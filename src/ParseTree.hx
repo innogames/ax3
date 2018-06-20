@@ -103,4 +103,9 @@ enum SyntaxType {
 
 enum Expr {
 	EIdent(i:TokenInfo);
+	ELiteral(l:Literal);
+}
+
+enum Literal {
+	LString(t:TokenInfo);
 }

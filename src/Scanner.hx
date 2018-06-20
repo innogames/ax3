@@ -137,6 +137,11 @@ class Scanner {
 					}
 					add(TkIdent);
 
+				case "\"".code:
+					pos++;
+					scanString();
+					add(TkStringDouble);
+
 				case _:
 					throw "Invalid token at " + tokenStartPos;
 			}
@@ -153,6 +158,41 @@ class Scanner {
 
 	inline function isIdentPart(ch) {
 		return isNumber(ch) || isIdentStart(ch);
+	}
+
+	function scanString() {
+		while (true) {
+			if (pos >= end) {
+				throw "Unterminated string at " + tokenStartPos;
+			}
+			// not using switch because of https://github.com/HaxeFoundation/haxe/pull/4964
+			var ch = text.fastCodeAt(pos);
+			if (ch == "\"".code) {
+				pos++;
+				break;
+			} else if (ch == "\\".code) {
+				pos++;
+				scanEscapeSequence(pos - 1);
+			} else {
+				pos++;
+			}
+		}
+	}
+
+	function scanEscapeSequence(start:Int) {
+		if (pos >= end) {
+			throw "Unterminated escape sequence at " + start;
+		}
+		var ch = text.fastCodeAt(pos);
+		pos++;
+		return switch (ch) {
+			case "t".code:
+			case "n".code:
+			case "r".code:
+			case "\"".code:
+			default:
+				throw "Invalid escape sequence at " + start;
+		}
 	}
 
 	function add(kind:TokenKind) {

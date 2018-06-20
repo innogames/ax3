@@ -262,6 +262,8 @@ class Parser {
 		switch token.kind {
 			case TkIdent:
 				return EIdent(stream.consume());
+			case TkStringSingle | TkStringDouble:
+				return ELiteral(LString(stream.consume()));
 			case _:
 				return null;
 		}
