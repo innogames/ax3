@@ -84,6 +84,28 @@ class Scanner {
 					pos++;
 					add(TkParenClose);
 
+				case "0".code:
+					pos++;
+					add(TkInteger);
+
+				case "1".code | "2".code | "3".code | "4".code | "5".code | "6".code | "7".code | "8".code | "9".code:
+					pos++;
+					while (pos < end && isNumber(text.fastCodeAt(pos)))
+						pos++;
+					add(TkInteger);
+
+				case "+".code:
+					pos++;
+					add(TkPlus);
+
+				case "-".code:
+					pos++;
+					add(TkMinus);
+
+				case "*".code:
+					pos++;
+					add(TkAsterisk);
+
 				case "/".code:
 					pos++;
 					if (pos < end) {
@@ -123,9 +145,10 @@ class Scanner {
 					pos++;
 					add(TkEquals);
 
-				case "*".code:
+				case "\"".code:
 					pos++;
-					add(TkAsterisk);
+					scanString();
+					add(TkStringDouble);
 
 				case _ if (isIdentStart(ch)):
 					pos++;
@@ -136,11 +159,6 @@ class Scanner {
 						pos++;
 					}
 					add(TkIdent);
-
-				case "\"".code:
-					pos++;
-					scanString();
-					add(TkStringDouble);
 
 				case _:
 					throw "Invalid token at " + tokenStartPos;
