@@ -294,6 +294,8 @@ class Parser {
 						return parseNewNext(stream.consume());
 					case "return":
 						return EReturn(stream.consume(), parseOptionalExpr());
+					case "if":
+						return parseIf(stream.consume());
 					case _:
 						return parseExprNext(EIdent(stream.consume()));
 				}
@@ -307,6 +309,20 @@ class Parser {
 			case _:
 				return null;
 		}
+	}
+
+	function parseIf(keyword:TokenInfo):Expr {
+		var openParen = expectKind(TkParenOpen);
+		var econd = parseExpr();
+		var closeParen = expectKind(TkParenClose);
+		var ethen = parseExpr();
+		var eelse = switch stream.advance() {
+			case {kind: TkIdent, text: "else"}:
+				{keyword: stream.consume(), expr: parseExpr()};
+			case _:
+				null;
+		}
+		return EIf(keyword, openParen, econd, closeParen, ethen, eelse);
 	}
 
 	function parseNewNext(keyword:TokenInfo):Expr {
