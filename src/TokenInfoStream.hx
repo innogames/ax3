@@ -6,6 +6,8 @@ class TokenInfoStream {
 	var head:Token;
 	var trivia:Array<Token>;
 
+	public var lastConsumedToken(default,null):TokenInfo;
+
 	public function new(head) {
 		this.head = head;
 		this.trivia = [];
@@ -33,6 +35,7 @@ class TokenInfoStream {
 		head = head.next;
 
 		info.trailTrivia = consumeTrailTrivia();
+		lastConsumedToken = info;
 		return info;
 	}
 

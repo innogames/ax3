@@ -270,13 +270,12 @@ class Parser {
 		}
 	}
 
-	function parseOptionalBlockExpr():Null<Expr> {
+	function parseOptionalBlockExpr():Null<BlockElement> {
 		var expr = parseOptionalExpr();
-		if (expr != null) {
-			// TODO: only require semicolon if last expr token wasn't a closing brace
-			expectKind(TkSemicolon);
-		}
-		return expr;
+		if (expr == null)
+			return null;
+		var semicolon = if (expr != null && stream.lastConsumedToken.token.kind != TkBraceClose) expectKind(TkSemicolon) else null;
+		return {expr: expr, semicolon: semicolon};
 	}
 
 	function parseExpr():Expr {
@@ -300,6 +299,11 @@ class Parser {
 				}
 			case TkStringSingle | TkStringDouble:
 				return parseExprNext(ELiteral(LString(stream.consume())));
+			case TkBraceOpen:
+				var openBrace = stream.consume();
+				var exprs = parseSequence(parseOptionalBlockExpr);
+				var closeBrace = expectKind(TkBraceClose);
+				return EBlock(openBrace, exprs, closeBrace);
 			case _:
 				return null;
 		}
