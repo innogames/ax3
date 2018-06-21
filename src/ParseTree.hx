@@ -110,6 +110,7 @@ enum SyntaxType {
 enum Expr {
 	EIdent(i:TokenInfo);
 	ELiteral(l:Literal);
+	ECall(e:Expr, openParen:TokenInfo, args:Null<Separated<Expr>>, closeParen:TokenInfo);
 }
 
 enum Literal {

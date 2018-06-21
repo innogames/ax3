@@ -279,11 +279,19 @@ class Parser {
 		return expr;
 	}
 
+	function parseExpr():Expr {
+		var expr = parseOptionalExpr();
+		if (expr == null)
+			throw "Expression expected";
+		return expr;
+	}
+
 	function parseOptionalExpr():Null<Expr> {
 		var token = stream.advance();
 		switch token.kind {
 			case TkIdent:
-				return EIdent(stream.consume());
+				var expr = EIdent(stream.consume());
+				return parseExprNext(expr);
 			case TkStringSingle | TkStringDouble:
 				return ELiteral(LString(stream.consume()));
 			case _:
@@ -291,11 +299,25 @@ class Parser {
 		}
 	}
 
-	function parseExpr():Expr {
-		var expr = parseOptionalExpr();
-		if (expr == null)
-			throw "Expression expected";
-		return expr;
+	function parseExprNext(first:Expr) {
+		var token = stream.advance();
+		switch token.kind {
+			case TkParenOpen:
+				return parseCallNext(first, stream.consume());
+			case _:
+				return first;
+		}
+	}
+
+	function parseCallNext(e:Expr, openParen:TokenInfo):Expr {
+		var token = stream.advance();
+		switch token.kind {
+			case TkParenClose:
+				return ECall(e, openParen, null, stream.consume());
+			case _:
+				var args = parseSeparated(parseExpr, t -> t.kind == TkComma);
+				return ECall(e, openParen, args, expectKind(TkParenClose));
+		}
 	}
 
 	function parseInterfaceNext(modifiers:Array<TokenInfo>, keyword:TokenInfo):InterfaceDecl {
