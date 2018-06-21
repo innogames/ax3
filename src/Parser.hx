@@ -148,7 +148,7 @@ class Parser {
 		while (true) {
 			var token = stream.advance();
 			switch [token.kind, token.text] {
-				case [TkIdent, "public" | "private" | "protected" | "internal"]:
+				case [TkIdent, "public" | "private" | "protected" | "internal" | "override" | "static"]:
 					modifiers.push(stream.consume());
 				case [TkIdent, "var" | "const"]:
 					return parseClassVarNext(modifiers, stream.consume());
