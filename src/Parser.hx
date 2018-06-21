@@ -296,6 +296,8 @@ class Parser {
 						return EReturn(stream.consume(), parseOptionalExpr());
 					case "if":
 						return parseIf(stream.consume());
+					case "while":
+						return parseWhile(stream.consume());
 					case _:
 						return parseExprNext(EIdent(stream.consume()));
 				}
@@ -323,6 +325,14 @@ class Parser {
 				null;
 		}
 		return EIf(keyword, openParen, econd, closeParen, ethen, eelse);
+	}
+
+	function parseWhile(keyword:TokenInfo):Expr {
+		var openParen = expectKind(TkParenOpen);
+		var econd = parseExpr();
+		var closeParen = expectKind(TkParenClose);
+		var ebody = parseExpr();
+		return EWhile(keyword, openParen, econd, closeParen, ebody);
 	}
 
 	function parseNewNext(keyword:TokenInfo):Expr {

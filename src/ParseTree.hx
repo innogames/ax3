@@ -116,6 +116,7 @@ enum Expr {
 	EField(e:Expr, dot:TokenInfo, fieldName:TokenInfo);
 	EBlock(openBrace:TokenInfo, exprs:Array<BlockElement>, closeBrace:TokenInfo);
 	EIf(keyword:TokenInfo, openParen:TokenInfo, econd:Expr, closeParen:TokenInfo, ethen:Expr, eelse:{keyword:TokenInfo, expr:Expr});
+	EWhile(keyword:TokenInfo, openParen:TokenInfo, cond:Expr, closeParen:TokenInfo, body:Expr);
 }
 
 typedef BlockElement = {
