@@ -202,7 +202,17 @@ class Parser {
 	}
 
 	function parseClassFunNext(modifiers:Array<TokenInfo>, keyword:TokenInfo):ClassField {
-		var name = expectKind(TkIdent);
+		var name, propKind;
+		var nameToken = expectKind(TkIdent);
+		switch nameToken.token.text {
+			case type = "get" | "set" if (stream.advance().kind == TkIdent):
+				name = stream.consume();
+				propKind = if (type == "get") PGet(nameToken) else PSet(nameToken);
+			case _:
+				name = nameToken;
+				propKind = null;
+		}
+
 		var openParen = expectKind(TkParenOpen);
 		var args = {
 			var token = stream.advance();
@@ -218,19 +228,22 @@ class Parser {
 		var openBrace = expectKind(TkBraceOpen);
 		var exprs = parseSequence(parseOptionalBlockExpr);
 		var closeBrace = expectKind(TkBraceClose);
+
+		var fun:ClassFun = {
+			keyword: keyword,
+			openParen: openParen,
+			args: args,
+			closeParen: closeParen,
+			ret: ret,
+			openBrace: openBrace,
+			exprs: exprs,
+			closeBrace: closeBrace
+		};
+
 		return {
 			modifiers: modifiers,
 			name: name,
-			kind: FFun({
-				keyword: keyword,
-				openParen: openParen,
-				args: args,
-				closeParen: closeParen,
-				ret: ret,
-				openBrace: openBrace,
-				exprs: exprs,
-				closeBrace: closeBrace
-			})
+			kind: if (propKind == null) FFun(fun) else FProp(propKind, fun)
 		};
 	}
 

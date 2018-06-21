@@ -60,6 +60,12 @@ typedef ClassField = {
 enum ClassFieldKind {
 	FVar(v:ClassVar);
 	FFun(f:ClassFun);
+	FProp(kind:PropKind, f:ClassFun);
+}
+
+enum PropKind {
+	PGet(keyword:TokenInfo);
+	PSet(keyword:TokenInfo);
 }
 
 typedef ClassVar = {
