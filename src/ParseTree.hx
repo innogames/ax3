@@ -111,6 +111,7 @@ enum Expr {
 	EIdent(i:TokenInfo);
 	ELiteral(l:Literal);
 	ECall(e:Expr, openParen:TokenInfo, args:Null<Separated<Expr>>, closeParen:TokenInfo);
+	EReturn(keyword:TokenInfo, e:Null<Expr>);
 }
 
 enum Literal {

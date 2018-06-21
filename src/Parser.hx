@@ -290,8 +290,13 @@ class Parser {
 		var token = stream.advance();
 		switch token.kind {
 			case TkIdent:
-				var expr = EIdent(stream.consume());
-				return parseExprNext(expr);
+				switch token.text {
+					case "return":
+						return EReturn(stream.consume(), parseOptionalExpr());
+					case _:
+						var expr = EIdent(stream.consume());
+						return parseExprNext(expr);
+				}
 			case TkStringSingle | TkStringDouble:
 				return ELiteral(LString(stream.consume()));
 			case _:
