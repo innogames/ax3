@@ -110,8 +110,16 @@ enum SyntaxType {
 enum Expr {
 	EIdent(i:TokenInfo);
 	ELiteral(l:Literal);
-	ECall(e:Expr, openParen:TokenInfo, args:Null<Separated<Expr>>, closeParen:TokenInfo);
+	ECall(e:Expr, args:CallArgs);
 	EReturn(keyword:TokenInfo, e:Null<Expr>);
+	ENew(keyword:TokenInfo, e:Expr, args:Null<CallArgs>);
+	EField(e:Expr, dot:TokenInfo, fieldName:TokenInfo);
+}
+
+typedef CallArgs = {
+	var openParen:TokenInfo;
+	var args:Null<Separated<Expr>>;
+	var closeParen:TokenInfo;
 }
 
 enum Literal {

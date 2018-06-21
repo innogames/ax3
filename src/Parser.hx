@@ -291,16 +291,24 @@ class Parser {
 		switch token.kind {
 			case TkIdent:
 				switch token.text {
+					case "new":
+						return parseNewNext(stream.consume());
 					case "return":
 						return EReturn(stream.consume(), parseOptionalExpr());
 					case _:
-						var expr = EIdent(stream.consume());
-						return parseExprNext(expr);
+						return parseExprNext(EIdent(stream.consume()));
 				}
 			case TkStringSingle | TkStringDouble:
-				return ELiteral(LString(stream.consume()));
+				return parseExprNext(ELiteral(LString(stream.consume())));
 			case _:
 				return null;
+		}
+	}
+
+	function parseNewNext(keyword:TokenInfo):Expr {
+		return switch parseExpr() {
+			case ECall(e, args): ENew(keyword, e, args);
+			case e: ENew(keyword, e, null);
 		}
 	}
 
@@ -308,20 +316,24 @@ class Parser {
 		var token = stream.advance();
 		switch token.kind {
 			case TkParenOpen:
-				return parseCallNext(first, stream.consume());
+				return parseExprNext(ECall(first, parseCallArgsNext(stream.consume())));
+			case TkDot:
+				var dot = stream.consume();
+				var fieldName = expectKind(TkIdent);
+				return parseExprNext(EField(first, dot, fieldName));
 			case _:
 				return first;
 		}
 	}
 
-	function parseCallNext(e:Expr, openParen:TokenInfo):Expr {
+	function parseCallArgsNext(openParen:TokenInfo):CallArgs {
 		var token = stream.advance();
 		switch token.kind {
 			case TkParenClose:
-				return ECall(e, openParen, null, stream.consume());
+				return {openParen: openParen, args: null, closeParen: stream.consume()};
 			case _:
 				var args = parseSeparated(parseExpr, t -> t.kind == TkComma);
-				return ECall(e, openParen, args, expectKind(TkParenClose));
+				return {openParen: openParen, args: args, closeParen: expectKind(TkParenClose)};
 		}
 	}
 
