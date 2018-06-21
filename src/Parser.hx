@@ -216,7 +216,7 @@ class Parser {
 		var closeParen = expectKind(TkParenClose);
 		var ret = parseOptionalTypeHint();
 		var openBrace = expectKind(TkBraceOpen);
-		var exprs = parseSequence(parseOptionalExpr);
+		var exprs = parseSequence(parseOptionalBlockExpr);
 		var closeBrace = expectKind(TkBraceClose);
 		return {
 			modifiers: modifiers,
@@ -255,6 +255,15 @@ class Parser {
 			case _:
 				throw "Unexpected token for type hint";
 		}
+	}
+
+	function parseOptionalBlockExpr():Null<Expr> {
+		var expr = parseOptionalExpr();
+		if (expr != null) {
+			// TODO: only require semicolon if last expr token wasn't a closing brace
+			expectKind(TkSemicolon);
+		}
+		return expr;
 	}
 
 	function parseOptionalExpr():Null<Expr> {
