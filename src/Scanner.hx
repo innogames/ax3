@@ -142,7 +142,50 @@ class Scanner {
 					}
 
 				case "=".code:
-					scanEquals();
+					pos++;
+					if (nextIsEquals()) {
+						pos++;
+						if (nextIsEquals()) {
+							pos++;
+							add(TkEqualsEqualsEquals);
+						} else {
+							add(TkEqualsEquals);
+						}
+					} else {
+						add(TkEquals);
+					}
+
+				case "!".code:
+					pos++;
+					if (nextIsEquals()) {
+						pos++;
+						if (nextIsEquals()) {
+							pos++;
+							add(TkExclamationEqualsEquals);
+						} else {
+							add(TkExclamationEquals);
+						}
+					} else {
+						add(TkExclamation);
+					}
+
+				case ">".code:
+					pos++;
+					if (nextIsEquals()) {
+						pos++;
+						add(TkGtEquals);
+					} else {
+						add(TkGt);
+					}
+
+				case "<".code:
+					pos++;
+					if (nextIsEquals()) {
+						pos++;
+						add(TkLtEquals);
+					} else {
+						add(TkLt);
+					}
 
 				case "\"".code:
 					pos++;
@@ -165,24 +208,8 @@ class Scanner {
 		}
 	}
 
-	function scanEquals() {
-		inline function moreEquals() {
-			return pos < end && text.fastCodeAt(pos) == "=".code;
-		}
-
-		pos++;
-		if (moreEquals()) {
-			pos++;
-			if (moreEquals()) {
-				pos++;
-				add(TkEqualsEqualsEquals);
-			} else {
-				add(TkEqualsEquals);
-			}
-			return;
-		} else {
-			add(TkEquals);
-		}
+	inline function nextIsEquals() {
+		return pos < end && text.fastCodeAt(pos) == "=".code;
 	}
 
 	inline function isNumber(ch) {

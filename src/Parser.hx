@@ -357,12 +357,25 @@ class Parser {
 				return parseBinop(first, OpEquals);
 			case TkEqualsEqualsEquals:
 				return parseBinop(first, OpStrictEquals);
+			case TkExclamationEquals:
+				return parseBinop(first, OpNotEquals);
+			case TkExclamationEqualsEquals:
+				return parseBinop(first, OpNotStrictEquals);
+			case TkLt:
+				return parseBinop(first, OpLt);
+			case TkLtEquals:
+				return parseBinop(first, OpLte);
+			case TkGt:
+				return parseBinop(first, OpGt);
+			case TkGtEquals:
+				return parseBinop(first, OpGte);
 			case _:
 				return first;
 		}
 	}
 
 	function parseBinop(a:Expr, ctor:TokenInfo->Binop):Expr {
+		// TODO: handle precedence here (swap expressions when needed)
 		var token = stream.consume();
 		var second = parseExpr();
 		return parseExprNext(EBinop(a, ctor(token), second));

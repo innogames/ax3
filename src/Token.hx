@@ -36,7 +36,14 @@ enum TokenKind {
 	TkAsterisk;
 	TkPlus;
 	TkMinus;
+	TkGt;
+	TkGtEquals;
+	TkLt;
+	TkLtEquals;
 	TkStringSingle;
 	TkStringDouble;
+	TkExclamation;
+	TkExclamationEquals;
+	TkExclamationEqualsEquals;
 	TkInteger;
 }
