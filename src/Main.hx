@@ -6,6 +6,8 @@ class Main {
 		var stream = new TokenInfoStream(head);
 		var parser = new Parser(stream);
 		var file = parser.parse();
-		trace(file);
+		var dump = ParseTreeDump.printFile(file, "");
+		Sys.println(dump);
+
 	}
 }
