@@ -117,6 +117,19 @@ enum Expr {
 	EBlock(openBrace:TokenInfo, exprs:Array<BlockElement>, closeBrace:TokenInfo);
 	EIf(keyword:TokenInfo, openParen:TokenInfo, econd:Expr, closeParen:TokenInfo, ethen:Expr, eelse:{keyword:TokenInfo, expr:Expr});
 	EWhile(keyword:TokenInfo, openParen:TokenInfo, cond:Expr, closeParen:TokenInfo, body:Expr);
+	EBinop(a:Expr, op:Binop, b:Expr);
+}
+
+enum Binop {
+	OpAssign(t:TokenInfo);
+	OpEquals(t:TokenInfo);
+	OpNotEquals(t:TokenInfo);
+	OpStrictEquals(t:TokenInfo);
+	OpNotStrictEquals(t:TokenInfo);
+	OpGt(t:TokenInfo);
+	OpGte(t:TokenInfo);
+	OpLt(t:TokenInfo);
+	OpLte(t:TokenInfo);
 }
 
 typedef BlockElement = {

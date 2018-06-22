@@ -142,8 +142,7 @@ class Scanner {
 					}
 
 				case "=".code:
-					pos++;
-					add(TkEquals);
+					scanEquals();
 
 				case "\"".code:
 					pos++;
@@ -163,6 +162,26 @@ class Scanner {
 				case _:
 					throw "Invalid token at " + tokenStartPos;
 			}
+		}
+	}
+
+	function scanEquals() {
+		inline function moreEquals() {
+			return pos < end && text.fastCodeAt(pos) == "=".code;
+		}
+
+		pos++;
+		if (moreEquals()) {
+			pos++;
+			if (moreEquals()) {
+				pos++;
+				add(TkEqualsEqualsEquals);
+			} else {
+				add(TkEqualsEquals);
+			}
+			return;
+		} else {
+			add(TkEquals);
 		}
 	}
 

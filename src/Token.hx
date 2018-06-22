@@ -31,6 +31,8 @@ enum TokenKind {
 	TkDot;
 	TkComma;
 	TkEquals;
+	TkEqualsEquals;
+	TkEqualsEqualsEquals;
 	TkAsterisk;
 	TkPlus;
 	TkMinus;

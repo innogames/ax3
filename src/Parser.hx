@@ -351,9 +351,21 @@ class Parser {
 				var dot = stream.consume();
 				var fieldName = expectKind(TkIdent);
 				return parseExprNext(EField(first, dot, fieldName));
+			case TkEquals:
+				return parseBinop(first, OpAssign);
+			case TkEqualsEquals:
+				return parseBinop(first, OpEquals);
+			case TkEqualsEqualsEquals:
+				return parseBinop(first, OpStrictEquals);
 			case _:
 				return first;
 		}
+	}
+
+	function parseBinop(a:Expr, ctor:TokenInfo->Binop):Expr {
+		var token = stream.consume();
+		var second = parseExpr();
+		return parseExprNext(EBinop(a, ctor(token), second));
 	}
 
 	function parseCallArgsNext(openParen:TokenInfo):CallArgs {
