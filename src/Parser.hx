@@ -367,6 +367,8 @@ class Parser {
 						return EReturn(stream.consume(), parseOptionalExpr());
 					case "throw":
 						return EThrow(stream.consume(), parseExpr());
+					case "delete":
+						return EDelete(stream.consume(), parseExpr());
 					case "if":
 						return parseIf(stream.consume());
 					case "switch":

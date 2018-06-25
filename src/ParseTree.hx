@@ -124,6 +124,7 @@ enum Expr {
 	EArrayDecl(d:ArrayDecl);
 	EReturn(keyword:TokenInfo, e:Null<Expr>);
 	EThrow(keyword:TokenInfo, e:Expr);
+	EDelete(keyword:TokenInfo, e:Expr);
 	EBreak(keyword:TokenInfo);
 	EContinue(keyword:TokenInfo);
 	ENew(keyword:TokenInfo, e:Expr, args:Null<CallArgs>);
