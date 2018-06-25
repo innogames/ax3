@@ -353,6 +353,8 @@ class Parser {
 						return EThrow(stream.consume(), parseExpr());
 					case "if":
 						return parseIf(stream.consume());
+					case "switch":
+						return parseSwitch(stream.consume());
 					case "while":
 						return parseWhile(stream.consume());
 					case "for":
@@ -361,6 +363,8 @@ class Parser {
 						return parseVars(stream.consume());
 					case "Vector":
 						return parseExprNext(EVector(parseVectorSyntax(stream.consume())));
+					case "case" | "default": // not part of expression
+						return null;
 					case _:
 						return parseExprNext(EIdent(stream.consume()));
 				}
@@ -427,6 +431,35 @@ class Parser {
 				null;
 		}
 		return EIf(keyword, openParen, econd, closeParen, ethen, eelse);
+	}
+
+	function parseSwitch(keyword:TokenInfo):Expr {
+		var openParen = expectKind(TkParenOpen);
+		var esubj = parseExpr();
+		var closeParen = expectKind(TkParenClose);
+		var openBrace = expectKind(TkBraceOpen);
+		var cases = parseSequence(function() {
+			var token = stream.advance();
+			return switch [token.kind, token.text] {
+				case [TkIdent, "case"]:
+					var keyword = stream.consume();
+					var v = parseExpr();
+					var colon = expectKind(TkColon);
+					var exprs = parseSequence(parseOptionalBlockExpr);
+					CCase(keyword, v, colon, exprs);
+
+				case [TkIdent, "default"]:
+					var keyword = stream.consume();
+					var colon = expectKind(TkColon);
+					var exprs = parseSequence(parseOptionalBlockExpr);
+					CDefault(keyword, colon, exprs);
+
+				case _:
+					null;
+			}
+		});
+		var closeBrace = expectKind(TkBraceClose);
+		return ESwitch(keyword, openParen, esubj, closeParen, openBrace, cases, closeBrace);
 	}
 
 	function parseWhile(keyword:TokenInfo):Expr {

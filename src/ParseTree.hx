@@ -135,6 +135,12 @@ enum Expr {
 	EAs(e:Expr, keyword:TokenInfo, t:SyntaxType);
 	EIs(e:Expr, keyword:TokenInfo, t:SyntaxType);
 	EVector(v:VectorSyntax);
+	ESwitch(keyword:TokenInfo, openParen:TokenInfo, subj:Expr, closeParen:TokenInfo, openBrace:TokenInfo, cases:Array<SwitchCase>, closeBrace:TokenInfo);
+}
+
+enum SwitchCase {
+	CCase(keyword:TokenInfo, v:Expr, colon:TokenInfo, body:Array<BlockElement>);
+	CDefault(keyword:TokenInfo, colon:TokenInfo, body:Array<BlockElement>);
 }
 
 typedef VectorSyntax = {
