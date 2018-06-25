@@ -298,6 +298,8 @@ class Parser {
 						return parseIf(stream.consume());
 					case "while":
 						return parseWhile(stream.consume());
+					case "for":
+						return parseFor(stream.consume());
 					case "var":
 						return parseVars(stream.consume());
 					case _:
@@ -352,6 +354,18 @@ class Parser {
 		var closeParen = expectKind(TkParenClose);
 		var ebody = parseExpr();
 		return EWhile(keyword, openParen, econd, closeParen, ebody);
+	}
+
+	function parseFor(keyword:TokenInfo):Expr {
+		var openParen = expectKind(TkParenOpen);
+		var einit = parseOptionalExpr();
+		var einitSep = expectKind(TkSemicolon);
+		var econd = parseOptionalExpr();
+		var econdSep = expectKind(TkSemicolon);
+		var eincr = parseOptionalExpr();
+		var closeParen = expectKind(TkParenClose);
+		var ebody = parseExpr();
+		return EFor(keyword, openParen, einit, einitSep, econd, econdSep, eincr, closeParen, ebody);
 	}
 
 	function parseNewNext(keyword:TokenInfo):Expr {
