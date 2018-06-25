@@ -20,6 +20,10 @@ enum TokenKind {
 	TkNewline;
 	TkBlockComment;
 	TkLineComment;
+	TkAmpersand;
+	TkAmpersandAmpersand;
+	TkPipe;
+	TkPipePipe;
 	TkIdent;
 	TkBraceOpen;
 	TkBraceClose;

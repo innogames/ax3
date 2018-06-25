@@ -160,6 +160,8 @@ enum Binop {
 	OpLt(t:TokenInfo);
 	OpLte(t:TokenInfo);
 	OpIn(t:TokenInfo);
+	OpAnd(t:TokenInfo);
+	OpOr(t:TokenInfo);
 }
 
 typedef BlockElement = {

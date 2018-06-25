@@ -210,6 +210,24 @@ class Scanner {
 						add(TkLt);
 					}
 
+				case "&".code:
+					pos++;
+					if (pos < end && text.fastCodeAt(pos) == "&".code) {
+						pos++;
+						add(TkAmpersandAmpersand);
+					} else {
+						add(TkAmpersand);
+					}
+
+				case "|".code:
+					pos++;
+					if (pos < end && text.fastCodeAt(pos) == "|".code) {
+						pos++;
+						add(TkPipePipe);
+					} else {
+						add(TkPipe);
+					}
+
 				case "\"".code:
 					pos++;
 					scanString();

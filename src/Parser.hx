@@ -434,6 +434,10 @@ class Parser {
 				return parseBinop(first, OpGt);
 			case TkGtEquals:
 				return parseBinop(first, OpGte);
+			case TkAmpersandAmpersand:
+				return parseBinop(first, OpAnd);
+			case TkPipePipe:
+				return parseBinop(first, OpOr);
 			case TkBracketOpen:
 				var openBracket = stream.consume();
 				var eindex = parseExpr();
