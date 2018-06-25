@@ -86,20 +86,12 @@ class Scanner {
 
 				case "0".code:
 					pos++;
-					var octal = false;
-					while (pos < end && isNumber(text.fastCodeAt(pos))) {
-						octal = true;
-						pos++;
-					}
-					if (octal)
-						add(TkOctalInteger);
-					else
-						add(TkDecimalInteger);
+					var kind = scanZeroLeadingNumber();
+					add(kind);
 
 				case "1".code | "2".code | "3".code | "4".code | "5".code | "6".code | "7".code | "8".code | "9".code:
 					pos++;
-					while (pos < end && isNumber(text.fastCodeAt(pos)))
-						pos++;
+					scanDigits();
 					add(TkDecimalInteger);
 
 				case "+".code:
@@ -216,11 +208,36 @@ class Scanner {
 		}
 	}
 
+	function scanZeroLeadingNumber():TokenKind {
+		if (pos < end) {
+			var ch = text.fastCodeAt(pos);
+			if (ch == "x".code || ch == "X".code) {
+				pos++;
+				if (pos >= end || !isDigit(text.fastCodeAt(pos)))
+					throw "Unterminated hexadecimal number";
+				pos++;
+				scanDigits();
+				return TkHexadecimalInteger;
+			} else if (isDigit(ch)) {
+				pos++;
+				scanDigits();
+				return TkOctalInteger;
+			}
+		}
+		return TkDecimalInteger;
+	}
+
 	inline function nextIsEquals() {
 		return pos < end && text.fastCodeAt(pos) == "=".code;
 	}
 
-	inline function isNumber(ch) {
+	inline function scanDigits() {
+		while (pos < end && isDigit(text.fastCodeAt(pos))) {
+			pos++;
+		}
+	}
+
+	inline function isDigit(ch) {
 		return ch >= "0".code && ch <= "9".code;
 	}
 
@@ -229,7 +246,7 @@ class Scanner {
 	}
 
 	inline function isIdentPart(ch) {
-		return isNumber(ch) || isIdentStart(ch);
+		return isDigit(ch) || isIdentStart(ch);
 	}
 
 	function scanString() {

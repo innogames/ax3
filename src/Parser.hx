@@ -305,6 +305,8 @@ class Parser {
 				return parseExprNext(ELiteral(LString(stream.consume())));
 			case TkDecimalInteger:
 				return parseExprNext(ELiteral(LDecInt(stream.consume())));
+			case TkHexadecimalInteger:
+				return parseExprNext(ELiteral(LHexInt(stream.consume())));
 			case TkOctalInteger:
 				return parseExprNext(ELiteral(LOctInt(stream.consume())));
 			case TkBraceOpen:
