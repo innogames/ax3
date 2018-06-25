@@ -115,7 +115,7 @@ enum Expr {
 	ENew(keyword:TokenInfo, e:Expr, args:Null<CallArgs>);
 	EField(e:Expr, dot:TokenInfo, fieldName:TokenInfo);
 	EBlock(openBrace:TokenInfo, exprs:Array<BlockElement>, closeBrace:TokenInfo);
-	EIf(keyword:TokenInfo, openParen:TokenInfo, econd:Expr, closeParen:TokenInfo, ethen:Expr, eelse:{keyword:TokenInfo, expr:Expr});
+	EIf(keyword:TokenInfo, openParen:TokenInfo, econd:Expr, closeParen:TokenInfo, ethen:Expr, eelse:Null<{keyword:TokenInfo, expr:Expr}>);
 	EWhile(keyword:TokenInfo, openParen:TokenInfo, cond:Expr, closeParen:TokenInfo, body:Expr);
 	EFor(keyword:TokenInfo, openParen:TokenInfo, einit:Null<Expr>, initSep:TokenInfo, econd:Null<Expr>, condSep:TokenInfo, eincr:Null<Expr>, closeParen:TokenInfo, body:Expr);
 	EBinop(a:Expr, op:Binop, b:Expr);
