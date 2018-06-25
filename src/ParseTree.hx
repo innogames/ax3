@@ -127,6 +127,7 @@ enum Expr {
 }
 
 enum PreUnop {
+	PreNeg(t:TokenInfo);
 	PreIncr(t:TokenInfo);
 	PreDecr(t:TokenInfo);
 }

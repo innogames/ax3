@@ -113,6 +113,7 @@ class Scanner {
 
 				case "-".code:
 					pos++;
+					// TODO: scan negative number literals here too
 					if (pos < end && text.fastCodeAt(pos) == "-".code) {
 						pos++;
 						add(TkMinusMinus);

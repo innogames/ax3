@@ -320,6 +320,8 @@ class Parser {
 				var exprs = parseSequence(parseOptionalBlockExpr);
 				var closeBrace = expectKind(TkBraceClose);
 				return EBlock(openBrace, exprs, closeBrace);
+			case TkMinus:
+				return EPreUnop(PreNeg(stream.consume()), parseExpr());
 			case TkPlusPlus:
 				return EPreUnop(PreIncr(stream.consume()), parseExpr());
 			case TkMinusMinus:
