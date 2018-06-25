@@ -1,4 +1,3 @@
-import haxe.io.Path;
 import sys.FileSystem;
 
 class Main {
@@ -21,7 +20,7 @@ class Main {
 	}
 
 	static function parseFile(path:String) {
-		trace('Parsing $path');
+		print('Parsing $path');
 		var content = sys.io.File.getContent(path);
 		var scanner = new Scanner(content);
 		var head = scanner.scan();
@@ -34,9 +33,12 @@ class Main {
 		} catch (e:Any) {
 			var pos = getPos(head, stream.advance());
 			var line = getLine(content, pos);
-			Sys.println('$path:$line: $e');
+			printerr('$path:$line: $e');
 		}
 	}
+
+	static function print(s:String) js.Node.console.log(s);
+	static function printerr(s:String) js.Node.console.error(s);
 
 	static function getLine(content:String, pos:Int):Int {
 		var line = 1;
