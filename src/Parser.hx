@@ -718,9 +718,9 @@ class Parser {
 					case "in":
 						return parseBinop(first, OpIn);
 					case "is":
-						return EIs(first, stream.consume(), parseSyntaxType(false));
+						return parseExprNext(EIs(first, stream.consume(), parseSyntaxType(false)));
 					case "as":
-						return EAs(first, stream.consume(), parseSyntaxType(false));
+						return parseExprNext(EAs(first, stream.consume(), parseSyntaxType(false)));
 					case _:
 				}
 			case _:
