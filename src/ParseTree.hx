@@ -118,6 +118,13 @@ enum Expr {
 	EIf(keyword:TokenInfo, openParen:TokenInfo, econd:Expr, closeParen:TokenInfo, ethen:Expr, eelse:{keyword:TokenInfo, expr:Expr});
 	EWhile(keyword:TokenInfo, openParen:TokenInfo, cond:Expr, closeParen:TokenInfo, body:Expr);
 	EBinop(a:Expr, op:Binop, b:Expr);
+	EVars(keyword:TokenInfo, vars:Separated<VarDecl>);
+}
+
+typedef VarDecl = {
+	var name:TokenInfo;
+	var type:Null<TypeHint>;
+	var init:Null<VarInit>;
 }
 
 enum Binop {

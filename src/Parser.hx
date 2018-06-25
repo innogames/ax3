@@ -298,6 +298,8 @@ class Parser {
 						return parseIf(stream.consume());
 					case "while":
 						return parseWhile(stream.consume());
+					case "var":
+						return parseVars(stream.consume());
 					case _:
 						return parseExprNext(EIdent(stream.consume()));
 				}
@@ -317,6 +319,17 @@ class Parser {
 			case _:
 				return null;
 		}
+	}
+
+	function parseVars(keyword:TokenInfo):Expr {
+		// TODO: disable comma expression parsing here
+		var vars = parseSeparated(function() {
+			var firstName = expectKind(TkIdent);
+			var type = parseOptionalTypeHint();
+			var init = parseOptionalVarInit();
+			return {name: firstName, type: type, init: init};
+		}, t -> t.kind == TkComma);
+		return EVars(keyword, vars);
 	}
 
 	function parseIf(keyword:TokenInfo):Expr {
