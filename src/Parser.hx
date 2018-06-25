@@ -363,7 +363,7 @@ class Parser {
 						return EBreak(stream.consume());
 					case "continue":
 						return EContinue(stream.consume());
-					case "var":
+					case "var" | "const":
 						return parseVars(stream.consume());
 					case "Vector":
 						return parseExprNext(EVector(parseVectorSyntax(stream.consume())));
