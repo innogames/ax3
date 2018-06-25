@@ -104,11 +104,21 @@ class Scanner {
 
 				case "+".code:
 					pos++;
-					add(TkPlus);
+					if (pos < end && text.fastCodeAt(pos) == "+".code) {
+						pos++;
+						add(TkPlusPlus);
+					} else {
+						add(TkPlus);
+					}
 
 				case "-".code:
 					pos++;
-					add(TkMinus);
+					if (pos < end && text.fastCodeAt(pos) == "-".code) {
+						pos++;
+						add(TkMinusMinus);
+					} else {
+						add(TkMinus);
+					}
 
 				case "*".code:
 					pos++;

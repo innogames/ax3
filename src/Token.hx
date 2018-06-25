@@ -37,7 +37,9 @@ enum TokenKind {
 	TkEqualsEqualsEquals;
 	TkAsterisk;
 	TkPlus;
+	TkPlusPlus;
 	TkMinus;
+	TkMinusMinus;
 	TkPercent;
 	TkGt;
 	TkGtEquals;

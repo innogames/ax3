@@ -121,7 +121,19 @@ enum Expr {
 	EWhile(keyword:TokenInfo, openParen:TokenInfo, cond:Expr, closeParen:TokenInfo, body:Expr);
 	EFor(keyword:TokenInfo, openParen:TokenInfo, einit:Null<Expr>, initSep:TokenInfo, econd:Null<Expr>, condSep:TokenInfo, eincr:Null<Expr>, closeParen:TokenInfo, body:Expr);
 	EBinop(a:Expr, op:Binop, b:Expr);
+	EPreUnop(op:PreUnop, e:Expr);
+	EPostUnop(e:Expr, op:PostUnop);
 	EVars(keyword:TokenInfo, vars:Separated<VarDecl>);
+}
+
+enum PreUnop {
+	PreIncr(t:TokenInfo);
+	PreDecr(t:TokenInfo);
+}
+
+enum PostUnop {
+	PostIncr(t:TokenInfo);
+	PostDecr(t:TokenInfo);
 }
 
 typedef VarDecl = {
