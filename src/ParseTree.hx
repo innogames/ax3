@@ -115,6 +115,7 @@ enum Expr {
 	EIdent(i:TokenInfo);
 	ELiteral(l:Literal);
 	ECall(e:Expr, args:CallArgs);
+	EParens(openParen:TokenInfo, e:Expr, closeParen:TokenInfo);
 	EArrayAccess(e:Expr, openBracket:TokenInfo, eindex:Expr, closeBracket:TokenInfo);
 	EArrayDecl(d:ArrayDecl);
 	EReturn(keyword:TokenInfo, e:Null<Expr>);
@@ -124,6 +125,7 @@ enum Expr {
 	EField(e:Expr, dot:TokenInfo, fieldName:TokenInfo);
 	EBlock(openBrace:TokenInfo, exprs:Array<BlockElement>, closeBrace:TokenInfo);
 	EIf(keyword:TokenInfo, openParen:TokenInfo, econd:Expr, closeParen:TokenInfo, ethen:Expr, eelse:Null<{keyword:TokenInfo, expr:Expr}>);
+	ETernary(econd:Expr, question:TokenInfo, ethen:Expr, colon:TokenInfo, eelse:Expr);
 	EWhile(keyword:TokenInfo, openParen:TokenInfo, cond:Expr, closeParen:TokenInfo, body:Expr);
 	EFor(keyword:TokenInfo, openParen:TokenInfo, einit:Null<Expr>, initSep:TokenInfo, econd:Null<Expr>, condSep:TokenInfo, eincr:Null<Expr>, closeParen:TokenInfo, body:Expr);
 	EBinop(a:Expr, op:Binop, b:Expr);

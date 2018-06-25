@@ -56,6 +56,7 @@ enum TokenKind {
 	TkLtEquals;
 	TkStringSingle;
 	TkStringDouble;
+	TkQuestion;
 	TkExclamation;
 	TkExclamationEquals;
 	TkExclamationEqualsEquals;

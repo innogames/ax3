@@ -222,6 +222,10 @@ class Scanner {
 						add(TkExclamation);
 					}
 
+				case "?".code:
+					pos++;
+					add(TkQuestion);
+
 				case ">".code:
 					pos++;
 					if (nextIsEquals()) {

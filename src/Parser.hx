@@ -75,7 +75,7 @@ class Parser {
 		}
 	}
 
-	function parseOptionalMetadata() {
+	function parseOptionalMetadata():Metadata {
 		return switch stream.advance().kind {
 			case TkBracketOpen: parseMetadataNext(stream.consume());
 			case _: null;
@@ -372,6 +372,8 @@ class Parser {
 				return parseExprNext(ELiteral(LHexInt(stream.consume())));
 			case TkOctalInteger:
 				return parseExprNext(ELiteral(LOctInt(stream.consume())));
+			case TkParenOpen:
+				return parseExprNext(EParens(stream.consume(), parseExpr(), expectKind(TkParenClose)));
 			case TkBraceOpen:
 				var openBrace = stream.consume();
 				var exprs = parseSequence(parseOptionalBlockExpr);
@@ -521,6 +523,8 @@ class Parser {
 				var eindex = parseExpr();
 				var closeBracket = expectKind(TkBracketClose);
 				return parseExprNext(EArrayAccess(first, openBracket, eindex, closeBracket));
+			case TkQuestion:
+				return parseTernary(first, stream.consume());
 			case TkIdent:
 				switch token.text {
 					case "in":
@@ -534,6 +538,13 @@ class Parser {
 			case _:
 		}
 		return first;
+	}
+
+	function parseTernary(econd:Expr, question:TokenInfo):Expr {
+		var ethen = parseExpr();
+		var colon = expectKind(TkColon);
+		var eelse = parseExpr();
+		return ETernary(econd, question, ethen, colon, eelse);
 	}
 
 	function parseBinop(a:Expr, ctor:TokenInfo->Binop):Expr {
