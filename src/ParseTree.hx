@@ -178,6 +178,11 @@ enum Binop {
 	OpMul(t:TokenInfo);
 	OpMod(t:TokenInfo);
 	OpAssign(t:TokenInfo);
+	OpAssignAdd(t:TokenInfo);
+	OpAssignSub(t:TokenInfo);
+	OpAssignMul(t:TokenInfo);
+	OpAssignDiv(t:TokenInfo);
+	OpAssignMod(t:TokenInfo);
 	OpEquals(t:TokenInfo);
 	OpNotEquals(t:TokenInfo);
 	OpStrictEquals(t:TokenInfo);

@@ -104,9 +104,17 @@ class Scanner {
 
 				case "+".code:
 					pos++;
-					if (pos < end && text.fastCodeAt(pos) == "+".code) {
-						pos++;
-						add(TkPlusPlus);
+					if (pos < end) {
+						switch text.fastCodeAt(pos) {
+							case "+".code:
+								pos++;
+								add(TkPlusPlus);
+							case "=".code:
+								pos++;
+								add(TkPlusEquals);
+							case _:
+								add(TkPlus);
+						}
 					} else {
 						add(TkPlus);
 					}
@@ -114,16 +122,29 @@ class Scanner {
 				case "-".code:
 					pos++;
 					// TODO: scan negative number literals here too
-					if (pos < end && text.fastCodeAt(pos) == "-".code) {
-						pos++;
-						add(TkMinusMinus);
+					if (pos < end) {
+						switch text.fastCodeAt(pos) {
+							case "-".code:
+								pos++;
+								add(TkMinusMinus);
+							case "=".code:
+								pos++;
+								add(TkMinusEquals);
+							case _:
+								add(TkMinus);
+						}
 					} else {
 						add(TkMinus);
 					}
 
 				case "*".code:
 					pos++;
-					add(TkAsterisk);
+					if (pos < end && text.fastCodeAt(pos) == "=".code) {
+						pos++;
+						add(TkAsteriskEquals);
+					} else {
+						add(TkAsterisk);
+					}
 
 				case "/".code:
 					pos++;
@@ -153,6 +174,10 @@ class Scanner {
 								}
 								add(TkBlockComment);
 
+							case "=".code:
+								pos++;
+								add(TkSlashEquals);
+
 							case _:
 								add(TkSlash);
 						}
@@ -162,7 +187,12 @@ class Scanner {
 
 				case "%".code:
 					pos++;
-					add(TkPercent);
+					if (pos < end && text.fastCodeAt(pos) == "=".code) {
+						pos++;
+						add(TkPercentEquals);
+					} else {
+						add(TkPercent);
+					}
 
 				case "=".code:
 					pos++;

@@ -472,18 +472,28 @@ class Parser {
 				return parseExprNext(EField(first, dot, fieldName));
 			case TkPlus:
 				return parseBinop(first, OpAdd);
-			case TkMinus:
-				return parseBinop(first, OpSub);
+			case TkPlusEquals:
+				return parseBinop(first, OpAssignAdd);
 			case TkPlusPlus:
 				return parseExprNext(EPostUnop(first, PostIncr(stream.consume())));
+			case TkMinus:
+				return parseBinop(first, OpSub);
+			case TkMinusEquals:
+				return parseBinop(first, OpAssignSub);
 			case TkMinusMinus:
 				return parseExprNext(EPostUnop(first, PostDecr(stream.consume())));
 			case TkAsterisk:
 				return parseBinop(first, OpMul);
+			case TkAsteriskEquals:
+				return parseBinop(first, OpAssignMul);
 			case TkSlash:
 				return parseBinop(first, OpDiv);
+			case TkSlashEquals:
+				return parseBinop(first, OpAssignDiv);
 			case TkPercent:
 				return parseBinop(first, OpMod);
+			case TkPercentEquals:
+				return parseBinop(first, OpAssignMod);
 			case TkEquals:
 				return parseBinop(first, OpAssign);
 			case TkEqualsEquals:
