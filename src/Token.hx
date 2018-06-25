@@ -45,5 +45,7 @@ enum TokenKind {
 	TkExclamation;
 	TkExclamationEquals;
 	TkExclamationEqualsEquals;
-	TkInteger;
+	TkDecimalInteger;
+	TkHexadecimalInteger;
+	TkOctalInteger;
 }

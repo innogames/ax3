@@ -86,13 +86,21 @@ class Scanner {
 
 				case "0".code:
 					pos++;
-					add(TkInteger);
+					var octal = false;
+					while (pos < end && isNumber(text.fastCodeAt(pos))) {
+						octal = true;
+						pos++;
+					}
+					if (octal)
+						add(TkOctalInteger);
+					else
+						add(TkDecimalInteger);
 
 				case "1".code | "2".code | "3".code | "4".code | "5".code | "6".code | "7".code | "8".code | "9".code:
 					pos++;
 					while (pos < end && isNumber(text.fastCodeAt(pos)))
 						pos++;
-					add(TkInteger);
+					add(TkDecimalInteger);
 
 				case "+".code:
 					pos++;

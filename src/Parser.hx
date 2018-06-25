@@ -303,6 +303,10 @@ class Parser {
 				}
 			case TkStringSingle | TkStringDouble:
 				return parseExprNext(ELiteral(LString(stream.consume())));
+			case TkDecimalInteger:
+				return parseExprNext(ELiteral(LDecInt(stream.consume())));
+			case TkOctalInteger:
+				return parseExprNext(ELiteral(LOctInt(stream.consume())));
 			case TkBraceOpen:
 				var openBrace = stream.consume();
 				var exprs = parseSequence(parseOptionalBlockExpr);
