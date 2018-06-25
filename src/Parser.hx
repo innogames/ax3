@@ -370,7 +370,7 @@ class Parser {
 					case "case" | "default": // not part of expression
 						return null;
 					case _:
-						return parseExprNext(EIdent(stream.consume()));
+						return parseIdent(stream.consume());
 				}
 			case TkStringSingle | TkStringDouble:
 				return parseExprNext(ELiteral(LString(stream.consume())));
@@ -396,6 +396,28 @@ class Parser {
 				return parseExprNext(EArrayDecl(parseArrayDecl(stream.consume())));
 			case _:
 				return null;
+		}
+	}
+
+	function parseIdent(token:TokenInfo):Expr {
+		switch stream.advance().kind {
+			case TkColonColon:
+				// conditional compilation
+				var sep = stream.consume();
+				var name = expectKind(TkIdent);
+				var condComp = {ns: token, sep: sep, name: name};
+				switch stream.advance().kind {
+					case TkBraceOpen:
+						var openBrace = stream.consume();
+						var exprs = parseSequence(parseOptionalBlockExpr);
+						var closeBrace = expectKind(TkBraceClose);
+						return ECondCompBlock(condComp, openBrace, exprs, closeBrace);
+					case _:
+						return ECondCompValue(condComp);
+				}
+			case _:
+				// just an indentifier
+				return parseExprNext(EIdent(token));
 		}
 	}
 

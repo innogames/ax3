@@ -141,6 +141,14 @@ enum Expr {
 	EIs(e:Expr, keyword:TokenInfo, t:SyntaxType);
 	EVector(v:VectorSyntax);
 	ESwitch(keyword:TokenInfo, openParen:TokenInfo, subj:Expr, closeParen:TokenInfo, openBrace:TokenInfo, cases:Array<SwitchCase>, closeBrace:TokenInfo);
+	ECondCompValue(v:CondCompVar);
+	ECondCompBlock(v:CondCompVar, openBrace:TokenInfo, exprs:Array<BlockElement>, closeBrace:TokenInfo);
+}
+
+typedef CondCompVar = {
+	var ns:TokenInfo;
+	var sep:TokenInfo;
+	var name:TokenInfo;
 }
 
 typedef ForIter = {
