@@ -29,13 +29,13 @@ class Main {
 		var parser = new Parser(stream);
 		try {
 			var file = parser.parse();
+			// var dump = ParseTreeDump.printFile(file, "");
+			// Sys.println(dump);
 		} catch (e:Any) {
 			var pos = getPos(head, stream.advance());
 			var line = getLine(content, pos);
 			Sys.println('$path:$line: $e');
 		}
-		// var dump = ParseTreeDump.printFile(file, "");
-		// Sys.println(dump);
 	}
 
 	static function getLine(content:String, pos:Int):Int {
