@@ -69,4 +69,5 @@ enum TokenKind {
 	TkDecimalInteger;
 	TkHexadecimalInteger;
 	TkFloat;
+	TkUnknown;
 }

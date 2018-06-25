@@ -331,7 +331,8 @@ class Scanner {
 					add(TkIdent);
 
 				case _:
-					throw "Invalid token at " + tokenStartPos + ": " + haxe.Json.stringify(text.substring(tokenStartPos, pos+1));
+					pos++;
+					add(TkUnknown);
 			}
 		}
 	}
