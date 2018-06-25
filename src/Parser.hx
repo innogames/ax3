@@ -49,23 +49,54 @@ class Parser {
 
 	function parseDeclaration():Declaration {
 		var modifiers = [];
+		var metadata = parseSequence(parseOptionalMetadata);
 		while (true) {
 			var token = stream.advance();
 			switch [token.kind, token.text] {
 				case [TkIdent, "import"]:
+					if (modifiers.length > 0)
+						throw "Import statements cannot have modifiers";
+					if (metadata.length > 0)
+						throw "Import statements cannot have metadata";
 					return DImport(parseImportNext(stream.consume()));
 				case [TkIdent, "public" | "internal" | "final" | "dynamic"]:
 					modifiers.push(stream.consume());
 				case [TkIdent, "class"]:
-					return DClass(parseClassNext(modifiers, stream.consume()));
+					return DClass(parseClassNext(metadata, modifiers, stream.consume()));
 				case [TkIdent, "interface"]:
-					return DInterface(parseInterfaceNext(modifiers, stream.consume()));
+					return DInterface(parseInterfaceNext(metadata, modifiers, stream.consume()));
 				case _:
 					if (modifiers.length > 0)
 						throw "Modifiers without declaration";
+					if (metadata.length > 0)
+						throw "Metadata without declaration";
 					return null;
 			}
 		}
+	}
+
+	function parseOptionalMetadata() {
+		return switch stream.advance().kind {
+			case TkBracketOpen: parseMetadataNext(stream.consume());
+			case _: null;
+		}
+	}
+
+	function parseMetadataNext(openBracket:TokenInfo):Metadata {
+		var name = expectKind(TkIdent);
+		var args = switch stream.advance().kind {
+			case TkParenOpen:
+				parseCallArgsNext(stream.consume());
+			case _:
+				null;
+		}
+		var closeBracket = expectKind(TkBracketClose);
+		return {
+			openBracket: openBracket,
+			name: name,
+			args: args,
+			closeBracket: closeBracket
+		};
 	}
 
 	function parseImportNext(keyword:TokenInfo):ImportDecl {
@@ -100,7 +131,7 @@ class Parser {
 		};
 	}
 
-	function parseClassNext(modifiers:Array<TokenInfo>, keyword:TokenInfo):ClassDecl {
+	function parseClassNext(metadata:Array<Metadata>, modifiers:Array<TokenInfo>, keyword:TokenInfo):ClassDecl {
 		var name = expectKind(TkIdent);
 
 		var extend = {
@@ -132,6 +163,7 @@ class Parser {
 		var closeBrace = expectKind(TkBraceClose);
 
 		return {
+			metadata: metadata,
 			modifiers: modifiers,
 			keyword: keyword,
 			name: name,
@@ -145,29 +177,33 @@ class Parser {
 
 	function parseClassField():Null<ClassField> {
 		var modifiers = [];
+		var metadata = parseSequence(parseOptionalMetadata);
 		while (true) {
 			var token = stream.advance();
 			switch [token.kind, token.text] {
 				case [TkIdent, "public" | "private" | "protected" | "internal" | "override" | "static"]:
 					modifiers.push(stream.consume());
 				case [TkIdent, "var" | "const"]:
-					return parseClassVarNext(modifiers, stream.consume());
+					return parseClassVarNext(metadata, modifiers, stream.consume());
 				case [TkIdent, "function"]:
-					return parseClassFunNext(modifiers, stream.consume());
+					return parseClassFunNext(metadata, modifiers, stream.consume());
 				case _:
 					if (modifiers.length > 0)
 						throw "Modifiers without declaration";
+					if (metadata.length > 0)
+						throw "Metadata without declaration";
 					return null;
 			}
 		}
 	}
 
-	function parseClassVarNext(modifiers:Array<TokenInfo>, keyword:TokenInfo):ClassField {
+	function parseClassVarNext(metadata:Array<Metadata>, modifiers:Array<TokenInfo>, keyword:TokenInfo):ClassField {
 		var name = expectKind(TkIdent);
 		var hint = parseOptionalTypeHint();
 		var init = parseOptionalVarInit();
 		var semicolon = expectKind(TkSemicolon);
 		return {
+			metadata: metadata,
 			modifiers: modifiers,
 			name: name,
 			kind: FVar({
@@ -201,7 +237,7 @@ class Parser {
 		}
 	}
 
-	function parseClassFunNext(modifiers:Array<TokenInfo>, keyword:TokenInfo):ClassField {
+	function parseClassFunNext(metadata:Array<Metadata>, modifiers:Array<TokenInfo>, keyword:TokenInfo):ClassField {
 		var name, propKind;
 		var nameToken = expectKind(TkIdent);
 		switch nameToken.token.text {
@@ -241,6 +277,7 @@ class Parser {
 		};
 
 		return {
+			metadata: metadata,
 			modifiers: modifiers,
 			name: name,
 			kind: if (propKind == null) FFun(fun) else FProp(propKind, fun)
@@ -478,7 +515,7 @@ class Parser {
 		}
 	}
 
-	function parseInterfaceNext(modifiers:Array<TokenInfo>, keyword:TokenInfo):InterfaceDecl {
+	function parseInterfaceNext(metadata:Array<Metadata>, modifiers:Array<TokenInfo>, keyword:TokenInfo):InterfaceDecl {
 		var name = expectKind(TkIdent);
 
 		var extend = null;
@@ -496,6 +533,7 @@ class Parser {
 		var openBrace = expectKind(TkBraceOpen);
 		var closeBrace = expectKind(TkBraceClose);
 		return {
+			metadata: metadata,
 			modifiers: modifiers,
 			keyword: keyword,
 			name: name,

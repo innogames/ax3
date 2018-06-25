@@ -32,6 +32,7 @@ typedef ImportDecl = {
 }
 
 typedef ClassDecl = {
+	var metadata:Array<Metadata>;
 	var modifiers:Array<TokenInfo>;
 	var keyword:TokenInfo;
 	var name:TokenInfo;
@@ -43,6 +44,7 @@ typedef ClassDecl = {
 }
 
 typedef InterfaceDecl = {
+	var metadata:Array<Metadata>;
 	var modifiers:Array<TokenInfo>;
 	var keyword:TokenInfo;
 	var name:TokenInfo;
@@ -52,6 +54,7 @@ typedef InterfaceDecl = {
 }
 
 typedef ClassField = {
+	var metadata:Array<Metadata>;
 	var modifiers:Array<TokenInfo>;
 	var name:TokenInfo;
 	var kind:ClassFieldKind;
@@ -183,4 +186,11 @@ enum Literal {
 	LOctInt(t:TokenInfo);
 	LDecInt(t:TokenInfo);
 	LHexInt(t:TokenInfo);
+}
+
+typedef Metadata = {
+	var openBracket:TokenInfo;
+	var name:TokenInfo;
+	var args:Null<CallArgs>;
+	var closeBracket:TokenInfo;
 }
