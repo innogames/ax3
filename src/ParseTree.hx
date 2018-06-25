@@ -78,15 +78,19 @@ typedef ClassVar = {
 	var semicolon:TokenInfo;
 }
 
+typedef BracedExprBlock = {
+	var openBrace:TokenInfo;
+	var exprs:Array<BlockElement>;
+	var closeBrace:TokenInfo;
+}
+
 typedef ClassFun = {
 	var keyword:TokenInfo;
 	var openParen:TokenInfo;
 	var args:Separated<FunctionArg>;
 	var closeParen:TokenInfo;
 	var ret:Null<TypeHint>;
-	var openBrace:TokenInfo;
-	var exprs:Array<BlockElement>;
-	var closeBrace:TokenInfo;
+	var block:BracedExprBlock;
 }
 
 typedef FunctionArg = {
@@ -125,7 +129,7 @@ enum Expr {
 	ENew(keyword:TokenInfo, e:Expr, args:Null<CallArgs>);
 	EVectorDecl(newKeyword:TokenInfo, t:TypeParam, d:ArrayDecl);
 	EField(e:Expr, dot:TokenInfo, fieldName:TokenInfo);
-	EBlock(openBrace:TokenInfo, exprs:Array<BlockElement>, closeBrace:TokenInfo);
+	EBlock(b:BracedExprBlock);
 	EObjectDecl(openBrace:TokenInfo, fields:Separated<ObjectField>, closeBrace:TokenInfo);
 	EIf(keyword:TokenInfo, openParen:TokenInfo, econd:Expr, closeParen:TokenInfo, ethen:Expr, eelse:Null<{keyword:TokenInfo, expr:Expr}>);
 	ETernary(econd:Expr, question:TokenInfo, ethen:Expr, colon:TokenInfo, eelse:Expr);
@@ -142,7 +146,22 @@ enum Expr {
 	EVector(v:VectorSyntax);
 	ESwitch(keyword:TokenInfo, openParen:TokenInfo, subj:Expr, closeParen:TokenInfo, openBrace:TokenInfo, cases:Array<SwitchCase>, closeBrace:TokenInfo);
 	ECondCompValue(v:CondCompVar);
-	ECondCompBlock(v:CondCompVar, openBrace:TokenInfo, exprs:Array<BlockElement>, closeBrace:TokenInfo);
+	ECondCompBlock(v:CondCompVar, b:BracedExprBlock);
+	ETry(keyword:TokenInfo, block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>);
+}
+
+typedef Catch = {
+	var keyword:TokenInfo;
+	var openParen:TokenInfo;
+	var name:TokenInfo;
+	var type:TypeHint;
+	var closeParen:TokenInfo;
+	var block:BracedExprBlock;
+}
+
+typedef Finally = {
+	var keyword:TokenInfo;
+	var block:BracedExprBlock;
 }
 
 typedef CondCompVar = {

@@ -226,6 +226,13 @@ class Parser {
 		}
 	}
 
+	function parseTypeHint():TypeHint {
+		var hint = parseOptionalTypeHint();
+		if (hint == null)
+			throw "Type hint expected";
+		return hint;
+	}
+
 	function parseOptionalVarInit():Null<VarInit> {
 		var token = stream.advance();
 		if (token.kind == TkEquals) {
@@ -261,9 +268,7 @@ class Parser {
 		}
 		var closeParen = expectKind(TkParenClose);
 		var ret = parseOptionalTypeHint();
-		var openBrace = expectKind(TkBraceOpen);
-		var exprs = parseSequence(parseOptionalBlockExpr);
-		var closeBrace = expectKind(TkBraceClose);
+		var block = parseBracedExprBlock(expectKind(TkBraceOpen));
 
 		var fun:ClassFun = {
 			keyword: keyword,
@@ -271,9 +276,7 @@ class Parser {
 			args: args,
 			closeParen: closeParen,
 			ret: ret,
-			openBrace: openBrace,
-			exprs: exprs,
-			closeBrace: closeBrace
+			block: block,
 		};
 
 		return {
@@ -282,6 +285,14 @@ class Parser {
 			name: name,
 			kind: if (propKind == null) FFun(fun) else FProp(propKind, fun)
 		};
+	}
+
+	function parseBracedExprBlock(openBrace:TokenInfo):BracedExprBlock {
+		return {
+			openBrace: openBrace,
+			exprs: parseSequence(parseOptionalBlockExpr),
+			closeBrace: expectKind(TkBraceClose)
+		}
 	}
 
 	function parseFunctionArg():FunctionArg {
@@ -365,6 +376,8 @@ class Parser {
 						return EContinue(stream.consume());
 					case "var" | "const":
 						return parseVars(stream.consume());
+					case "try":
+						return parseTry(stream.consume());
 					case "Vector":
 						return parseExprNext(EVector(parseVectorSyntax(stream.consume())));
 					case "case" | "default": // not part of expression
@@ -408,10 +421,7 @@ class Parser {
 				var condComp = {ns: token, sep: sep, name: name};
 				switch stream.advance().kind {
 					case TkBraceOpen:
-						var openBrace = stream.consume();
-						var exprs = parseSequence(parseOptionalBlockExpr);
-						var closeBrace = expectKind(TkBraceClose);
-						return ECondCompBlock(condComp, openBrace, exprs, closeBrace);
+						return ECondCompBlock(condComp, parseBracedExprBlock(stream.consume()));
 					case _:
 						return ECondCompValue(condComp);
 				}
@@ -425,13 +435,11 @@ class Parser {
 		var token = stream.advance();
 		switch token.kind {
 			case TkBraceClose:
-				return EBlock(openBrace, [], stream.consume());
+				return EBlock({openBrace: openBrace, exprs: [], closeBrace: stream.consume()});
 			case TkIdent | TkStringSingle | TkStringDouble if (stream.peekAfter(token).kind == TkColon):
 				return parseObjectNext(openBrace);
 			case _:
-				var exprs = parseSequence(parseOptionalBlockExpr);
-				var closeBrace = expectKind(TkBraceClose);
-				return EBlock(openBrace, exprs, closeBrace);
+				return EBlock(parseBracedExprBlock(openBrace));
 		}
 	}
 
@@ -470,6 +478,37 @@ class Parser {
 			return {name: firstName, type: type, init: init};
 		}, t -> t.kind == TkComma);
 		return EVars(keyword, vars);
+	}
+
+	function parseTry(keyword:TokenInfo):Expr {
+		var block = parseBracedExprBlock(expectKind(TkBraceOpen));
+		var catches = parseSequence(function():Catch {
+			return switch stream.advance() {
+				case {kind: TkIdent, text: "catch"}:
+					{
+						keyword: stream.consume(),
+						openParen: expectKind(TkParenOpen),
+						name: expectKind(TkIdent),
+						type: parseTypeHint(),
+						closeParen: expectKind(TkParenClose),
+						block: parseBracedExprBlock(expectKind(TkBraceOpen))
+					}
+				case _:
+					null;
+			}
+		});
+
+		if (catches.length == 0)
+			throw "try without catches";
+
+		var finally = switch stream.advance() {
+			case {kind: TkIdent, text: "finally"}:
+				{keyword: stream.consume(), block: parseBracedExprBlock(expectKind(TkBraceOpen))};
+			case _:
+				null;
+		}
+
+		return ETry(keyword, block, catches, finally);
 	}
 
 	function parseIf(keyword:TokenInfo):Expr {
