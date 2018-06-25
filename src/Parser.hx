@@ -402,9 +402,15 @@ class Parser {
 				return parseBinop(first, OpGt);
 			case TkGtEquals:
 				return parseBinop(first, OpGte);
+			case TkIdent:
+				switch token.text {
+					case "in":
+						return parseBinop(first, OpIn);
+					case _:
+				}
 			case _:
-				return first;
 		}
+		return first;
 	}
 
 	function parseBinop(a:Expr, ctor:TokenInfo->Binop):Expr {
