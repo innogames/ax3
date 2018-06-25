@@ -141,6 +141,10 @@ class Scanner {
 						add(TkSlash);
 					}
 
+				case "%".code:
+					pos++;
+					add(TkPercent);
+
 				case "=".code:
 					pos++;
 					if (nextIsEquals()) {

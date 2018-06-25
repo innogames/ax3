@@ -384,6 +384,16 @@ class Parser {
 				var dot = stream.consume();
 				var fieldName = expectKind(TkIdent);
 				return parseExprNext(EField(first, dot, fieldName));
+			case TkPlus:
+				return parseBinop(first, OpAdd);
+			case TkMinus:
+				return parseBinop(first, OpSub);
+			case TkAsterisk:
+				return parseBinop(first, OpMul);
+			case TkSlash:
+				return parseBinop(first, OpDiv);
+			case TkPercent:
+				return parseBinop(first, OpMod);
 			case TkEquals:
 				return parseBinop(first, OpAssign);
 			case TkEqualsEquals:

@@ -36,6 +36,7 @@ enum TokenKind {
 	TkAsterisk;
 	TkPlus;
 	TkMinus;
+	TkPercent;
 	TkGt;
 	TkGtEquals;
 	TkLt;

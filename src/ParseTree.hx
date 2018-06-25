@@ -129,6 +129,11 @@ typedef VarDecl = {
 }
 
 enum Binop {
+	OpAdd(t:TokenInfo);
+	OpSub(t:TokenInfo);
+	OpDiv(t:TokenInfo);
+	OpMul(t:TokenInfo);
+	OpMod(t:TokenInfo);
 	OpAssign(t:TokenInfo);
 	OpEquals(t:TokenInfo);
 	OpNotEquals(t:TokenInfo);
