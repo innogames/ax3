@@ -125,6 +125,8 @@ enum Expr {
 	EPreUnop(op:PreUnop, e:Expr);
 	EPostUnop(e:Expr, op:PostUnop);
 	EVars(keyword:TokenInfo, vars:Separated<VarDecl>);
+	EAs(e:Expr, keyword:TokenInfo, t:SyntaxType);
+	EIs(e:Expr, keyword:TokenInfo, t:SyntaxType);
 }
 
 enum PreUnop {

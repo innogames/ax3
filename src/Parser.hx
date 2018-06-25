@@ -183,7 +183,7 @@ class Parser {
 		var token = stream.advance();
 		if (token.kind == TkColon) {
 			var colon = stream.consume();
-			var type = parseSyntaxType();
+			var type = parseSyntaxType(true);
 			return {colon: colon, type: type};
 		} else {
 			return null;
@@ -258,10 +258,10 @@ class Parser {
 		return {name: name, hint: hint, init: init};
 	}
 
-	function parseSyntaxType():SyntaxType {
+	function parseSyntaxType(allowAny:Bool):SyntaxType {
 		var token = stream.advance();
 		switch token.kind {
-			case TkAsterisk:
+			case TkAsterisk if (allowAny):
 				return TAny(stream.consume());
 			case TkIdent:
 				return TPath(parseDotPathNext(stream.consume()));
@@ -449,6 +449,10 @@ class Parser {
 				switch token.text {
 					case "in":
 						return parseBinop(first, OpIn);
+					case "is":
+						return EIs(first, stream.consume(), parseSyntaxType(false));
+					case "as":
+						return EAs(first, stream.consume(), parseSyntaxType(false));
 					case _:
 				}
 			case _:
