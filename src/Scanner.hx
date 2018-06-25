@@ -307,10 +307,10 @@ class Scanner {
 
 			if (ch == "x".code || ch == "X".code) {
 				pos++;
-				if (pos >= end || !isDigit(text.fastCodeAt(pos)))
+				if (pos >= end || !isHexDigit(text.fastCodeAt(pos)))
 					throw "Unterminated hexadecimal number";
 				pos++;
-				scanDigits();
+				scanHexDigits();
 				return TkHexadecimalInteger;
 			}
 
@@ -333,6 +333,12 @@ class Scanner {
 
 	inline function scanDigits() {
 		while (pos < end && isDigit(text.fastCodeAt(pos))) {
+			pos++;
+		}
+	}
+
+	inline function scanHexDigits() {
+		while (pos < end && isHexDigit(text.fastCodeAt(pos))) {
 			pos++;
 		}
 	}
@@ -369,6 +375,10 @@ class Scanner {
 
 	inline function isDigit(ch) {
 		return ch >= "0".code && ch <= "9".code;
+	}
+
+	inline function isHexDigit(ch) {
+		return (ch >= "0".code && ch <= "9".code) || (ch >= "a".code && ch <= "f".code) || (ch >= "A".code && ch <= "F".code);
 	}
 
 	inline function isIdentStart(ch) {
