@@ -116,10 +116,11 @@ enum Expr {
 	ELiteral(l:Literal);
 	ECall(e:Expr, args:CallArgs);
 	EArrayAccess(e:Expr, openBracket:TokenInfo, eindex:Expr, closeBracket:TokenInfo);
-	EArrayDecl(openBracket:TokenInfo, elems:Null<Separated<Expr>>, closeBracket:TokenInfo);
+	EArrayDecl(d:ArrayDecl);
 	EReturn(keyword:TokenInfo, e:Null<Expr>);
 	EThrow(keyword:TokenInfo, e:Expr);
 	ENew(keyword:TokenInfo, e:Expr, args:Null<CallArgs>);
+	EVectorDecl(newKeyword:TokenInfo, t:TypeParam, d:ArrayDecl);
 	EField(e:Expr, dot:TokenInfo, fieldName:TokenInfo);
 	EBlock(openBrace:TokenInfo, exprs:Array<BlockElement>, closeBrace:TokenInfo);
 	EIf(keyword:TokenInfo, openParen:TokenInfo, econd:Expr, closeParen:TokenInfo, ethen:Expr, eelse:Null<{keyword:TokenInfo, expr:Expr}>);
@@ -137,9 +138,19 @@ enum Expr {
 typedef VectorSyntax = {
 	var name:TokenInfo;
 	var dot:TokenInfo;
+	var t:TypeParam;
+}
+
+typedef TypeParam = {
 	var lt:TokenInfo;
-	var t:SyntaxType;
+	var type:SyntaxType;
 	var gt:TokenInfo;
+}
+
+typedef ArrayDecl = {
+	var openBracket:TokenInfo;
+	var elems:Null<Separated<Expr>>;
+	var closeBracket:TokenInfo;
 }
 
 enum PreUnop {

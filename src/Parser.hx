@@ -310,16 +310,18 @@ class Parser {
 	}
 
 	function parseVectorSyntax(name:TokenInfo):VectorSyntax {
-		var dot = expectKind(TkDot);
-		var lt = expectKind(TkLt);
-		var t = parseSyntaxType(true);
-		var gt = expectKind(TkGt);
 		return {
 			name: name,
-			dot: dot,
+			dot: expectKind(TkDot),
+			t: parseTypeParam(expectKind(TkLt))
+		};
+	}
+
+	function parseTypeParam(lt:TokenInfo):TypeParam {
+		return {
 			lt: lt,
-			t: t,
-			gt: gt
+			type: parseSyntaxType(true),
+			gt: expectKind(TkGt)
 		};
 	}
 
@@ -384,18 +386,20 @@ class Parser {
 			case TkMinusMinus:
 				return EPreUnop(PreDecr(stream.consume()), parseExpr());
 			case TkBracketOpen:
-				var openBracket = stream.consume();
-				var expr = switch stream.advance().kind {
-					case TkBracketClose:
-						EArrayDecl(openBracket, null, stream.consume());
-					case _:
-						var elems = parseSeparated(parseExpr, t -> t.kind == TkComma);
-						EArrayDecl(openBracket, elems, expectKind(TkBracketClose));
-				}
-				return parseExprNext(expr);
+				return parseExprNext(EArrayDecl(parseArrayDecl(stream.consume())));
 			case _:
 				return null;
 		}
+	}
+
+	function parseArrayDecl(openBracket:TokenInfo):ArrayDecl {
+		return switch stream.advance().kind {
+			case TkBracketClose:
+				{openBracket: openBracket, elems: null, closeBracket: stream.consume()};
+			case _:
+				var elems = parseSeparated(parseExpr, t -> t.kind == TkComma);
+				{openBracket: openBracket, elems: elems, closeBracket: expectKind(TkBracketClose)};
+		};
 	}
 
 	function parseVars(keyword:TokenInfo):Expr {
@@ -444,9 +448,16 @@ class Parser {
 	}
 
 	function parseNewNext(keyword:TokenInfo):Expr {
-		return switch parseExpr() {
-			case ECall(e, args): ENew(keyword, e, args);
-			case e: ENew(keyword, e, null);
+		return switch stream.advance().kind {
+			case TkLt:
+				var t = parseTypeParam(stream.consume());
+				var decl = parseArrayDecl(expectKind(TkBracketOpen));
+				EVectorDecl(keyword, t, decl);
+			case _:
+				switch parseExpr() {
+					case ECall(e, args): ENew(keyword, e, args);
+					case e: ENew(keyword, e, null);
+				}
 		}
 	}
 
