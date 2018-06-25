@@ -68,7 +68,12 @@ class Scanner {
 
 				case ":".code:
 					pos++;
-					add(TkColon);
+					if (pos < end && text.fastCodeAt(pos) == ":".code) {
+						pos++;
+						add(TkColonColon);
+					} else {
+						add(TkColon);
+					}
 
 				case ";".code:
 					pos++;

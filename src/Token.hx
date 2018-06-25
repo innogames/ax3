@@ -32,6 +32,7 @@ enum TokenKind {
 	TkBracketOpen;
 	TkBracketClose;
 	TkColon;
+	TkColonColon;
 	TkSemicolon;
 	TkSlash;
 	TkSlashEquals;
