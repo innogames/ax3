@@ -120,6 +120,8 @@ enum Expr {
 	EArrayDecl(d:ArrayDecl);
 	EReturn(keyword:TokenInfo, e:Null<Expr>);
 	EThrow(keyword:TokenInfo, e:Expr);
+	EBreak(keyword:TokenInfo);
+	EContinue(keyword:TokenInfo);
 	ENew(keyword:TokenInfo, e:Expr, args:Null<CallArgs>);
 	EVectorDecl(newKeyword:TokenInfo, t:TypeParam, d:ArrayDecl);
 	EField(e:Expr, dot:TokenInfo, fieldName:TokenInfo);

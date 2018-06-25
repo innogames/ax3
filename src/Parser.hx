@@ -359,6 +359,10 @@ class Parser {
 						return parseWhile(stream.consume());
 					case "for":
 						return parseFor(stream.consume());
+					case "break":
+						return EBreak(stream.consume());
+					case "continue":
+						return EContinue(stream.consume());
 					case "var":
 						return parseVars(stream.consume());
 					case "Vector":
