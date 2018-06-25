@@ -294,6 +294,8 @@ class Parser {
 						return parseNewNext(stream.consume());
 					case "return":
 						return EReturn(stream.consume(), parseOptionalExpr());
+					case "throw":
+						return EThrow(stream.consume(), parseExpr());
 					case "if":
 						return parseIf(stream.consume());
 					case "while":
@@ -412,6 +414,11 @@ class Parser {
 				return parseBinop(first, OpGt);
 			case TkGtEquals:
 				return parseBinop(first, OpGte);
+			case TkBracketOpen:
+				var openBracket = stream.consume();
+				var eindex = parseExpr();
+				var closeBracket = expectKind(TkBracketClose);
+				return parseExprNext(EArrayAccess(first, openBracket, eindex, closeBracket));
 			case TkIdent:
 				switch token.text {
 					case "in":

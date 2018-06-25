@@ -111,7 +111,9 @@ enum Expr {
 	EIdent(i:TokenInfo);
 	ELiteral(l:Literal);
 	ECall(e:Expr, args:CallArgs);
+	EArrayAccess(e:Expr, openBracket:TokenInfo, eindex:Expr, closeBracket:TokenInfo);
 	EReturn(keyword:TokenInfo, e:Null<Expr>);
+	EThrow(keyword:TokenInfo, e:Expr);
 	ENew(keyword:TokenInfo, e:Expr, args:Null<CallArgs>);
 	EField(e:Expr, dot:TokenInfo, fieldName:TokenInfo);
 	EBlock(openBrace:TokenInfo, exprs:Array<BlockElement>, closeBrace:TokenInfo);

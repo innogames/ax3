@@ -25,6 +25,8 @@ enum TokenKind {
 	TkBraceClose;
 	TkParenOpen;
 	TkParenClose;
+	TkBracketOpen;
+	TkBracketClose;
 	TkColon;
 	TkSemicolon;
 	TkSlash;

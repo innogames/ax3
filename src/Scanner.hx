@@ -84,6 +84,14 @@ class Scanner {
 					pos++;
 					add(TkParenClose);
 
+				case "[".code:
+					pos++;
+					add(TkBracketOpen);
+
+				case "]".code:
+					pos++;
+					add(TkBracketClose);
+
 				case "0".code:
 					pos++;
 					var kind = scanZeroLeadingNumber();
