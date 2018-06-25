@@ -300,11 +300,27 @@ class Parser {
 		switch token.kind {
 			case TkAsterisk if (allowAny):
 				return TAny(stream.consume());
+			case TkIdent if (token.text == "Vector"): // vector is special and should contain type params
+				return TVector(parseVectorSyntax(stream.consume()));
 			case TkIdent:
 				return TPath(parseDotPathNext(stream.consume()));
 			case _:
 				throw "Unexpected token for type hint";
 		}
+	}
+
+	function parseVectorSyntax(name:TokenInfo):VectorSyntax {
+		var dot = expectKind(TkDot);
+		var lt = expectKind(TkLt);
+		var t = parseSyntaxType(true);
+		var gt = expectKind(TkGt);
+		return {
+			name: name,
+			dot: dot,
+			lt: lt,
+			t: t,
+			gt: gt
+		};
 	}
 
 	function parseOptionalBlockExpr():Null<BlockElement> {
@@ -341,6 +357,8 @@ class Parser {
 						return parseFor(stream.consume());
 					case "var":
 						return parseVars(stream.consume());
+					case "Vector":
+						return parseExprNext(EVector(parseVectorSyntax(stream.consume())));
 					case _:
 						return parseExprNext(EIdent(stream.consume()));
 				}

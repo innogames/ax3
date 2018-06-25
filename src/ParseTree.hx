@@ -108,6 +108,7 @@ typedef VarInit = {
 enum SyntaxType {
 	TAny(star:TokenInfo);
 	TPath(path:DotPath);
+	TVector(v:VectorSyntax);
 }
 
 enum Expr {
@@ -130,6 +131,15 @@ enum Expr {
 	EVars(keyword:TokenInfo, vars:Separated<VarDecl>);
 	EAs(e:Expr, keyword:TokenInfo, t:SyntaxType);
 	EIs(e:Expr, keyword:TokenInfo, t:SyntaxType);
+	EVector(v:VectorSyntax);
+}
+
+typedef VectorSyntax = {
+	var name:TokenInfo;
+	var dot:TokenInfo;
+	var lt:TokenInfo;
+	var t:SyntaxType;
+	var gt:TokenInfo;
 }
 
 enum PreUnop {
