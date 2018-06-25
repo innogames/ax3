@@ -124,6 +124,7 @@ enum Expr {
 	EVectorDecl(newKeyword:TokenInfo, t:TypeParam, d:ArrayDecl);
 	EField(e:Expr, dot:TokenInfo, fieldName:TokenInfo);
 	EBlock(openBrace:TokenInfo, exprs:Array<BlockElement>, closeBrace:TokenInfo);
+	EObjectDecl(openBrace:TokenInfo, fields:Separated<ObjectField>, closeBrace:TokenInfo);
 	EIf(keyword:TokenInfo, openParen:TokenInfo, econd:Expr, closeParen:TokenInfo, ethen:Expr, eelse:Null<{keyword:TokenInfo, expr:Expr}>);
 	ETernary(econd:Expr, question:TokenInfo, ethen:Expr, colon:TokenInfo, eelse:Expr);
 	EWhile(keyword:TokenInfo, openParen:TokenInfo, cond:Expr, closeParen:TokenInfo, body:Expr);
@@ -136,6 +137,12 @@ enum Expr {
 	EIs(e:Expr, keyword:TokenInfo, t:SyntaxType);
 	EVector(v:VectorSyntax);
 	ESwitch(keyword:TokenInfo, openParen:TokenInfo, subj:Expr, closeParen:TokenInfo, openBrace:TokenInfo, cases:Array<SwitchCase>, closeBrace:TokenInfo);
+}
+
+typedef ObjectField = {
+	var name:TokenInfo;
+	var colon:TokenInfo;
+	var value:Expr;
 }
 
 enum SwitchCase {

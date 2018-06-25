@@ -379,10 +379,7 @@ class Parser {
 			case TkParenOpen:
 				return parseExprNext(EParens(stream.consume(), parseExpr(), expectKind(TkParenClose)));
 			case TkBraceOpen:
-				var openBrace = stream.consume();
-				var exprs = parseSequence(parseOptionalBlockExpr);
-				var closeBrace = expectKind(TkBraceClose);
-				return EBlock(openBrace, exprs, closeBrace);
+				return parseBlockOrObject(stream.consume());
 			case TkExclamation:
 				return EPreUnop(PreNot(stream.consume()), parseExpr());
 			case TkMinus:
@@ -396,6 +393,36 @@ class Parser {
 			case _:
 				return null;
 		}
+	}
+
+	function parseBlockOrObject(openBrace:TokenInfo):Expr {
+		var token = stream.advance();
+		switch token.kind {
+			case TkBraceClose:
+				return EBlock(openBrace, [], stream.consume());
+			case TkIdent | TkStringSingle | TkStringDouble if (stream.peekAfter(token).kind == TkColon):
+				return parseObjectNext(openBrace);
+			case _:
+				var exprs = parseSequence(parseOptionalBlockExpr);
+				var closeBrace = expectKind(TkBraceClose);
+				return EBlock(openBrace, exprs, closeBrace);
+		}
+	}
+
+	function parseObjectNext(openBrace:TokenInfo):Expr {
+		var fields = parseSeparated(function() {
+			return switch stream.advance().kind {
+				case TkIdent | TkStringSingle | TkStringDouble:
+					var name = stream.consume();
+					var colon = expectKind(TkColon);
+					var expr = parseExpr();
+					{name: name, colon: colon, value: expr};
+				case _:
+					throw "Object keys must be identifiers or strings";
+			}
+		}, t -> t.kind == TkComma);
+		var closeBrace = expectKind(TkBraceClose);
+		return EObjectDecl(openBrace, fields, closeBrace);
 	}
 
 	function parseArrayDecl(openBracket:TokenInfo):ArrayDecl {

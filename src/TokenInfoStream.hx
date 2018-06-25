@@ -13,15 +13,31 @@ class TokenInfoStream {
 		this.trivia = [];
 	}
 
+	static inline function isTrivia(token:Token) return switch token.kind {
+		case TkWhitespace | TkNewline | TkLineComment | TkBlockComment: true;
+		case _: false;
+	}
+
 	public function advance():Token {
 		while (true) {
-			switch head.kind {
-				case TkWhitespace | TkNewline | TkLineComment | TkBlockComment:
-					trivia.push(head);
-				case _:
-					break;
+			if (isTrivia(head)) {
+				trivia.push(head);
+				head = head.next;
+			} else {
+				break;
 			}
-			head = head.next;
+		}
+		return head;
+	}
+
+	public function peekAfter(token:Token):Token {
+		var head = token.next;
+		while (true) {
+			if (isTrivia(head)) {
+				head = head.next;
+			} else {
+				break;
+			}
 		}
 		return head;
 	}
