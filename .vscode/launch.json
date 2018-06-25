@@ -6,8 +6,12 @@
 			"request": "launch",
 			"name": "Launch Program",
 			"program": "${workspaceFolder}/main.js",
+			"args": [
+				"E:/Code/foe/Frontend/client/src"
+			],
 			"outFiles": ["${workspaceFolder}/main.js"],
-			"preLaunchTask": "build"
+			"preLaunchTask": "build",
+			"console": "integratedTerminal"
 		}
 	]
 }
