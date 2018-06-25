@@ -129,6 +129,8 @@ enum Expr {
 	ETernary(econd:Expr, question:TokenInfo, ethen:Expr, colon:TokenInfo, eelse:Expr);
 	EWhile(keyword:TokenInfo, openParen:TokenInfo, cond:Expr, closeParen:TokenInfo, body:Expr);
 	EFor(keyword:TokenInfo, openParen:TokenInfo, einit:Null<Expr>, initSep:TokenInfo, econd:Null<Expr>, condSep:TokenInfo, eincr:Null<Expr>, closeParen:TokenInfo, body:Expr);
+	EForIn(forKeyword:TokenInfo, openParen:TokenInfo, iter:ForIter, closeParen:TokenInfo, body:Expr);
+	EForEach(forKeyword:TokenInfo, eachKeyword:TokenInfo, openParen:TokenInfo, iter:ForIter, closeParen:TokenInfo, body:Expr);
 	EBinop(a:Expr, op:Binop, b:Expr);
 	EPreUnop(op:PreUnop, e:Expr);
 	EPostUnop(e:Expr, op:PostUnop);
@@ -137,6 +139,12 @@ enum Expr {
 	EIs(e:Expr, keyword:TokenInfo, t:SyntaxType);
 	EVector(v:VectorSyntax);
 	ESwitch(keyword:TokenInfo, openParen:TokenInfo, subj:Expr, closeParen:TokenInfo, openBrace:TokenInfo, cases:Array<SwitchCase>, closeBrace:TokenInfo);
+}
+
+typedef ForIter = {
+	var eit:Expr;
+	var inKeyword:TokenInfo;
+	var eobj:Expr;
 }
 
 typedef ObjectField = {

@@ -498,15 +498,59 @@ class Parser {
 	}
 
 	function parseFor(keyword:TokenInfo):Expr {
+		return switch stream.advance() {
+			case {kind: TkIdent, text: "each"}:
+				parseForEach(keyword, stream.consume());
+			case _:
+				var openParen = expectKind(TkParenOpen);
+				var einit = parseOptionalExpr();
+				if (einit == null) {
+					parseCFor(keyword, openParen, null);
+				} else {
+					var forIter = parseOptionalForIter(einit);
+					if (forIter == null) {
+						parseCFor(keyword, openParen, einit);
+ 					} else {
+						var closeParen = expectKind(TkParenClose);
+						var ebody = parseExpr();
+						EForIn(keyword, openParen, forIter, closeParen, ebody);
+					}
+				}
+		}
+	}
+
+	function parseOptionalForIter(expr:Null<Expr>):ForIter {
+		return switch expr {
+			case EBinop(a, OpIn(inKeyword), b):
+				{eit: a, inKeyword: inKeyword, eobj: b}
+			case _:
+				switch stream.advance() {
+					case {kind: TkIdent, text: "in"}:
+						{eit: expr, inKeyword: stream.consume(), eobj: parseExpr()}
+					case _:
+						null;
+				}
+		}
+	}
+
+	function parseForEach(forKeyword:TokenInfo, eachKeyword:TokenInfo):Expr {
 		var openParen = expectKind(TkParenOpen);
-		var einit = parseOptionalExpr();
+		var iter = parseOptionalForIter(parseExpr());
+		if (iter == null)
+			throw "`a in b` expression expected for the `for each` loop";
+		var closeParen = expectKind(TkParenClose);
+		var body = parseExpr();
+		return EForEach(forKeyword, eachKeyword, openParen, iter, closeParen, body);
+	}
+
+	function parseCFor(forKeyword:TokenInfo, openParen:TokenInfo, einit:Expr):Expr {
 		var einitSep = expectKind(TkSemicolon);
 		var econd = parseOptionalExpr();
 		var econdSep = expectKind(TkSemicolon);
 		var eincr = parseOptionalExpr();
 		var closeParen = expectKind(TkParenClose);
 		var ebody = parseExpr();
-		return EFor(keyword, openParen, einit, einitSep, econd, econdSep, eincr, closeParen, ebody);
+		return EFor(forKeyword, openParen, einit, einitSep, econd, econdSep, eincr, closeParen, ebody);
 	}
 
 	function parseNewNext(keyword:TokenInfo):Expr {
