@@ -301,6 +301,15 @@ class Scanner {
 						add(TkPipe);
 					}
 
+				case "^".code:
+					pos++;
+					if (pos < end && text.fastCodeAt(pos) == "=".code) {
+						pos++;
+						add(TkCaretEquals);
+					} else {
+						add(TkCaret);
+					}
+
 				case "\"".code:
 					pos++;
 					scanString(ch);

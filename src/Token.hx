@@ -24,6 +24,8 @@ enum TokenKind {
 	TkAmpersandAmpersand;
 	TkPipe;
 	TkPipePipe;
+	TkCaret;
+	TkCaretEquals;
 	TkIdent;
 	TkBraceOpen;
 	TkBraceClose;
