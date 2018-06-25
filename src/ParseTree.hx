@@ -217,9 +217,9 @@ typedef CallArgs = {
 
 enum Literal {
 	LString(t:TokenInfo);
-	LOctInt(t:TokenInfo);
 	LDecInt(t:TokenInfo);
 	LHexInt(t:TokenInfo);
+	LFloat(t:TokenInfo);
 }
 
 typedef Metadata = {

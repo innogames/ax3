@@ -54,7 +54,13 @@ class Scanner {
 
 				case ".".code:
 					pos++;
-					add(TkDot);
+					if (pos < end && isDigit(text.fastCodeAt(pos))) {
+						pos++;
+						scanFloatAfterDot();
+						add(TkFloat);
+					} else {
+						add(TkDot);
+					}
 
 				case ",".code:
 					pos++;
@@ -100,7 +106,14 @@ class Scanner {
 				case "1".code | "2".code | "3".code | "4".code | "5".code | "6".code | "7".code | "8".code | "9".code:
 					pos++;
 					scanDigits();
-					add(TkDecimalInteger);
+
+					if (pos < end && text.fastCodeAt(pos) == ".".code) {
+						pos++;
+						scanFloatAfterDot();
+						add(TkFloat);
+					} else {
+						add(TkDecimalInteger);
+					}
 
 				case "+".code:
 					pos++;
@@ -286,6 +299,7 @@ class Scanner {
 	function scanZeroLeadingNumber():TokenKind {
 		if (pos < end) {
 			var ch = text.fastCodeAt(pos);
+
 			if (ch == "x".code || ch == "X".code) {
 				pos++;
 				if (pos >= end || !isDigit(text.fastCodeAt(pos)))
@@ -293,10 +307,16 @@ class Scanner {
 				pos++;
 				scanDigits();
 				return TkHexadecimalInteger;
-			} else if (isDigit(ch)) {
+			}
+
+			if (ch == ".".code) {
 				pos++;
-				scanDigits();
-				return TkOctalInteger;
+				scanFloatAfterDot();
+				return TkFloat;
+			}
+
+			if (isDigit(ch)) {
+				throw "octal literals are not supported";
 			}
 		}
 		return TkDecimalInteger;
@@ -309,6 +329,36 @@ class Scanner {
 	inline function scanDigits() {
 		while (pos < end && isDigit(text.fastCodeAt(pos))) {
 			pos++;
+		}
+	}
+
+	function scanFloatAfterDot() {
+		scanDigits();
+		if (pos < end) {
+			switch text.fastCodeAt(pos) {
+				case "e".code | "E".code:
+					pos++;
+
+					if (pos >= end)
+						throw "Unterminated float literal";
+
+					switch text.fastCodeAt(pos) {
+						case "+".code | "-".code:
+							pos++;
+						case _:
+					}
+
+					if (pos >= end)
+						throw "Unterminated float literal";
+
+					if (!isDigit(text.fastCodeAt(pos)))
+						throw "Unterminated float literal";
+
+					pos++;
+					scanDigits();
+
+				case _:
+			}
 		}
 	}
 
