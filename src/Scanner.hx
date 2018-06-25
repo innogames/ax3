@@ -277,8 +277,13 @@ class Scanner {
 
 				case "\"".code:
 					pos++;
-					scanString();
+					scanString(ch);
 					add(TkStringDouble);
+
+				case "'".code:
+					pos++;
+					scanString(ch);
+					add(TkStringSingle);
 
 				case _ if (isIdentStart(ch)):
 					pos++;
@@ -374,14 +379,14 @@ class Scanner {
 		return isDigit(ch) || isIdentStart(ch);
 	}
 
-	function scanString() {
+	function scanString(delimeter:Int) {
 		while (true) {
 			if (pos >= end) {
 				throw "Unterminated string at " + tokenStartPos;
 			}
 			// not using switch because of https://github.com/HaxeFoundation/haxe/pull/4964
 			var ch = text.fastCodeAt(pos);
-			if (ch == "\"".code) {
+			if (ch == delimeter) {
 				pos++;
 				break;
 			} else if (ch == "\\".code) {
@@ -404,6 +409,7 @@ class Scanner {
 			case "n".code:
 			case "r".code:
 			case "\"".code:
+			case "'".code:
 			default:
 				throw "Invalid escape sequence at " + start;
 		}
