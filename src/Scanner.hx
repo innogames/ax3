@@ -454,6 +454,7 @@ class Scanner {
 			case "t".code:
 			case "n".code:
 			case "r".code:
+			case "\\".code:
 			case "\"".code:
 			case "'".code:
 			default:
