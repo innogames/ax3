@@ -27,8 +27,40 @@ class Main {
 		var head = scanner.scan();
 		var stream = new TokenInfoStream(head);
 		var parser = new Parser(stream);
-		var file = parser.parse();
+		try {
+			var file = parser.parse();
+		} catch (e:Any) {
+			var pos = getPos(head, stream.advance());
+			var line = getLine(content, pos);
+			Sys.println('$path:$line: $e');
+		}
 		// var dump = ParseTreeDump.printFile(file, "");
 		// Sys.println(dump);
+	}
+
+	static function getLine(content:String, pos:Int):Int {
+		var line = 1;
+		var p = 0;
+		while (p < pos) {
+			switch StringTools.fastCodeAt(content, p++) {
+				case '\n'.code:
+					line++;
+				case '\r'.code:
+					p++;
+					line++;
+			}
+		}
+		return line;
+	}
+
+	static function getPos(head:Token, token:Token):Int {
+		var pos = 0;
+		while (true) {
+			if (head == token || head.kind == TkEof)
+				break;
+			pos += head.text.length;
+			head = head.next;
+		}
+		return pos;
 	}
 }
