@@ -30,6 +30,36 @@ class TokenInfoStream {
 		return head;
 	}
 
+	// this is required to parse >> and >>> as separated > tokens when parsing type parameters
+	public function advanceAndSplitGt():Token {
+		advance();
+		switch head.kind {
+			case TkGtGt:
+				var first = new Token(TkGt, ">");
+				var second = new Token(TkGt, ">");
+				first.prev = head.prev;
+				first.next = second;
+				second.prev = first;
+				second.next = head.next;
+				return head = first;
+
+			case TkGtGtGt:
+				var first = new Token(TkGt, ">");
+				var second = new Token(TkGt, ">");
+				var third = new Token(TkGt, ">");
+				first.prev = head.prev;
+				first.next = second;
+				second.prev = first;
+				second.next = third;
+				third.prev = second;
+				third.next = head.next;
+				return head = first;
+
+			case _:
+				return head;
+		}
+	}
+
 	public function peekAfter(token:Token):Token {
 		var head = token.next;
 		while (true) {

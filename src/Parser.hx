@@ -329,10 +329,15 @@ class Parser {
 	}
 
 	function parseTypeParam(lt:TokenInfo):TypeParam {
+		var type = parseSyntaxType(true);
+		var gt = switch stream.advanceAndSplitGt().kind {
+			case TkGt: stream.consume();
+			case _: throw "Expected >";
+		}
 		return {
 			lt: lt,
-			type: parseSyntaxType(true),
-			gt: expectKind(TkGt)
+			type: type,
+			gt: gt,
 		};
 	}
 
@@ -677,10 +682,16 @@ class Parser {
 				return parseBinop(first, OpNotStrictEquals);
 			case TkLt:
 				return parseBinop(first, OpLt);
+			case TkLtLt:
+				return parseBinop(first, OpShl);
 			case TkLtEquals:
 				return parseBinop(first, OpLte);
 			case TkGt:
 				return parseBinop(first, OpGt);
+			case TkGtGt:
+				return parseBinop(first, OpShr);
+			case TkGtGtGt:
+				return parseBinop(first, OpUshr);
 			case TkGtEquals:
 				return parseBinop(first, OpGte);
 			case TkAmpersandAmpersand:

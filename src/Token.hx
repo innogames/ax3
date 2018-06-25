@@ -52,8 +52,11 @@ enum TokenKind {
 	TkPercent;
 	TkPercentEquals;
 	TkGt;
+	TkGtGt;
+	TkGtGtGt;
 	TkGtEquals;
 	TkLt;
+	TkLtLt;
 	TkLtEquals;
 	TkStringSingle;
 	TkStringDouble;

@@ -246,18 +246,39 @@ class Scanner {
 
 				case ">".code:
 					pos++;
-					if (nextIsEquals()) {
-						pos++;
-						add(TkGtEquals);
+					if (pos < end) {
+						switch text.fastCodeAt(pos) {
+							case ">".code:
+								pos++;
+								if (pos < end && text.fastCodeAt(pos) == ">".code) {
+									pos++;
+									add(TkGtGtGt);
+								} else {
+									add(TkGtGt);
+								}
+							case "=".code:
+								pos++;
+								add(TkGtEquals);
+							case _:
+								add(TkGt);
+						}
 					} else {
 						add(TkGt);
 					}
 
 				case "<".code:
 					pos++;
-					if (nextIsEquals()) {
-						pos++;
-						add(TkLtEquals);
+					if (pos < end) {
+						switch text.fastCodeAt(pos) {
+							case "<".code:
+								pos++;
+								add(TkLtLt);
+							case "=".code:
+								pos++;
+								add(TkLtEquals);
+							case _:
+								add(TkLt);
+						}
 					} else {
 						add(TkLt);
 					}
