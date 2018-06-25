@@ -112,6 +112,7 @@ enum Expr {
 	ELiteral(l:Literal);
 	ECall(e:Expr, args:CallArgs);
 	EArrayAccess(e:Expr, openBracket:TokenInfo, eindex:Expr, closeBracket:TokenInfo);
+	EArrayDecl(openBracket:TokenInfo, elems:Null<Separated<Expr>>, closeBracket:TokenInfo);
 	EReturn(keyword:TokenInfo, e:Null<Expr>);
 	EThrow(keyword:TokenInfo, e:Expr);
 	ENew(keyword:TokenInfo, e:Expr, args:Null<CallArgs>);

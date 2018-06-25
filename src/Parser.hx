@@ -326,6 +326,16 @@ class Parser {
 				return EPreUnop(PreIncr(stream.consume()), parseExpr());
 			case TkMinusMinus:
 				return EPreUnop(PreDecr(stream.consume()), parseExpr());
+			case TkBracketOpen:
+				var openBracket = stream.consume();
+				var expr = switch stream.advance().kind {
+					case TkBracketClose:
+						EArrayDecl(openBracket, null, stream.consume());
+					case _:
+						var elems = parseSeparated(parseExpr, t -> t.kind == TkComma);
+						EArrayDecl(openBracket, elems, expectKind(TkBracketClose));
+				}
+				return parseExprNext(expr);
 			case _:
 				return null;
 		}
