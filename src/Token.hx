@@ -1,8 +1,8 @@
 class Token {
 	public var kind:TokenKind;
 	public var text:String;
-	public var prev:Token;
-	public var next:Token;
+	public var leadTrivia:Array<Trivia>;
+	public var trailTrivia:Array<Trivia>;
 
 	public function new(kind, text) {
 		this.kind = kind;
@@ -14,12 +14,32 @@ class Token {
 	}
 }
 
+@:forward(kind, text)
+abstract PeekToken(Token) from Token {}
+
+class Trivia {
+	public var kind:TriviaKind;
+	public var text:String;
+
+	public function new(kind, text) {
+		this.kind = kind;
+		this.text = text;
+	}
+
+	public function toString() {
+		return '${kind.getName()}(${haxe.Json.stringify(text)})';
+	}
+}
+
+enum TriviaKind {
+	TrWhitespace;
+	TrNewline;
+	TrBlockComment;
+	TrLineComment;
+}
+
 enum TokenKind {
 	TkEof;
-	TkWhitespace;
-	TkNewline;
-	TkBlockComment;
-	TkLineComment;
 	TkAmpersand;
 	TkAmpersandAmpersand;
 	TkPipe;

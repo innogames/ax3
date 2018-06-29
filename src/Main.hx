@@ -20,21 +20,24 @@ class Main {
 	}
 
 	static function parseFile(path:String) {
-		print('Parsing $path');
-		var content = sys.io.File.getContent(path);
+		// print('Parsing $path');
+		var content = stripBOM(sys.io.File.getContent(path));
 		var scanner = new Scanner(content);
-		var head = scanner.scan();
-		var stream = new TokenInfoStream(head);
-		var parser = new Parser(stream);
+		var parser = new Parser(scanner);
+		// var file = parser.parse();
+		// var dump = ParseTreeDump.printFile(file, "");
+		// Sys.println(dump);
 		try {
-			var file = parser.parse();
-			// var dump = ParseTreeDump.printFile(file, "");
-			// Sys.println(dump);
+			parser.parse();
 		} catch (e:Any) {
-			var pos = getPos(head, stream.advance());
+			var pos = @:privateAccess scanner.pos;
 			var line = getLine(content, pos);
 			printerr('$path:$line: $e');
 		}
+	}
+
+	static function stripBOM(text:String):String {
+		return if (StringTools.fastCodeAt(text, 0) == 0xFEFF) text.substring(1) else text;
 	}
 
 	static function print(s:String) js.Node.console.log(s);
@@ -53,16 +56,5 @@ class Main {
 			}
 		}
 		return line;
-	}
-
-	static function getPos(head:Token, token:Token):Int {
-		var pos = 0;
-		while (true) {
-			if (head == token || head.kind == TkEof)
-				break;
-			pos += head.text.length;
-			head = head.next;
-		}
-		return pos;
 	}
 }

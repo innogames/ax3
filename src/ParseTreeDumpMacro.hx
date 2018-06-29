@@ -17,8 +17,8 @@ class ParseTreeDumpMacro {
 
 	static function walk(type:Type, origType, fields:Map<String,Field>, name:Null<String>):Expr {
 		switch (type) {
-			case TInst(_.get() => {pack: [], name: "TokenInfo"}, _):
-				return macro printTokenInfo;
+			case TInst(_.get() => {pack: [], name: "Token"}, _):
+				return macro printToken;
 
 			case TInst(_.get() => {pack: [], name: "Array"}, [elemT]) if (name != null):
 				return walkSeq(elemT, origType, name, macro printArray, fields);

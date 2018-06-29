@@ -4,19 +4,19 @@ typedef File = {
 }
 
 typedef Package = {
-	var keyword:TokenInfo;
+	var keyword:Token;
 	var name:Null<DotPath>;
-	var openBrace:TokenInfo;
-	var closeBrace:TokenInfo;
+	var openBrace:Token;
+	var closeBrace:Token;
 	var declarations:Array<Declaration>;
 }
 
 typedef Separated<T> = {
 	var first:T;
-	var rest:Array<{sep:TokenInfo, element:T}>;
+	var rest:Array<{sep:Token, element:T}>;
 }
 
-typedef DotPath = Separated<TokenInfo>;
+typedef DotPath = Separated<Token>;
 
 enum Declaration {
 	DImport(d:ImportDecl);
@@ -25,38 +25,38 @@ enum Declaration {
 }
 
 typedef ImportDecl = {
-	var keyword:TokenInfo;
+	var keyword:Token;
 	var path:DotPath;
-	var wildcard:Null<TokenInfo>;
-	var semicolon:TokenInfo;
+	var wildcard:Null<Token>;
+	var semicolon:Token;
 }
 
 typedef ClassDecl = {
 	var metadata:Array<Metadata>;
-	var modifiers:Array<TokenInfo>;
-	var keyword:TokenInfo;
-	var name:TokenInfo;
-	var extend:Null<{keyword:TokenInfo, path:DotPath}>;
-	var implement:Null<{keyword:TokenInfo, paths:Separated<DotPath>}>;
-	var openBrace:TokenInfo;
+	var modifiers:Array<Token>;
+	var keyword:Token;
+	var name:Token;
+	var extend:Null<{keyword:Token, path:DotPath}>;
+	var implement:Null<{keyword:Token, paths:Separated<DotPath>}>;
+	var openBrace:Token;
 	var fields:Array<ClassField>;
-	var closeBrace:TokenInfo;
+	var closeBrace:Token;
 }
 
 typedef InterfaceDecl = {
 	var metadata:Array<Metadata>;
-	var modifiers:Array<TokenInfo>;
-	var keyword:TokenInfo;
-	var name:TokenInfo;
-	var extend:Null<{keyword:TokenInfo, paths:Separated<DotPath>}>;
-	var openBrace:TokenInfo;
-	var closeBrace:TokenInfo;
+	var modifiers:Array<Token>;
+	var keyword:Token;
+	var name:Token;
+	var extend:Null<{keyword:Token, paths:Separated<DotPath>}>;
+	var openBrace:Token;
+	var closeBrace:Token;
 }
 
 typedef ClassField = {
 	var metadata:Array<Metadata>;
-	var modifiers:Array<TokenInfo>;
-	var name:TokenInfo;
+	var modifiers:Array<Token>;
+	var name:Token;
 	var kind:ClassFieldKind;
 }
 
@@ -67,215 +67,215 @@ enum ClassFieldKind {
 }
 
 enum PropKind {
-	PGet(keyword:TokenInfo);
-	PSet(keyword:TokenInfo);
+	PGet(keyword:Token);
+	PSet(keyword:Token);
 }
 
 typedef ClassVar = {
-	var keyword:TokenInfo;
+	var keyword:Token;
 	var hint:Null<TypeHint>;
 	var init:Null<VarInit>;
-	var semicolon:TokenInfo;
+	var semicolon:Token;
 }
 
 typedef BracedExprBlock = {
-	var openBrace:TokenInfo;
+	var openBrace:Token;
 	var exprs:Array<BlockElement>;
-	var closeBrace:TokenInfo;
+	var closeBrace:Token;
 }
 
 typedef ClassFun = {
-	var keyword:TokenInfo;
-	var openParen:TokenInfo;
+	var keyword:Token;
+	var openParen:Token;
 	var args:Separated<FunctionArg>;
-	var closeParen:TokenInfo;
+	var closeParen:Token;
 	var ret:Null<TypeHint>;
 	var block:BracedExprBlock;
 }
 
 typedef FunctionArg = {
-	var name:TokenInfo;
+	var name:Token;
 	var hint:Null<TypeHint>;
 	var init:Null<VarInit>;
 }
 
 typedef TypeHint = {
-	var colon:TokenInfo;
+	var colon:Token;
 	var type:SyntaxType;
 }
 
 typedef VarInit = {
-	var equals:TokenInfo;
+	var equals:Token;
 	var expr:Expr;
 }
 
 enum SyntaxType {
-	TAny(star:TokenInfo);
+	TAny(star:Token);
 	TPath(path:DotPath);
 	TVector(v:VectorSyntax);
 }
 
 enum Expr {
-	EIdent(i:TokenInfo);
+	EIdent(i:Token);
 	ELiteral(l:Literal);
 	ECall(e:Expr, args:CallArgs);
-	EParens(openParen:TokenInfo, e:Expr, closeParen:TokenInfo);
-	EArrayAccess(e:Expr, openBracket:TokenInfo, eindex:Expr, closeBracket:TokenInfo);
+	EParens(openParen:Token, e:Expr, closeParen:Token);
+	EArrayAccess(e:Expr, openBracket:Token, eindex:Expr, closeBracket:Token);
 	EArrayDecl(d:ArrayDecl);
-	EReturn(keyword:TokenInfo, e:Null<Expr>);
-	EThrow(keyword:TokenInfo, e:Expr);
-	EDelete(keyword:TokenInfo, e:Expr);
-	EBreak(keyword:TokenInfo);
-	EContinue(keyword:TokenInfo);
-	ENew(keyword:TokenInfo, e:Expr, args:Null<CallArgs>);
-	EVectorDecl(newKeyword:TokenInfo, t:TypeParam, d:ArrayDecl);
-	EField(e:Expr, dot:TokenInfo, fieldName:TokenInfo);
+	EReturn(keyword:Token, e:Null<Expr>);
+	EThrow(keyword:Token, e:Expr);
+	EDelete(keyword:Token, e:Expr);
+	EBreak(keyword:Token);
+	EContinue(keyword:Token);
+	ENew(keyword:Token, e:Expr, args:Null<CallArgs>);
+	EVectorDecl(newKeyword:Token, t:TypeParam, d:ArrayDecl);
+	EField(e:Expr, dot:Token, fieldName:Token);
 	EBlock(b:BracedExprBlock);
-	EObjectDecl(openBrace:TokenInfo, fields:Separated<ObjectField>, closeBrace:TokenInfo);
-	EIf(keyword:TokenInfo, openParen:TokenInfo, econd:Expr, closeParen:TokenInfo, ethen:Expr, eelse:Null<{keyword:TokenInfo, expr:Expr}>);
-	ETernary(econd:Expr, question:TokenInfo, ethen:Expr, colon:TokenInfo, eelse:Expr);
-	EWhile(keyword:TokenInfo, openParen:TokenInfo, cond:Expr, closeParen:TokenInfo, body:Expr);
-	EFor(keyword:TokenInfo, openParen:TokenInfo, einit:Null<Expr>, initSep:TokenInfo, econd:Null<Expr>, condSep:TokenInfo, eincr:Null<Expr>, closeParen:TokenInfo, body:Expr);
-	EForIn(forKeyword:TokenInfo, openParen:TokenInfo, iter:ForIter, closeParen:TokenInfo, body:Expr);
-	EForEach(forKeyword:TokenInfo, eachKeyword:TokenInfo, openParen:TokenInfo, iter:ForIter, closeParen:TokenInfo, body:Expr);
+	EObjectDecl(openBrace:Token, fields:Separated<ObjectField>, closeBrace:Token);
+	EIf(keyword:Token, openParen:Token, econd:Expr, closeParen:Token, ethen:Expr, eelse:Null<{keyword:Token, expr:Expr}>);
+	ETernary(econd:Expr, question:Token, ethen:Expr, colon:Token, eelse:Expr);
+	EWhile(keyword:Token, openParen:Token, cond:Expr, closeParen:Token, body:Expr);
+	EFor(keyword:Token, openParen:Token, einit:Null<Expr>, initSep:Token, econd:Null<Expr>, condSep:Token, eincr:Null<Expr>, closeParen:Token, body:Expr);
+	EForIn(forKeyword:Token, openParen:Token, iter:ForIter, closeParen:Token, body:Expr);
+	EForEach(forKeyword:Token, eachKeyword:Token, openParen:Token, iter:ForIter, closeParen:Token, body:Expr);
 	EBinop(a:Expr, op:Binop, b:Expr);
 	EPreUnop(op:PreUnop, e:Expr);
 	EPostUnop(e:Expr, op:PostUnop);
-	EVars(keyword:TokenInfo, vars:Separated<VarDecl>);
-	EAs(e:Expr, keyword:TokenInfo, t:SyntaxType);
-	EIs(e:Expr, keyword:TokenInfo, t:SyntaxType);
+	EVars(keyword:Token, vars:Separated<VarDecl>);
+	EAs(e:Expr, keyword:Token, t:SyntaxType);
+	EIs(e:Expr, keyword:Token, t:SyntaxType);
 	EVector(v:VectorSyntax);
-	ESwitch(keyword:TokenInfo, openParen:TokenInfo, subj:Expr, closeParen:TokenInfo, openBrace:TokenInfo, cases:Array<SwitchCase>, closeBrace:TokenInfo);
+	ESwitch(keyword:Token, openParen:Token, subj:Expr, closeParen:Token, openBrace:Token, cases:Array<SwitchCase>, closeBrace:Token);
 	ECondCompValue(v:CondCompVar);
 	ECondCompBlock(v:CondCompVar, b:BracedExprBlock);
-	ETry(keyword:TokenInfo, block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>);
+	ETry(keyword:Token, block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>);
 }
 
 typedef Catch = {
-	var keyword:TokenInfo;
-	var openParen:TokenInfo;
-	var name:TokenInfo;
+	var keyword:Token;
+	var openParen:Token;
+	var name:Token;
 	var type:TypeHint;
-	var closeParen:TokenInfo;
+	var closeParen:Token;
 	var block:BracedExprBlock;
 }
 
 typedef Finally = {
-	var keyword:TokenInfo;
+	var keyword:Token;
 	var block:BracedExprBlock;
 }
 
 typedef CondCompVar = {
-	var ns:TokenInfo;
-	var sep:TokenInfo;
-	var name:TokenInfo;
+	var ns:Token;
+	var sep:Token;
+	var name:Token;
 }
 
 typedef ForIter = {
 	var eit:Expr;
-	var inKeyword:TokenInfo;
+	var inKeyword:Token;
 	var eobj:Expr;
 }
 
 typedef ObjectField = {
-	var name:TokenInfo;
-	var colon:TokenInfo;
+	var name:Token;
+	var colon:Token;
 	var value:Expr;
 }
 
 enum SwitchCase {
-	CCase(keyword:TokenInfo, v:Expr, colon:TokenInfo, body:Array<BlockElement>);
-	CDefault(keyword:TokenInfo, colon:TokenInfo, body:Array<BlockElement>);
+	CCase(keyword:Token, v:Expr, colon:Token, body:Array<BlockElement>);
+	CDefault(keyword:Token, colon:Token, body:Array<BlockElement>);
 }
 
 typedef VectorSyntax = {
-	var name:TokenInfo;
-	var dot:TokenInfo;
+	var name:Token;
+	var dot:Token;
 	var t:TypeParam;
 }
 
 typedef TypeParam = {
-	var lt:TokenInfo;
+	var lt:Token;
 	var type:SyntaxType;
-	var gt:TokenInfo;
+	var gt:Token;
 }
 
 typedef ArrayDecl = {
-	var openBracket:TokenInfo;
+	var openBracket:Token;
 	var elems:Null<Separated<Expr>>;
-	var closeBracket:TokenInfo;
+	var closeBracket:Token;
 }
 
 enum PreUnop {
-	PreNot(t:TokenInfo);
-	PreNeg(t:TokenInfo);
-	PreIncr(t:TokenInfo);
-	PreDecr(t:TokenInfo);
+	PreNot(t:Token);
+	PreNeg(t:Token);
+	PreIncr(t:Token);
+	PreDecr(t:Token);
 }
 
 enum PostUnop {
-	PostIncr(t:TokenInfo);
-	PostDecr(t:TokenInfo);
+	PostIncr(t:Token);
+	PostDecr(t:Token);
 }
 
 typedef VarDecl = {
-	var name:TokenInfo;
+	var name:Token;
 	var type:Null<TypeHint>;
 	var init:Null<VarInit>;
 }
 
 enum Binop {
-	OpAdd(t:TokenInfo);
-	OpSub(t:TokenInfo);
-	OpDiv(t:TokenInfo);
-	OpMul(t:TokenInfo);
-	OpMod(t:TokenInfo);
-	OpAssign(t:TokenInfo);
-	OpAssignAdd(t:TokenInfo);
-	OpAssignSub(t:TokenInfo);
-	OpAssignMul(t:TokenInfo);
-	OpAssignDiv(t:TokenInfo);
-	OpAssignMod(t:TokenInfo);
-	OpEquals(t:TokenInfo);
-	OpNotEquals(t:TokenInfo);
-	OpStrictEquals(t:TokenInfo);
-	OpNotStrictEquals(t:TokenInfo);
-	OpGt(t:TokenInfo);
-	OpGte(t:TokenInfo);
-	OpLt(t:TokenInfo);
-	OpLte(t:TokenInfo);
-	OpIn(t:TokenInfo);
-	OpAnd(t:TokenInfo);
-	OpOr(t:TokenInfo);
-	OpShl(t:TokenInfo);
-	OpShr(t:TokenInfo);
-	OpUshr(t:TokenInfo);
-	OpBitAnd(t:TokenInfo);
-	OpBitOr(t:TokenInfo);
-	OpBitXor(t:TokenInfo);
+	OpAdd(t:Token);
+	OpSub(t:Token);
+	OpDiv(t:Token);
+	OpMul(t:Token);
+	OpMod(t:Token);
+	OpAssign(t:Token);
+	OpAssignAdd(t:Token);
+	OpAssignSub(t:Token);
+	OpAssignMul(t:Token);
+	OpAssignDiv(t:Token);
+	OpAssignMod(t:Token);
+	OpEquals(t:Token);
+	OpNotEquals(t:Token);
+	OpStrictEquals(t:Token);
+	OpNotStrictEquals(t:Token);
+	OpGt(t:Token);
+	OpGte(t:Token);
+	OpLt(t:Token);
+	OpLte(t:Token);
+	OpIn(t:Token);
+	OpAnd(t:Token);
+	OpOr(t:Token);
+	OpShl(t:Token);
+	OpShr(t:Token);
+	OpUshr(t:Token);
+	OpBitAnd(t:Token);
+	OpBitOr(t:Token);
+	OpBitXor(t:Token);
 }
 
 typedef BlockElement = {
 	var expr:Expr;
-	var semicolon:Null<TokenInfo>;
+	var semicolon:Null<Token>;
 }
 
 typedef CallArgs = {
-	var openParen:TokenInfo;
+	var openParen:Token;
 	var args:Null<Separated<Expr>>;
-	var closeParen:TokenInfo;
+	var closeParen:Token;
 }
 
 enum Literal {
-	LString(t:TokenInfo);
-	LDecInt(t:TokenInfo);
-	LHexInt(t:TokenInfo);
-	LFloat(t:TokenInfo);
+	LString(t:Token);
+	LDecInt(t:Token);
+	LHexInt(t:Token);
+	LFloat(t:Token);
 }
 
 typedef Metadata = {
-	var openBracket:TokenInfo;
-	var name:TokenInfo;
+	var openBracket:Token;
+	var name:Token;
 	var args:Null<CallArgs>;
-	var closeBracket:TokenInfo;
+	var closeBracket:Token;
 }

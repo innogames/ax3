@@ -2,8 +2,8 @@ import ParseTree;
 
 @:build(ParseTreeDumpMacro.build())
 class ParseTreeDump {
-	public static function printTokenInfo(t:TokenInfo, indent:String):String {
-		return haxe.Json.stringify(t.token.text);
+	public static function printToken(t:Token, indent:String):String {
+		return haxe.Json.stringify(t.text);
 	}
 
 	static function printArray<T>(elems:Array<T>, printer:(v:T, indent:String)->String, indent:String):String {
@@ -21,7 +21,7 @@ class ParseTreeDump {
 		var nextIndent = indent + "  ";
 		var parts = [nextIndent + printer(elems.first, nextIndent)];
 		for (elem in elems.rest) {
-			parts.push(nextIndent + "(" + printTokenInfo(elem.sep, nextIndent) + ")");
+			parts.push(nextIndent + "(" + printToken(elem.sep, nextIndent) + ")");
 			parts.push(nextIndent + printer(elem.element, nextIndent));
 		}
 		return "<\n" + parts.join("\n") + "\n" + indent + ">";

@@ -1,18 +1,23 @@
 import Token;
 using StringTools;
 
-/**
-	Scanner builds a linked list of all the tokens for a given source,
-	including whitespace and comments.
-**/
+enum ScanMode {
+	MNormal;
+	MNoRightShift;
+}
+
 class Scanner {
 	var text:String;
 	var end:Int;
 	var pos:Int;
 	var tokenStartPos:Int;
+	var leadTrivia:Array<Trivia>;
 
-	var head:Token;
-	var tail:Token;
+	var lastPos:Int;
+	var lastToken:Token;
+	var lastMode:ScanMode;
+
+	public var lastConsumedToken(default,null):Token;
 
 	public function new(text) {
 		this.text = text;
@@ -20,13 +25,33 @@ class Scanner {
 		pos = tokenStartPos = 0;
 	}
 
-	public function scan():Token {
-		while (true) {
+	public inline function advance() return doAdvance(MNormal);
+	public inline function advanceAndSplitGt() return doAdvance(MNoRightShift);
+
+	public function doAdvance(mode:ScanMode):PeekToken {
+		if (lastToken != null) {
+			if (mode == lastMode)
+				return lastToken;
+			else
+				pos = lastPos;
+		}
+		lastPos = pos;
+		lastMode = mode;
+		lastToken = scan(mode);
+		return lastToken;
+	}
+
+	public function consume():Token {
+		lastConsumedToken = lastToken;
+		lastToken = null;
+		lastMode = null;
+		return lastConsumedToken;
+	}
+
+	function scanTrivia(breakOnNewLine:Bool):Array<Trivia> {
+		var trivia = [];
+		while (pos < end) {
 			tokenStartPos = pos;
-			if (pos >= end) {
-				add(TkEof);
-				return head;
-			}
 
 			var ch = text.fastCodeAt(pos);
 			switch ch {
@@ -34,11 +59,15 @@ class Scanner {
 					pos++;
 					if (text.fastCodeAt(pos) == "\n".code)
 						pos++;
-					add(TkNewline);
+					trivia.push(mkTrivia(TrNewline));
+					if (breakOnNewLine)
+						break;
 
 				case "\n".code:
 					pos++;
-					add(TkNewline);
+					trivia.push(mkTrivia(TrNewline));
+					if (breakOnNewLine)
+						break;
 
 				case " ".code | "\t".code:
 					pos++;
@@ -50,136 +79,23 @@ class Scanner {
 							break;
 						}
 					}
-					add(TkWhitespace);
-
-				case ".".code:
-					pos++;
-					if (pos < end && isDigit(text.fastCodeAt(pos))) {
-						pos++;
-						scanFloatAfterDot();
-						add(TkFloat);
-					} else {
-						add(TkDot);
-					}
-
-				case ",".code:
-					pos++;
-					add(TkComma);
-
-				case ":".code:
-					pos++;
-					if (pos < end && text.fastCodeAt(pos) == ":".code) {
-						pos++;
-						add(TkColonColon);
-					} else {
-						add(TkColon);
-					}
-
-				case ";".code:
-					pos++;
-					add(TkSemicolon);
-
-				case "{".code:
-					pos++;
-					add(TkBraceOpen);
-
-				case "}".code:
-					pos++;
-					add(TkBraceClose);
-
-				case "(".code:
-					pos++;
-					add(TkParenOpen);
-
-				case ")".code:
-					pos++;
-					add(TkParenClose);
-
-				case "[".code:
-					pos++;
-					add(TkBracketOpen);
-
-				case "]".code:
-					pos++;
-					add(TkBracketClose);
-
-				case "0".code:
-					pos++;
-					var kind = scanZeroLeadingNumber();
-					add(kind);
-
-				case "1".code | "2".code | "3".code | "4".code | "5".code | "6".code | "7".code | "8".code | "9".code:
-					pos++;
-					scanDigits();
-
-					if (pos < end && text.fastCodeAt(pos) == ".".code) {
-						pos++;
-						scanFloatAfterDot();
-						add(TkFloat);
-					} else {
-						add(TkDecimalInteger);
-					}
-
-				case "+".code:
-					pos++;
-					if (pos < end) {
-						switch text.fastCodeAt(pos) {
-							case "+".code:
-								pos++;
-								add(TkPlusPlus);
-							case "=".code:
-								pos++;
-								add(TkPlusEquals);
-							case _:
-								add(TkPlus);
-						}
-					} else {
-						add(TkPlus);
-					}
-
-				case "-".code:
-					pos++;
-					// TODO: scan negative number literals here too
-					if (pos < end) {
-						switch text.fastCodeAt(pos) {
-							case "-".code:
-								pos++;
-								add(TkMinusMinus);
-							case "=".code:
-								pos++;
-								add(TkMinusEquals);
-							case _:
-								add(TkMinus);
-						}
-					} else {
-						add(TkMinus);
-					}
-
-				case "*".code:
-					pos++;
-					if (pos < end && text.fastCodeAt(pos) == "=".code) {
-						pos++;
-						add(TkAsteriskEquals);
-					} else {
-						add(TkAsterisk);
-					}
+					trivia.push(mkTrivia(TrWhitespace));
 
 				case "/".code:
-					pos++;
-					if (pos < end) {
-						switch text.fastCodeAt(pos) {
+					if (pos + 1 < end) {
+						switch text.fastCodeAt(pos + 1) {
 							case "/".code:
-								pos++;
+								pos += 2;
 								while (pos < end) {
 									ch = text.fastCodeAt(pos);
 									if (ch == "\r".code || ch == "\n".code)
 										break;
 									pos++;
 								}
-								add(TkLineComment);
+								trivia.push(mkTrivia(TrLineComment));
 
 							case "*".code:
-								pos++;
+								pos += 2;
 								while (pos < end) {
 									if (text.fastCodeAt(pos) == "*".code && pos + 1 < end && text.fastCodeAt(pos + 1) == "/".code) {
 										pos += 2;
@@ -190,26 +106,157 @@ class Scanner {
 											throw "Unterminated block comment at " + tokenStartPos;
 									}
 								}
-								add(TkBlockComment);
+								trivia.push(mkTrivia(TrBlockComment));
+							case _:
+								break;
+						}
+					}
 
+				case _:
+					break;
+			}
+		}
+		return trivia;
+	}
+
+	function scan(mode:ScanMode):Token {
+		while (true) {
+			leadTrivia = scanTrivia(false);
+
+			tokenStartPos = pos;
+			if (pos >= end) {
+				return mk(TkEof);
+			}
+
+			var ch = text.fastCodeAt(pos);
+			switch ch {
+				case ".".code:
+					pos++;
+					if (pos < end && isDigit(text.fastCodeAt(pos))) {
+						pos++;
+						scanFloatAfterDot();
+						return mk(TkFloat);
+					} else {
+						return mk(TkDot);
+					}
+
+				case ",".code:
+					pos++;
+					return mk(TkComma);
+
+				case ":".code:
+					pos++;
+					if (pos < end && text.fastCodeAt(pos) == ":".code) {
+						pos++;
+						return mk(TkColonColon);
+					} else {
+						return mk(TkColon);
+					}
+
+				case ";".code:
+					pos++;
+					return mk(TkSemicolon);
+
+				case "{".code:
+					pos++;
+					return mk(TkBraceOpen);
+
+				case "}".code:
+					pos++;
+					return mk(TkBraceClose);
+
+				case "(".code:
+					pos++;
+					return mk(TkParenOpen);
+
+				case ")".code:
+					pos++;
+					return mk(TkParenClose);
+
+				case "[".code:
+					pos++;
+					return mk(TkBracketOpen);
+
+				case "]".code:
+					pos++;
+					return mk(TkBracketClose);
+
+				case "0".code:
+					pos++;
+					var kind = scanZeroLeadingNumber();
+					return mk(kind);
+
+				case "1".code | "2".code | "3".code | "4".code | "5".code | "6".code | "7".code | "8".code | "9".code:
+					pos++;
+					scanDigits();
+
+					if (pos < end && text.fastCodeAt(pos) == ".".code) {
+						pos++;
+						scanFloatAfterDot();
+						return mk(TkFloat);
+					} else {
+						return mk(TkDecimalInteger);
+					}
+
+				case "+".code:
+					pos++;
+					if (pos < end) {
+						switch text.fastCodeAt(pos) {
+							case "+".code:
+								pos++;
+								return mk(TkPlusPlus);
 							case "=".code:
 								pos++;
-								add(TkSlashEquals);
-
+								return mk(TkPlusEquals);
 							case _:
-								add(TkSlash);
+								return mk(TkPlus);
 						}
 					} else {
-						add(TkSlash);
+						return mk(TkPlus);
+					}
+
+				case "-".code:
+					pos++;
+					// TODO: scan negative number literals here too
+					if (pos < end) {
+						switch text.fastCodeAt(pos) {
+							case "-".code:
+								pos++;
+								return mk(TkMinusMinus);
+							case "=".code:
+								pos++;
+								return mk(TkMinusEquals);
+							case _:
+								return mk(TkMinus);
+						}
+					} else {
+						return mk(TkMinus);
+					}
+
+				case "*".code:
+					pos++;
+					if (pos < end && text.fastCodeAt(pos) == "=".code) {
+						pos++;
+						return mk(TkAsteriskEquals);
+					} else {
+						return mk(TkAsterisk);
+					}
+
+				case "/".code:
+					pos++;
+					if (pos < end && text.fastCodeAt(pos) == "=".code) {
+						return mk(TkSlashEquals);
+					} else {
+						return mk(TkSlash);
 					}
 
 				case "%".code:
 					pos++;
 					if (pos < end && text.fastCodeAt(pos) == "=".code) {
 						pos++;
-						add(TkPercentEquals);
+						return mk(TkPercentEquals);
 					} else {
-						add(TkPercent);
+						return mk(TkPercent);
 					}
 
 				case "=".code:
@@ -218,12 +265,12 @@ class Scanner {
 						pos++;
 						if (nextIsEquals()) {
 							pos++;
-							add(TkEqualsEqualsEquals);
+							return mk(TkEqualsEqualsEquals);
 						} else {
-							add(TkEqualsEquals);
+							return mk(TkEqualsEquals);
 						}
 					} else {
-						add(TkEquals);
+						return mk(TkEquals);
 					}
 
 				case "!".code:
@@ -232,38 +279,38 @@ class Scanner {
 						pos++;
 						if (nextIsEquals()) {
 							pos++;
-							add(TkExclamationEqualsEquals);
+							return mk(TkExclamationEqualsEquals);
 						} else {
-							add(TkExclamationEquals);
+							return mk(TkExclamationEquals);
 						}
 					} else {
-						add(TkExclamation);
+						return mk(TkExclamation);
 					}
 
 				case "?".code:
 					pos++;
-					add(TkQuestion);
+					return mk(TkQuestion);
 
 				case ">".code:
 					pos++;
 					if (pos < end) {
 						switch text.fastCodeAt(pos) {
-							case ">".code:
+							case ">".code if (mode != MNoRightShift):
 								pos++;
 								if (pos < end && text.fastCodeAt(pos) == ">".code) {
 									pos++;
-									add(TkGtGtGt);
+									return mk(TkGtGtGt);
 								} else {
-									add(TkGtGt);
+									return mk(TkGtGt);
 								}
 							case "=".code:
 								pos++;
-								add(TkGtEquals);
+								return mk(TkGtEquals);
 							case _:
-								add(TkGt);
+								return mk(TkGt);
 						}
 					} else {
-						add(TkGt);
+						return mk(TkGt);
 					}
 
 				case "<".code:
@@ -272,53 +319,53 @@ class Scanner {
 						switch text.fastCodeAt(pos) {
 							case "<".code:
 								pos++;
-								add(TkLtLt);
+								return mk(TkLtLt);
 							case "=".code:
 								pos++;
-								add(TkLtEquals);
+								return mk(TkLtEquals);
 							case _:
-								add(TkLt);
+								return mk(TkLt);
 						}
 					} else {
-						add(TkLt);
+						return mk(TkLt);
 					}
 
 				case "&".code:
 					pos++;
 					if (pos < end && text.fastCodeAt(pos) == "&".code) {
 						pos++;
-						add(TkAmpersandAmpersand);
+						return mk(TkAmpersandAmpersand);
 					} else {
-						add(TkAmpersand);
+						return mk(TkAmpersand);
 					}
 
 				case "|".code:
 					pos++;
 					if (pos < end && text.fastCodeAt(pos) == "|".code) {
 						pos++;
-						add(TkPipePipe);
+						return mk(TkPipePipe);
 					} else {
-						add(TkPipe);
+						return mk(TkPipe);
 					}
 
 				case "^".code:
 					pos++;
 					if (pos < end && text.fastCodeAt(pos) == "=".code) {
 						pos++;
-						add(TkCaretEquals);
+						return mk(TkCaretEquals);
 					} else {
-						add(TkCaret);
+						return mk(TkCaret);
 					}
 
 				case "\"".code:
 					pos++;
 					scanString(ch);
-					add(TkStringDouble);
+					return mk(TkStringDouble);
 
 				case "'".code:
 					pos++;
 					scanString(ch);
-					add(TkStringSingle);
+					return mk(TkStringSingle);
 
 				case _ if (isIdentStart(ch)):
 					pos++;
@@ -328,11 +375,11 @@ class Scanner {
 							break;
 						pos++;
 					}
-					add(TkIdent);
+					return mk(TkIdent);
 
 				case _:
 					pos++;
-					add(TkUnknown);
+					return mk(TkUnknown);
 			}
 		}
 	}
@@ -462,14 +509,14 @@ class Scanner {
 		}
 	}
 
-	function add(kind:TokenKind) {
+	function mkTrivia(kind:TriviaKind):Trivia {
+		return new Trivia(kind, text.substring(tokenStartPos, pos));
+	}
+
+	function mk(kind:TokenKind):Token {
 		var token = new Token(kind, text.substring(tokenStartPos, pos));
-		if (head == null) {
-			head = tail = token;
-		} else {
-			token.prev = tail;
-			tail.next = token;
-			tail = token;
-		}
+		token.leadTrivia = leadTrivia;
+		token.trailTrivia = scanTrivia(true);
+		return token;
 	}
 }
