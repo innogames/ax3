@@ -11,7 +11,8 @@
 				"E:/Code/foe/Frontend/client/src"
 			],
 			"outFiles": ["${workspaceFolder}/main.js"],
-			"preLaunchTask": "build"
+			"preLaunchTask": "build",
+			"console": "integratedTerminal"
 		}
 	]
 }
