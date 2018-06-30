@@ -331,7 +331,7 @@ class Parser {
 
 	function parseTypeParam(lt:Token):TypeParam {
 		var type = parseSyntaxType(true);
-		var gt = switch scanner.advanceAndSplitGt().kind {
+		var gt = switch scanner.advanceNoRightShift().kind {
 			case TkGt: scanner.consume();
 			case _: throw "Expected >";
 		}
@@ -362,7 +362,7 @@ class Parser {
 	}
 
 	function parseOptionalExpr():Null<Expr> {
-		var token = scanner.advance();
+		var token = scanner.advanceExprStart();
 		switch token.kind {
 			case TkIdent:
 				if (token.text ==  "case" || token.text == "default") // not part of expression, so don't even consume the token
@@ -371,6 +371,8 @@ class Parser {
 					return parseIdent(scanner.consume());
 			case TkStringSingle | TkStringDouble:
 				return parseExprNext(ELiteral(LString(scanner.consume())));
+			case TkRegExp:
+				return parseExprNext(ELiteral(LRegExp(scanner.consume())));
 			case TkDecimalInteger:
 				return parseExprNext(ELiteral(LDecInt(scanner.consume())));
 			case TkHexadecimalInteger:

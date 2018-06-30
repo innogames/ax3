@@ -4,6 +4,7 @@ using StringTools;
 enum ScanMode {
 	MNormal;
 	MNoRightShift;
+	MExprStart;
 }
 
 class Scanner {
@@ -26,7 +27,8 @@ class Scanner {
 	}
 
 	public inline function advance() return doAdvance(MNormal);
-	public inline function advanceAndSplitGt() return doAdvance(MNoRightShift);
+	public inline function advanceNoRightShift() return doAdvance(MNoRightShift);
+	public inline function advanceExprStart() return doAdvance(MExprStart);
 
 	public function doAdvance(mode:ScanMode):PeekToken {
 		if (lastToken != null) {
@@ -244,10 +246,15 @@ class Scanner {
 
 				case "/".code:
 					pos++;
-					if (pos < end && text.fastCodeAt(pos) == "=".code) {
-						return mk(TkSlashEquals);
+					if (mode == MExprStart) {
+						scanRegExp();
+						return mk(TkRegExp);
 					} else {
-						return mk(TkSlash);
+						if (pos < end && text.fastCodeAt(pos) == "=".code) {
+							return mk(TkSlashEquals);
+						} else {
+							return mk(TkSlash);
+						}
 					}
 
 				case "%".code:
@@ -506,6 +513,35 @@ class Scanner {
 			case "'".code:
 			default:
 				throw "Invalid escape sequence at " + start;
+		}
+	}
+
+	function scanRegExp() {
+		while (true) {
+			if (pos >= end) {
+				throw "Unterminated regexp at " + tokenStartPos;
+			}
+			var ch = text.fastCodeAt(pos);
+			if (ch == "/".code) {
+				pos++;
+				while (pos < end) {
+					ch = text.fastCodeAt(pos);
+					if (ch >= 'a'.code && ch <= 'z'.code) { // parse flags
+						pos++;
+					} else {
+						break;
+					}
+				}
+				return;
+			} else if (ch == "\\".code) {
+				pos++;
+				if (pos >= end) {
+					throw "Unterminated escape sequence at " + (pos - 1);
+				}
+				pos++;
+			} else {
+				pos++;
+			}
 		}
 	}
 

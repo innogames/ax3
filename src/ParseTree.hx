@@ -271,6 +271,7 @@ enum Literal {
 	LDecInt(t:Token);
 	LHexInt(t:Token);
 	LFloat(t:Token);
+	LRegExp(t:Token);
 }
 
 typedef Metadata = {
