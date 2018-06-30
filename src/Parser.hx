@@ -178,6 +178,7 @@ class Parser {
 
 	function parseClassField():Null<ClassField> {
 		var modifiers = [];
+		var namespace = null;
 		var metadata = parseSequence(parseOptionalMetadata);
 		while (true) {
 			var token = scanner.advance();
@@ -185,26 +186,34 @@ class Parser {
 				case [TkIdent, "public" | "private" | "protected" | "internal" | "override" | "static"]:
 					modifiers.push(scanner.consume());
 				case [TkIdent, "var" | "const"]:
-					return parseClassVarNext(metadata, modifiers, scanner.consume());
+					return parseClassVarNext(metadata, namespace, modifiers, scanner.consume());
 				case [TkIdent, "function"]:
-					return parseClassFunNext(metadata, modifiers, scanner.consume());
+					return parseClassFunNext(metadata, namespace, modifiers, scanner.consume());
+				case [TkIdent, _]:
+					if (namespace != null)
+						throw "Namespace already defined";
+					else
+						namespace = scanner.consume();
 				case _:
 					if (modifiers.length > 0)
 						throw "Modifiers without declaration";
 					if (metadata.length > 0)
 						throw "Metadata without declaration";
+					if (namespace != null)
+						throw "Namespace without declaration";
 					return null;
 			}
 		}
 	}
 
-	function parseClassVarNext(metadata:Array<Metadata>, modifiers:Array<Token>, keyword:Token):ClassField {
+	function parseClassVarNext(metadata:Array<Metadata>, namespace:Null<Token>, modifiers:Array<Token>, keyword:Token):ClassField {
 		var name = expectKind(TkIdent);
 		var hint = parseOptionalTypeHint();
 		var init = parseOptionalVarInit();
 		var semicolon = expectKind(TkSemicolon);
 		return {
 			metadata: metadata,
+			namespace: namespace,
 			modifiers: modifiers,
 			name: name,
 			kind: FVar({
@@ -245,7 +254,7 @@ class Parser {
 		}
 	}
 
-	function parseClassFunNext(metadata:Array<Metadata>, modifiers:Array<Token>, keyword:Token):ClassField {
+	function parseClassFunNext(metadata:Array<Metadata>, namespace:Null<Token>, modifiers:Array<Token>, keyword:Token):ClassField {
 		var name, propKind;
 		var nameToken = expectKind(TkIdent);
 		switch nameToken.text {
@@ -282,6 +291,7 @@ class Parser {
 
 		return {
 			metadata: metadata,
+			namespace: namespace,
 			modifiers: modifiers,
 			name: name,
 			kind: if (propKind == null) FFun(fun) else FProp(propKind, fun)

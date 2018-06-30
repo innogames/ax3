@@ -55,6 +55,7 @@ typedef InterfaceDecl = {
 
 typedef ClassField = {
 	var metadata:Array<Metadata>;
+	var namespace:Null<Token>;
 	var modifiers:Array<Token>;
 	var name:Token;
 	var kind:ClassFieldKind;
