@@ -50,6 +50,7 @@ typedef InterfaceDecl = {
 	var name:Token;
 	var extend:Null<{keyword:Token, paths:Separated<DotPath>}>;
 	var openBrace:Token;
+	var fields:Array<InterfaceField>;
 	var closeBrace:Token;
 }
 
@@ -98,6 +99,26 @@ typedef FunctionArg = {
 	var name:Token;
 	var hint:Null<TypeHint>;
 	var init:Null<VarInit>;
+}
+
+typedef InterfaceField = {
+	var metadata:Array<Metadata>;
+	var name:Token;
+	var kind:InterfaceFieldKind;
+	var semicolon:Token;
+}
+
+enum InterfaceFieldKind {
+	IFFun(f:InterfaceFun);
+	IFProp(kind:PropKind, f:InterfaceFun);
+}
+
+typedef InterfaceFun = {
+	var keyword:Token;
+	var openParen:Token;
+	var args:Separated<FunctionArg>;
+	var closeParen:Token;
+	var ret:TypeHint;
 }
 
 typedef TypeHint = {

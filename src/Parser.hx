@@ -267,15 +267,7 @@ class Parser {
 		}
 
 		var openParen = expectKind(TkParenOpen);
-		var args = {
-			var token = scanner.advance();
-			if (token.kind == TkIdent) {
-				var first = parseFunctionArgNext(scanner.consume());
-				parseSeparatedNext(first, parseFunctionArg, t -> t.kind == TkComma);
-			} else {
-				null;
-			}
-		}
+		var args = parseFunctionArgs();
 		var closeParen = expectKind(TkParenClose);
 		var ret = parseOptionalTypeHint();
 		var block = parseBracedExprBlock(expectKind(TkBraceOpen));
@@ -303,6 +295,16 @@ class Parser {
 			openBrace: openBrace,
 			exprs: parseSequence(parseOptionalBlockExpr),
 			closeBrace: expectKind(TkBraceClose)
+		}
+	}
+
+	function parseFunctionArgs():Null<Separated<FunctionArg>> {
+		var token = scanner.advance();
+		if (token.kind == TkIdent) {
+			var first = parseFunctionArgNext(scanner.consume());
+			return parseSeparatedNext(first, parseFunctionArg, t -> t.kind == TkComma);
+		} else {
+			return null;
 		}
 	}
 
@@ -812,6 +814,7 @@ class Parser {
 		}
 
 		var openBrace = expectKind(TkBraceOpen);
+		var fields = parseSequence(parseInterfaceField);
 		var closeBrace = expectKind(TkBraceClose);
 		return {
 			metadata: metadata,
@@ -820,7 +823,52 @@ class Parser {
 			name: name,
 			extend: extend,
 			openBrace: openBrace,
+			fields: fields,
 			closeBrace: closeBrace
+		};
+	}
+
+	function parseInterfaceField():Null<InterfaceField> {
+		var metadata = parseSequence(parseOptionalMetadata);
+		var token = scanner.advance();
+		if (token.kind == TkIdent && token.text == "function") {
+			return parseInterfaceFunNext(metadata, scanner.consume());
+		} else {
+			return null;
+		}
+	}
+
+	function parseInterfaceFunNext(metadata:Array<Metadata>, keyword:Token):InterfaceField {
+		var name, propKind;
+		var nameToken = expectKind(TkIdent);
+		switch nameToken.text {
+			case type = "get" | "set" if (scanner.advance().kind == TkIdent):
+				name = scanner.consume();
+				propKind = if (type == "get") PGet(nameToken) else PSet(nameToken);
+			case _:
+				name = nameToken;
+				propKind = null;
+		}
+
+		var openParen = expectKind(TkParenOpen);
+		var args = parseFunctionArgs();
+		var closeParen = expectKind(TkParenClose);
+		var ret = parseTypeHint();
+		var semicolon = expectKind(TkSemicolon);
+
+		var fun:InterfaceFun = {
+			keyword: keyword,
+			openParen: openParen,
+			args: args,
+			closeParen: closeParen,
+			ret: ret,
+		};
+
+		return {
+			metadata: metadata,
+			name: name,
+			kind: if (propKind == null) IFFun(fun) else IFProp(propKind, fun),
+			semicolon: semicolon
 		};
 	}
 
