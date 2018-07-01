@@ -348,7 +348,12 @@ class Scanner {
 						switch text.fastCodeAt(pos) {
 							case "&".code:
 								pos++;
-								return mk(TkAmpersandAmpersand);
+								if (pos < end && text.fastCodeAt(pos) == "=".code) {
+									pos++;
+									return mk(TkAmpersandAmpersandEquals);
+								} else {
+									return mk(TkAmpersandAmpersand);
+								}
 							case "=".code:
 								pos++;
 								return mk(TkAmpersandEquals);
@@ -365,7 +370,12 @@ class Scanner {
 						switch text.fastCodeAt(pos) {
 							case "|".code:
 								pos++;
-								return mk(TkPipePipe);
+								if (pos < end && text.fastCodeAt(pos) == "=".code) {
+									pos++;
+									return mk(TkPipePipeEquals);
+								} else {
+									return mk(TkPipePipe);
+								}
 							case "=".code:
 								pos++;
 								return mk(TkPipeEquals);

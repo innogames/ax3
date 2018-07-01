@@ -42,9 +42,11 @@ enum TokenKind {
 	TkEof;
 	TkAmpersand;
 	TkAmpersandAmpersand;
+	TkAmpersandAmpersandEquals;
 	TkAmpersandEquals;
 	TkPipe;
 	TkPipePipe;
+	TkPipePipeEquals;
 	TkPipeEquals;
 	TkCaret;
 	TkCaretEquals;

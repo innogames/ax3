@@ -754,12 +754,16 @@ class Parser {
 				return parseBinop(first, OpBitAnd);
 			case TkAmpersandAmpersand:
 				return parseBinop(first, OpAnd);
+			case TkAmpersandAmpersandEquals:
+				return parseBinop(first, OpAssignAnd);
 			case TkAmpersandEquals:
 				return parseBinop(first, OpAssignBitAnd);
 			case TkPipe:
 				return parseBinop(first, OpBitOr);
 			case TkPipePipe:
 				return parseBinop(first, OpOr);
+			case TkPipePipeEquals:
+				return parseBinop(first, OpAssignOr);
 			case TkPipeEquals:
 				return parseBinop(first, OpAssignBitOr);
 			case TkCaret:

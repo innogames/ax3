@@ -259,6 +259,8 @@ enum Binop {
 	OpAssignMul(t:Token);
 	OpAssignDiv(t:Token);
 	OpAssignMod(t:Token);
+	OpAssignAnd(t:Token);
+	OpAssignOr(t:Token);
 	OpAssignBitAnd(t:Token);
 	OpAssignBitOr(t:Token);
 	OpAssignBitXor(t:Token);
