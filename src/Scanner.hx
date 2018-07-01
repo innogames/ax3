@@ -251,6 +251,7 @@ class Scanner {
 						return mk(TkRegExp);
 					} else {
 						if (pos < end && text.fastCodeAt(pos) == "=".code) {
+							pos++;
 							return mk(TkSlashEquals);
 						} else {
 							return mk(TkSlash);
