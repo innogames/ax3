@@ -207,21 +207,18 @@ class Parser {
 	}
 
 	function parseClassVarNext(metadata:Array<Metadata>, namespace:Null<Token>, modifiers:Array<Token>, keyword:Token):ClassField {
-		var name = expectKind(TkIdent);
-		var hint = parseOptionalTypeHint();
-		var init = parseOptionalVarInit();
+		var vars = parseSeparated(function() {
+			var firstName = expectKind(TkIdent);
+			var type = parseOptionalTypeHint();
+			var init = parseOptionalVarInit();
+			return {name: firstName, type: type, init: init};
+		}, t -> t.kind == TkComma);
 		var semicolon = expectKind(TkSemicolon);
 		return {
 			metadata: metadata,
 			namespace: namespace,
 			modifiers: modifiers,
-			name: name,
-			kind: FVar({
-				keyword: keyword,
-				hint: hint,
-				init: init,
-				semicolon: semicolon
-			})
+			kind: FVar(keyword, vars, semicolon)
 		};
 	}
 
@@ -259,16 +256,15 @@ class Parser {
 			case TkIdent: scanner.consume();
 			case _: null;
 		}
-		return EFunction(name, parseFunctionNext(keyword));
+		return EFunction(keyword, name, parseFunctionNext());
 	}
 
-	function parseFunctionSignature(keyword:Token):FunctionSignature {
+	function parseFunctionSignature():FunctionSignature {
 		var openParen = expectKind(TkParenOpen);
 		var args = parseFunctionArgs();
 		var closeParen = expectKind(TkParenClose);
 		var ret = parseOptionalTypeHint();
 		return {
-			keyword: keyword,
 			openParen: openParen,
 			args: args,
 			closeParen: closeParen,
@@ -276,8 +272,8 @@ class Parser {
 		};
 	}
 
-	function parseFunctionNext(keyword:Token):Function {
-		var signature = parseFunctionSignature(keyword);
+	function parseFunctionNext():Function {
+		var signature = parseFunctionSignature();
 		var block = parseBracedExprBlock(expectKind(TkBraceOpen));
 		return {
 			signature: signature,
@@ -297,13 +293,12 @@ class Parser {
 				propKind = null;
 		}
 
-		var fun = parseFunctionNext(keyword);
+		var fun = parseFunctionNext();
 		return {
 			metadata: metadata,
 			namespace: namespace,
 			modifiers: modifiers,
-			name: name,
-			kind: if (propKind == null) FFun(fun) else FProp(propKind, fun)
+			kind: if (propKind == null) FFun(keyword, name, fun) else FProp(keyword, propKind, name, fun)
 		};
 	}
 
@@ -562,7 +557,6 @@ class Parser {
 	}
 
 	function parseVars(keyword:Token):Expr {
-		// TODO: disable comma expression parsing here
 		var vars = parseSeparated(function() {
 			var firstName = expectKind(TkIdent);
 			var type = parseOptionalTypeHint();
@@ -911,13 +905,12 @@ class Parser {
 				propKind = null;
 		}
 
-		var signature = parseFunctionSignature(keyword);
+		var signature = parseFunctionSignature();
 		var semicolon = expectKind(TkSemicolon);
 
 		return {
 			metadata: metadata,
-			name: name,
-			kind: if (propKind == null) IFFun(signature) else IFProp(propKind, signature),
+			kind: if (propKind == null) IFFun(keyword, name, signature) else IFProp(keyword, propKind, name, signature),
 			semicolon: semicolon
 		};
 	}

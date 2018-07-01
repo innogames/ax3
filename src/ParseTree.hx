@@ -58,26 +58,18 @@ typedef ClassField = {
 	var metadata:Array<Metadata>;
 	var namespace:Null<Token>;
 	var modifiers:Array<Token>;
-	var name:Token;
 	var kind:ClassFieldKind;
 }
 
 enum ClassFieldKind {
-	FVar(v:ClassVar);
-	FFun(f:Function);
-	FProp(kind:PropKind, f:Function);
+	FVar(keyword:Token, vars:Separated<VarDecl>, semicolon:Token);
+	FFun(keyword:Token, name:Token, fun:Function);
+	FProp(keyword:Token, kind:PropKind, name:Token, fun:Function);
 }
 
 enum PropKind {
 	PGet(keyword:Token);
 	PSet(keyword:Token);
-}
-
-typedef ClassVar = {
-	var keyword:Token;
-	var hint:Null<TypeHint>;
-	var init:Null<VarInit>;
-	var semicolon:Token;
 }
 
 typedef BracedExprBlock = {
@@ -87,7 +79,6 @@ typedef BracedExprBlock = {
 }
 
 typedef FunctionSignature = {
-	var keyword:Token;
 	var openParen:Token;
 	var args:Separated<FunctionArg>;
 	var closeParen:Token;
@@ -112,14 +103,13 @@ typedef FunctionArgNormal = {
 
 typedef InterfaceField = {
 	var metadata:Array<Metadata>;
-	var name:Token;
 	var kind:InterfaceFieldKind;
 	var semicolon:Token;
 }
 
 enum InterfaceFieldKind {
-	IFFun(f:FunctionSignature);
-	IFProp(kind:PropKind, f:FunctionSignature);
+	IFFun(keyword:Token, name:Token, fun:FunctionSignature);
+	IFProp(keyword:Token, kind:PropKind, name:Token, fun:FunctionSignature);
 }
 
 typedef TypeHint = {
@@ -174,7 +164,7 @@ enum Expr {
 	ECondCompValue(v:CondCompVar);
 	ECondCompBlock(v:CondCompVar, b:BracedExprBlock);
 	ETry(keyword:Token, block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>);
-	EFunction(name:Null<Token>, fun:Function);
+	EFunction(keyword:Token, name:Null<Token>, fun:Function);
 }
 
 typedef Catch = {
