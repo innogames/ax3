@@ -64,8 +64,8 @@ typedef ClassField = {
 
 enum ClassFieldKind {
 	FVar(v:ClassVar);
-	FFun(f:ClassFun);
-	FProp(kind:PropKind, f:ClassFun);
+	FFun(f:Function);
+	FProp(kind:PropKind, f:Function);
 }
 
 enum PropKind {
@@ -86,12 +86,16 @@ typedef BracedExprBlock = {
 	var closeBrace:Token;
 }
 
-typedef ClassFun = {
+typedef FunctionSignature = {
 	var keyword:Token;
 	var openParen:Token;
 	var args:Separated<FunctionArg>;
 	var closeParen:Token;
 	var ret:Null<TypeHint>;
+}
+
+typedef Function = {
+	var signature:FunctionSignature;
 	var block:BracedExprBlock;
 }
 
@@ -109,16 +113,8 @@ typedef InterfaceField = {
 }
 
 enum InterfaceFieldKind {
-	IFFun(f:InterfaceFun);
-	IFProp(kind:PropKind, f:InterfaceFun);
-}
-
-typedef InterfaceFun = {
-	var keyword:Token;
-	var openParen:Token;
-	var args:Separated<FunctionArg>;
-	var closeParen:Token;
-	var ret:TypeHint;
+	IFFun(f:FunctionSignature);
+	IFProp(kind:PropKind, f:FunctionSignature);
 }
 
 typedef TypeHint = {
@@ -171,6 +167,7 @@ enum Expr {
 	ECondCompValue(v:CondCompVar);
 	ECondCompBlock(v:CondCompVar, b:BracedExprBlock);
 	ETry(keyword:Token, block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>);
+	EFunction(name:Null<Token>, fun:Function);
 }
 
 typedef Catch = {

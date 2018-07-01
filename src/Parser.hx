@@ -254,6 +254,37 @@ class Parser {
 		}
 	}
 
+	function parseLocalFunction(keyword:Token):Expr {
+		var name = switch scanner.advance().kind {
+			case TkIdent: scanner.consume();
+			case _: null;
+		}
+		return EFunction(name, parseFunctionNext(keyword));
+	}
+
+	function parseFunctionSignature(keyword:Token):FunctionSignature {
+		var openParen = expectKind(TkParenOpen);
+		var args = parseFunctionArgs();
+		var closeParen = expectKind(TkParenClose);
+		var ret = parseOptionalTypeHint();
+		return {
+			keyword: keyword,
+			openParen: openParen,
+			args: args,
+			closeParen: closeParen,
+			ret: ret
+		};
+	}
+
+	function parseFunctionNext(keyword:Token):Function {
+		var signature = parseFunctionSignature(keyword);
+		var block = parseBracedExprBlock(expectKind(TkBraceOpen));
+		return {
+			signature: signature,
+			block: block,
+		};
+	}
+
 	function parseClassFunNext(metadata:Array<Metadata>, namespace:Null<Token>, modifiers:Array<Token>, keyword:Token):ClassField {
 		var name, propKind;
 		var nameToken = expectKind(TkIdent);
@@ -266,21 +297,7 @@ class Parser {
 				propKind = null;
 		}
 
-		var openParen = expectKind(TkParenOpen);
-		var args = parseFunctionArgs();
-		var closeParen = expectKind(TkParenClose);
-		var ret = parseOptionalTypeHint();
-		var block = parseBracedExprBlock(expectKind(TkBraceOpen));
-
-		var fun:ClassFun = {
-			keyword: keyword,
-			openParen: openParen,
-			args: args,
-			closeParen: closeParen,
-			ret: ret,
-			block: block,
-		};
-
+		var fun = parseFunctionNext(keyword);
 		return {
 			metadata: metadata,
 			namespace: namespace,
@@ -445,6 +462,8 @@ class Parser {
 				return parseVars(consumedToken);
 			case "try":
 				return parseTry(consumedToken);
+			case "function":
+				return parseLocalFunction(consumedToken);
 			case "Vector":
 				return parseExprNext(EVector(parseVectorSyntax(consumedToken)));
 			case _:
@@ -869,24 +888,13 @@ class Parser {
 				propKind = null;
 		}
 
-		var openParen = expectKind(TkParenOpen);
-		var args = parseFunctionArgs();
-		var closeParen = expectKind(TkParenClose);
-		var ret = parseTypeHint();
+		var signature = parseFunctionSignature(keyword);
 		var semicolon = expectKind(TkSemicolon);
-
-		var fun:InterfaceFun = {
-			keyword: keyword,
-			openParen: openParen,
-			args: args,
-			closeParen: closeParen,
-			ret: ret,
-		};
 
 		return {
 			metadata: metadata,
 			name: name,
-			kind: if (propKind == null) IFFun(fun) else IFProp(propKind, fun),
+			kind: if (propKind == null) IFFun(signature) else IFProp(propKind, signature),
 			semicolon: semicolon
 		};
 	}
