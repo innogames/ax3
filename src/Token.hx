@@ -42,8 +42,10 @@ enum TokenKind {
 	TkEof;
 	TkAmpersand;
 	TkAmpersandAmpersand;
+	TkAmpersandEquals;
 	TkPipe;
 	TkPipePipe;
+	TkPipeEquals;
 	TkCaret;
 	TkCaretEquals;
 	TkIdent;
@@ -84,6 +86,7 @@ enum TokenKind {
 	TkStringDouble;
 	TkRegExp;
 	TkQuestion;
+	TkTilde;
 	TkExclamation;
 	TkExclamationEquals;
 	TkExclamationEqualsEquals;

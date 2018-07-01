@@ -280,6 +280,10 @@ class Scanner {
 						return mk(TkEquals);
 					}
 
+				case "~".code:
+					pos++;
+					return mk(TkTilde);
+
 				case "!".code:
 					pos++;
 					if (nextIsEquals()) {
@@ -339,18 +343,34 @@ class Scanner {
 
 				case "&".code:
 					pos++;
-					if (pos < end && text.fastCodeAt(pos) == "&".code) {
-						pos++;
-						return mk(TkAmpersandAmpersand);
+					if (pos < end) {
+						switch text.fastCodeAt(pos) {
+							case "&".code:
+								pos++;
+								return mk(TkAmpersandAmpersand);
+							case "=".code:
+								pos++;
+								return mk(TkAmpersandEquals);
+							case _:
+								return mk(TkAmpersand);
+						}
 					} else {
 						return mk(TkAmpersand);
 					}
 
 				case "|".code:
 					pos++;
-					if (pos < end && text.fastCodeAt(pos) == "|".code) {
-						pos++;
-						return mk(TkPipePipe);
+					if (pos < end) {
+						switch text.fastCodeAt(pos) {
+							case "|".code:
+								pos++;
+								return mk(TkPipePipe);
+							case "=".code:
+								pos++;
+								return mk(TkPipeEquals);
+							case _:
+								return mk(TkPipe);
+						}
 					} else {
 						return mk(TkPipe);
 					}

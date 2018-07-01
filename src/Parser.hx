@@ -397,6 +397,8 @@ class Parser {
 				return parseBlockOrObject(scanner.consume());
 			case TkExclamation:
 				return EPreUnop(PreNot(scanner.consume()), parseExpr());
+			case TkTilde:
+				return EPreUnop(PreBitNeg(scanner.consume()), parseExpr());
 			case TkMinus:
 				return EPreUnop(PreNeg(scanner.consume()), parseExpr());
 			case TkPlusPlus:
@@ -745,12 +747,18 @@ class Parser {
 				return parseBinop(first, OpBitAnd);
 			case TkAmpersandAmpersand:
 				return parseBinop(first, OpAnd);
+			case TkAmpersandEquals:
+				return parseBinop(first, OpAssignBitAnd);
 			case TkPipe:
 				return parseBinop(first, OpBitOr);
 			case TkPipePipe:
 				return parseBinop(first, OpOr);
+			case TkPipeEquals:
+				return parseBinop(first, OpAssignBitOr);
 			case TkCaret:
 				return parseBinop(first, OpBitXor);
+			case TkCaretEquals:
+				return parseBinop(first, OpAssignBitXor);
 			case TkBracketOpen:
 				var openBracket = scanner.consume();
 				var eindex = parseExpr();

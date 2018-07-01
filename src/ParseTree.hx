@@ -233,6 +233,7 @@ enum PreUnop {
 	PreNeg(t:Token);
 	PreIncr(t:Token);
 	PreDecr(t:Token);
+	PreBitNeg(t:Token);
 }
 
 enum PostUnop {
@@ -258,6 +259,9 @@ enum Binop {
 	OpAssignMul(t:Token);
 	OpAssignDiv(t:Token);
 	OpAssignMod(t:Token);
+	OpAssignBitAnd(t:Token);
+	OpAssignBitOr(t:Token);
+	OpAssignBitXor(t:Token);
 	OpEquals(t:Token);
 	OpNotEquals(t:Token);
 	OpStrictEquals(t:Token);
