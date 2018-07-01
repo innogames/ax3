@@ -362,7 +362,14 @@ class Parser {
 	}
 
 	function parseBlockExprNext(expr:Expr):BlockElement {
-		var semicolon = if (scanner.lastConsumedToken.kind != TkBraceClose) expectKind(TkSemicolon) else null;
+		var semicolon = switch scanner.advance().kind {
+			case TkSemicolon:
+				scanner.consume();
+			case _ if (scanner.lastConsumedToken.kind != TkBraceClose):
+				throw "Semicolon expected after block expression";
+			case _:
+				null;
+		}
 		return {expr: expr, semicolon: semicolon};
 	}
 
