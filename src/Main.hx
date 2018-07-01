@@ -1,8 +1,20 @@
 import sys.FileSystem;
 
 class Main {
+	static var eagerFail = false;
+
 	static function main() {
-		walk(Sys.args()[0]);
+		var args = Sys.args();
+		var dir = switch args {
+			case ["eagerFail", path]:
+				eagerFail = true;
+				path;
+			case [path]:
+				path;
+			case _:
+				throw "invalid args";
+		}
+		walk(dir);
 	}
 
 	static function walk(dir:String) {
@@ -24,15 +36,18 @@ class Main {
 		var content = stripBOM(sys.io.File.getContent(path));
 		var scanner = new Scanner(content);
 		var parser = new Parser(scanner);
-		// var file = parser.parse();
-		// var dump = ParseTreeDump.printFile(file, "");
-		// Sys.println(dump);
-		try {
-			parser.parse();
-		} catch (e:Any) {
-			var pos = @:privateAccess scanner.pos;
-			var line = getLine(content, pos);
-			printerr('$path:$line: $e');
+		if (eagerFail) {
+			var file = parser.parse();
+			var dump = ParseTreeDump.printFile(file, "");
+			Sys.println(dump);
+		} else {
+			try {
+				parser.parse();
+			} catch (e:Any) {
+				var pos = @:privateAccess scanner.pos;
+				var line = getLine(content, pos);
+				printerr('$path:$line: $e');
+			}
 		}
 	}
 

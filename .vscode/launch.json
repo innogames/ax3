@@ -7,7 +7,7 @@
 			"name": "Launch Program",
 			"program": "${workspaceFolder}/main.js",
 			"args": [
-				// "."
+				// "eagerFail", "."
 				"E:/Code/foe/Frontend/client/src"
 			],
 			"outFiles": ["${workspaceFolder}/main.js"],
