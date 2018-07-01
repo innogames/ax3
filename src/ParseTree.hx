@@ -163,6 +163,7 @@ enum Expr {
 	EVars(keyword:Token, vars:Separated<VarDecl>);
 	EAs(e:Expr, keyword:Token, t:SyntaxType);
 	EIs(e:Expr, keyword:Token, t:SyntaxType);
+	EComma(a:Expr, comma:Token, b:Expr);
 	EVector(v:VectorSyntax);
 	ESwitch(keyword:Token, openParen:Token, subj:Expr, closeParen:Token, openBrace:Token, cases:Array<SwitchCase>, closeBrace:Token);
 	ECondCompValue(v:CondCompVar);

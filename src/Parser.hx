@@ -247,7 +247,7 @@ class Parser {
 		var token = scanner.advance();
 		if (token.kind == TkEquals) {
 			var equals = scanner.consume();
-			var expr = parseExpr();
+			var expr = parseExpr(false);
 			return {equals: equals, expr: expr};
 		} else {
 			return null;
@@ -372,7 +372,7 @@ class Parser {
 	}
 
 	function parseOptionalBlockExpr():Null<BlockElement> {
-		var expr = parseOptionalExpr();
+		var expr = parseOptionalExpr(true);
 		if (expr == null)
 			return null;
 		return parseBlockExprNext(expr);
@@ -390,62 +390,62 @@ class Parser {
 		return {expr: expr, semicolon: semicolon};
 	}
 
-	function parseExpr():Expr {
-		var expr = parseOptionalExpr();
+	function parseExpr(allowComma:Bool):Expr {
+		var expr = parseOptionalExpr(allowComma);
 		if (expr == null)
 			throw "Expression expected";
 		return expr;
 	}
 
-	function parseOptionalExpr():Null<Expr> {
+	function parseOptionalExpr(allowComma:Bool):Null<Expr> {
 		var token = scanner.advanceExprStart();
 		switch token.kind {
 			case TkIdent:
 				if (token.text ==  "case" || token.text == "default") // not part of expression, so don't even consume the token
 					return null;
 				else
-					return parseIdent(scanner.consume());
+					return parseIdent(scanner.consume(), allowComma);
 			case TkStringSingle | TkStringDouble:
-				return parseExprNext(ELiteral(LString(scanner.consume())));
+				return parseExprNext(ELiteral(LString(scanner.consume())), allowComma);
 			case TkRegExp:
-				return parseExprNext(ELiteral(LRegExp(scanner.consume())));
+				return parseExprNext(ELiteral(LRegExp(scanner.consume())), allowComma);
 			case TkDecimalInteger:
-				return parseExprNext(ELiteral(LDecInt(scanner.consume())));
+				return parseExprNext(ELiteral(LDecInt(scanner.consume())), allowComma);
 			case TkHexadecimalInteger:
-				return parseExprNext(ELiteral(LHexInt(scanner.consume())));
+				return parseExprNext(ELiteral(LHexInt(scanner.consume())), allowComma);
 			case TkFloat:
-				return parseExprNext(ELiteral(LFloat(scanner.consume())));
+				return parseExprNext(ELiteral(LFloat(scanner.consume())), allowComma);
 			case TkParenOpen:
-				return parseExprNext(EParens(scanner.consume(), parseExpr(), expectKind(TkParenClose)));
+				return parseExprNext(EParens(scanner.consume(), parseExpr(true), expectKind(TkParenClose)), allowComma);
 			case TkBraceOpen:
 				return parseBlockOrObject(scanner.consume());
 			case TkExclamation:
-				return EPreUnop(PreNot(scanner.consume()), parseExpr());
+				return EPreUnop(PreNot(scanner.consume()), parseExpr(allowComma));
 			case TkTilde:
-				return EPreUnop(PreBitNeg(scanner.consume()), parseExpr());
+				return EPreUnop(PreBitNeg(scanner.consume()), parseExpr(allowComma));
 			case TkMinus:
-				return EPreUnop(PreNeg(scanner.consume()), parseExpr());
+				return EPreUnop(PreNeg(scanner.consume()), parseExpr(allowComma));
 			case TkPlusPlus:
-				return EPreUnop(PreIncr(scanner.consume()), parseExpr());
+				return EPreUnop(PreIncr(scanner.consume()), parseExpr(allowComma));
 			case TkMinusMinus:
-				return EPreUnop(PreDecr(scanner.consume()), parseExpr());
+				return EPreUnop(PreDecr(scanner.consume()), parseExpr(allowComma));
 			case TkBracketOpen:
-				return parseExprNext(EArrayDecl(parseArrayDecl(scanner.consume())));
+				return parseExprNext(EArrayDecl(parseArrayDecl(scanner.consume())), allowComma);
 			case _:
 				return null;
 		}
 	}
 
-	function parseIdent(consumedToken:Token):Expr {
+	function parseIdent(consumedToken:Token, allowComma:Bool):Expr {
 		switch consumedToken.text {
 			case "new":
 				return parseNewNext(consumedToken);
 			case "return":
-				return EReturn(consumedToken, parseOptionalExpr());
+				return EReturn(consumedToken, parseOptionalExpr(allowComma));
 			case "throw":
-				return EThrow(consumedToken, parseExpr());
+				return EThrow(consumedToken, parseExpr(allowComma));
 			case "delete":
-				return EDelete(consumedToken, parseExpr());
+				return EDelete(consumedToken, parseExpr(allowComma));
 			case "if":
 				return parseIf(consumedToken);
 			case "switch":
@@ -467,13 +467,13 @@ class Parser {
 			case "function":
 				return parseLocalFunction(consumedToken);
 			case "Vector":
-				return parseExprNext(EVector(parseVectorSyntax(consumedToken)));
+				return parseExprNext(EVector(parseVectorSyntax(consumedToken)), allowComma);
 			case _:
-				return parseActualIdent(consumedToken);
+				return parseActualIdent(consumedToken, allowComma);
 		}
 	}
 
-	function parseActualIdent(token:Token):Expr {
+	function parseActualIdent(token:Token, allowComma:Bool):Expr {
 		switch scanner.advance().kind {
 			case TkColonColon:
 				// conditional compilation
@@ -488,7 +488,7 @@ class Parser {
 				}
 			case _:
 				// just an indentifier
-				return parseExprNext(EIdent(token));
+				return parseExprNext(EIdent(token), allowComma);
 		}
 	}
 
@@ -504,8 +504,8 @@ class Parser {
 						return parseObjectNext(openBrace, stringOrIdent, scanner.consume());
 					case _:
 						var firstExpr = switch stringOrIdent.kind {
-							case TkIdent: parseIdent(stringOrIdent);
-							case TkStringSingle | TkStringDouble: return parseExprNext(ELiteral(LString(stringOrIdent)));
+							case TkIdent: parseIdent(stringOrIdent, true);
+							case TkStringSingle | TkStringDouble: return parseExprNext(ELiteral(LString(stringOrIdent)), true);
 							case _: throw "assert";
 						}
 						var first = parseBlockExprNext(firstExpr);
@@ -525,13 +525,13 @@ class Parser {
 	}
 
 	function parseObjectNext(openBrace:Token, firstIdent:Token, firstColon:Token):Expr {
-		var first = {name: firstIdent, colon: firstColon, value: parseExpr()};
+		var first = {name: firstIdent, colon: firstColon, value: parseExpr(false)};
 		var fields = parseSeparatedNext(first, function() {
 			return switch scanner.advance().kind {
 				case TkIdent | TkStringSingle | TkStringDouble:
 					var name = scanner.consume();
 					var colon = expectKind(TkColon);
-					var expr = parseExpr();
+					var expr = parseExpr(false);
 					{name: name, colon: colon, value: expr};
 				case _:
 					throw "Object keys must be identifiers or strings";
@@ -546,7 +546,7 @@ class Parser {
 			case TkBracketClose:
 				{openBracket: openBracket, elems: null, closeBracket: scanner.consume()};
 			case _:
-				var elems = parseSeparated(parseExpr, t -> t.kind == TkComma);
+				var elems = parseSeparated(parseExpr.bind(false), t -> t.kind == TkComma);
 				{openBracket: openBracket, elems: elems, closeBracket: expectKind(TkBracketClose)};
 		};
 	}
@@ -595,12 +595,12 @@ class Parser {
 
 	function parseIf(keyword:Token):Expr {
 		var openParen = expectKind(TkParenOpen);
-		var econd = parseExpr();
+		var econd = parseExpr(true);
 		var closeParen = expectKind(TkParenClose);
-		var ethen = parseExpr();
+		var ethen = parseExpr(true);
 		var eelse = switch scanner.advance() {
 			case {kind: TkIdent, text: "else"}:
-				{keyword: scanner.consume(), expr: parseExpr()};
+				{keyword: scanner.consume(), expr: parseExpr(true)};
 			case _:
 				null;
 		}
@@ -609,7 +609,7 @@ class Parser {
 
 	function parseSwitch(keyword:Token):Expr {
 		var openParen = expectKind(TkParenOpen);
-		var esubj = parseExpr();
+		var esubj = parseExpr(true);
 		var closeParen = expectKind(TkParenClose);
 		var openBrace = expectKind(TkBraceOpen);
 		var cases = parseSequence(function() {
@@ -617,7 +617,7 @@ class Parser {
 			return switch [token.kind, token.text] {
 				case [TkIdent, "case"]:
 					var keyword = scanner.consume();
-					var v = parseExpr();
+					var v = parseExpr(false);
 					var colon = expectKind(TkColon);
 					var exprs = parseSequence(parseOptionalBlockExpr);
 					CCase(keyword, v, colon, exprs);
@@ -638,17 +638,17 @@ class Parser {
 
 	function parseWhile(keyword:Token):Expr {
 		var openParen = expectKind(TkParenOpen);
-		var econd = parseExpr();
+		var econd = parseExpr(true);
 		var closeParen = expectKind(TkParenClose);
-		var ebody = parseExpr();
+		var ebody = parseExpr(true);
 		return EWhile(keyword, openParen, econd, closeParen, ebody);
 	}
 
 	function parseDoWhile(doKeyword:Token):Expr {
-		var ebody = parseExpr();
+		var ebody = parseExpr(true);
 		var whileKeyword = expectKeyword("while");
 		var openParen = expectKind(TkParenOpen);
-		var econd = parseExpr();
+		var econd = parseExpr(true);
 		var closeParen = expectKind(TkParenClose);
 		return EDoWhile(doKeyword, ebody, whileKeyword, openParen, econd, closeParen);
 	}
@@ -659,7 +659,7 @@ class Parser {
 				parseForEach(keyword, scanner.consume());
 			case _:
 				var openParen = expectKind(TkParenOpen);
-				var einit = parseOptionalExpr();
+				var einit = parseOptionalExpr(true);
 				if (einit == null) {
 					parseCFor(keyword, openParen, null);
 				} else {
@@ -668,7 +668,7 @@ class Parser {
 						parseCFor(keyword, openParen, einit);
  					} else {
 						var closeParen = expectKind(TkParenClose);
-						var ebody = parseExpr();
+						var ebody = parseExpr(true);
 						EForIn(keyword, openParen, forIter, closeParen, ebody);
 					}
 				}
@@ -682,7 +682,7 @@ class Parser {
 			case _:
 				switch scanner.advance() {
 					case {kind: TkIdent, text: "in"}:
-						{eit: expr, inKeyword: scanner.consume(), eobj: parseExpr()}
+						{eit: expr, inKeyword: scanner.consume(), eobj: parseExpr(true)}
 					case _:
 						null;
 				}
@@ -691,21 +691,21 @@ class Parser {
 
 	function parseForEach(forKeyword:Token, eachKeyword:Token):Expr {
 		var openParen = expectKind(TkParenOpen);
-		var iter = parseOptionalForIter(parseExpr());
+		var iter = parseOptionalForIter(parseExpr(true));
 		if (iter == null)
 			throw "`a in b` expression expected for the `for each` loop";
 		var closeParen = expectKind(TkParenClose);
-		var body = parseExpr();
+		var body = parseExpr(true);
 		return EForEach(forKeyword, eachKeyword, openParen, iter, closeParen, body);
 	}
 
 	function parseCFor(forKeyword:Token, openParen:Token, einit:Expr):Expr {
 		var einitSep = expectKind(TkSemicolon);
-		var econd = parseOptionalExpr();
+		var econd = parseOptionalExpr(true);
 		var econdSep = expectKind(TkSemicolon);
-		var eincr = parseOptionalExpr();
+		var eincr = parseOptionalExpr(true);
 		var closeParen = expectKind(TkParenClose);
-		var ebody = parseExpr();
+		var ebody = parseExpr(true);
 		return EFor(forKeyword, openParen, einit, einitSep, econd, econdSep, eincr, closeParen, ebody);
 	}
 
@@ -716,124 +716,126 @@ class Parser {
 				var decl = parseArrayDecl(expectKind(TkBracketOpen));
 				EVectorDecl(keyword, t, decl);
 			case _:
-				switch parseExpr() {
+				switch parseExpr(false) {
 					case ECall(e, args): ENew(keyword, e, args);
 					case e: ENew(keyword, e, null);
 				}
 		}
 	}
 
-	function parseExprNext(first:Expr) {
+	function parseExprNext(first:Expr, allowComma:Bool) {
 		var token = scanner.advance();
 		switch token.kind {
 			case TkParenOpen:
-				return parseExprNext(ECall(first, parseCallArgsNext(scanner.consume())));
+				return parseExprNext(ECall(first, parseCallArgsNext(scanner.consume())), allowComma);
 			case TkDot:
 				var dot = scanner.consume();
 				var fieldName = expectKind(TkIdent);
-				return parseExprNext(EField(first, dot, fieldName));
+				return parseExprNext(EField(first, dot, fieldName), allowComma);
 			case TkPlus:
-				return parseBinop(first, OpAdd);
+				return parseBinop(first, OpAdd, allowComma);
 			case TkPlusEquals:
-				return parseBinop(first, OpAssignAdd);
+				return parseBinop(first, OpAssignAdd, allowComma);
 			case TkPlusPlus:
-				return parseExprNext(EPostUnop(first, PostIncr(scanner.consume())));
+				return parseExprNext(EPostUnop(first, PostIncr(scanner.consume())), allowComma);
 			case TkMinus:
-				return parseBinop(first, OpSub);
+				return parseBinop(first, OpSub, allowComma);
 			case TkMinusEquals:
-				return parseBinop(first, OpAssignSub);
+				return parseBinop(first, OpAssignSub, allowComma);
 			case TkMinusMinus:
-				return parseExprNext(EPostUnop(first, PostDecr(scanner.consume())));
+				return parseExprNext(EPostUnop(first, PostDecr(scanner.consume())), allowComma);
 			case TkAsterisk:
-				return parseBinop(first, OpMul);
+				return parseBinop(first, OpMul, allowComma);
 			case TkAsteriskEquals:
-				return parseBinop(first, OpAssignMul);
+				return parseBinop(first, OpAssignMul, allowComma);
 			case TkSlash:
-				return parseBinop(first, OpDiv);
+				return parseBinop(first, OpDiv, allowComma);
 			case TkSlashEquals:
-				return parseBinop(first, OpAssignDiv);
+				return parseBinop(first, OpAssignDiv, allowComma);
 			case TkPercent:
-				return parseBinop(first, OpMod);
+				return parseBinop(first, OpMod, allowComma);
 			case TkPercentEquals:
-				return parseBinop(first, OpAssignMod);
+				return parseBinop(first, OpAssignMod, allowComma);
 			case TkEquals:
-				return parseBinop(first, OpAssign);
+				return parseBinop(first, OpAssign, allowComma);
 			case TkEqualsEquals:
-				return parseBinop(first, OpEquals);
+				return parseBinop(first, OpEquals, allowComma);
 			case TkEqualsEqualsEquals:
-				return parseBinop(first, OpStrictEquals);
+				return parseBinop(first, OpStrictEquals, allowComma);
 			case TkExclamationEquals:
-				return parseBinop(first, OpNotEquals);
+				return parseBinop(first, OpNotEquals, allowComma);
 			case TkExclamationEqualsEquals:
-				return parseBinop(first, OpNotStrictEquals);
+				return parseBinop(first, OpNotStrictEquals, allowComma);
 			case TkLt:
-				return parseBinop(first, OpLt);
+				return parseBinop(first, OpLt, allowComma);
 			case TkLtLt:
-				return parseBinop(first, OpShl);
+				return parseBinop(first, OpShl, allowComma);
 			case TkLtEquals:
-				return parseBinop(first, OpLte);
+				return parseBinop(first, OpLte, allowComma);
 			case TkGt:
-				return parseBinop(first, OpGt);
+				return parseBinop(first, OpGt, allowComma);
 			case TkGtGt:
-				return parseBinop(first, OpShr);
+				return parseBinop(first, OpShr, allowComma);
 			case TkGtGtGt:
-				return parseBinop(first, OpUshr);
+				return parseBinop(first, OpUshr, allowComma);
 			case TkGtEquals:
-				return parseBinop(first, OpGte);
+				return parseBinop(first, OpGte, allowComma);
 			case TkAmpersand:
-				return parseBinop(first, OpBitAnd);
+				return parseBinop(first, OpBitAnd, allowComma);
 			case TkAmpersandAmpersand:
-				return parseBinop(first, OpAnd);
+				return parseBinop(first, OpAnd, allowComma);
 			case TkAmpersandAmpersandEquals:
-				return parseBinop(first, OpAssignAnd);
+				return parseBinop(first, OpAssignAnd, allowComma);
 			case TkAmpersandEquals:
-				return parseBinop(first, OpAssignBitAnd);
+				return parseBinop(first, OpAssignBitAnd, allowComma);
 			case TkPipe:
-				return parseBinop(first, OpBitOr);
+				return parseBinop(first, OpBitOr, allowComma);
 			case TkPipePipe:
-				return parseBinop(first, OpOr);
+				return parseBinop(first, OpOr, allowComma);
 			case TkPipePipeEquals:
-				return parseBinop(first, OpAssignOr);
+				return parseBinop(first, OpAssignOr, allowComma);
 			case TkPipeEquals:
-				return parseBinop(first, OpAssignBitOr);
+				return parseBinop(first, OpAssignBitOr, allowComma);
 			case TkCaret:
-				return parseBinop(first, OpBitXor);
+				return parseBinop(first, OpBitXor, allowComma);
 			case TkCaretEquals:
-				return parseBinop(first, OpAssignBitXor);
+				return parseBinop(first, OpAssignBitXor, allowComma);
 			case TkBracketOpen:
 				var openBracket = scanner.consume();
-				var eindex = parseExpr();
+				var eindex = parseExpr(true);
 				var closeBracket = expectKind(TkBracketClose);
-				return parseExprNext(EArrayAccess(first, openBracket, eindex, closeBracket));
+				return parseExprNext(EArrayAccess(first, openBracket, eindex, closeBracket), allowComma);
 			case TkQuestion:
-				return parseTernary(first, scanner.consume());
+				return parseTernary(first, scanner.consume(), allowComma);
 			case TkIdent:
 				switch token.text {
 					case "in":
-						return parseBinop(first, OpIn);
+						return parseBinop(first, OpIn, allowComma);
 					case "is":
-						return parseExprNext(EIs(first, scanner.consume(), parseSyntaxType(false)));
+						return parseExprNext(EIs(first, scanner.consume(), parseSyntaxType(false)), allowComma);
 					case "as":
-						return parseExprNext(EAs(first, scanner.consume(), parseSyntaxType(false)));
+						return parseExprNext(EAs(first, scanner.consume(), parseSyntaxType(false)), allowComma);
 					case _:
 				}
+			case TkComma if (allowComma):
+				return parseExprNext(EComma(first, scanner.consume(), parseExpr(false)), true);
 			case _:
 		}
 		return first;
 	}
 
-	function parseTernary(econd:Expr, question:Token):Expr {
-		var ethen = parseExpr();
+	function parseTernary(econd:Expr, question:Token, allowComma:Bool):Expr {
+		var ethen = parseExpr(true);
 		var colon = expectKind(TkColon);
-		var eelse = parseExpr();
+		var eelse = parseExpr(allowComma);
 		return ETernary(econd, question, ethen, colon, eelse);
 	}
 
-	function parseBinop(a:Expr, ctor:Token->Binop):Expr {
+	function parseBinop(a:Expr, ctor:Token->Binop, allowComma:Bool):Expr {
 		// TODO: handle precedence here (swap expressions when needed)
 		var token = scanner.consume();
-		var second = parseExpr();
-		return parseExprNext(EBinop(a, ctor(token), second));
+		var second = parseExpr(allowComma);
+		return parseExprNext(EBinop(a, ctor(token), second), allowComma);
 	}
 
 	function parseCallArgsNext(openParen:Token):CallArgs {
@@ -842,7 +844,7 @@ class Parser {
 			case TkParenClose:
 				return {openParen: openParen, args: null, closeParen: scanner.consume()};
 			case _:
-				var args = parseSeparated(parseExpr, t -> t.kind == TkComma);
+				var args = parseSeparated(parseExpr.bind(false), t -> t.kind == TkComma);
 				return {openParen: openParen, args: args, closeParen: expectKind(TkParenClose)};
 		}
 	}
