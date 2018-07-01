@@ -99,7 +99,12 @@ typedef Function = {
 	var block:BracedExprBlock;
 }
 
-typedef FunctionArg = {
+enum FunctionArg {
+	ArgNormal(a:FunctionArgNormal);
+	ArgRest(dots:Token, name:Token);
+}
+
+typedef FunctionArgNormal = {
 	var name:Token;
 	var hint:Null<TypeHint>;
 	var init:Null<VarInit>;

@@ -134,10 +134,23 @@ class Scanner {
 			switch ch {
 				case ".".code:
 					pos++;
-					if (pos < end && isDigit(text.fastCodeAt(pos))) {
-						pos++;
-						scanFloatAfterDot();
-						return mk(TkFloat);
+					if (pos < end) {
+						ch = text.fastCodeAt(pos);
+						if (ch == ".".code) {
+							pos++;
+							if (pos < end && text.fastCodeAt(pos) == ".".code) {
+								pos++;
+								return mk(TkDotDotDot);
+							} else {
+								return mk(TkDotDot);
+							}
+						} else if (isDigit(ch)) {
+							pos++;
+							scanFloatAfterDot();
+							return mk(TkFloat);
+						} else {
+							return mk(TkDot);
+						}
 					} else {
 						return mk(TkDot);
 					}

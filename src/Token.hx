@@ -63,6 +63,8 @@ enum TokenKind {
 	TkSlash;
 	TkSlashEquals;
 	TkDot;
+	TkDotDot;
+	TkDotDotDot;
 	TkComma;
 	TkEquals;
 	TkEqualsEquals;

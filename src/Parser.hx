@@ -315,25 +315,35 @@ class Parser {
 		}
 	}
 
-	function parseFunctionArgs():Null<Separated<FunctionArg>> {
-		var token = scanner.advance();
-		if (token.kind == TkIdent) {
-			var first = parseFunctionArgNext(scanner.consume());
-			return parseSeparatedNext(first, parseFunctionArg, t -> t.kind == TkComma);
-		} else {
-			return null;
+	function parseOptionalFunctionArg():Null<FunctionArg> {
+		return switch scanner.advance().kind {
+			case TkIdent:
+				return ArgNormal(parseFunctionArgNext(scanner.consume()));
+			case TkDotDotDot:
+				return ArgRest(scanner.consume(), expectKind(TkIdent));
+			case _:
+				null;
 		}
 	}
 
 	function parseFunctionArg():FunctionArg {
-		var name = expectKind(TkIdent);
-		return parseFunctionArgNext(name);
+		var arg = parseOptionalFunctionArg();
+		if (arg == null)
+			throw "Function argument expected";
+		return arg;
 	}
 
-	function parseFunctionArgNext(name:Token):FunctionArg {
+	function parseFunctionArgNext(name:Token):FunctionArgNormal {
 		var hint = parseOptionalTypeHint();
 		var init = parseOptionalVarInit();
 		return {name: name, hint: hint, init: init};
+	}
+
+	function parseFunctionArgs():Null<Separated<FunctionArg>> {
+		var first = parseOptionalFunctionArg();
+		if (first == null)
+			return null;
+		return parseSeparatedNext(first, parseFunctionArg, t -> t.kind == TkComma);
 	}
 
 	function parseSyntaxType(allowAny:Bool):SyntaxType {
