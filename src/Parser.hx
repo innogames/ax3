@@ -452,6 +452,8 @@ class Parser {
 				return parseSwitch(consumedToken);
 			case "while":
 				return parseWhile(consumedToken);
+			case "do":
+				return parseDoWhile(consumedToken);
 			case "for":
 				return parseFor(consumedToken);
 			case "break":
@@ -640,6 +642,15 @@ class Parser {
 		var closeParen = expectKind(TkParenClose);
 		var ebody = parseExpr();
 		return EWhile(keyword, openParen, econd, closeParen, ebody);
+	}
+
+	function parseDoWhile(doKeyword:Token):Expr {
+		var ebody = parseExpr();
+		var whileKeyword = expectKeyword("while");
+		var openParen = expectKind(TkParenOpen);
+		var econd = parseExpr();
+		var closeParen = expectKind(TkParenClose);
+		return EDoWhile(doKeyword, ebody, whileKeyword, openParen, econd, closeParen);
 	}
 
 	function parseFor(keyword:Token):Expr {

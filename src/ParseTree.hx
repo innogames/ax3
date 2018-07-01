@@ -153,6 +153,7 @@ enum Expr {
 	EIf(keyword:Token, openParen:Token, econd:Expr, closeParen:Token, ethen:Expr, eelse:Null<{keyword:Token, expr:Expr}>);
 	ETernary(econd:Expr, question:Token, ethen:Expr, colon:Token, eelse:Expr);
 	EWhile(keyword:Token, openParen:Token, cond:Expr, closeParen:Token, body:Expr);
+	EDoWhile(doKeyword:Token, body:Expr, whileKeyword:Token, openParen:Token, cond:Expr, closeParen:Token);
 	EFor(keyword:Token, openParen:Token, einit:Null<Expr>, initSep:Token, econd:Null<Expr>, condSep:Token, eincr:Null<Expr>, closeParen:Token, body:Expr);
 	EForIn(forKeyword:Token, openParen:Token, iter:ForIter, closeParen:Token, body:Expr);
 	EForEach(forKeyword:Token, eachKeyword:Token, openParen:Token, iter:ForIter, closeParen:Token, body:Expr);
