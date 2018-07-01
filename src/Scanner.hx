@@ -327,19 +327,24 @@ class Scanner {
 
 				case "<".code:
 					pos++;
-					if (pos < end) {
-						switch text.fastCodeAt(pos) {
-							case "<".code:
-								pos++;
-								return mk(TkLtLt);
-							case "=".code:
-								pos++;
-								return mk(TkLtEquals);
-							case _:
-								return mk(TkLt);
-						}
+					if (mode == MExprStart) {
+						scanXml();
+						return mk(TkXml);
 					} else {
-						return mk(TkLt);
+						if (pos < end) {
+							switch text.fastCodeAt(pos) {
+								case "<".code:
+									pos++;
+									return mk(TkLtLt);
+								case "=".code:
+									pos++;
+									return mk(TkLtEquals);
+								case _:
+									return mk(TkLt);
+							}
+						} else {
+							return mk(TkLt);
+						}
 					}
 
 				case "&".code:
@@ -574,6 +579,10 @@ class Scanner {
 				pos++;
 			}
 		}
+	}
+
+	function scanXml() {
+		throw "XML is not supported yet!";
 	}
 
 	function mkTrivia(kind:TriviaKind):Trivia {

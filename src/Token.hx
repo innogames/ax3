@@ -87,6 +87,7 @@ enum TokenKind {
 	TkStringSingle;
 	TkStringDouble;
 	TkRegExp;
+	TkXml;
 	TkQuestion;
 	TkTilde;
 	TkExclamation;
