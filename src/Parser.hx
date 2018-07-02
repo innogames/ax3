@@ -802,14 +802,20 @@ class Parser {
 				return parseBinop(first, OpLt, allowComma);
 			case TkLtLt:
 				return parseBinop(first, OpShl, allowComma);
+			case TkLtLtEquals:
+				return parseBinop(first, OpAssignShl, allowComma);
 			case TkLtEquals:
 				return parseBinop(first, OpLte, allowComma);
 			case TkGt:
 				return parseBinop(first, OpGt, allowComma);
 			case TkGtGt:
 				return parseBinop(first, OpShr, allowComma);
+			case TkGtGtEquals:
+				return parseBinop(first, OpAssignShr, allowComma);
 			case TkGtGtGt:
 				return parseBinop(first, OpUshr, allowComma);
+			case TkGtGtGtEquals:
+				return parseBinop(first, OpAssignUshr, allowComma);
 			case TkGtEquals:
 				return parseBinop(first, OpGte, allowComma);
 			case TkAmpersand:

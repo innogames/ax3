@@ -322,9 +322,22 @@ class Scanner {
 						switch text.fastCodeAt(pos) {
 							case ">".code if (mode != MNoRightShift):
 								pos++;
-								if (pos < end && text.fastCodeAt(pos) == ">".code) {
-									pos++;
-									return mk(TkGtGtGt);
+								if (pos < end) {
+									switch text.fastCodeAt(pos) {
+										case ">".code:
+											pos++;
+											if (pos < end && text.fastCodeAt(pos) == "=".code) {
+												pos++;
+												return mk(TkGtGtGtEquals);
+											} else {
+												return mk(TkGtGtGt);
+											}
+										case "=".code:
+											pos++;
+											return mk(TkGtGtEquals);
+										case _:
+											return mk(TkGtGt);
+									}
 								} else {
 									return mk(TkGtGt);
 								}
@@ -348,7 +361,12 @@ class Scanner {
 							switch text.fastCodeAt(pos) {
 								case "<".code:
 									pos++;
-									return mk(TkLtLt);
+									if (pos < end && text.fastCodeAt(pos) == "=".code) {
+										pos++;
+										return mk(TkLtLtEquals);
+									} else {
+										return mk(TkLtLt);
+									}
 								case "=".code:
 									pos++;
 									return mk(TkLtEquals);

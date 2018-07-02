@@ -271,6 +271,9 @@ enum Binop {
 	OpAssignBitAnd(t:Token);
 	OpAssignBitOr(t:Token);
 	OpAssignBitXor(t:Token);
+	OpAssignShl(t:Token);
+	OpAssignShr(t:Token);
+	OpAssignUshr(t:Token);
 	OpEquals(t:Token);
 	OpNotEquals(t:Token);
 	OpStrictEquals(t:Token);
