@@ -46,7 +46,7 @@ typedef ClassDecl = {
 	var extend:Null<{keyword:Token, path:DotPath}>;
 	var implement:Null<{keyword:Token, paths:Separated<DotPath>}>;
 	var openBrace:Token;
-	var fields:Array<ClassField>;
+	var members:Array<ClassMember>;
 	var closeBrace:Token;
 }
 
@@ -59,6 +59,11 @@ typedef InterfaceDecl = {
 	var openBrace:Token;
 	var fields:Array<InterfaceField>;
 	var closeBrace:Token;
+}
+
+enum ClassMember {
+	MUseNamespace(n:UseNamespace, semicolon:Token);
+	MField(f:ClassField);
 }
 
 typedef ClassField = {

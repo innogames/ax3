@@ -174,7 +174,7 @@ class Parser {
 
 		var openBrace = expectKind(TkBraceOpen);
 
-		var fields = parseSequence(parseClassField);
+		var members = parseSequence(parseClassMember);
 
 		var closeBrace = expectKind(TkBraceClose);
 
@@ -186,12 +186,12 @@ class Parser {
 			extend: extend,
 			implement: implement,
 			openBrace: openBrace,
-			fields: fields,
+			members: members,
 			closeBrace: closeBrace
 		};
 	}
 
-	function parseClassField():Null<ClassField> {
+	function parseClassMember():Null<ClassMember> {
 		var modifiers = [];
 		var namespace = null;
 		var metadata = parseSequence(parseOptionalMetadata);
@@ -201,10 +201,10 @@ class Parser {
 				case [TkIdent, "public" | "private" | "protected" | "internal" | "override" | "static"]:
 					modifiers.push(scanner.consume());
 				case [TkIdent, "var" | "const"]:
-					return parseClassVarNext(metadata, namespace, modifiers, scanner.consume());
+					return MField(parseClassVarNext(metadata, namespace, modifiers, scanner.consume()));
 				case [TkIdent, "function"]:
-					return parseClassFunNext(metadata, namespace, modifiers, scanner.consume());
-				case [TkIdent, _]:
+					return MField(parseClassFunNext(metadata, namespace, modifiers, scanner.consume()));
+				case [TkIdent, text] if (text != "use"):
 					if (namespace != null)
 						throw "Namespace already defined";
 					else
@@ -216,6 +216,9 @@ class Parser {
 						throw "Metadata without declaration";
 					if (namespace != null)
 						throw "Namespace without declaration";
+					if (token.kind == TkIdent && token.text == "use") {
+						return MUseNamespace(parseUseNamespace(scanner.consume()), expectKind(TkSemicolon));
+					}
 					return null;
 			}
 		}
