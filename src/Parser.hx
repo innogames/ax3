@@ -387,6 +387,8 @@ class Parser {
 		var semicolon = switch scanner.advance().kind {
 			case TkSemicolon:
 				scanner.consume();
+			case TkBraceClose:
+				null; // if the next token is `}` then okay, allow no semicolon
 			case _ if (scanner.lastConsumedToken.kind != TkBraceClose):
 				throw "Semicolon expected after block expression";
 			case _:
