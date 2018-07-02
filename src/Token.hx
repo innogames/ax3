@@ -95,6 +95,7 @@ enum TokenKind {
 	TkXml;
 	TkQuestion;
 	TkTilde;
+	TkAt;
 	TkExclamation;
 	TkExclamationEquals;
 	TkExclamationEqualsEquals;

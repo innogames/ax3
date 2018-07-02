@@ -298,6 +298,10 @@ class Scanner {
 					pos++;
 					return mk(TkTilde);
 
+				case "@".code:
+					pos++;
+					return mk(TkAt);
+
 				case "!".code:
 					pos++;
 					if (nextIsEquals()) {
