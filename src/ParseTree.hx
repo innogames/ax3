@@ -63,6 +63,7 @@ typedef InterfaceDecl = {
 }
 
 enum ClassMember {
+	MCondComp(v:CondCompVar, openBrace:Token, members:Array<ClassMember>, closeBrace:Token);
 	MUseNamespace(n:UseNamespace, semicolon:Token);
 	MField(f:ClassField);
 }
