@@ -54,12 +54,6 @@ class Parser {
 		while (true) {
 			var token = scanner.advance();
 			switch [token.kind, token.text] {
-				case [TkIdent, "import"]:
-					if (modifiers.length > 0)
-						throw "Import statements cannot have modifiers";
-					if (metadata.length > 0)
-						throw "Import statements cannot have metadata";
-					return DImport(parseImportNext(scanner.consume()));
 				case [TkIdent, "public" | "internal" | "final" | "dynamic"]:
 					modifiers.push(scanner.consume());
 				case [TkIdent, "class"]:
@@ -71,6 +65,17 @@ class Parser {
 						throw "Modifiers without declaration";
 					if (metadata.length > 0)
 						throw "Metadata without declaration";
+
+					if (token.kind == TkIdent) {
+						switch token.text {
+							case "import":
+								return DImport(parseImportNext(scanner.consume()));
+							case "use":
+								return DUseNamespace(parseUseNamespace(scanner.consume()), expectKind(TkSemicolon));
+							case _:
+						}
+					}
+
 					return null;
 			}
 		}
@@ -97,6 +102,16 @@ class Parser {
 			name: name,
 			args: args,
 			closeBracket: closeBracket
+		};
+	}
+
+	function parseUseNamespace(useKeyword:Token):UseNamespace {
+		var namespaceKeyword = expectKeyword("namespace");
+		var name = expectKind(TkIdent);
+		return {
+			useKeyword: useKeyword,
+			namespaceKeyword: namespaceKeyword,
+			name: name
 		};
 	}
 

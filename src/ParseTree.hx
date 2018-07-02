@@ -22,6 +22,7 @@ enum Declaration {
 	DImport(d:ImportDecl);
 	DClass(c:ClassDecl);
 	DInterface(i:InterfaceDecl);
+	DUseNamespace(n:UseNamespace, semicolon:Token);
 }
 
 typedef ImportDecl = {
@@ -29,6 +30,12 @@ typedef ImportDecl = {
 	var path:DotPath;
 	var wildcard:Null<Token>;
 	var semicolon:Token;
+}
+
+typedef UseNamespace = {
+	var useKeyword:Token;
+	var namespaceKeyword:Token;
+	var name:Token;
 }
 
 typedef ClassDecl = {
