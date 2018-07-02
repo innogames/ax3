@@ -23,6 +23,7 @@ enum Declaration {
 	DClass(c:ClassDecl);
 	DInterface(i:InterfaceDecl);
 	DUseNamespace(n:UseNamespace, semicolon:Token);
+	DCondComp(v:CondCompVar, openBrace:Token, decls:Array<Declaration>, closeBrace:Token);
 }
 
 typedef ImportDecl = {

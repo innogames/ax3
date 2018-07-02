@@ -73,6 +73,14 @@ class Parser {
 							case "use":
 								return DUseNamespace(parseUseNamespace(scanner.consume()), expectKind(TkSemicolon));
 							case _:
+								var ns = scanner.consume();
+								var sep = expectKind(TkColonColon);
+								var name = expectKind(TkIdent);
+								var openBrace = expectKind(TkBraceOpen);
+								var decls = parseSequence(parseDeclaration);
+								var closeBrace = expectKind(TkBraceClose);
+								var condComp = {ns: ns, sep: sep, name: name};
+								return DCondComp(condComp, openBrace, decls, closeBrace);
 						}
 					}
 
