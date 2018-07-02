@@ -178,6 +178,7 @@ enum Expr {
 	ECondCompBlock(v:CondCompVar, b:BracedExprBlock);
 	ETry(keyword:Token, block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>);
 	EFunction(keyword:Token, name:Null<Token>, fun:Function);
+	EUseNamespace(n:UseNamespace);
 }
 
 typedef Catch = {

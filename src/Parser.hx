@@ -499,6 +499,8 @@ class Parser {
 				return parseTry(consumedToken);
 			case "function":
 				return parseLocalFunction(consumedToken);
+			case "use":
+				return EUseNamespace(parseUseNamespace(consumedToken));
 			case "Vector":
 				return parseExprNext(EVector(parseVectorSyntax(consumedToken)), allowComma);
 			case _:
