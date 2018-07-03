@@ -60,6 +60,10 @@ class Parser {
 					return DClass(parseClassNext(metadata, modifiers, scanner.consume()));
 				case [TkIdent, "interface"]:
 					return DInterface(parseInterfaceNext(metadata, modifiers, scanner.consume()));
+				case [TkIdent, "function"]:
+					return DFunction(parseFunctionDeclNext(metadata, modifiers, scanner.consume()));
+				case [TkIdent, "var" | "const"]:
+					return DVar(scanner.consume(), parseVarDecls(), expectKind(TkSemicolon));
 				case _:
 					if (modifiers.length > 0)
 						throw "Modifiers without declaration";
@@ -248,12 +252,7 @@ class Parser {
 	}
 
 	function parseClassVarNext(metadata:Array<Metadata>, namespace:Null<Token>, modifiers:Array<Token>, keyword:Token):ClassField {
-		var vars = parseSeparated(function() {
-			var firstName = expectKind(TkIdent);
-			var type = parseOptionalTypeHint();
-			var init = parseOptionalVarInit();
-			return {name: firstName, type: type, init: init};
-		}, t -> t.kind == TkComma);
+		var vars = parseVarDecls();
 		var semicolon = expectKind(TkSemicolon);
 		return {
 			metadata: metadata,
@@ -509,7 +508,7 @@ class Parser {
 			case "continue":
 				return EContinue(consumedToken);
 			case "var" | "const":
-				return parseVars(consumedToken);
+				return EVars(consumedToken, parseVarDecls());
 			case "try":
 				return parseTry(consumedToken);
 			case "function":
@@ -601,14 +600,13 @@ class Parser {
 		};
 	}
 
-	function parseVars(keyword:Token):Expr {
-		var vars = parseSeparated(function() {
+	function parseVarDecls():Separated<VarDecl> {
+		return parseSeparated(function() {
 			var firstName = expectKind(TkIdent);
 			var type = parseOptionalTypeHint();
 			var init = parseOptionalVarInit();
 			return {name: firstName, type: type, init: init};
 		}, t -> t.kind == TkComma);
-		return EVars(keyword, vars);
 	}
 
 	function parseTry(keyword:Token):Expr {
@@ -931,6 +929,16 @@ class Parser {
 			openBrace: openBrace,
 			fields: fields,
 			closeBrace: closeBrace
+		};
+	}
+
+	function parseFunctionDeclNext(metadata:Array<Metadata>, modifiers:Array<Token>, keyword:Token):FunctionDecl {
+		return {
+			metadata: metadata,
+			modifiers: modifiers,
+			keyword: keyword,
+			name: expectKind(TkIdent),
+			fun: parseFunctionNext()
 		};
 	}
 

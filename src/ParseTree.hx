@@ -22,6 +22,8 @@ enum Declaration {
 	DImport(d:ImportDecl);
 	DClass(c:ClassDecl);
 	DInterface(i:InterfaceDecl);
+	DFunction(f:FunctionDecl);
+	DVar(keyword:Token, vars:Separated<VarDecl>, semicolon:Token);
 	DUseNamespace(n:UseNamespace, semicolon:Token);
 	DCondComp(v:CondCompVar, openBrace:Token, decls:Array<Declaration>, closeBrace:Token);
 }
@@ -37,6 +39,14 @@ typedef UseNamespace = {
 	var useKeyword:Token;
 	var namespaceKeyword:Token;
 	var name:Token;
+}
+
+typedef FunctionDecl = {
+	var metadata:Array<Metadata>;
+	var modifiers:Array<Token>;
+	var keyword:Token;
+	var name:Token;
+	var fun:Function;
 }
 
 typedef ClassDecl = {
