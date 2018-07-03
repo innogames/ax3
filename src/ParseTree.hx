@@ -1,15 +1,6 @@
 typedef File = {
-	var pack:Package;
 	var declarations:Array<Declaration>;
 	var eof:Token;
-}
-
-typedef Package = {
-	var keyword:Token;
-	var name:Null<DotPath>;
-	var openBrace:Token;
-	var closeBrace:Token;
-	var declarations:Array<Declaration>;
 }
 
 typedef Separated<T> = {
@@ -20,6 +11,7 @@ typedef Separated<T> = {
 typedef DotPath = Separated<Token>;
 
 enum Declaration {
+	DPackage(P:PackageDecl);
 	DImport(d:ImportDecl);
 	DClass(c:ClassDecl);
 	DInterface(i:InterfaceDecl);
@@ -27,6 +19,14 @@ enum Declaration {
 	DVar(keyword:Token, vars:Separated<VarDecl>, semicolon:Token);
 	DUseNamespace(n:UseNamespace, semicolon:Token);
 	DCondComp(v:CondCompVar, openBrace:Token, decls:Array<Declaration>, closeBrace:Token);
+}
+
+typedef PackageDecl = {
+	var keyword:Token;
+	var name:Null<DotPath>;
+	var openBrace:Token;
+	var closeBrace:Token;
+	var declarations:Array<Declaration>;
 }
 
 typedef ImportDecl = {

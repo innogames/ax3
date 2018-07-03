@@ -11,41 +11,9 @@ class Parser {
 	public inline function parse() return parseFile();
 
 	function parseFile():File {
-		var pack = parsePackage();
-		var decls = [];
 		return {
-			pack: pack,
-			declarations: decls,
+			declarations: parseSequence(parseDeclaration),
 			eof: expectKind(TkEof),
-		};
-	}
-
-	function parsePackage():Package {
-		var keyword = expectKeyword("package");
-
-		var brOpen, name;
-		var token = scanner.advance();
-		switch token.kind {
-			case TkBraceOpen:
-				name = null;
-				brOpen = scanner.consume();
-			case TkIdent:
-				name = parseDotPathNext(scanner.consume());
-				brOpen = expectKind(TkBraceOpen);
-			case _:
-				throw "Expected package path or open brace";
-		}
-
-		var decls = parseSequence(parseDeclaration);
-
-		var brClose = expectKind(TkBraceClose);
-
-		return {
-			keyword: keyword,
-			name: name,
-			openBrace: brOpen,
-			closeBrace: brClose,
-			declarations: decls
 		};
 	}
 
@@ -73,6 +41,8 @@ class Parser {
 
 					if (token.kind == TkIdent) {
 						switch token.text {
+							case "package":
+								return DPackage(parsePackage(scanner.consume()));
 							case "import":
 								return DImport(parseImportNext(scanner.consume()));
 							case "use":
@@ -92,6 +62,33 @@ class Parser {
 					return null;
 			}
 		}
+	}
+
+	function parsePackage(keyword:Token):PackageDecl {
+		var brOpen, name;
+		var token = scanner.advance();
+		switch token.kind {
+			case TkBraceOpen:
+				name = null;
+				brOpen = scanner.consume();
+			case TkIdent:
+				name = parseDotPathNext(scanner.consume());
+				brOpen = expectKind(TkBraceOpen);
+			case _:
+				throw "Expected package path or open brace";
+		}
+
+		var decls = parseSequence(parseDeclaration);
+
+		var brClose = expectKind(TkBraceClose);
+
+		return {
+			keyword: keyword,
+			name: name,
+			openBrace: brOpen,
+			closeBrace: brClose,
+			declarations: decls
+		};
 	}
 
 	function parseOptionalMetadata():Metadata {
