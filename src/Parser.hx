@@ -16,6 +16,7 @@ class Parser {
 		return {
 			pack: pack,
 			declarations: decls,
+			eof: expectKind(TkEof),
 		};
 	}
 

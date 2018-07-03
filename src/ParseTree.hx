@@ -1,6 +1,7 @@
 typedef File = {
 	var pack:Package;
 	var declarations:Array<Declaration>;
+	var eof:Token;
 }
 
 typedef Package = {
