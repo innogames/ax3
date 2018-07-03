@@ -23,16 +23,24 @@ class Parser {
 		while (true) {
 			var token = scanner.advance();
 			switch [token.kind, token.text] {
-				case [TkIdent, "public" | "internal" | "final" | "dynamic"]:
-					modifiers.push(scanner.consume());
+				case [TkIdent, "public"]:
+					modifiers.push(DMPublic(scanner.consume()));
+				case [TkIdent, "internal"]:
+					modifiers.push(DMInternal(scanner.consume()));
+				case [TkIdent, "final"]:
+					modifiers.push(DMFinal(scanner.consume()));
+				case [TkIdent, "dynamic"]:
+					modifiers.push(DMDynamic(scanner.consume()));
 				case [TkIdent, "class"]:
 					return DClass(parseClassNext(metadata, modifiers, scanner.consume()));
 				case [TkIdent, "interface"]:
 					return DInterface(parseInterfaceNext(metadata, modifiers, scanner.consume()));
 				case [TkIdent, "function"]:
 					return DFunction(parseFunctionDeclNext(metadata, modifiers, scanner.consume()));
-				case [TkIdent, "var" | "const"]:
-					return DVar(scanner.consume(), parseVarDecls(), expectKind(TkSemicolon));
+				case [TkIdent, "var"]:
+					return DVar(parseModuleVarDeclNext(metadata, modifiers, VVar(scanner.consume())));
+				case [TkIdent, "const"]:
+					return DVar(parseModuleVarDeclNext(metadata, modifiers, VConst(scanner.consume())));
 				case [TkIdent, "namespace"]:
 					return DNamespace({
 						modifiers: modifiers,
@@ -145,7 +153,7 @@ class Parser {
 					case TkIdent:
 						rest.push({sep: dot, element: scanner.consume()});
 					case TkAsterisk:
-						wildcard = scanner.consume();
+						wildcard = {dot: dot, asterisk: scanner.consume()};
 						break;
 					case _:
 						break;
@@ -164,7 +172,7 @@ class Parser {
 		};
 	}
 
-	function parseClassNext(metadata:Array<Metadata>, modifiers:Array<Token>, keyword:Token):ClassDecl {
+	function parseClassNext(metadata:Array<Metadata>, modifiers:Array<DeclModifier>, keyword:Token):ClassDecl {
 		var name = expectKind(TkIdent);
 
 		var extend = {
@@ -218,10 +226,24 @@ class Parser {
 				return null;
 
 			switch token.text {
-				case "public" | "private" | "protected" | "internal" | "override" | "static" | "final":
-					modifiers.push(scanner.consume());
-				case "var" | "const":
-					return MField(parseClassVarNext(metadata, namespace, modifiers, scanner.consume()));
+				case "public":
+					modifiers.push(FMPublic(scanner.consume()));
+				case "private":
+					modifiers.push(FMPrivate(scanner.consume()));
+				case "protected":
+					modifiers.push(FMProtected(scanner.consume()));
+				case "internal":
+					modifiers.push(FMInternal(scanner.consume()));
+				case "override":
+					modifiers.push(FMOverride(scanner.consume()));
+				case "static":
+					modifiers.push(FMStatic(scanner.consume()));
+				case "final":
+					modifiers.push(FMFinal(scanner.consume()));
+				case "var":
+					return MField(parseClassVarNext(metadata, namespace, modifiers, VVar(scanner.consume())));
+				case "const":
+					return MField(parseClassVarNext(metadata, namespace, modifiers, VConst(scanner.consume())));
 				case "function":
 					return MField(parseClassFunNext(metadata, namespace, modifiers, scanner.consume()));
 				case text:
@@ -256,14 +278,14 @@ class Parser {
 		}
 	}
 
-	function parseClassVarNext(metadata:Array<Metadata>, namespace:Null<Token>, modifiers:Array<Token>, keyword:Token):ClassField {
+	function parseClassVarNext(metadata:Array<Metadata>, namespace:Null<Token>, modifiers:Array<ClassFieldModifier>, kind:VarDeclKind):ClassField {
 		var vars = parseVarDecls();
 		var semicolon = expectKind(TkSemicolon);
 		return {
 			metadata: metadata,
 			namespace: namespace,
 			modifiers: modifiers,
-			kind: FVar(keyword, vars, semicolon)
+			kind: FVar(kind, vars, semicolon)
 		};
 	}
 
@@ -326,7 +348,7 @@ class Parser {
 		};
 	}
 
-	function parseClassFunNext(metadata:Array<Metadata>, namespace:Null<Token>, modifiers:Array<Token>, keyword:Token):ClassField {
+	function parseClassFunNext(metadata:Array<Metadata>, namespace:Null<Token>, modifiers:Array<ClassFieldModifier>, keyword:Token):ClassField {
 		var name, propKind;
 		var nameToken = expectKind(TkIdent);
 		switch nameToken.text {
@@ -358,7 +380,7 @@ class Parser {
 	function parseOptionalFunctionArg():Null<FunctionArg> {
 		return switch scanner.advance().kind {
 			case TkIdent:
-				return ArgNormal(parseFunctionArgNext(scanner.consume()));
+				return ArgNormal(parseVarDeclNext(scanner.consume()));
 			case TkDotDotDot:
 				return ArgRest(scanner.consume(), expectKind(TkIdent));
 			case _:
@@ -373,10 +395,10 @@ class Parser {
 		return arg;
 	}
 
-	function parseFunctionArgNext(name:Token):FunctionArgNormal {
-		var hint = parseOptionalTypeHint();
+	function parseVarDeclNext(name:Token):VarDecl {
+		var type = parseOptionalTypeHint();
 		var init = parseOptionalVarInit();
-		return {name: name, hint: hint, init: init};
+		return {name: name, type: type, init: init};
 	}
 
 	function parseFunctionArgs():Null<Separated<FunctionArg>> {
@@ -512,8 +534,10 @@ class Parser {
 				return EBreak(consumedToken);
 			case "continue":
 				return EContinue(consumedToken);
-			case "var" | "const":
-				return EVars(consumedToken, parseVarDecls());
+			case "var":
+				return EVars(VVar(consumedToken), parseVarDecls());
+			case "const":
+				return EVars(VConst(consumedToken), parseVarDecls());
 			case "try":
 				return parseTry(consumedToken);
 			case "function":
@@ -606,12 +630,7 @@ class Parser {
 	}
 
 	function parseVarDecls():Separated<VarDecl> {
-		return parseSeparated(function() {
-			var firstName = expectKind(TkIdent);
-			var type = parseOptionalTypeHint();
-			var init = parseOptionalVarInit();
-			return {name: firstName, type: type, init: init};
-		}, t -> t.kind == TkComma);
+		return parseSeparated(() -> parseVarDeclNext(expectKind(TkIdent)), t -> t.kind == TkComma);
 	}
 
 	function parseTry(keyword:Token):Expr {
@@ -907,7 +926,7 @@ class Parser {
 		}
 	}
 
-	function parseInterfaceNext(metadata:Array<Metadata>, modifiers:Array<Token>, keyword:Token):InterfaceDecl {
+	function parseInterfaceNext(metadata:Array<Metadata>, modifiers:Array<DeclModifier>, keyword:Token):InterfaceDecl {
 		var name = expectKind(TkIdent);
 
 		var extend = null;
@@ -937,13 +956,23 @@ class Parser {
 		};
 	}
 
-	function parseFunctionDeclNext(metadata:Array<Metadata>, modifiers:Array<Token>, keyword:Token):FunctionDecl {
+	function parseFunctionDeclNext(metadata:Array<Metadata>, modifiers:Array<DeclModifier>, keyword:Token):FunctionDecl {
 		return {
 			metadata: metadata,
 			modifiers: modifiers,
 			keyword: keyword,
 			name: expectKind(TkIdent),
 			fun: parseFunctionNext()
+		};
+	}
+
+	function parseModuleVarDeclNext(metadata:Array<Metadata>, modifiers:Array<DeclModifier>, kind:VarDeclKind):ModuleVarDecl {
+		return {
+			metadata: metadata,
+			modifiers: modifiers,
+			kind: kind,
+			vars: parseVarDecls(),
+			semicolon: expectKind(TkSemicolon)
 		};
 	}
 

@@ -36,19 +36,28 @@ class Main {
 		var content = stripBOM(sys.io.File.getContent(path));
 		var scanner = new Scanner(content);
 		var parser = new Parser(scanner);
+		var parseTree = null;
 		if (eagerFail) {
-			var file = parser.parse();
-			var dump = ParseTreeDump.printFile(file, "");
+			parseTree = parser.parse();
+			var dump = ParseTreeDump.printFile(parseTree, "");
 			Sys.println(dump);
 		} else {
 			try {
-				parser.parse();
+				parseTree = parser.parse();
 			} catch (e:Any) {
 				var pos = @:privateAccess scanner.pos;
 				var line = getLine(content, pos);
 				printerr('$path:$line: $e');
 			}
 		}
+		if (parseTree != null)
+			checkParseTree(content, parseTree);
+	}
+
+	static function checkParseTree(expected:String, parseTree:ParseTree.File) {
+		var actual = Printer.print(parseTree);
+		if (actual != expected)
+			throw "not the same: " + haxe.Json.stringify(actual);
 	}
 
 	static function stripBOM(text:String):String {

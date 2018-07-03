@@ -11,12 +11,12 @@ typedef Separated<T> = {
 typedef DotPath = Separated<Token>;
 
 enum Declaration {
-	DPackage(P:PackageDecl);
-	DImport(d:ImportDecl);
+	DPackage(p:PackageDecl);
+	DImport(i:ImportDecl);
 	DClass(c:ClassDecl);
 	DInterface(i:InterfaceDecl);
 	DFunction(f:FunctionDecl);
-	DVar(keyword:Token, vars:Separated<VarDecl>, semicolon:Token);
+	DVar(v:ModuleVarDecl);
 	DNamespace(ns:NamespaceDecl);
 	DUseNamespace(n:UseNamespace, semicolon:Token);
 	DCondComp(v:CondCompVar, openBrace:Token, decls:Array<Declaration>, closeBrace:Token);
@@ -26,21 +26,29 @@ typedef PackageDecl = {
 	var keyword:Token;
 	var name:Null<DotPath>;
 	var openBrace:Token;
-	var closeBrace:Token;
 	var declarations:Array<Declaration>;
+	var closeBrace:Token;
 }
 
 typedef NamespaceDecl = {
-	var modifiers:Array<Token>;
+	var modifiers:Array<DeclModifier>;
 	var keyword:Token;
 	var name:Token;
+	var semicolon:Token;
+}
+
+typedef ModuleVarDecl = {
+	var metadata:Array<Metadata>;
+	var modifiers:Array<DeclModifier>;
+	var kind:VarDeclKind;
+	var vars:Separated<VarDecl>;
 	var semicolon:Token;
 }
 
 typedef ImportDecl = {
 	var keyword:Token;
 	var path:DotPath;
-	var wildcard:Null<Token>;
+	var wildcard:Null<{dot:Token, asterisk:Token}>;
 	var semicolon:Token;
 }
 
@@ -50,9 +58,16 @@ typedef UseNamespace = {
 	var name:Token;
 }
 
+enum DeclModifier {
+	DMPublic(t:Token);
+	DMInternal(t:Token);
+	DMFinal(t:Token);
+	DMDynamic(t:Token);
+}
+
 typedef FunctionDecl = {
 	var metadata:Array<Metadata>;
-	var modifiers:Array<Token>;
+	var modifiers:Array<DeclModifier>;
 	var keyword:Token;
 	var name:Token;
 	var fun:Function;
@@ -60,7 +75,7 @@ typedef FunctionDecl = {
 
 typedef ClassDecl = {
 	var metadata:Array<Metadata>;
-	var modifiers:Array<Token>;
+	var modifiers:Array<DeclModifier>;
 	var keyword:Token;
 	var name:Token;
 	var extend:Null<{keyword:Token, path:DotPath}>;
@@ -72,7 +87,7 @@ typedef ClassDecl = {
 
 typedef InterfaceDecl = {
 	var metadata:Array<Metadata>;
-	var modifiers:Array<Token>;
+	var modifiers:Array<DeclModifier>;
 	var keyword:Token;
 	var name:Token;
 	var extend:Null<{keyword:Token, paths:Separated<DotPath>}>;
@@ -90,12 +105,22 @@ enum ClassMember {
 typedef ClassField = {
 	var metadata:Array<Metadata>;
 	var namespace:Null<Token>;
-	var modifiers:Array<Token>;
+	var modifiers:Array<ClassFieldModifier>;
 	var kind:ClassFieldKind;
 }
 
+enum ClassFieldModifier {
+	FMPublic(t:Token);
+	FMPrivate(t:Token);
+	FMProtected(t:Token);
+	FMInternal(t:Token);
+	FMOverride(t:Token);
+	FMStatic(t:Token);
+	FMFinal(t:Token);
+}
+
 enum ClassFieldKind {
-	FVar(keyword:Token, vars:Separated<VarDecl>, semicolon:Token);
+	FVar(kind:VarDeclKind, vars:Separated<VarDecl>, semicolon:Token);
 	FFun(keyword:Token, name:Token, fun:Function);
 	FProp(keyword:Token, kind:PropKind, name:Token, fun:Function);
 }
@@ -113,7 +138,7 @@ typedef BracedExprBlock = {
 
 typedef FunctionSignature = {
 	var openParen:Token;
-	var args:Separated<FunctionArg>;
+	var args:Null<Separated<FunctionArg>>;
 	var closeParen:Token;
 	var ret:Null<TypeHint>;
 }
@@ -124,14 +149,8 @@ typedef Function = {
 }
 
 enum FunctionArg {
-	ArgNormal(a:FunctionArgNormal);
+	ArgNormal(a:VarDecl);
 	ArgRest(dots:Token, name:Token);
-}
-
-typedef FunctionArgNormal = {
-	var name:Token;
-	var hint:Null<TypeHint>;
-	var init:Null<VarInit>;
 }
 
 enum InterfaceMember {
@@ -193,7 +212,7 @@ enum Expr {
 	EBinop(a:Expr, op:Binop, b:Expr);
 	EPreUnop(op:PreUnop, e:Expr);
 	EPostUnop(e:Expr, op:PostUnop);
-	EVars(keyword:Token, vars:Separated<VarDecl>);
+	EVars(kind:VarDeclKind, vars:Separated<VarDecl>);
 	EAs(e:Expr, keyword:Token, t:SyntaxType);
 	EIs(e:Expr, keyword:Token, t:SyntaxType);
 	EComma(a:Expr, comma:Token, b:Expr);
@@ -204,6 +223,11 @@ enum Expr {
 	ETry(keyword:Token, block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>);
 	EFunction(keyword:Token, name:Null<Token>, fun:Function);
 	EUseNamespace(n:UseNamespace);
+}
+
+enum VarDeclKind {
+	VVar(t:Token);
+	VConst(t:Token);
 }
 
 typedef Catch = {
