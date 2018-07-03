@@ -142,7 +142,6 @@ class Scanner {
 								pos++;
 								return mk(TkDotDotDot);
 							} else {
-								throw "XML is not supported yet!";
 								return mk(TkDotDot);
 							}
 						} else if (isDigit(ch)) {
@@ -301,7 +300,6 @@ class Scanner {
 
 				case "@".code:
 					pos++;
-					throw "XML is not supported yet!";
 					return mk(TkAt);
 
 				case "!".code:

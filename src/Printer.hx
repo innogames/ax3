@@ -344,6 +344,15 @@ class Printer {
 				printExpr(e);
 				printDot(dot);
 				printIdent(fieldName);
+			case EXmlAttr(e, dot, at, attrName):
+				printExpr(e);
+				printDot(dot);
+				printTextWithTrivia("@", at);
+				printIdent(attrName);
+			case EXmlDescend(e, dotDot, childName):
+				printExpr(e);
+				printTextWithTrivia("..", dotDot);
+				printIdent(childName);
 			case EBlock(b):
 				printBracedExprBlock(b);
 			case EObjectDecl(openBrace, fields, closeBrace):

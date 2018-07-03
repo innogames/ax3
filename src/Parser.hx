@@ -801,8 +801,16 @@ class Parser {
 				return parseExprNext(ECall(first, parseCallArgsNext(scanner.consume())), allowComma);
 			case TkDot:
 				var dot = scanner.consume();
-				var fieldName = expectKind(TkIdent);
-				return parseExprNext(EField(first, dot, fieldName), allowComma);
+				switch scanner.advance().kind {
+					case TkAt:
+						return parseExprNext(EXmlAttr(first, dot, scanner.consume(), expectKind(TkIdent)), allowComma);
+					case TkIdent:
+						return parseExprNext(EField(first, dot, scanner.consume()), allowComma);
+					case _:
+						throw "Invalid dot access expression: fieldName or @fieldName expected";
+				}
+			case TkDotDot:
+				return parseExprNext(EXmlDescend(first, scanner.consume(), expectKind(TkIdent)), allowComma);
 			case TkPlus:
 				return parseBinop(first, OpAdd, allowComma);
 			case TkPlusEquals:

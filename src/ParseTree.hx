@@ -200,6 +200,8 @@ enum Expr {
 	ENew(keyword:Token, e:Expr, args:Null<CallArgs>);
 	EVectorDecl(newKeyword:Token, t:TypeParam, d:ArrayDecl);
 	EField(e:Expr, dot:Token, fieldName:Token);
+	EXmlAttr(e:Expr, dot:Token, at:Token, attrName:Token);
+	EXmlDescend(e:Expr, dotDot:Token, childName:Token);
 	EBlock(b:BracedExprBlock);
 	EObjectDecl(openBrace:Token, fields:Separated<ObjectField>, closeBrace:Token);
 	EIf(keyword:Token, openParen:Token, econd:Expr, closeParen:Token, ethen:Expr, eelse:Null<{keyword:Token, expr:Expr}>);
