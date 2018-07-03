@@ -214,7 +214,7 @@ class Parser {
 				return null;
 
 			switch token.text {
-				case "public" | "private" | "protected" | "internal" | "override" | "static":
+				case "public" | "private" | "protected" | "internal" | "override" | "static" | "final":
 					modifiers.push(scanner.consume());
 				case "var" | "const":
 					return MField(parseClassVarNext(metadata, namespace, modifiers, scanner.consume()));
