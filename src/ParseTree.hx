@@ -17,6 +17,7 @@ enum Declaration {
 	DInterface(i:InterfaceDecl);
 	DFunction(f:FunctionDecl);
 	DVar(keyword:Token, vars:Separated<VarDecl>, semicolon:Token);
+	DNamespace(ns:NamespaceDecl);
 	DUseNamespace(n:UseNamespace, semicolon:Token);
 	DCondComp(v:CondCompVar, openBrace:Token, decls:Array<Declaration>, closeBrace:Token);
 }
@@ -27,6 +28,13 @@ typedef PackageDecl = {
 	var openBrace:Token;
 	var closeBrace:Token;
 	var declarations:Array<Declaration>;
+}
+
+typedef NamespaceDecl = {
+	var modifiers:Array<Token>;
+	var keyword:Token;
+	var name:Token;
+	var semicolon:Token;
 }
 
 typedef ImportDecl = {

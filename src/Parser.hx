@@ -33,6 +33,13 @@ class Parser {
 					return DFunction(parseFunctionDeclNext(metadata, modifiers, scanner.consume()));
 				case [TkIdent, "var" | "const"]:
 					return DVar(scanner.consume(), parseVarDecls(), expectKind(TkSemicolon));
+				case [TkIdent, "namespace"]:
+					return DNamespace({
+						modifiers: modifiers,
+						keyword: scanner.consume(),
+						name: expectKind(TkIdent),
+						semicolon: expectKind(TkSemicolon)
+					});
 				case _:
 					if (modifiers.length > 0)
 						throw "Modifiers without declaration";
