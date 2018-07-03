@@ -923,7 +923,7 @@ class Parser {
 		}
 
 		var openBrace = expectKind(TkBraceOpen);
-		var fields = parseSequence(parseInterfaceField);
+		var members = parseSequence(parseInterfaceMember);
 		var closeBrace = expectKind(TkBraceClose);
 		return {
 			metadata: metadata,
@@ -932,7 +932,7 @@ class Parser {
 			name: name,
 			extend: extend,
 			openBrace: openBrace,
-			fields: fields,
+			members: members,
 			closeBrace: closeBrace
 		};
 	}
@@ -947,14 +947,32 @@ class Parser {
 		};
 	}
 
-	function parseInterfaceField():Null<InterfaceField> {
+	function parseInterfaceMember():Null<InterfaceMember> {
 		var metadata = parseSequence(parseOptionalMetadata);
 		var token = scanner.advance();
-		if (token.kind == TkIdent && token.text == "function") {
-			return parseInterfaceFunNext(metadata, scanner.consume());
-		} else {
+		if (token.kind != TkIdent)
 			return null;
+
+		switch token.text {
+			case "function":
+				return MIField(parseInterfaceFunNext(metadata, scanner.consume()));
+			case _:
+				var token = scanner.consume();
+				switch scanner.advance().kind {
+					case TkColonColon:
+						var ns = token;
+						var sep = scanner.consume();
+						var name = expectKind(TkIdent);
+						var openBrace = expectKind(TkBraceOpen);
+						var members = parseSequence(parseInterfaceMember);
+						var closeBrace = expectKind(TkBraceClose);
+						var condComp = {ns: ns, sep: sep, name: name};
+						return MICondComp(condComp, openBrace, members, closeBrace);
+					case other:
+						throw "unexpected token: " + other;
+				}
 		}
+		return null;
 	}
 
 	function parseInterfaceFunNext(metadata:Array<Metadata>, keyword:Token):InterfaceField {

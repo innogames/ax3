@@ -77,7 +77,7 @@ typedef InterfaceDecl = {
 	var name:Token;
 	var extend:Null<{keyword:Token, paths:Separated<DotPath>}>;
 	var openBrace:Token;
-	var fields:Array<InterfaceField>;
+	var members:Array<InterfaceMember>;
 	var closeBrace:Token;
 }
 
@@ -132,6 +132,11 @@ typedef FunctionArgNormal = {
 	var name:Token;
 	var hint:Null<TypeHint>;
 	var init:Null<VarInit>;
+}
+
+enum InterfaceMember {
+	MICondComp(v:CondCompVar, openBrace:Token, members:Array<InterfaceMember>, closeBrace:Token);
+	MIField(f:InterfaceField);
 }
 
 typedef InterfaceField = {
