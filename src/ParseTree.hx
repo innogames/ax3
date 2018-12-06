@@ -1,4 +1,5 @@
 typedef File = {
+	var name:String;
 	var declarations:Array<Declaration>;
 	var eof:Token;
 }
@@ -100,6 +101,7 @@ enum ClassMember {
 	MCondComp(v:CondCompVar, openBrace:Token, members:Array<ClassMember>, closeBrace:Token);
 	MUseNamespace(n:UseNamespace, semicolon:Token);
 	MField(f:ClassField);
+	MStaticInit(block:BracedExprBlock);
 }
 
 typedef ClassField = {

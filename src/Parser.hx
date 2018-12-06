@@ -3,15 +3,18 @@ import Token;
 
 class Parser {
 	var scanner:Scanner;
+	var name:String;
 
-	public function new(scanner) {
+	public function new(scanner, name) {
 		this.scanner = scanner;
+		this.name = name;
 	}
 
 	public inline function parse() return parseFile();
 
 	function parseFile():File {
 		return {
+			name: name,
 			declarations: parseSequence(parseDeclaration),
 			eof: expectKind(TkEof),
 		};
@@ -222,8 +225,16 @@ class Parser {
 		var metadata = parseSequence(parseOptionalMetadata);
 		while (true) {
 			var token = scanner.advance();
-			if (token.kind != TkIdent)
-				return null;
+
+			switch token.kind {
+				case TkBraceOpen:
+					var initBlock = parseBracedExprBlock(scanner.consume());
+					return MStaticInit(initBlock);
+				case TkIdent:
+					// the logic follows
+				case _:
+					return null;
+			}
 
 			switch token.text {
 				case "public":

@@ -3,6 +3,8 @@ import sys.FileSystem;
 class Main {
 	static var eagerFail = false;
 
+	static var typer:Typer;
+
 	static function main() {
 		var args = Sys.args();
 		var dir = switch args {
@@ -14,7 +16,10 @@ class Main {
 			case _:
 				throw "invalid args";
 		}
+		typer = new Typer();
 		walk(dir);
+		typer.process();
+		typer.write("./OUT/");
 	}
 
 	static function walk(dir:String) {
@@ -35,12 +40,12 @@ class Main {
 		// print('Parsing $path');
 		var content = stripBOM(sys.io.File.getContent(path));
 		var scanner = new Scanner(content);
-		var parser = new Parser(scanner);
+		var parser = new Parser(scanner, new haxe.io.Path(path).file);
 		var parseTree = null;
 		if (eagerFail) {
 			parseTree = parser.parse();
 			var dump = ParseTreeDump.printFile(parseTree, "");
-			Sys.println(dump);
+			// Sys.println(dump);
 		} else {
 			try {
 				parseTree = parser.parse();
@@ -50,8 +55,14 @@ class Main {
 				printerr('$path:$line: $e');
 			}
 		}
-		if (parseTree != null)
+		if (parseTree != null) {
 			checkParseTree(content, parseTree);
+
+			try
+				typer.addFile(parseTree)
+			catch (e:Any)
+				printerr('$path:0: $e');
+		}
 	}
 
 	static function checkParseTree(expected:String, parseTree:ParseTree.File) {

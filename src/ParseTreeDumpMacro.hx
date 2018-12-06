@@ -20,6 +20,9 @@ class ParseTreeDumpMacro {
 			case TInst(_.get() => {pack: [], name: "Token"}, _):
 				return macro printToken;
 
+			case TInst(_.get() => {pack: [], name: "String"}, _):
+				return macro function(s, indent) return s;
+
 			case TInst(_.get() => {pack: [], name: "Array"}, [elemT]) if (name != null):
 				return walkSeq(elemT, origType, name, macro printArray, fields);
 

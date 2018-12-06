@@ -120,6 +120,8 @@ class Printer {
 						printClassMember(m);
 					}
 					printTextWithTrivia("}", closeBrace);
+				case MStaticInit(block):
+					printBracedExprBlock(block);
 				case MUseNamespace(n, semicolon):
 					printUseNamespace(n);
 					printSemicolon(semicolon);
