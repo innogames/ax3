@@ -19,9 +19,10 @@ typedef TInterface = {
 }
 
 typedef TClassField = {
+	var name:Token;
 	var kind:TClassFieldKind;
 }
 
 enum TClassFieldKind {
-	TFVar;
+	TFVar(kind:ParseTree.VarDeclKind, endToken:Token);
 }

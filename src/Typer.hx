@@ -81,6 +81,14 @@ class Typer {
 		var fields = new Array<TClassField>();
 		var fieldMap = new Map();
 
+		inline function addField(field:TClassField) {
+			var name = field.name.text;
+			if (fieldMap.exists(name))
+				throw 'Field $name already exists!';
+			fields.push(field);
+			fieldMap[name] = field;
+		}
+
 		for (m in c.members) {
 			switch (m) {
 				case MCondComp(v, openBrace, members, closeBrace):
@@ -92,9 +100,25 @@ class Typer {
 				case MField(f):
 					switch (f.kind) {
 						case FVar(kind, vars, semicolon):
+							var tVars = [];
 
+							var prev:TClassField;
 
+							inline function add(name:Token) {
+								tVars.push(prev = {name: name, kind: null});
+							}
 
+							add(vars.first.name);
+							for (v in vars.rest) {
+								prev.kind = TFVar(kind, v.sep);
+								add(v.element.name);
+							}
+
+							tVars[tVars.length - 1].kind = TFVar(kind, semicolon);
+
+							for (v in tVars) {
+								addField(v);
+							}
 
 						case FFun(keyword, name, fun):
 							trace("TODO: function");
