@@ -102,19 +102,19 @@ class Typer {
 						case FVar(kind, vars, semicolon):
 							var tVars = [];
 
-							var prev:TClassField;
+							var prevDecl:TFVarDecl;
 
 							inline function add(name:Token) {
-								tVars.push(prev = {name: name, kind: null});
+								tVars.push({name: name, kind: TFVar(prevDecl = {kind: kind, endToken: null})});
 							}
 
 							add(vars.first.name);
 							for (v in vars.rest) {
-								prev.kind = TFVar(kind, v.sep);
+								prevDecl.endToken = v.sep;
 								add(v.element.name);
 							}
 
-							tVars[tVars.length - 1].kind = TFVar(kind, semicolon);
+							prevDecl.endToken = semicolon;
 
 							for (v in tVars) {
 								addField(v);

@@ -24,5 +24,10 @@ typedef TClassField = {
 }
 
 enum TClassFieldKind {
-	TFVar(kind:ParseTree.VarDeclKind, endToken:Token);
+	TFVar(v:TFVarDecl);
+}
+
+typedef TFVarDecl = {
+	var kind:ParseTree.VarDeclKind;
+	var endToken:Token; // comma or semicolon
 }
