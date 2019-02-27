@@ -3,3 +3,6 @@
 -js main.js
 -lib hxnodejs
 -debug
+-cmd node main.js c:/Users/nadako/Code/foe/Frontend/client/src
+# -cmd node main.js eagerFail .
+

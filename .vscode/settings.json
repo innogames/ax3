@@ -1,5 +1,5 @@
 {
-	"haxe.executable": "/Users/daniil.korostelev/Code/haxe/haxe",
+	"haxe.executable": "c:/haxe4/haxe.exe",
 	"haxe.enableCompilationServer": false,
 	"editor.insertSpaces": false,
 	"as3mxml.sdk.framework": "/Users/daniil.korostelev/Code/airsdk"

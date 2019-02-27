@@ -8,7 +8,7 @@
 			"program": "${workspaceFolder}/main.js",
 			"args": [
 				// "eagerFail", "."
-				"~/Code/foe/Frontend/client/src"
+				"c:/Users/nadako/Code/foe/Frontend/client/src"
 			],
 			"outFiles": ["${workspaceFolder}/main.js"],
 			"preLaunchTask": "build",
