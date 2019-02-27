@@ -98,6 +98,13 @@ enum TExprKind {
 	TEDoWhile(doKeyword:Token, body:TExpr, whileKeyword:Token, openParen:Token, cond:TExpr, closeParen:Token);
 	TEObjectDecl(openBrace:Token, fields:Array<{field:TObjectField, comma:Token}>, closeBrace:Token);
 	TEField(e:TExpr, dot:Token, fieldName:Token);
+	TEArrayDecl(d:TArrayDecl);
+}
+
+typedef TArrayDecl = {
+	var openBracket:Token;
+	var elems:Array<{expr:TExpr, comma:Null<Token>}>;
+	var closeBracket:Token;
 }
 
 typedef TObjectField = {

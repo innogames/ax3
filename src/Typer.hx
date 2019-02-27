@@ -172,7 +172,7 @@ class Typer {
 			fieldMap: fieldMap,
 		};
 	}
-	
+
 	function commaSeparatedToArray<T,S>(s:ParseTree.Separated<T>, f:T->S, fixup:S->Token->Void):Array<S> {
 		var r = [];
 		var prev:S;
@@ -187,7 +187,7 @@ class Typer {
 		}
 		return r;
 	}
-	
+
 	function typeFunction(fun:ParseTree.Function):TFunction {
 		var args = [];
 		if (fun.signature.args != null) {
@@ -208,7 +208,7 @@ class Typer {
 			expr: typeExpr(EBlock(fun.block))
 		};
 	}
-	
+
 	function typeLiteral(l:ParseTree.Literal):TExpr {
 		return {
 			kind: TELiteral(l),
@@ -221,7 +221,7 @@ class Typer {
 			}
 		};
 	}
-	
+
 	function typeBinop(a:ParseTree.Expr, op:ParseTree.Binop, b:ParseTree.Expr):TExpr {
 		var a = typeExpr(a);
 		var b = typeExpr(b);
@@ -230,7 +230,7 @@ class Typer {
 			type: TObject
 		};
 	}
-	
+
 	function typeBlock(b:ParseTree.BracedExprBlock):TExpr {
 		var exprs = [
 			for (e in b.exprs)
@@ -241,7 +241,7 @@ class Typer {
 			type: TVoid,
 		};
 	}
-	
+
 	function typeIf(keyword:Token, openParen:Token, econd:ParseTree.Expr, closeParen:Token, ethen:ParseTree.Expr, eelse:Null<{keyword:Token, expr:ParseTree.Expr}>):TExpr {
 		var econd = typeExpr(econd); // this needs to-bool coercion for Haxe
 		var ethen = typeExpr(ethen);
@@ -254,7 +254,7 @@ class Typer {
 			type: TVoid
 		}
 	}
-	
+
 	function typeIdent(i:Token):TExpr {
 		return switch i.text {
 			case "null": {kind: TNull(i), type: TAny};
@@ -263,7 +263,7 @@ class Typer {
 			case _: {kind: TNull(i), type: TAny};
 		}
 	}
-	
+
 	function typeCall(e:ParseTree.Expr, args:ParseTree.CallArgs):TExpr {
 		var e = typeExpr(e);
 		var argsArray = if (args.args != null) commaSeparatedToArray(args.args, e -> {expr: typeExpr(e), comma: null}, (prev, comma) -> prev.comma = comma) else [];
@@ -272,7 +272,7 @@ class Typer {
 			type: TAny,
 		};
 	}
-	
+
 	function typeArrayAccess(e:ParseTree.Expr, openBracket:Token, eindex:Expr, closeBracket:Token):TExpr {
 		var e = typeExpr(e);
 		var eindex = typeExpr(eindex);
@@ -281,7 +281,7 @@ class Typer {
 			type: TAny
 		}
 	}
-	
+
 	function typePreUnop(e:Expr, op:PreUnop):TExpr {
 		var e = typeExpr(e);
 		return {
@@ -289,7 +289,7 @@ class Typer {
 			type: TAny
 		};
 	}
-	
+
 	function typePostUnop(e:Expr, op:PostUnop):TExpr {
 		var e = typeExpr(e);
 		return {
@@ -297,7 +297,7 @@ class Typer {
 			type: TAny
 		};
 	}
-	
+
 	function typeTry(keyword:Token, block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>):TExpr {
 		if (finally_ != null) throw "finally in `try` is not supported yet";
 		var expr = typeExpr(EBlock(block));
@@ -314,7 +314,7 @@ class Typer {
 			type: TVoid
 		}
 	}
-	
+
 	function typeComma(a:Expr, comma:Token, b:Expr):TExpr {
 		var a = typeExpr(a);
 		var b = typeExpr(b);
@@ -323,7 +323,7 @@ class Typer {
 			type: b.type
 		};
 	}
-	
+
 	function typeVars(kind:VarDeclKind, vars:ParseTree.Separated<VarDecl>):TExpr {
 		var vars = commaSeparatedToArray(vars, function(v) {
 			return {
@@ -337,9 +337,9 @@ class Typer {
 		return {
 			kind: TEVars(kind, vars),
 			type: TVoid
-		};		
+		};
 	}
-	
+
 	function typeObjectDecl(openBrace:Token, fields:Separated<ParseTree.ObjectField>, closeBrace:Token):TExpr {
 		var fields = commaSeparatedToArray(fields, function(f) {
 			return {
@@ -356,7 +356,7 @@ class Typer {
 			type: TObject,
 		}
 	}
-	
+
 	function typeField(e:Expr, dot:Token, fieldName:Token):TExpr {
 		var e = typeExpr(e);
 		return {
@@ -364,7 +364,15 @@ class Typer {
 			type: TAny
 		};
 	}
-	
+
+	function typeArrayDecl(d:ParseTree.ArrayDecl):TExpr {
+		var elems = if (d.elems == null) [] else commaSeparatedToArray(d.elems, e -> {expr: typeExpr(e), comma: null}, (e, sep) -> e.comma = sep);
+		return {
+			kind: TEArrayDecl({openBracket: d.openBracket, elems: elems, closeBracket: d.closeBracket}),
+			type: TUnresolved("Array")
+		};
+	}
+
 	function typeExpr(e:ParseTree.Expr):TExpr {
 		var none:TExpr = {
 			kind: TELiteral(LString({
@@ -382,7 +390,7 @@ class Typer {
 			case EParens(openParen, e, closeParen):
 				var e = typeExpr(e);
 				{kind: TEParens(openParen, e, closeParen), type: e.type};
-			case EArrayDecl(d): trace("TODO"); none;
+			case EArrayDecl(d): typeArrayDecl(d);
 			case EReturn(keyword, e): {kind: TEReturn(keyword, if (e != null) typeExpr(e) else null), type: TVoid};
 			case EThrow(keyword, e): {kind: TEThrow(keyword, typeExpr(e)), type: TVoid};
 			case EDelete(keyword, e): {kind: TEDelete(keyword, typeExpr(e)), type: TVoid};

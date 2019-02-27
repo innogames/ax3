@@ -14,7 +14,7 @@ class GenHaxe {
 		printTextWithTrivia("package", m.packDecl.keyword);
 		if (m.packDecl.name != null) printDotPath(m.packDecl.name);
 		buf.add(";"); // TODO: move semicolon before the newline (if any)
-		
+
 		printTextWithTrivia("", m.packDecl.openBrace);
 
 		printTypeDecl(m.mainType);
@@ -60,21 +60,21 @@ class GenHaxe {
 		}
 		printTextWithTrivia("}", c.syntax.closeBrace);
 	}
-	
+
 	function printClassField(f:TClassField) {
 		switch f.kind {
 			case TFVar(v): printVarField(v, f);
 			case TFFun(fun): printMethod(fun, f);
 		}
 	}
-	
+
 	function printMethod(fun:TFFunDecl, f:TClassField) {
 		printTextWithTrivia("function", fun.keyword);
 		printToken(f.name);
 		printFunctionSignature(fun.fun.signature);
 		printExpr(fun.fun.expr);
 	}
-	
+
 	function printFunctionSignature(sig:TFunctionSignature) {
 		printTextWithTrivia("(", sig.syntax.openParen);
 		for (arg in sig.args) {
@@ -88,31 +88,31 @@ class GenHaxe {
 		}
 		printTextWithTrivia(")", sig.syntax.closeParen);
 	}
-	
+
 	function printBracedBlock(block:TBracedExprBlock) {
 		printTextWithTrivia("{", block.syntax.openBrace);
 		printTextWithTrivia("}", block.syntax.closeBrace);
 	}
-	
+
 	function printVarDeclKind(kind:ParseTree.VarDeclKind) {
 		switch kind {
 			case VVar(t): printTextWithTrivia("var", t);
 			case VConst(t): printTextWithTrivia("final", t);
 		}
 	}
-	
+
 	function printVarField(v:TFVarDecl, f:TClassField) {
 		printVarDeclKind(v.kind);
-		
+
 		if (v.syntax.type != null) {
 			printTextWithTrivia(v.syntax.name.text, v.syntax.name);
 			printTypeHint(v.syntax.type);
 		} else {
 			printTextWithTrivia(v.syntax.name.text + ":Dynamic", v.syntax.name);
 		}
-		
+
 		if (v.init != null) printVarInit(v.init);
-		
+
 		printSemicolon(v.endToken);
 	}
 
@@ -120,13 +120,13 @@ class GenHaxe {
 		printToken(init.syntax.equals);
 		printExpr(init.expr);
 	}
-	
+
 	function printExpr(e:TExpr) {
 		switch e.kind {
 			case TNull(t): printTextWithTrivia("null", t);
 			case TThis(t): printTextWithTrivia("this", t);
 			case TSuper(t): printTextWithTrivia("super", t);
-			case TEPreUnop(op, e): 
+			case TEPreUnop(op, e):
 				switch (op) {
 					case PreNot(t): printTextWithTrivia("!", t);
 					case PreNeg(t): printTextWithTrivia("-", t);
@@ -135,7 +135,7 @@ class GenHaxe {
 					case PreBitNeg(t): printTextWithTrivia("~", t);
 				}
 				printExpr(e);
-			case TEPostUnop(e, op): 
+			case TEPostUnop(e, op):
 				printExpr(e);
 				switch (op) {
 					case PostIncr(t): printTextWithTrivia("++", t);
@@ -242,6 +242,13 @@ class GenHaxe {
 					if (v.decl.init != null) printVarInit(v.decl.init);
 					if (v.comma != null) printComma(v.comma);
 				}
+			case TEArrayDecl(d):
+				printTextWithTrivia("[", d.openBracket);
+				for (e in d.elems) {
+					printExpr(e.expr);
+					if (e.comma != null) printComma(e.comma);
+				}
+				printTextWithTrivia("]", d.closeBracket);
 			case TEObjectDecl(openBrace, fields, closeBrace):
 				printTextWithTrivia("{", openBrace);
 				for (f in fields) {
@@ -268,7 +275,7 @@ class GenHaxe {
 				printTrivia(fieldName.trailTrivia);
 		}
 	}
-	
+
 	function printBinop(op:ParseTree.Binop) {
 		printToken(switch (op) {
 			case OpAdd(t): t;
@@ -309,7 +316,7 @@ class GenHaxe {
 			case OpBitXor(t): t;
 		});
 	}
-	
+
 	function printLiteral(l:ParseTree.Literal) {
 		switch (l) {
 			case LString(t): printToken(t);
@@ -319,11 +326,11 @@ class GenHaxe {
 			case LRegExp(t): printTextWithTrivia("~" + t.text, t);
 		}
 	}
-	
+
 	function printToken(t:Token) {
 		printTextWithTrivia(t.text, t);
 	}
-	
+
 	function printTypeHint(hint:ParseTree.TypeHint) {
 		printColon(hint.colon);
 		switch hint.type {
