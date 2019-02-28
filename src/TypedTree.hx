@@ -23,6 +23,7 @@ typedef TInterface = {
 
 typedef TClassField = {
 	var name:Token;
+	var syntax:ParseTree.ClassField;
 	var kind:TClassFieldKind;
 }
 

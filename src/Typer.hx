@@ -131,6 +131,7 @@ class Typer {
 									};
 								}
 								tVars.push({
+									syntax: f,
 									name: v.name,
 									kind: TFVar(prevDecl = {
 										syntax: v,
@@ -155,6 +156,7 @@ class Typer {
 
 						case FFun(keyword, name, fun):
 							addField({
+								syntax: f,
 								name: name,
 								kind: TFFun({
 									keyword: keyword,
