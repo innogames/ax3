@@ -120,6 +120,17 @@ class GenHaxe {
 		printToken(init.syntax.equals);
 		printExpr(init.expr);
 	}
+	
+	function printCallArgs(args:TCallArgs) {
+		printTextWithTrivia("(", args.openParen);
+		for (arg in args.args) {
+			printExpr(arg.expr);
+			if (arg.comma != null) {
+				printComma(arg.comma);
+			}
+		}
+		printTextWithTrivia(")", args.closeParen);
+	}
 
 	function printExpr(e:TExpr) {
 		switch e.kind {
@@ -143,14 +154,15 @@ class GenHaxe {
 				}
 			case TECall(e, args):
 				printExpr(e);
-				printTextWithTrivia("(", args.openParen);
-				for (arg in args.args) {
-					printExpr(arg.expr);
-					if (arg.comma != null) {
-						printComma(arg.comma);
-					}
+				printCallArgs(args);
+			case TENew(keyword, e, args):
+				printTextWithTrivia("new", keyword);
+				printExpr(e);
+				if (args != null) {
+					printCallArgs(args);
+				} else {
+					buf.add("()");
 				}
-				printTextWithTrivia(")", args.closeParen);
 			case TEArrayAccess(e, openBracket, eindex, closeBracket):
 				printExpr(e);
 				printTextWithTrivia("[", openBracket);

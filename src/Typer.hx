@@ -1,3 +1,4 @@
+import ParseTree.CallArgs;
 import ParseTree.VarDecl;
 import ParseTree.VarDeclKind;
 import ParseTree.Catch;
@@ -264,13 +265,25 @@ class Typer {
 			case _: {kind: TNull(i), type: TAny};
 		}
 	}
+	
+	function typeCallArgs(args:CallArgs):TCallArgs {
+		var argsArray = if (args.args != null) separatedToArray(args.args, (e,comma) -> {expr: typeExpr(e), comma: comma}) else [];
+		return {openParen: args.openParen, args: argsArray, closeParen: args.closeParen};
+	}
 
 	function typeCall(e:ParseTree.Expr, args:ParseTree.CallArgs):TExpr {
 		var e = typeExpr(e);
-		var argsArray = if (args.args != null) separatedToArray(args.args, (e,comma) -> {expr: typeExpr(e), comma: comma}) else [];
 		return {
-			kind: TECall(e, {openParen: args.openParen, args: argsArray, closeParen: args.closeParen}),
+			kind: TECall(e, typeCallArgs(args)),
 			type: TAny,
+		};
+	}
+
+	function typeNew(keyword:Token, e:Expr, args:CallArgs):TExpr {
+		var e = typeExpr(e);
+		return {
+			kind: TENew(keyword, e, if (args != null) typeCallArgs(args) else null),
+			type: TAny
 		};
 	}
 
@@ -397,7 +410,7 @@ class Typer {
 			case EDelete(keyword, e): {kind: TEDelete(keyword, typeExpr(e)), type: TVoid};
 			case EBreak(keyword): {kind: TEContinue(keyword), type: TVoid};
 			case EContinue(keyword): {kind: TEContinue(keyword), type: TVoid};
-			case ENew(keyword, e, args): trace("TODO"); none;
+			case ENew(keyword, e, args): typeNew(keyword, e, args);
 			case EVectorDecl(newKeyword, t, d): trace("TODO"); none;
 			case EField(e, dot, fieldName): typeField(e, dot, fieldName);
 			case EXmlAttr(e, dot, at, attrName): trace("TODO"); none;

@@ -75,6 +75,7 @@ typedef TExpr = {
 enum TExprKind {
 	TEArrayAccess(e:TExpr, openBracket:Token, eindex:TExpr, closeBracket:Token);
 	TECall(e:TExpr, args:TCallArgs);
+	TENew(keyword:Token, e:TExpr, args:Null<TCallArgs>);
 	TELiteral(l:ParseTree.Literal);
 	TEBinop(a:TExpr, op:ParseTree.Binop, b:TExpr);
 	TEBlock(openBrace:Token, exprs:Array<TBlockElement>, closeBrace:Token);
