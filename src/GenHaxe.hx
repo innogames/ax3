@@ -137,6 +137,7 @@ class GenHaxe {
 			case TNull(t): printTextWithTrivia("null", t);
 			case TThis(t): printTextWithTrivia("this", t);
 			case TSuper(t): printTextWithTrivia("super", t);
+			case TELocal(t, _): printToken(t);
 			case TEPreUnop(op, e):
 				switch (op) {
 					case PreNot(t): printTextWithTrivia("!", t);

@@ -262,7 +262,7 @@ class Typer {
 			case "null": {kind: TNull(i), type: TAny};
 			case "this": {kind: TThis(i), type: TAny};
 			case "super": {kind: TSuper(i), type: TAny};
-			case _: {kind: TNull(i), type: TAny};
+			case _: {kind: TELocal(i, {}), type: TAny};
 		}
 	}
 	

@@ -73,6 +73,7 @@ typedef TExpr = {
 }
 
 enum TExprKind {
+	TELocal(token:Token, v:TVar);
 	TEArrayAccess(e:TExpr, openBracket:Token, eindex:TExpr, closeBracket:Token);
 	TECall(e:TExpr, args:TCallArgs);
 	TENew(keyword:Token, e:TExpr, args:Null<TCallArgs>);
@@ -100,6 +101,10 @@ enum TExprKind {
 	TEObjectDecl(openBrace:Token, fields:Array<{field:TObjectField, comma:Token}>, closeBrace:Token);
 	TEField(e:TExpr, dot:Token, fieldName:Token);
 	TEArrayDecl(d:TArrayDecl);
+}
+
+typedef TVar = {
+	
 }
 
 typedef TArrayDecl = {
