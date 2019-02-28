@@ -49,6 +49,7 @@ typedef TFunctionSignature = {
 
 typedef TFunctionArg = {
 	var syntax:ParseTree.VarDecl;
+	var v:TVar;
 	var comma:Null<Token>;
 }
 
@@ -59,6 +60,7 @@ typedef TBracedExprBlock = {
 typedef TFVarDecl = {
 	var syntax:ParseTree.VarDecl;
 	var kind:ParseTree.VarDeclKind;
+	var type:TType;
 	var init:Null<TVarInit>;
 	var endToken:Token; // comma or semicolon
 }
@@ -105,7 +107,7 @@ enum TExprKind {
 }
 
 typedef TVar = {
-	
+	var type:TType;
 }
 
 typedef TArrayDecl = {
@@ -127,6 +129,7 @@ typedef TVarDecl = {
 
 typedef TCatch = {
 	var syntax:ParseTree.Catch;
+	var v:TVar;
 	var expr:TExpr;
 }
 

@@ -90,9 +90,7 @@ class GenHaxe {
 		printTextWithTrivia("(", sig.syntax.openParen);
 		for (arg in sig.args) {
 			printToken(arg.syntax.name);
-			if (arg.syntax.type != null) {
-				printTypeHint(arg.syntax.type);
-			}
+			printTypeHint(arg.v.type, arg.syntax.type);
 			if (arg.comma != null) {
 				printComma(arg.comma);
 			}
@@ -115,12 +113,8 @@ class GenHaxe {
 	function printVarField(v:TFVarDecl, f:TClassField) {
 		printVarDeclKind(v.kind);
 
-		if (v.syntax.type != null) {
-			printTextWithTrivia(v.syntax.name.text, v.syntax.name);
-			printTypeHint(v.syntax.type);
-		} else {
-			printTextWithTrivia(v.syntax.name.text + ":Dynamic", v.syntax.name);
-		}
+		printTextWithTrivia(v.syntax.name.text, v.syntax.name);
+		printTypeHint(v.type, v.syntax.type);
 
 		if (v.init != null) printVarInit(v.init);
 
@@ -249,7 +243,7 @@ class GenHaxe {
 					printTextWithTrivia("catch", c.syntax.keyword);
 					printTextWithTrivia("(", c.syntax.openParen);
 					printToken(c.syntax.name);
-					printTypeHint(c.syntax.type);
+					printTypeHint(c.v.type, c.syntax.type);
 					printTextWithTrivia(")", c.syntax.closeParen);
 					printExpr(c.expr);
 				}
@@ -354,13 +348,31 @@ class GenHaxe {
 	function printToken(t:Token) {
 		printTextWithTrivia(t.text, t);
 	}
+	
+	function printType(type:TType) {
+		buf.add(switch (type) {
+			case TString: "String";
+			case TNumber: "Float";
+			case TInt: "Int";
+			case TUint: "UInt";
+			case TBoolean: "Bool";
+			case TAny: "Dynamic";
+			case TObject: "Dynamic<Dynamic>";
+			case TArray: "Array<Dynamic>";
+			case TVoid: "Void";
+			case TUnresolved(path): path;
+		});
+	}
 
-	function printTypeHint(hint:ParseTree.TypeHint) {
-		printColon(hint.colon);
-		switch hint.type {
-			case TAny(star): printTextWithTrivia("Dynamic", star);
-			case TPath(path): printDotPath(path);
-			case TVector(v): trace("TODO");
+	function printTypeHint(type:TType, hint:Null<ParseTree.TypeHint>) {
+		if (hint == null) {
+			buf.add(":");
+			printType(type);
+		} else {
+			printColon(hint.colon);
+			// TODO: print trivias from hint.type
+			// or supply tokens in TType
+			printType(type);
 		}
 	}
 

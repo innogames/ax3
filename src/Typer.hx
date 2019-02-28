@@ -137,6 +137,7 @@ class Typer {
 										syntax: v,
 										kind: kind,
 										init: init,
+										type: TAny,
 										endToken: null
 									})
 								});
@@ -202,6 +203,7 @@ class Typer {
 								trace("TODO: REST");
 								{name: name, type: null, init: null};
 						},
+						v: {type: TAny},
 						comma: comma,
 					}
 				});
@@ -264,7 +266,7 @@ class Typer {
 			case "null": {kind: TNull(i), type: TAny};
 			case "this": {kind: TThis(i), type: TAny};
 			case "super": {kind: TSuper(i), type: TAny};
-			case _: {kind: TELocal(i, {}), type: TAny};
+			case _: {kind: TELocal(i, {type:TAny}), type: TAny};
 		}
 	}
 	
@@ -321,6 +323,7 @@ class Typer {
 			for (c in catches) {
 				{
 					syntax: c,
+					v: {type: TAny},
 					expr: typeExpr(EBlock(c.block))
 				}
 			}
