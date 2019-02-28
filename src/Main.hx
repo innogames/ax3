@@ -3,7 +3,7 @@ import sys.FileSystem;
 class Main {
 	static var eagerFail = false;
 
-	static var typer:Typer;
+	// static var typer:Typer;
 
 	static function main() {
 		var args = Sys.args();
@@ -16,27 +16,32 @@ class Main {
 			case _:
 				throw "invalid args";
 		}
-		typer = new Typer();
-		walk(dir);
-		typer.process();
-		typer.write("./OUT/");
+		var files = [];
+		walk(dir, files);
+		var typer = new Typer2();
+		typer.process(files);
+		// typer.process();
+		// typer.write("./OUT/");
 	}
 
-	static function walk(dir:String) {
+	static function walk(dir:String, files:Array<ParseTree.File>) {
 		function loop(dir) {
 			for (name in FileSystem.readDirectory(dir)) {
 				var absPath = dir + "/" + name;
 				if (FileSystem.isDirectory(absPath)) {
-					walk(absPath);
+					walk(absPath, files);
 				} else if (StringTools.endsWith(name, ".as")) {
-					parseFile(absPath);
+					var file = parseFile(absPath);
+					if (file != null) {
+						files.push(file);
+					}
 				}
 			}
 		}
 		loop(dir);
 	}
 
-	static function parseFile(path:String) {
+	static function parseFile(path:String):ParseTree.File {
 		// print('Parsing $path');
 		var content = stripBOM(sys.io.File.getContent(path));
 		var scanner = new Scanner(content);
@@ -57,12 +62,8 @@ class Main {
 		}
 		if (parseTree != null) {
 			checkParseTree(content, parseTree);
-
-			try
-				typer.addFile(parseTree)
-			catch (e:Any)
-				printerr('$path:0: $e');
 		}
+		return parseTree;
 	}
 
 	static function checkParseTree(expected:String, parseTree:ParseTree.File) {

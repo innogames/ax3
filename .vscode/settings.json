@@ -3,4 +3,5 @@
 	"haxe.enableCompilationServer": false,
 	"editor.insertSpaces": false,
 	"as3mxml.sdk.framework": "/Users/daniil.korostelev/Code/airsdk"
+	"files.trimTrailingWhitespace": true
 }
