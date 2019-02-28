@@ -104,6 +104,7 @@ enum TExprKind {
 	TEObjectDecl(openBrace:Token, fields:Array<{field:TObjectField, comma:Token}>, closeBrace:Token);
 	TEField(e:TExpr, dot:Token, fieldName:Token);
 	TEArrayDecl(d:TArrayDecl);
+	TEIs(e:TExpr, keyword:Token, type:TType, syntaxType:ParseTree.SyntaxType);
 }
 
 typedef TVar = {

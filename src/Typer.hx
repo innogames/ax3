@@ -1,3 +1,4 @@
+import ParseTree.SyntaxType;
 import ParseTree.CallArgs;
 import ParseTree.VarDecl;
 import ParseTree.VarDeclKind;
@@ -391,6 +392,13 @@ class Typer {
 			type: TUnresolved("Array")
 		};
 	}
+	
+	function typeIs(e:Expr, keyword:Token, t:SyntaxType):TExpr {
+		return {
+			kind: TEIs(typeExpr(e), keyword, TAny, t),
+			type: TBoolean,
+		};
+	}
 
 	function typeExpr(e:ParseTree.Expr):TExpr {
 		var none:TExpr = {
@@ -443,7 +451,7 @@ class Typer {
 			case EPostUnop(e, op): typePostUnop(e, op);
 			case EVars(kind, vars): typeVars(kind, vars);
 			case EAs(e, keyword, t): trace("TODO"); none;
-			case EIs(e, keyword, t): trace("TODO"); none;
+			case EIs(e, keyword, t): typeIs(e, keyword, t);
 			case EComma(a, comma, b): typeComma(a, comma, b);
 			case EVector(v): trace("TODO"); none;
 			case ESwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace): trace("TODO"); none;

@@ -251,6 +251,13 @@ class GenHaxe {
 				printTextWithTrivia("(", openParen);
 				printExpr(e);
 				printTextWithTrivia(")", closeParen);
+			case TEIs(e, keyword, type, syntaxType):
+				// TODO: rewrite this to Std.is and friends, preserve trivia
+				buf.add("Std.is(");
+				printExpr(e);
+				buf.add(", ");
+				printType(type);
+				buf.add(")");
 			case TEDelete(keyword, e):
 				buf.add("'[TODO: delete]'");
 			case TEVars(kind, vars):
