@@ -98,7 +98,7 @@ enum TExprKind {
 	TETry(keyword:Token, expr:TExpr, catches:Array<TCatch>);
 	TEComma(a:TExpr, comma:Token, b:TExpr);
 	TEParens(openParen:Token, e:TExpr, closeParen:Token);
-	TEVars(kind:ParseTree.VarDeclKind, vars:Array<{decl:TVarDecl, comma:Null<Token>}>);
+	TEVars(kind:ParseTree.VarDeclKind, vars:Array<{v:TVar, decl:TVarDecl, comma:Null<Token>}>);
 	TEWhile(keyword:Token, openParen:Token, cond:TExpr, closeParen:Token, body:TExpr);
 	TEDoWhile(doKeyword:Token, body:TExpr, whileKeyword:Token, openParen:Token, cond:TExpr, closeParen:Token);
 	TEObjectDecl(openBrace:Token, fields:Array<{field:TObjectField, comma:Token}>, closeBrace:Token);
@@ -108,6 +108,7 @@ enum TExprKind {
 }
 
 typedef TVar = {
+	var name:String;
 	var type:TType;
 }
 

@@ -14,11 +14,41 @@ import sys.io.File;
 import TypedTree;
 import Utils.createDirectory;
 
+typedef Locals = Map<String,TVar>;
+
+class Context {
+    var locals:Locals;
+    var localsStack:Array<Locals>;
+
+	public function new() {}
+
+	public function initLocals() {
+		locals = new Map();
+		localsStack = [locals];
+	}
+
+	public function pushLocals() {
+        locals = locals.copy();
+        localsStack.push(locals);
+	}
+
+	public function popLocals() {
+        localsStack.pop();
+        locals = localsStack[localsStack.length - 1];
+	}
+
+	public function addLocal(v:TVar) {
+		locals[v.name] = v;
+	}
+}
+
 class Typer {
 	var files:Array<ParseTree.File>;
 
 	var modules:Array<TModule>;
 	var moduleMap:Map<String,TModule>;
+
+	var context:Context;
 
 	public function new() {
 		files = [];
@@ -29,6 +59,7 @@ class Typer {
 	}
 
 	public function process() {
+		context = new Context();
 		buildStructure();
 		resolveTypes();
 	}
@@ -157,6 +188,7 @@ class Typer {
 							}
 
 						case FFun(keyword, name, fun):
+							context.initLocals();
 							addField({
 								syntax: f,
 								name: name,
@@ -180,11 +212,11 @@ class Typer {
 
 	function separatedToArray<T,S>(s:ParseTree.Separated<T>, f:(T,Token)->S):Array<S> {
 		var result = [];
-		
+
 		inline function add(v:T, i:Int) {
 			result.push(f(v, if (i < s.rest.length) s.rest[i].sep else null));
 		}
-		
+
 		add(s.first, 0);
 		for (i in 0...s.rest.length) {
 			add(s.rest[i].element, i + 1);
@@ -194,25 +226,46 @@ class Typer {
 	}
 
 	function typeFunction(fun:ParseTree.Function):TFunction {
-		var args = 
-			if (fun.signature.args != null)
-				separatedToArray(fun.signature.args, function(v, comma) {
-					return {
-						syntax: switch (v) {
-							case ArgNormal(a): a;
-							case ArgRest(dots, name):
-								trace("TODO: REST");
-								{name: name, type: null, init: null};
-						},
-						v: {type: TAny},
-						comma: comma,
-					}
-				});
-			else
-				[];
+		context.pushLocals();
+
+		var args;
+		if (fun.signature.args == null) {
+			args = [];
+		} else {
+			args = separatedToArray(fun.signature.args, function(arg, comma) {
+				var syntax:ParseTree.VarDecl;
+				var v:TVar;
+				switch (arg) {
+						case ArgNormal(a):
+							syntax = a;
+							v = {
+								name: a.name.text,
+								type: TAny,
+							}
+						case ArgRest(dots, name):
+							trace("TODO: REST");
+							syntax = {name: name, type: null, init: null};
+							v = {
+								name: name.text,
+								type: TArray,
+							};
+				}
+				context.addLocal(v);
+				return {
+					syntax: syntax,
+					v: v,
+					comma: comma,
+				}
+			});
+		}
+
+		var expr = typeExpr(EBlock(fun.block));
+
+		context.popLocals();
+
 		return {
 			signature: {syntax: fun.signature, args: args},
-			expr: typeExpr(EBlock(fun.block))
+			expr: expr
 		};
 	}
 
@@ -239,10 +292,12 @@ class Typer {
 	}
 
 	function typeBlock(b:ParseTree.BracedExprBlock):TExpr {
+		context.pushLocals();
 		var exprs = [
 			for (e in b.exprs)
 				{expr: typeExpr(e.expr), semicolon: e.semicolon}
 		];
+		context.popLocals();
 		return {
 			kind: TEBlock(b.openBrace, exprs, b.closeBrace),
 			type: TVoid,
@@ -267,10 +322,10 @@ class Typer {
 			case "null": {kind: TNull(i), type: TAny};
 			case "this": {kind: TThis(i), type: TAny};
 			case "super": {kind: TSuper(i), type: TAny};
-			case _: {kind: TELocal(i, {type:TAny}), type: TAny};
+			case name: {kind: TELocal(i, {name: name, type:TAny}), type: TAny};
 		}
 	}
-	
+
 	function typeCallArgs(args:CallArgs):TCallArgs {
 		var argsArray = if (args.args != null) separatedToArray(args.args, (e,comma) -> {expr: typeExpr(e), comma: comma}) else [];
 		return {openParen: args.openParen, args: argsArray, closeParen: args.closeParen};
@@ -324,7 +379,7 @@ class Typer {
 			for (c in catches) {
 				{
 					syntax: c,
-					v: {type: TAny},
+					v: {name: c.name.text, type: TAny},
 					expr: typeExpr(EBlock(c.block))
 				}
 			}
@@ -345,11 +400,15 @@ class Typer {
 	}
 
 	function typeVars(kind:VarDeclKind, vars:ParseTree.Separated<VarDecl>):TExpr {
-		var vars = separatedToArray(vars, function(v, comma) {
+		var vars = separatedToArray(vars, function(decl, comma) {
+			var init:TVarInit = if (decl.init != null) {syntax: decl.init, expr: typeExpr(decl.init.expr)} else null;
+			var v:TVar = {name: decl.name.text, type: TAny};
+			context.addLocal(v);
 			return {
+				v: v,
 				decl: {
-					syntax: v,
-					init: if (v.init != null) {syntax: v.init, expr: typeExpr(v.init.expr)} else null
+					syntax: decl,
+					init: init
 				},
 				comma: comma,
 			};
@@ -392,7 +451,7 @@ class Typer {
 			type: TUnresolved("Array")
 		};
 	}
-	
+
 	function typeIs(e:Expr, keyword:Token, t:SyntaxType):TExpr {
 		return {
 			kind: TEIs(typeExpr(e), keyword, TAny, t),
