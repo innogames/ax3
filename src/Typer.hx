@@ -173,36 +173,37 @@ class Typer {
 		};
 	}
 
-	function commaSeparatedToArray<T,S>(s:ParseTree.Separated<T>, f:T->S, fixup:S->Token->Void):Array<S> {
-		var r = [];
-		var prev:S;
-		inline function add(v:T) {
-			prev = f(v);
-			r.push(prev);
+	function separatedToArray<T,S>(s:ParseTree.Separated<T>, f:(T,Token)->S):Array<S> {
+		var result = [];
+		
+		inline function add(v:T, i:Int) {
+			result.push(f(v, if (i < s.rest.length) s.rest[i].sep else null));
 		}
-		add(s.first);
-		for (v in s.rest) {
-			fixup(prev, v.sep);
-			add(v.element);
+		
+		add(s.first, 0);
+		for (i in 0...s.rest.length) {
+			add(s.rest[i].element, i + 1);
 		}
-		return r;
+
+		return result;
 	}
 
 	function typeFunction(fun:ParseTree.Function):TFunction {
-		var args = [];
-		if (fun.signature.args != null) {
-			args = commaSeparatedToArray(fun.signature.args, function(v:ParseTree.FunctionArg) {
-				return {
-					syntax: switch (v) {
-						case ArgNormal(a): a;
-						case ArgRest(dots, name):
-							trace("TODO: REST");
-							{name: name, type: null, init: null};
-					},
-					comma: null,
-				}
-			}, (prev, comma) -> prev.comma = comma);
-		}
+		var args = 
+			if (fun.signature.args != null)
+				separatedToArray(fun.signature.args, function(v, comma) {
+					return {
+						syntax: switch (v) {
+							case ArgNormal(a): a;
+							case ArgRest(dots, name):
+								trace("TODO: REST");
+								{name: name, type: null, init: null};
+						},
+						comma: comma,
+					}
+				});
+			else
+				[];
 		return {
 			signature: {syntax: fun.signature, args: args},
 			expr: typeExpr(EBlock(fun.block))
@@ -266,7 +267,7 @@ class Typer {
 
 	function typeCall(e:ParseTree.Expr, args:ParseTree.CallArgs):TExpr {
 		var e = typeExpr(e);
-		var argsArray = if (args.args != null) commaSeparatedToArray(args.args, e -> {expr: typeExpr(e), comma: null}, (prev, comma) -> prev.comma = comma) else [];
+		var argsArray = if (args.args != null) separatedToArray(args.args, (e,comma) -> {expr: typeExpr(e), comma: comma}) else [];
 		return {
 			kind: TECall(e, {openParen: args.openParen, args: argsArray, closeParen: args.closeParen}),
 			type: TAny,
@@ -325,15 +326,15 @@ class Typer {
 	}
 
 	function typeVars(kind:VarDeclKind, vars:ParseTree.Separated<VarDecl>):TExpr {
-		var vars = commaSeparatedToArray(vars, function(v) {
+		var vars = separatedToArray(vars, function(v, comma) {
 			return {
 				decl: {
 					syntax: v,
 					init: if (v.init != null) {syntax: v.init, expr: typeExpr(v.init.expr)} else null
 				},
-				comma: null,
+				comma: comma,
 			};
-		}, (v, sep) -> v.comma = sep);
+		});
 		return {
 			kind: TEVars(kind, vars),
 			type: TVoid
@@ -341,16 +342,16 @@ class Typer {
 	}
 
 	function typeObjectDecl(openBrace:Token, fields:Separated<ParseTree.ObjectField>, closeBrace:Token):TExpr {
-		var fields = commaSeparatedToArray(fields, function(f) {
+		var fields = separatedToArray(fields, function(f, comma) {
 			return {
 				field: {
 					name: f.name,
 					colon: f.colon,
 					value: typeExpr(f.value),
 				},
-				comma: null
+				comma: comma
 			};
-		}, (f,c) -> f.comma = c);
+		});
 		return {
 			kind: TEObjectDecl(openBrace, fields, closeBrace),
 			type: TObject,
@@ -366,7 +367,7 @@ class Typer {
 	}
 
 	function typeArrayDecl(d:ParseTree.ArrayDecl):TExpr {
-		var elems = if (d.elems == null) [] else commaSeparatedToArray(d.elems, e -> {expr: typeExpr(e), comma: null}, (e, sep) -> e.comma = sep);
+		var elems = if (d.elems == null) [] else separatedToArray(d.elems, (e,comma) -> {expr: typeExpr(e), comma: comma});
 		return {
 			kind: TEArrayDecl({openBracket: d.openBracket, elems: elems, closeBracket: d.closeBracket}),
 			type: TUnresolved("Array")
