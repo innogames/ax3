@@ -1,11 +1,19 @@
-1) parse into parse tree
-2) build typed tree structure for all modules
-3) resolve types in the typed tree
-4) transform to haxe-friendly tree
+1) parse parsetree into
+2) build structure
+  a list of modules, each of whose contains:
+   - imports
+   - main decl
+     * class/interface with function signatures
+	 * function with its signature
+	 * var with type?
+   - module-local decls
+3) load extern libs with signatures into the structure
+4) type the function bodies and var init expressions
+5) transform typed tree into a more haxe-friendly one
  - rewrite for
  - rewrite for...in
  - rewrite for..each
  - rewrite implicit to-bool coercion
  - rewrite potentially-undefined-to-basic-type coercion
  - rewrite E4X
-5) output Haxe modules
+6) output Haxe files

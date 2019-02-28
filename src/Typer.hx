@@ -399,10 +399,24 @@ class Typer {
 		};
 	}
 
+	function typeType(t:SyntaxType):TType {
+		return switch (t) {
+			case TAny(star): TAny;
+			case TPath(path): TUnresolved(separatedToArray(path, (ident,dot) -> if (dot == null) ident.text else ident.text + ".").join("."));
+			case TVector(v): TAny; // TODO
+		}
+	}
+
 	function typeVars(kind:VarDeclKind, vars:ParseTree.Separated<VarDecl>):TExpr {
 		var vars = separatedToArray(vars, function(decl, comma) {
 			var init:TVarInit = if (decl.init != null) {syntax: decl.init, expr: typeExpr(decl.init.expr)} else null;
-			var v:TVar = {name: decl.name.text, type: TAny};
+			var type:TType;
+			if (decl.type == null) {
+				type = TAny;
+			} else {
+				type = typeType(decl.type.type);
+			}
+			var v:TVar = {name: decl.name.text, type: type};
 			context.addLocal(v);
 			return {
 				v: v,
