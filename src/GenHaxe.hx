@@ -65,7 +65,7 @@ class GenHaxe {
 		for (m in f.syntax.modifiers) {
 			switch (m) {
 				case FMPublic(t): printTextWithTrivia("public", t);
-				case FMPrivate(t): printTextWithTrivia("/*real*/private", t);
+				case FMPrivate(t): printTextWithTrivia("private", t);
 				case FMProtected(t): printTextWithTrivia("private", t);
 				case FMInternal(t): printTextWithTrivia("/*internal*/public", t);
 				case FMOverride(t): printTextWithTrivia("override", t);
