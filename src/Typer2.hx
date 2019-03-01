@@ -1,7 +1,5 @@
 import ParseTree;
 import ParseTree.*;
-import Utils.iterSeparated;
-import Utils.dotPathToString;
 
 class Typer2 {
 	final structure:Structure;

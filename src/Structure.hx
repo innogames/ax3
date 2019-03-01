@@ -1,7 +1,5 @@
 import ParseTree;
 import ParseTree.*;
-import Utils.dotPathToArray;
-import Utils.foldSeparated;
 
 class Structure {
 	public final packages:Map<String, SPackage>;
