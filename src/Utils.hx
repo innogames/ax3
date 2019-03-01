@@ -1,6 +1,20 @@
 import sys.FileSystem;
+import ParseTree;
 
 class Utils {
+
+	public static function dotPathToArray(d:DotPath):Array<String> {
+		return foldSeparated(d, [], (part, acc) -> acc.push(part.text));
+	}
+
+	public static function foldSeparated<T,S>(d:Separated<T>, acc:S, f:(T,S)->Void):S {
+		f(d.first, acc);
+		for (p in d.rest) {
+			f(p.element, acc);
+		}
+		return acc;
+	}
+
 	public static function createDirectory(dir:String) {
 		var tocreate = [];
 		while (!FileSystem.exists(dir) && dir != '') {
