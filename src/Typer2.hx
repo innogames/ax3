@@ -24,8 +24,20 @@ class Typer2 {
 			for (mod in pack.modules) {
 
 				function resolvePath(path:String) {
-					if (path.indexOf(".") != -1) {
-						// already a full-path
+					var dotIndex = path.lastIndexOf(".");
+					if (dotIndex != -1) {
+						// already a full-path, check that it's present
+						var packName = path.substring(0, dotIndex);
+						var declName = path.substring(dotIndex + 1);
+						switch structure.packages[packName] {
+							case null:
+								throw "No such package " + packName;
+							case pack:
+								var mod = pack.getModule(declName);
+								if (mod == null) {
+									throw "No such type " + path;
+								}
+						}
 						return path;
 					}
 
@@ -236,7 +248,7 @@ class Typer2 {
 		return switch (t) {
 			case TAny(star): STAny;
 			case TPath(path):
-				switch dotPathToArray(path).toString() {
+				switch dotPathToArray(path).join(".").toString() {
 					case "void": STVoid;
 					case "Boolean": STBoolean;
 					case "Number": STUint;
