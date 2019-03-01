@@ -85,9 +85,9 @@ class Structure {
 						var packName = path.substring(0, dotIndex);
 						var declName = path.substring(dotIndex + 1);
 						if (!checkValidPath(packName, declName)) {
-							return 'Unresolved<$path>';
+							return STUnresolved(path);
 						}
-						return path;
+						return STPath(path);
 					}
 
 					inline function fq(pack:String, name:String) {
@@ -95,7 +95,7 @@ class Structure {
 					}
 
 					if (mod.mainDecl.name == path) {
-						return fq(pack.name, path);
+						return STPath(fq(pack.name, path));
 					}
 
 					var imports = mod.imports.copy();
@@ -106,19 +106,18 @@ class Structure {
 							case SISingle(pack, name):
 								if (name == path) {
 									if (!checkValidPath(pack, name)) {
-										return 'Unresolved<${fq(pack,name)}>';
+										return STUnresolved(fq(pack,name));
 									}
-									return fq(pack, name);
+									return STPath(fq(pack, name));
 								}
 							case SIAll(pack):
 								switch packages[pack] {
 									case null:
-										return "Unresolved<"+path+">";
-										throw "No such package: " + pack;
+										return STUnresolved(path);
 									case p:
 										var m = p.getModule(path);
 										if (m != null) {
-											return fq(pack, path);
+											return STPath(fq(pack, path));
 										}
 								}
 						}
@@ -126,23 +125,22 @@ class Structure {
 
 					var modInPack = pack.getModule(path);
 					if (modInPack != null) {
-						return fq(pack.name, path);
+						return STPath(fq(pack.name, path));
 					}
 
 					if (checkValidPath("", path)) {
 						// toplevel type
-						return path;
+						return STPath(path);
 					}
 
-					return "Unresolved<"+path+">";
-					throw "Unresolved type: " + path;
+					return STUnresolved(path);
 				}
 
 				function resolveType(t:SType) {
 					return switch (t) {
-						case STVoid | STAny | STBoolean | STNumber | STInt | STUint | STString | STArray | STFunction | STClass | STObject | STXML | STRegExp: t;
+						case STVoid | STAny | STBoolean | STNumber | STInt | STUint | STString | STArray | STFunction | STClass | STObject | STXML | STRegExp | STUnresolved(_): t;
 						case STVector(t): STVector(resolveType(t));
-						case STPath(path): STPath(resolvePath(path));
+						case STPath(path): resolvePath(path);
 					};
 				}
 
@@ -507,6 +505,7 @@ class SModule {
 			case STRegExp: "RegExp";
 			case STVector(t): "Vector.<" + dumpType(t) + ">";
 			case STPath(path): path;
+			case STUnresolved(path): 'UNRESOLVED<$path>';
 		}
 	}
 }
@@ -585,4 +584,5 @@ enum SType {
 	STRegExp;
 	STVector(t:SType);
 	STPath(path:String);
+	STUnresolved(path:String);
 }
