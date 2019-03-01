@@ -4,6 +4,7 @@
 -lib format
 -js main.js
 # --interp
+-D no-copt
 -debug
 -cmd node main.js c:/Users/nadako/Code/foe/Frontend/client/src
 # -cmd node main.js eagerFail .
