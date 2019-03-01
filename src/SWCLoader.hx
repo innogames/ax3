@@ -10,12 +10,35 @@ class SWCLoader {
 		processLibrary(getLibrary(file), structure);
 	}
 
+	static function shouldSkipClass(ns:String, name:String):Bool {
+		return switch [ns, name] {
+			case
+				  ["", "Object"]
+				| ["", "Class"]
+				| ["", "Function"]
+				| ["", "Namespace"]
+				| ["", "QName"]
+				| ["", "Boolean"]
+				| ["", "Number"]
+				| ["", "int"]
+				| ["", "uint"]
+				| ["", "String"]
+				| ["", "Array"]
+				| ["", "RegExp"]
+				| ["", "XML"]
+				| ["", "XMLList"]
+				| ["__AS3__.vec", "Vector"]
+				: true;
+			case _: false;
+		}
+	}
+
 	static function processLibrary(swf:SWF, structure:Structure) {
 		var abcs = getAbcs(swf);
 		for (abc in abcs) {
 			for (cls in abc.classes) {
 				var n = getPublicName(abc, cls.name);
-				if (n == null) continue;
+				if (n == null || shouldSkipClass(n.ns, n.name)) continue;
 
 				var pack = structure.getPackage(n.ns);
 
@@ -147,6 +170,8 @@ class SWCLoader {
 						var ns = abc.get(abc.strings, ns);
 						var name = abc.get(abc.strings, name);
 						return {ns: ns, name: name};
+					case NNamespace(ns) if (abc.get(abc.strings, ns) == "http://adobe.com/AS3/2006/builtin"):
+						return {ns: "", name: abc.get(abc.strings, name)};
 					case _:
 						// trace("Skipping non-public: " +  ns.getName() + " " + abc.get(abc.strings, name));
 						return null;
