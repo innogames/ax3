@@ -126,6 +126,7 @@ class SWCLoader {
 									case "Object": STObject;
 									case "Function": STFunction;
 									case "XML": STXML;
+									case "XMLList": STXMLList;
 									case "RegExp": STRegExp;
 									case _: STPath(name);
 								}

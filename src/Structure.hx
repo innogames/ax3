@@ -138,7 +138,7 @@ class Structure {
 
 				function resolveType(t:SType) {
 					return switch (t) {
-						case STVoid | STAny | STBoolean | STNumber | STInt | STUint | STString | STArray | STFunction | STClass | STObject | STXML | STRegExp | STUnresolved(_): t;
+						case STVoid | STAny | STBoolean | STNumber | STInt | STUint | STString | STArray | STFunction | STClass | STObject | STXML | STXMLList | STRegExp | STUnresolved(_): t;
 						case STVector(t): STVector(resolveType(t));
 						case STPath(path): resolvePath(path);
 					};
@@ -375,6 +375,7 @@ class Structure {
 					case "Object": STObject;
 					case "Function": STFunction;
 					case "XML": STXML;
+					case "XMLList": STXMLList;
 					case "RegExp": STRegExp;
 					case other: STPath(other);
 				}
@@ -502,6 +503,7 @@ class SModule {
 			case STClass: "Class";
 			case STObject: "Object";
 			case STXML: "XML";
+			case STXMLList: "XMLList";
 			case STRegExp: "RegExp";
 			case STVector(t): "Vector.<" + dumpType(t) + ">";
 			case STPath(path): path;
@@ -581,6 +583,7 @@ enum SType {
 	STClass;
 	STObject;
 	STXML;
+	STXMLList;
 	STRegExp;
 	STVector(t:SType);
 	STPath(path:String);
