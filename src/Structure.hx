@@ -16,8 +16,11 @@ class Structure {
 		};
 	}
 
-	public static function build(files:Array<File>):Structure {
+	public static function build(files:Array<File>, libs:Array<String>):Structure {
 		var structure = new Structure();
+		for (lib in libs) {
+			SWCLoader.load(structure, lib);
+		}
 		for (file in files) {
 			structure.buildModule(file);
 		}
@@ -124,6 +127,11 @@ class Structure {
 					var modInPack = pack.getModule(path);
 					if (modInPack != null) {
 						return fq(pack.name, path);
+					}
+
+					if (checkValidPath("", path)) {
+						// toplevel type
+						return path;
 					}
 
 					return "Unresolved<"+path+">";
@@ -394,7 +402,12 @@ class SPackage {
 	}
 
 	public function createModule(name:String):SModule {
-		if (moduleMap.exists(name)) throw 'Module `$name` in package `${this.name}` already exists';
+		switch moduleMap[name] {
+			case null:
+			case existing:
+				trace('Duplicate module `$name` in package `${this.name}`');
+				modules.remove(existing);
+		}
 		var module = new SModule(name);
 		modules.push(module);
 		moduleMap[name] = module;

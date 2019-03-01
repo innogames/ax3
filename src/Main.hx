@@ -16,10 +16,29 @@ class Main {
 			case _:
 				throw "invalid args";
 		}
+		var libs = [
+			"playerglobal32_0.swc",
+			"libs/starling-1.7.1-20151208.155452-1.swc",
+			"libs/starling-extensions-scrollimg_foe.swc",
+			"libs/starling-ffparticlesystem-1.0.0.swc",
+			"libs/robotlegs-framework-v1.5.2.swc",
+			"libs/robotlegs-utilities-Modular.swc",
+			"libs/robotlegs-utilities-StateMachine.swc",
+			"libs/robotlegs-plugin-starling-0.3.swc",
+			"libs/common.swc",
+			"libs/Collections.swc",
+			"libs/snake-0.7.0.swc",
+			"libs/openfl-tilemap.swc",
+			"libs/greensock.swc",
+			"libs/Flint2d_4.0.1.swc",
+			"libs/as3-gettext-0.9.6.innogames-custom.swc",
+			"libs/spine-as3-1.0.0.swc",
+			"libs/tutorial-1.1.2.swc",
+		];
 		var files = [];
 		walk(dir, files);
 		var typer = new Typer2();
-		typer.process(files);
+		typer.process(files, libs);
 		// typer.process();
 		// typer.write("./OUT/");
 	}
@@ -76,8 +95,8 @@ class Main {
 		return if (StringTools.fastCodeAt(text, 0) == 0xFEFF) text.substring(1) else text;
 	}
 
-	static function print(s:String) js.Node.console.log(s);
-	static function printerr(s:String) js.Node.console.error(s);
+	static function print(s:String) #if hxnodejs js.Node.console.log(s) #else Sys.println(s) #end;
+	static function printerr(s:String) #if hxnodejs js.Node.console.error(s) #else Sys.println(s) #end;
 
 	static function getLine(content:String, pos:Int):Int {
 		var line = 1;

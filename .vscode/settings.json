@@ -2,6 +2,6 @@
 	"haxe.executable": "c:/haxe4/haxe.exe",
 	"haxe.enableCompilationServer": false,
 	"editor.insertSpaces": false,
-	"as3mxml.sdk.framework": "/Users/daniil.korostelev/Code/airsdk"
+	"as3mxml.sdk.framework": "c:\\airsdk",
 	"files.trimTrailingWhitespace": true
 }
