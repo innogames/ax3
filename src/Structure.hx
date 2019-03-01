@@ -190,21 +190,6 @@ class Structure {
 		return if (p.name != null) dotPathToArray(p.name) else [];
 	}
 
-	function getImports(file:File) {
-		var result = [];
-		function loop(decls:Array<Declaration>) {
-			for (d in decls) {
-				switch (d) {
-					case DPackage(p): loop(p.declarations);
-					case DImport(i): result.push(i);
-					case _: // TODO: handle cond.compilation
-				}
-			}
-		}
-		loop(file.declarations);
-		return result;
-	}
-
 	function buildImport(i:ImportDecl):SImport {
 		var path = dotPathToArray(i.path);
 		return if (i.wildcard != null) SIAll(path.join(".")) else {var name = path.pop(); SISingle(path.join("."), name);}

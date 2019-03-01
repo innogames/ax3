@@ -54,6 +54,21 @@ class ParseTree {
 		}
 		return decls;
 	}
+
+	public static function getImports(file:File) {
+		var result = [];
+		function loop(decls:Array<Declaration>) {
+			for (d in decls) {
+				switch (d) {
+					case DPackage(p): loop(p.declarations);
+					case DImport(i): result.push(i);
+					case _: // TODO: handle cond.compilation
+				}
+			}
+		}
+		loop(file.declarations);
+		return result;
+	}
 }
 
 typedef File = {
