@@ -1,10 +1,15 @@
 import ParseTree;
 
 class Typer2 {
-	public function new() {}
+	final structure:Structure;
 
-	public function process(files:Array<File>, libs:Array<String>) {
-		var structure = Structure.build(files, libs);
-		sys.io.File.saveContent("structure.txt", structure.dump());
+	public function new(structure) {
+		this.structure = structure;
+	}
+
+	public function process(files:Array<File>) {
+		for (file in files) {
+
+		}
 	}
 }

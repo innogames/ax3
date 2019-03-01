@@ -35,10 +35,15 @@ class Main {
 			"libs/spine-as3-1.0.0.swc",
 			"libs/tutorial-1.1.2.swc",
 		];
+
 		var files = [];
 		walk(dir, files);
-		var typer = new Typer2();
-		typer.process(files, libs);
+
+		var structure = Structure.build(files, libs);
+		sys.io.File.saveContent("structure.txt", structure.dump());
+
+		var typer = new Typer2(structure);
+		typer.process(files);
 		// typer.process();
 		// typer.write("./OUT/");
 	}

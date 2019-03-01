@@ -7,6 +7,7 @@ import Structure;
 
 class SWCLoader {
 	public static function load(structure:Structure, file:String) {
+		trace('Loading $file');
 		processLibrary(getLibrary(file), structure);
 	}
 

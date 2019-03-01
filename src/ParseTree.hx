@@ -1,3 +1,61 @@
+class ParseTree {
+	public static function getPackageDecl(file:File):PackageDecl {
+		var pack = null;
+		for (decl in file.declarations) {
+			switch (decl) {
+				case DPackage(p):
+					if (pack != null) throw 'Duplicate package decl in ${file.name}';
+					pack = p;
+				case _:
+			}
+		}
+		if (pack == null) throw "No package declaration in " + file.name;
+		return pack;
+	}
+
+	public static function getPackageMainDecl(p:PackageDecl):Declaration {
+		var decl = null;
+		for (d in p.declarations) {
+			switch (d) {
+				case DPackage(p):
+					throw "Package inside package is not allowed";
+
+				case DClass(_) | DInterface(_) | DFunction(_) | DVar(_):
+					if (decl != null) throw "More than one declaration inside package";
+					decl = d;
+
+				// skip these for now
+				case DImport(_):
+				case DNamespace(_):
+				case DUseNamespace(_):
+				case DCondComp(_):
+			}
+		}
+		// TODO: just skipping conditional-compiled ones for now
+		// if (decl == null) throw "No declaration inside package";
+		return decl;
+	}
+
+	public static function getPrivateDecls(file:File):Array<Declaration> {
+		var decls = [];
+		for (d in file.declarations) {
+			switch (d) {
+				case DPackage(p): // in-package is the main one
+
+				case DClass(_) | DInterface(_) | DFunction(_) | DVar(_):
+					decls.push(d);
+
+				// skip these for now
+				case DImport(i):
+				case DNamespace(ns):
+				case DUseNamespace(n, semicolon):
+				case DCondComp(v, openBrace, decls, closeBrace):
+			}
+		}
+		return decls;
+	}
+}
+
 typedef File = {
 	var name:String;
 	var declarations:Array<Declaration>;
