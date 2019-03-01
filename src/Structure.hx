@@ -60,40 +60,58 @@ class Structure {
 		for (pack in packages) {
 			for (mod in pack.modules) {
 
+				function checkValidPath(packName:String, declName:String) {
+					switch packages[packName] {
+						case null:
+							return false;
+							throw "No such package " + packName;
+						case pack:
+							var mod = pack.getModule(declName);
+							if (mod == null) {
+								return false;
+								throw "No such type " + declName;
+							}
+					}
+					return true;
+				}
+
 				function resolvePath(path:String) {
 					var dotIndex = path.lastIndexOf(".");
 					if (dotIndex != -1) {
 						// already a full-path, check that it's present
 						var packName = path.substring(0, dotIndex);
 						var declName = path.substring(dotIndex + 1);
-						switch packages[packName] {
-							case null:
-								throw "No such package " + packName;
-							case pack:
-								var mod = pack.getModule(declName);
-								if (mod == null) {
-									throw "No such type " + path;
-								}
+						if (!checkValidPath(packName, declName)) {
+							return 'Unresolved<$path>';
 						}
 						return path;
 					}
-
-					var imports = mod.imports.copy();
-					imports.reverse();
 
 					inline function fq(pack:String, name:String) {
 						return if (pack == "") name else pack + "." + name;
 					}
 
+					if (mod.mainDecl.name == path) {
+						return fq(pack.name, path);
+					}
+
+					var imports = mod.imports.copy();
+					imports.reverse();
+
 					for (i in imports) {
 						switch (i) {
 							case SISingle(pack, name):
 								if (name == path) {
+									if (!checkValidPath(pack, name)) {
+										return 'Unresolved<${fq(pack,name)}>';
+									}
 									return fq(pack, name);
 								}
 							case SIAll(pack):
 								switch packages[pack] {
-									case null: throw "No such package: " + pack;
+									case null:
+										return "Unresolved<"+path+">";
+										throw "No such package: " + pack;
 									case p:
 										var m = p.getModule(path);
 										if (m != null) {
@@ -103,12 +121,18 @@ class Structure {
 						}
 					}
 
+					var modInPack = pack.getModule(path);
+					if (modInPack != null) {
+						return fq(pack.name, path);
+					}
+
+					return "Unresolved<"+path+">";
 					throw "Unresolved type: " + path;
 				}
 
 				function resolveType(t:SType) {
 					return switch (t) {
-						case STVoid | STAny | STBoolean | STNumber | STInt | STUint | STString | STArray | STFunction: t;
+						case STVoid | STAny | STBoolean | STNumber | STInt | STUint | STString | STArray | STFunction | STClass | STObject | STXML | STRegExp: t;
 						case STVector(t): STVector(resolveType(t));
 						case STPath(path): STPath(resolvePath(path));
 					};
@@ -341,7 +365,11 @@ class Structure {
 					case "uint": STUint;
 					case "String": STString;
 					case "Array": STArray;
+					case "Class": STClass;
+					case "Object": STObject;
 					case "Function": STFunction;
+					case "XML": STXML;
+					case "RegExp": STRegExp;
 					case other: STPath(other);
 				}
 			case TVector(v): STVector(buildTypeStructure(v.t.type));
@@ -353,7 +381,7 @@ class SPackage {
 	public final modules:Array<SModule>;
 	final moduleMap:Map<String, SModule>;
 
-	final name:String;
+	public final name:String;
 
 	public function new(name) {
 		this.name = name;
@@ -460,6 +488,10 @@ class SModule {
 			case STString: "String";
 			case STArray: "Array";
 			case STFunction: "Function";
+			case STClass: "Class";
+			case STObject: "Object";
+			case STXML: "XML";
+			case STRegExp: "RegExp";
 			case STVector(t): "Vector.<" + dumpType(t) + ">";
 			case STPath(path): path;
 		}
@@ -534,6 +566,10 @@ enum SType {
 	STString;
 	STArray;
 	STFunction;
+	STClass;
+	STObject;
+	STXML;
+	STRegExp;
 	STVector(t:SType);
 	STPath(path:String);
 }
