@@ -15,5 +15,7 @@
  - rewrite for..each
  - rewrite implicit to-bool coercion
  - rewrite potentially-undefined-to-basic-type coercion
- - rewrite E4X
+ - rewrite E4X operators
+ - rewrite module-level functions/vars into classes with statics
+ - rewrite "untyped" field access to getProperty
 6) output Haxe files
