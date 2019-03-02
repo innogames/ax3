@@ -87,7 +87,7 @@ class Main {
 			}
 		}
 		if (parseTree != null) {
-			checkParseTree(content, parseTree);
+			// checkParseTree(content, parseTree);
 		}
 		return parseTree;
 	}
