@@ -306,6 +306,34 @@ class SModule {
 		privateDecls = [];
 	}
 
+	public function getDecl(name:String):Null<SDecl> {
+		if (mainDecl.name == name) return mainDecl;
+		for (decl in privateDecls) if (decl.name == name) return decl;
+		return null;
+	}
+
+	public function getMainClass(name:String):Null<SClassDecl> {
+		if (mainDecl.name == name) {
+			return switch mainDecl.kind {
+				case SClass(c): c;
+				case _: null;
+			}
+		}
+		return null;
+	}
+
+	public function getPrivateClass(name:String):Null<SClassDecl> {
+		for (p in privateDecls) {
+			if (p.name == name) {
+				return switch p.kind {
+					case SClass(c): c;
+					case _: null;
+				}
+			}
+		}
+		return null;
+	}
+
 	public function resolveTypePath(path:String) {
 		var dotIndex = path.lastIndexOf(".");
 		if (dotIndex != -1) {
@@ -322,12 +350,15 @@ class SModule {
 			return if (pack == "") name else pack + "." + name;
 		}
 
+		// TODO: these only should work for SClass declarations
 		if (mainDecl.name == path) {
 			return STPath(fq(pack.name, path));
 		}
-
-		var imports = imports.copy();
-		imports.reverse();
+		for (decl in privateDecls) {
+			if (decl.name == path) {
+				return STPath(fq(pack.name, path));
+			}
+		}
 
 		for (i in imports) {
 			switch (i) {

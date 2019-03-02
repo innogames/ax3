@@ -2,15 +2,40 @@ import ParseTree;
 import ParseTree.*;
 import Structure;
 
+typedef Locals = Map<String, SType>;
+
 @:nullSafety
 class Typer2 {
 	final structure:Structure;
+
+	@:nullSafety(Off) var locals:Locals;
+	@:nullSafety(Off) var localsStack:Array<Locals>;
 
 	public function new(structure) {
 		this.structure = structure;
 	}
 
+	function initLocals() {
+		locals = new Map();
+		localsStack = [locals];
+	}
+
+	function pushLocals() {
+		locals = locals.copy();
+		localsStack.push(locals);
+	}
+
+	function popLocals() {
+		localsStack.pop();
+		locals = localsStack[localsStack.length - 1];
+	}
+
+	function addLocal(name, type) {
+		locals[name] = type;
+	}
+
 	@:nullSafety(Off) var currentModule:SModule;
+	var currentClass:Null<SClassDecl>;
 
 	public function process(files:Array<File>) {
 		for (file in files) {
@@ -38,6 +63,10 @@ class Typer2 {
 				case DPackage(p):
 				case DImport(i):
 				case DClass(c):
+					switch currentModule.getMainClass(c.name.text) {
+						case null: throw "assert";
+						case cls: currentClass = cls;
+					}
 					typeClass(c);
 				case DInterface(i):
 				case DFunction(f):
@@ -58,7 +87,8 @@ class Typer2 {
 	}
 
 	function typeClass(c:ClassDecl) {
-		// trace("cls", c.name.text);
+		trace("cls", c.name.text);
+
 		for (m in c.members) {
 			switch (m) {
 				case MCondComp(v, openBrace, members, closeBrace):
@@ -73,15 +103,40 @@ class Typer2 {
 	function typeClassField(f:ClassField) {
 		switch (f.kind) {
 			case FVar(kind, vars, semicolon):
+				iterSeparated(vars, function(v) {
+					// TODO: check what is allowed to be resolved
+					if (v.init != null) typeExpr(v.init.expr);
+				});
 			case FFun(keyword, name, fun):
-				// trace(" - " + name.text);
+				trace(" - " + name.text);
+				initLocals();
+				// TODO: can use structure to get arg types (speedup \o/)
 				typeFunction(fun);
 			case FProp(keyword, kind, name, fun):
+				trace(" - " + name.text);
+				initLocals();
+				// TODO: can use structure to get arg types (speedup \o/)
+				typeFunction(fun);
 		}
 	}
 
 	function typeFunction(fun:Function) {
+		pushLocals();
+
+		if (fun.signature.args != null) {
+			iterSeparated(fun.signature.args, function(arg) {
+				switch (arg) {
+					case ArgNormal(a):
+						var type = if (a.type == null) STAny else resolveType(a.type.type);
+						addLocal(a.name.text, type);
+					case ArgRest(dots, name):
+						addLocal(name.text, STArray);
+				}
+			});
+		}
+
 		typeExpr(EBlock(fun.block));
+		popLocals();
 	}
 
 	function typeExpr(e:Expr) {
@@ -224,9 +279,11 @@ class Typer2 {
 	}
 
 	function typeBlock(b:BracedExprBlock) {
+		pushLocals();
 		for (e in b.exprs) {
 			typeExpr(e.expr);
 		}
+		popLocals();
 	}
 
 	function typeArrayAccess(e:Expr, eindex:Expr) {
@@ -239,7 +296,58 @@ class Typer2 {
 	}
 
 	function typeIdent(i:Token) {
+		switch i.text {
+			case "this":
+			case "super":
+			case "true":
+			case "false":
+			case "null" | "undefined":
+			case "trace":
+			case ident:
+				var type = locals[ident];
+				if (type != null) {
+					// found a local
+					// trace('Found local: $ident');
+					return;
+				}
 
+				if (currentClass != null) {
+					var field = currentClass.getField(ident);
+					if (field != null) {
+						// found a field
+						// trace('Found field: $ident');
+						return;
+					}
+				}
+
+				var decl = currentModule.getDecl(ident);
+				if (decl != null) {
+					// trace('Found module decl: $ident');
+					return;
+				}
+
+				for (i in currentModule.imports) {
+					switch (i) {
+						case SISingle(pack, name):
+							if (name == ident) {
+								// trace('Found imported decl: $pack::$name');
+								return;
+							}
+						case SIAll(pack):
+							switch structure.packages[pack] {
+								case null:
+								case p:
+									var m = p.getModule(ident);
+									if (m != null) {
+										// trace('Found imported decl: $pack::$ident');
+										return;
+									}
+							}
+					}
+				}
+
+				trace('Unknown ident: $ident');
+		}
 	}
 
 	function typeLiteral(l:Literal) {
@@ -260,6 +368,7 @@ class Typer2 {
 			if (v.init != null) {
 				typeExpr(v.init.expr);
 			}
+			addLocal(v.name.text, type);
 		});
 	}
 }

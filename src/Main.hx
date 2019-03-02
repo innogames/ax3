@@ -74,7 +74,7 @@ class Main {
 		var parseTree = null;
 		if (eagerFail) {
 			parseTree = parser.parse();
-			var dump = ParseTreeDump.printFile(parseTree, "");
+			// var dump = ParseTreeDump.printFile(parseTree, "");
 			// Sys.println(dump);
 		} else {
 			try {
