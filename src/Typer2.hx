@@ -303,6 +303,22 @@ class Typer2 {
 			case "false":
 			case "null" | "undefined":
 			case "trace":
+			case "int":
+			case "uint":
+			case "Boolean":
+			case "Number":
+			case "XML":
+			case "XMLList":
+			case "String":
+			case "Array":
+			case "Function":
+			case "Class":
+			case "Object":
+			case "RegExp":
+			case "parseInt":
+			case "parseFloat":
+			case "NaN":
+			case "isNaN":
 			case ident:
 				var type = locals[ident];
 				if (type != null) {
@@ -312,10 +328,21 @@ class Typer2 {
 				}
 
 				if (currentClass != null) {
-					var field = currentClass.getField(ident);
-					if (field != null) {
-						// found a field
-						// trace('Found field: $ident');
+					function loop(c:SClassDecl):Bool {
+						var field = c.getField(ident);
+						if (field != null) {
+							// found a field
+							// trace('Found field: $ident');
+							return true;
+						}
+						for (ext in c.extensions) {
+							if (loop(structure.getClass(ext))) {
+								return true;
+							}
+						}
+						return false;
+					}
+					if (loop(currentClass)) {
 						return;
 					}
 				}
@@ -344,6 +371,20 @@ class Typer2 {
 									}
 							}
 					}
+				}
+
+				var modInPack = currentModule.pack.getModule(ident);
+				if (modInPack != null) {
+					return;
+				}
+
+				switch structure.packages[""] {
+					case null:
+					case pack:
+						var toplevel = pack.getModule(ident);
+						if (toplevel != null) {
+							return;
+						}
 				}
 
 				trace('Unknown ident: $ident');

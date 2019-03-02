@@ -51,12 +51,28 @@ class SWCLoader {
 				var mod = pack.createModule(n.name);
 
 				var decl = new SClassDecl(n.name);
-				// trace(n);
+
+				if (cls.isInterface) {
+					for (iface in cls.interfaces) {
+						var n = getPublicName(abc, iface);
+						if (n != null) {
+							decl.extensions.push(if (n.ns == "") n.name else n.ns + "." + n.name);
+						}
+					}
+				} else {
+					if (cls.superclass != null) {
+						var n = getPublicName(abc, cls.superclass);
+						if (n != null) {
+							decl.extensions.push(if (n.ns == "") n.name else n.ns + "." + n.name);
+						}
+					}
+				}
 
 				for (f in cls.fields) {
 					var n = getPublicName(abc, f.name);
 					if (n == null) continue;
-					if (n.ns != "") throw "namespaced field name?";
+					// TODO: sort out namespaces
+					// if (n.ns != "") throw "namespaced field name? " + n.ns;
 
 					inline function buildPublicType(type) {
 						return buildTypeStructure(abc, type);
@@ -168,7 +184,7 @@ class SWCLoader {
 			case NName(name, ns):
 				var ns = abc.get(abc.namespaces, ns);
 				switch (ns) {
-					case NPublic(ns):
+					case NPublic(ns) | NProtected(ns):
 						var ns = abc.get(abc.strings, ns);
 						var name = abc.get(abc.strings, name);
 						return {ns: ns, name: name};
@@ -178,6 +194,21 @@ class SWCLoader {
 						// trace("Skipping non-public: " +  ns.getName() + " " + abc.get(abc.strings, name));
 						return null;
 				}
+			case NMulti(name, nss):
+				trace("OMG", abc.get(abc.strings, name));
+				var nss = abc.get(abc.nssets, nss);
+				for (ns in nss) {
+					var nsk = abc.get(abc.namespaces, ns);
+					switch (nsk) {
+						case NPublic(ns) | NPrivate(ns) | NInternal(ns):
+							var ns = abc.get(abc.strings, ns);
+							var name = abc.get(abc.strings, name);
+							return {ns: ns, name: name}
+						case _: throw "assert " + ns.getName();
+					}
+				}
+				// TODO: ffs
+				return null;
 			case _:
 				throw "assert " + name.getName();
 		}

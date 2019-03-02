@@ -23,6 +23,7 @@ class Main {
 			"libs/starling-ffparticlesystem-1.0.0.swc",
 			"libs/robotlegs-framework-v1.5.2.swc",
 			"libs/robotlegs-utilities-Modular.swc",
+			"libs/robotlegs-starling-utilities-Modular-v0.5.3.swc",
 			"libs/robotlegs-utilities-StateMachine.swc",
 			"libs/robotlegs-plugin-starling-0.3.swc",
 			"libs/common.swc",

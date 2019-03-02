@@ -8,6 +8,20 @@ class Structure {
 		packages = [];
 	}
 
+	public function getClass(fqn:String):SClassDecl {
+		var pack, name;
+		switch fqn.lastIndexOf(".") {
+			case -1: pack = ""; name = fqn;
+			case index:
+				pack = fqn.substring(0, index);
+				name = fqn.substring(index + 1);
+		}
+		return switch packages[pack].getModule(name).mainDecl.kind {
+			case SClass(c): c;
+			case _: throw "assert";
+		}
+	}
+
 	public function getPackage(path:String):SPackage {
 		return switch packages[path] {
 			case null: packages[path] = new SPackage(path, this);
@@ -98,6 +112,19 @@ class Structure {
 						case SFun(f):
 							resolveFun(f);
 						case SClass(f):
+							f.extensions = [
+								for (path in f.extensions) {
+									// TODO: this is dirty
+									if (path != "Object" && path != "mx.core.UIComponent") {
+										switch (mod.resolveTypePath(path)) {
+											case STPath(path): path;
+											case STUnresolved(path): throw "Unknown extension: " + path;
+											case _: throw "assert";
+										}
+									}
+								}
+							];
+
 							for (f in f.fields) {
 								switch (f.kind) {
 									case SFVar(v): resolveVar(v);
@@ -146,6 +173,15 @@ class Structure {
 
 	function buildClassStructure(v:ClassDecl):SDecl {
 		var cls = new SClassDecl(v.name.text);
+		if (v.extend != null) {
+			cls.extensions.push(dotPathToString(v.extend.path));
+		}
+		// maybe we don't need that for struct because all public fields
+		// will be there anyway
+		// if (v.implement != null) {
+		// 	iterSeparated(v.implement.paths, p -> cls.extensions.push(dotPathToString(p)));
+		// }
+
 		for (m in v.members) {
 			switch (m) {
 				case MField(f):
@@ -160,7 +196,7 @@ class Structure {
 							cls.addField({name: name.text, kind: SFFun(fun)});
 						case FProp(_, _, name, fun):
 							var type = buildTypeStructure(fun.signature.ret.type);
-							if (cls.getField(name.text) != null) {
+							if (cls.getField(name.text) == null) {
 								// TODO: check if it was really a property getter/setter
 								cls.addField({name: name.text, kind: SFVar({type: type})});
 							}
@@ -180,6 +216,10 @@ class Structure {
 
 	function buildInterfaceStructure(v:InterfaceDecl):SDecl {
 		var cls = new SClassDecl(v.name.text);
+		if (v.extend != null) {
+			iterSeparated(v.extend.paths, p -> cls.extensions.push(dotPathToString(p)));
+		}
+
 		for (m in v.members) {
 			switch (m) {
 				case MIField(f):
@@ -293,9 +333,9 @@ class SModule {
 	public var mainDecl:SDecl;
 	public var privateDecls(default,null):Array<SDecl>;
 	public final imports:Array<SImport>;
+	public final pack:SPackage;
 
 	final name:String;
-	final pack:SPackage;
 	final structure:Structure;
 
 	public function new(name, pack:SPackage, structure:Structure) {
@@ -422,6 +462,9 @@ class SModule {
 				return indent + dumpFun(d.name, f);
 			case SClass(f):
 				var r = [indent + "CLS " + d.name];
+				if (f.extensions.length > 0) {
+					r.push(indent + " - EXT: " + f.extensions.join(", "));
+				}
 				for (field in f.fields) {
 					r.push(dumpClassField(field));
 				}
@@ -498,13 +541,15 @@ enum SFunArg {
 }
 
 class SClassDecl {
+	public var extensions:Array<String>;
+
 	public final fields:Array<SClassField>;
 	final fieldMap:Map<String, SClassField>;
-
 	final name:String;
 
 	public function new(name) {
 		this.name = name;
+		this.extensions = [];
 		fields = [];
 		fieldMap = new Map();
 	}
