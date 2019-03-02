@@ -10,9 +10,19 @@ class Structure {
 
 	public function getPackage(path:String):SPackage {
 		return switch packages[path] {
-			case null: packages[path] = new SPackage(path);
+			case null: packages[path] = new SPackage(path, this);
 			case pack: pack;
 		};
+	}
+
+	public function checkValidFullPath(packName:String, declName:String) {
+		switch packages[packName] {
+			case null:
+				return false;
+			case pack:
+				var mod = pack.getModule(declName);
+				return (mod != null);
+		}
 	}
 
 	public static function build(files:Array<File>, libs:Array<String>):Structure {
@@ -61,85 +71,11 @@ class Structure {
 	public function resolve() {
 		for (pack in packages) {
 			for (mod in pack.modules) {
-
-				function checkValidPath(packName:String, declName:String) {
-					switch packages[packName] {
-						case null:
-							return false;
-							throw "No such package " + packName;
-						case pack:
-							var mod = pack.getModule(declName);
-							if (mod == null) {
-								return false;
-								throw "No such type " + declName;
-							}
-					}
-					return true;
-				}
-
-				function resolvePath(path:String) {
-					var dotIndex = path.lastIndexOf(".");
-					if (dotIndex != -1) {
-						// already a full-path, check that it's present
-						var packName = path.substring(0, dotIndex);
-						var declName = path.substring(dotIndex + 1);
-						if (!checkValidPath(packName, declName)) {
-							return STUnresolved(path);
-						}
-						return STPath(path);
-					}
-
-					inline function fq(pack:String, name:String) {
-						return if (pack == "") name else pack + "." + name;
-					}
-
-					if (mod.mainDecl.name == path) {
-						return STPath(fq(pack.name, path));
-					}
-
-					var imports = mod.imports.copy();
-					imports.reverse();
-
-					for (i in imports) {
-						switch (i) {
-							case SISingle(pack, name):
-								if (name == path) {
-									if (!checkValidPath(pack, name)) {
-										return STUnresolved(fq(pack,name));
-									}
-									return STPath(fq(pack, name));
-								}
-							case SIAll(pack):
-								switch packages[pack] {
-									case null:
-										return STUnresolved(path);
-									case p:
-										var m = p.getModule(path);
-										if (m != null) {
-											return STPath(fq(pack, path));
-										}
-								}
-						}
-					}
-
-					var modInPack = pack.getModule(path);
-					if (modInPack != null) {
-						return STPath(fq(pack.name, path));
-					}
-
-					if (checkValidPath("", path)) {
-						// toplevel type
-						return STPath(path);
-					}
-
-					return STUnresolved(path);
-				}
-
 				function resolveType(t:SType) {
 					return switch (t) {
 						case STVoid | STAny | STBoolean | STNumber | STInt | STUint | STString | STArray | STFunction | STClass | STObject | STXML | STXMLList | STRegExp | STUnresolved(_): t;
 						case STVector(t): STVector(resolveType(t));
-						case STPath(path): resolvePath(path);
+						case STPath(path): mod.resolveTypePath(path);
 					};
 				}
 
@@ -287,7 +223,7 @@ class Structure {
 		return {type: type};
 	}
 
-	function buildTypeStructure(t:SyntaxType):SType {
+	public function buildTypeStructure(t:SyntaxType, ?resolveModule:SModule):SType {
 		return switch (t) {
 			case TAny(star): STAny;
 			case TPath(path):
@@ -305,9 +241,9 @@ class Structure {
 					case "XML": STXML;
 					case "XMLList": STXMLList;
 					case "RegExp": STRegExp;
-					case other: STPath(other);
+					case other: if (resolveModule != null) resolveModule.resolveTypePath(other) else STPath(other);
 				}
-			case TVector(v): STVector(buildTypeStructure(v.t.type));
+			case TVector(v): STVector(buildTypeStructure(v.t.type, resolveModule));
 		}
 	}
 }
@@ -317,9 +253,11 @@ class SPackage {
 	final moduleMap:Map<String, SModule>;
 
 	public final name:String;
+	final stucture:Structure;
 
-	public function new(name) {
+	public function new(name, structure) {
 		this.name = name;
+		this.stucture = structure;
 		modules = [];
 		moduleMap = new Map();
 	}
@@ -335,7 +273,7 @@ class SPackage {
 				trace('Duplicate module `$name` in package `${this.name}`');
 				modules.remove(existing);
 		}
-		var module = new SModule(name);
+		var module = new SModule(name, this, stucture);
 		modules.push(module);
 		moduleMap[name] = module;
 		return module;
@@ -357,12 +295,75 @@ class SModule {
 	public final imports:Array<SImport>;
 
 	final name:String;
+	final pack:SPackage;
+	final structure:Structure;
 
-	public function new(name) {
+	public function new(name, pack:SPackage, structure:Structure) {
 		this.name = name;
+		this.pack = pack;
+		this.structure = structure;
 		imports = [];
 		privateDecls = [];
 	}
+
+	public function resolveTypePath(path:String) {
+		var dotIndex = path.lastIndexOf(".");
+		if (dotIndex != -1) {
+			// already a full-path, check that it's present
+			var packName = path.substring(0, dotIndex);
+			var declName = path.substring(dotIndex + 1);
+			if (!structure.checkValidFullPath(packName, declName)) {
+				return STUnresolved(path);
+			}
+			return STPath(path);
+		}
+
+		inline function fq(pack:String, name:String) {
+			return if (pack == "") name else pack + "." + name;
+		}
+
+		if (mainDecl.name == path) {
+			return STPath(fq(pack.name, path));
+		}
+
+		var imports = imports.copy();
+		imports.reverse();
+
+		for (i in imports) {
+			switch (i) {
+				case SISingle(pack, name):
+					if (name == path) {
+						if (!structure.checkValidFullPath(pack, name)) {
+							return STUnresolved(fq(pack,name));
+						}
+						return STPath(fq(pack, name));
+					}
+				case SIAll(pack):
+					switch structure.packages[pack] {
+						case null:
+							return STUnresolved(path);
+						case p:
+							var m = p.getModule(path);
+							if (m != null) {
+								return STPath(fq(pack, path));
+							}
+					}
+			}
+		}
+
+		var modInPack = pack.getModule(path);
+		if (modInPack != null) {
+			return STPath(fq(pack.name, path));
+		}
+
+		if (structure.checkValidFullPath("", path)) {
+			// toplevel type
+			return STPath(path);
+		}
+
+		return STUnresolved(path);
+	}
+
 
 	static final indent = "  ";
 

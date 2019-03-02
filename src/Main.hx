@@ -34,6 +34,7 @@ class Main {
 			"libs/as3-gettext-0.9.6.innogames-custom.swc",
 			"libs/spine-as3-1.0.0.swc",
 			"libs/tutorial-1.1.2.swc",
+			"libs/AS3Communicator-lib.swc",
 		];
 
 		var files = [];
