@@ -189,8 +189,11 @@ class Typer2 {
 		if (finally_ != null) throw "finally is unsupported";
 		typeExpr(EBlock(block));
 		for (c in catches) {
+			pushLocals();
+			addLocal(c.name.text, resolveType(c.type.type));
 			resolveType(c.type.type);
 			typeExpr(EBlock(c.block));
+			popLocals();
 		}
 	}
 
@@ -315,10 +318,13 @@ class Typer2 {
 			case "Class":
 			case "Object":
 			case "RegExp":
+			// TODO: actually these must be resolved after everything because they are global idents!!!
 			case "parseInt":
 			case "parseFloat":
 			case "NaN":
 			case "isNaN":
+			case "escape":
+			case "unescape":
 			case ident:
 				var type = locals[ident];
 				if (type != null) {
