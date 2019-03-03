@@ -5,7 +5,7 @@ import Structure;
 typedef Locals = Map<String, SType>;
 
 @:nullSafety
-class Typer2 {
+class Typer {
 	final structure:Structure;
 
 	@:nullSafety(Off) var locals:Locals;

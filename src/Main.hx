@@ -44,10 +44,8 @@ class Main {
 		var structure = Structure.build(files, libs);
 		sys.io.File.saveContent("structure.txt", structure.dump());
 
-		var typer = new Typer2(structure);
+		var typer = new Typer(structure);
 		typer.process(files);
-		// typer.process();
-		// typer.write("./OUT/");
 	}
 
 	static function walk(dir:String, files:Array<ParseTree.File>) {
