@@ -115,6 +115,49 @@ class SWCLoader {
 
 				mod.mainDecl = {name: n.name, kind: SClass(decl)};
 			}
+
+			for (init in abc.inits) {
+				for (f in init.fields) {
+					var n = getPublicName(abc, f.name);
+					if (n == null) continue;
+
+					var pack = structure.getPackage(n.ns);
+
+					var decl = switch (f.kind) {
+						case FVar(type, value, const):
+							SVar({type: if (type != null) buildTypeStructure(abc, type) else STAny});
+						case FMethod(type, KNormal, _, _):
+							var methType = getMethodType(abc, type);
+							var args = [];
+							for (i in 0...methType.args.length) {
+								var arg = methType.args[i];
+								var type = if (arg != null) buildTypeStructure(abc, arg) else STAny;
+								args.push({kind: SArgNormal("arg", false), type: type});
+							}
+							var ret = if (methType.ret != null) buildTypeStructure(abc, methType.ret) else STAny;
+							SFun({args: args, ret: ret});
+
+						case FMethod(_, _, _, _):
+							throw "assert";
+						case FClass(_):
+							// TODO: assert that class is there already (should be filled in by iterating abc.classes)
+							null;
+						case FFunction(f):
+							throw "assert"; // toplevel funcs are FMethods
+					}
+					if (decl == null) continue;
+
+					// TODO: code duplication with classes
+					if (pack.getModule(n.name) != null) {
+						trace('Duplicate module: ' + n.ns + "::" + n.name);
+						continue;
+					}
+
+					var mod = pack.createModule(n.name);
+					mod.mainDecl = {name: n.name, kind: decl};
+				}
+			}
+
 		}
 	}
 
@@ -134,7 +177,7 @@ class SWCLoader {
 								switch name {
 									case "void": STVoid;
 									case "Boolean": STBoolean;
-									case "Number": STUint;
+									case "Number": STNumber;
 									case "int": STInt;
 									case "uint": STUint;
 									case "String": STString;

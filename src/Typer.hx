@@ -375,6 +375,7 @@ class Typer {
 			case "true" | "false": mk(TELiteral(TLBool(i)), TTBoolean);
 			case "null": mk(TELiteral(TLNull(i)), TTAny);
 			case "undefined": mk(TELiteral(TLUndefined(i)), TTAny);
+			case "arguments": mk(TEBuiltin(i, "arguments"), TTBuiltin);
 			case "trace": mk(TEBuiltin(i, "trace"), TTFunction);
 			case "int": mk(TEBuiltin(i, "int"), TTBuiltin);
 			case "uint": mk(TEBuiltin(i, "int"), TTBuiltin);
