@@ -1,8 +1,9 @@
 import ParseTree;
 import ParseTree.*;
 import Structure;
+import TypedTree;
 
-typedef Locals = Map<String, SType>;
+typedef Locals = Map<String, TVar>;
 
 @:nullSafety
 class Typer {
@@ -30,8 +31,8 @@ class Typer {
 		locals = localsStack[localsStack.length - 1];
 	}
 
-	function addLocal(name, type) {
-		locals[name] = type;
+	function addLocal(name:String, type:TType) {
+		locals[name] = {name: name, type: type};
 	}
 
 	@:nullSafety(Off) var currentModule:SModule;
@@ -68,6 +69,7 @@ class Typer {
 						case cls: currentClass = cls;
 					}
 					typeClass(c);
+					currentClass = null;
 				case DInterface(i):
 				case DFunction(f):
 				case DVar(v):
@@ -79,12 +81,33 @@ class Typer {
 		}
 	}
 
-	inline function resolveType(t:SyntaxType):SType {
-		return switch structure.buildTypeStructure(t, currentModule) {
-			case STUnresolved(path): throw "Unresolved type " + path;
-			case resolved: resolved;
+	function typeType(t:SType):TType {
+		return switch (t) {
+			case STVoid: TTVoid;
+			case STAny: TTAny;
+			case STBoolean: TTBoolean;
+			case STNumber: TTNumber;
+			case STInt: TTInt;
+			case STUint: TTUint;
+			case STString: TTString;
+			case STArray: TTArray;
+			case STFunction: TTFunction;
+			case STClass: TTClass;
+			case STObject: TTObject;
+			case STXML: TTXML;
+			case STXMLList: TTXMLList;
+			case STRegExp: TTRegExp;
+			case STVector(t): TTVector(typeType(t));
+			case STPath(path): TTInst(structure.getClass(path));
+			case STUnresolved(path):  throw "Unresolved type " + path;
 		}
 	}
+
+	function resolveType(t:SyntaxType):TType {
+		return typeType(structure.buildTypeStructure(t, currentModule));
+	}
+
+	inline function mk(e:TExprKind, t:TType):TExpr return {kind: e, type: t};
 
 	function typeClass(c:ClassDecl) {
 		trace("cls", c.name.text);
@@ -127,10 +150,10 @@ class Typer {
 			iterSeparated(fun.signature.args, function(arg) {
 				switch (arg) {
 					case ArgNormal(a):
-						var type = if (a.type == null) STAny else resolveType(a.type.type);
+						var type = if (a.type == null) TTAny else resolveType(a.type.type);
 						addLocal(a.name.text, type);
 					case ArgRest(dots, name):
-						addLocal(name.text, STArray);
+						addLocal(name.text, TTArray);
 				}
 			});
 		}
@@ -141,7 +164,7 @@ class Typer {
 
 	function typeExpr(e:Expr) {
 		switch (e) {
-			case EIdent(i): typeIdent(i);
+			case EIdent(i): typeIdent(i, e);
 			case ELiteral(l): typeLiteral(l);
 			case ECall(e, args): typeCall(e, args);
 			case EParens(openParen, e, closeParen): typeExpr(e);
@@ -152,7 +175,7 @@ class Typer {
 			case EDelete(keyword, e): typeExpr(e);
 			case ENew(keyword, e, args): typeNew(e, args);
 			case EVectorDecl(newKeyword, t, d): typeArrayDecl(d);
-			case EField(e, dot, fieldName): typeField(e, fieldName);
+			case EField(eobj, dot, fieldName): typeField(eobj, fieldName, e);
 			case EBlock(b): typeBlock(b);
 			case EObjectDecl(openBrace, fields, closeBrace): typeObjectDecl(fields);
 			case EIf(keyword, openParen, econd, closeParen, ethen, eelse): typeIf(econd, ethen, eelse);
@@ -298,65 +321,84 @@ class Typer {
 		if (d.elems != null) iterSeparated(d.elems, typeExpr);
 	}
 
-	function typeIdent(i:Token) {
-		switch i.text {
-			case "this":
-			case "super":
-			case "true":
-			case "false":
-			case "null" | "undefined":
-			case "trace":
-			case "int":
-			case "uint":
-			case "Boolean":
-			case "Number":
-			case "XML":
-			case "XMLList":
-			case "String":
-			case "Array":
-			case "Function":
-			case "Class":
-			case "Object":
-			case "RegExp":
+	function getTypeOfFunctionDecl(f:SFunDecl):TType {
+		return TTFun([for (a in f.args) typeType(a.type)], typeType(f.ret));
+	}
+
+	function mkDeclRef(decl:SDecl):TExpr {
+		var type = switch (decl.kind) {
+			case SVar(v): typeType(v.type);
+			case SFun(f): getTypeOfFunctionDecl(f);
+			case SClass(c): TTStatic(c);
+		};
+		return mk(TEDeclRef(decl), type);
+	}
+
+	function typeIdent(i:Token, e:Expr):TExpr {
+		inline function getCurrentClass(subj) return if (currentClass != null) currentClass else throw '`$subj` used outside of class';
+
+		return switch i.text {
+			case "this": mk(TEThis(e), TTInst(getCurrentClass("this")));
+			case "super": mk(TEThis(e), TTInst(structure.getClass(getCurrentClass("super").extensions[0])));
+			case "true" | "false": mk(TELiteral(TLBool(i)), TTBoolean);
+			case "null": mk(TELiteral(TLNull(i)), TTAny);
+			case "undefined": mk(TELiteral(TLUndefined(i)), TTAny);
+			case "trace": mk(TEBuiltin(i, "trace"), TTFunction);
+			case "int": mk(TEBuiltin(i, "int"), TTBuiltin);
+			case "uint": mk(TEBuiltin(i, "int"), TTBuiltin);
+			case "Boolean": mk(TEBuiltin(i, "Boolean"), TTBuiltin);
+			case "Number": mk(TEBuiltin(i, "Number"), TTBuiltin);
+			case "XML": mk(TEBuiltin(i, "XML"), TTBuiltin);
+			case "XMLList": mk(TEBuiltin(i, "XMLList"), TTBuiltin);
+			case "String": mk(TEBuiltin(i, "String"), TTBuiltin);
+			case "Array": mk(TEBuiltin(i, "Array"), TTBuiltin);
+			case "Function": mk(TEBuiltin(i, "Function"), TTBuiltin);
+			case "Class": mk(TEBuiltin(i, "Class"), TTBuiltin);
+			case "Object": mk(TEBuiltin(i, "Object"), TTBuiltin);
+			case "RegExp": mk(TEBuiltin(i, "RegExp"), TTBuiltin);
 			// TODO: actually these must be resolved after everything because they are global idents!!!
-			case "parseInt":
-			case "parseFloat":
-			case "NaN":
-			case "isNaN":
-			case "escape":
-			case "unescape":
+			case "parseInt":  mk(TEBuiltin(i, "parseInt"), TTFun([TTString], TTInt));
+			case "parseFloat": mk(TEBuiltin(i, "parseFloat"), TTFun([TTString], TTNumber));
+			case "NaN": mk(TEBuiltin(i, "NaN"), TTNumber);
+			case "isNaN": mk(TEBuiltin(i, "isNaN"), TTFun([TTNumber], TTBoolean));
+			case "escape": mk(TEBuiltin(i, "escape"), TTFun([TTString], TTString));
+			case "unescape": mk(TEBuiltin(i, "unescape"), TTFun([TTString], TTString));
 			case ident:
-				var type = locals[ident];
-				if (type != null) {
-					// found a local
-					// trace('Found local: $ident');
-					return;
+				var v = locals[ident];
+				if (v != null) {
+					return mk(TELocal(i, v), v.type);
 				}
 
 				if (currentClass != null) {
-					function loop(c:SClassDecl):Bool {
+					var currentClass:SClassDecl = currentClass; // TODO: this is here only to please the null-safety checker
+					function loop(c:SClassDecl):Null<TExpr> {
 						var field = c.getField(ident);
 						if (field != null) {
 							// found a field
-							// trace('Found field: $ident');
-							return true;
+							var eobj = mk(TEThis(null), TTInst(currentClass));
+							var type = switch (field.kind) {
+								case SFVar(v): typeType(v.type);
+								case SFFun(f): getTypeOfFunctionDecl(f);
+							};
+							return mk(TEField(e, eobj, ident), type);
 						}
 						for (ext in c.extensions) {
-							if (loop(structure.getClass(ext))) {
-								return true;
+							var e = loop(structure.getClass(ext));
+							if (e != null) {
+								return e;
 							}
 						}
-						return false;
+						return null;
 					}
-					if (loop(currentClass)) {
-						return;
+					var e = loop(currentClass);
+					if (e != null) {
+						return e;
 					}
 				}
 
 				var decl = currentModule.getDecl(ident);
 				if (decl != null) {
-					// trace('Found module decl: $ident');
-					return;
+					return mkDeclRef(decl);
 				}
 
 				for (i in currentModule.imports) {
@@ -364,7 +406,7 @@ class Typer {
 						case SISingle(pack, name):
 							if (name == ident) {
 								// trace('Found imported decl: $pack::$name');
-								return;
+								return mkDeclRef(structure.getDecl(pack, name));
 							}
 						case SIAll(pack):
 							switch structure.packages[pack] {
@@ -373,7 +415,7 @@ class Typer {
 									var m = p.getModule(ident);
 									if (m != null) {
 										// trace('Found imported decl: $pack::$ident');
-										return;
+										return mkDeclRef(m.mainDecl);
 									}
 							}
 					}
@@ -381,7 +423,7 @@ class Typer {
 
 				var modInPack = currentModule.pack.getModule(ident);
 				if (modInPack != null) {
-					return;
+					return mkDeclRef(modInPack.mainDecl);
 				}
 
 				switch structure.packages[""] {
@@ -389,20 +431,25 @@ class Typer {
 					case pack:
 						var toplevel = pack.getModule(ident);
 						if (toplevel != null) {
-							return;
+							return mkDeclRef(toplevel.mainDecl);
 						}
 				}
 
-				trace('Unknown ident: $ident');
+				throw 'Unknown ident: $ident';
 		}
 	}
 
-	function typeLiteral(l:Literal) {
-
+	function typeLiteral(l:Literal):TExpr {
+		return switch (l) {
+			case LString(t): mk(TELiteral(TLString(t)), TTString);
+			case LDecInt(t) | LHexInt(t): mk(TELiteral(TLInt(t)), TTInt);
+			case LFloat(t): mk(TELiteral(TLNumber(t)), TTNumber);
+			case LRegExp(t): mk(TELiteral(TLRegExp(t)), TTRegExp);
+		}
 	}
 
-	function typeField(e:Expr, name:Token) {
-		typeExpr(e);
+	function typeField(eobj:Expr, name:Token, e:Expr) {
+		typeExpr(eobj);
 	}
 
 	function typeObjectDecl(fields:Separated<ObjectField>) {
@@ -411,7 +458,7 @@ class Typer {
 
 	function typeVars(vars:Separated<VarDecl>) {
 		iterSeparated(vars, function(v) {
-			var type = if (v.type == null) STAny else resolveType(v.type.type);
+			var type = if (v.type == null) TTAny else resolveType(v.type.type);
 			if (v.init != null) {
 				typeExpr(v.init.expr);
 			}

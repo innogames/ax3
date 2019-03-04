@@ -89,7 +89,7 @@ class SWCLoader {
 							for (i in 0...methType.args.length) {
 								var arg = methType.args[i];
 								var type = if (arg != null) buildPublicType(arg) else STAny;
-								args.push(SArgNormal("arg", false, type));
+								args.push({kind: SArgNormal("arg", false), type: type});
 							}
 							var ret = if (methType.ret != null) buildPublicType(methType.ret) else STAny;
 							decl.addField({name: n.name, kind: SFFun({args: args, ret: ret})});

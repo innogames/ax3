@@ -16,10 +16,14 @@ class Structure {
 				pack = fqn.substring(0, index);
 				name = fqn.substring(index + 1);
 		}
-		return switch packages[pack].getModule(name).mainDecl.kind {
+		return switch getDecl(pack, name).kind {
 			case SClass(c): c;
 			case _: throw "assert";
 		}
+	}
+
+	public function getDecl(pack:String, name:String):SDecl {
+		return packages[pack].getModule(name).mainDecl;
 	}
 
 	public function getPackage(path:String):SPackage {
@@ -94,10 +98,9 @@ class Structure {
 				}
 
 				function resolveFun(f:SFunDecl) {
-					f.args = f.args.map(a -> switch (a) {
-						case SArgNormal(name, opt, type): SArgNormal(name, opt, resolveType(type));
-						case SArgRest(_): a;
-					});
+					for (a in f.args) {
+						a.type = resolveType(a.type);
+					}
 					f.ret = resolveType(f.ret);
 				}
 
@@ -247,8 +250,11 @@ class Structure {
 	function buildFunctionStructure(sig:FunctionSignature):SFunDecl {
 		function buildArg(arg:FunctionArg) {
 			return switch (arg) {
-				case ArgNormal(a): SArgNormal(a.name.text, a.init != null, if (a.type == null) STAny else buildTypeStructure(a.type.type));
-				case ArgRest(_, name): SArgRest(name.text);
+				case ArgNormal(a):
+					var type = if (a.type == null) STAny else buildTypeStructure(a.type.type);
+					{kind: SArgNormal(a.name.text, a.init != null), type: type};
+				case ArgRest(_, name):
+					{kind: SArgRest(name.text), type: STArray};
 			}
 		}
 
@@ -477,8 +483,8 @@ class SModule {
 	}
 
 	static function dumpFun(name:String, f:SFunDecl):String {
-		var args = [for (a in f.args) switch (a) {
-			case SArgNormal(name, opt, type): (if (opt) "?" else "") + name + ":" + dumpType(type);
+		var args = [for (a in f.args) switch (a.kind) {
+			case SArgNormal(name, opt): (if (opt) "?" else "") + name + ":" + dumpType(a.type);
 			case SArgRest(name): "..." + name;
 		}];
 		return "FUN " + name + "(" + args.join(", ") + "):" + dumpType(f.ret);
@@ -531,12 +537,12 @@ typedef SVarDecl = {
 }
 
 typedef SFunDecl = {
-	var args:Array<SFunArg>;
+	var args:Array<{kind:SFunArgKind, type:SType}>;
 	var ret:SType;
 }
 
-enum SFunArg {
-	SArgNormal(name:String, opt:Bool, type:SType);
+enum SFunArgKind {
+	SArgNormal(name:String, opt:Bool);
 	SArgRest(name:String);
 }
 
