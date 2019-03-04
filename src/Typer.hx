@@ -143,7 +143,7 @@ class Typer {
 		}
 	}
 
-	function typeFunction(fun:Function) {
+	function typeFunction(fun:Function):TExpr {
 		pushLocals();
 
 		if (fun.signature.args != null) {
@@ -160,19 +160,21 @@ class Typer {
 
 		typeExpr(EBlock(fun.block));
 		popLocals();
+
+		return mk(null, TTFunction); // TODO: return TTFun instead (we need to coerce args on call)
 	}
 
-	function typeExpr(e:Expr) {
-		switch (e) {
+	function typeExpr(e:Expr):TExpr {
+		return switch (e) {
 			case EIdent(i): typeIdent(i, e);
 			case ELiteral(l): typeLiteral(l);
 			case ECall(e, args): typeCall(e, args);
 			case EParens(openParen, e, closeParen): typeExpr(e);
 			case EArrayAccess(e, openBracket, eindex, closeBracket): typeArrayAccess(e, eindex);
 			case EArrayDecl(d): typeArrayDecl(d);
-			case EReturn(keyword, e): if (e != null) typeExpr(e);
-			case EThrow(keyword, e): typeExpr(e);
-			case EDelete(keyword, e): typeExpr(e);
+			case EReturn(keyword, e): mk(TEReturn(keyword, if (e != null) typeExpr(e) else null), TTVoid);
+			case EThrow(keyword, e): mk(TEThrow(keyword, typeExpr(e)), TTVoid);
+			case EDelete(keyword, e): mk(TEDelete(keyword, typeExpr(e)), TTVoid);
 			case ENew(keyword, e, args): typeNew(e, args);
 			case EVectorDecl(newKeyword, t, d): typeArrayDecl(d);
 			case EField(eobj, dot, fieldName): typeField(eobj, fieldName, e);
@@ -192,23 +194,28 @@ class Typer {
 			case EAs(e, keyword, t): typeAs(e, t);
 			case EIs(e, keyword, t): typeIs(e, t);
 			case EComma(a, comma, b): typeComma(a, b);
-			case EVector(v): resolveType(v.t.type);
+			case EVector(v): typeVector(v);
 			case ESwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace): typeSwitch(subj, cases);
 			case ETry(keyword, block, catches, finally_): typeTry(block, catches, finally_);
 			case EFunction(keyword, name, fun): typeFunction(fun);
 
-			case EBreak(keyword):
-			case EContinue(keyword):
+			case EBreak(keyword): mk(TEBreak(keyword), TTVoid);
+			case EContinue(keyword): mk(TEContinue(keyword), TTVoid);
 
-			case EXmlAttr(e, dot, at, attrName):
-			case EXmlDescend(e, dotDot, childName):
-			case ECondCompValue(v):
-			case ECondCompBlock(v, b):
-			case EUseNamespace(n):
+			case EXmlAttr(e, dot, at, attrName): null;
+			case EXmlDescend(e, dotDot, childName): null;
+			case ECondCompValue(v): null;
+			case ECondCompBlock(v, b): null;
+			case EUseNamespace(n): null;
 		}
 	}
 
-	function typeTry(block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>) {
+	function typeVector(v:VectorSyntax):TExpr {
+		var type = resolveType(v.t.type);
+		return mk(null, TTVector(type));
+	}
+
+	function typeTry(block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>):TExpr {
 		if (finally_ != null) throw "finally is unsupported";
 		typeExpr(EBlock(block));
 		for (c in catches) {
@@ -218,9 +225,10 @@ class Typer {
 			typeExpr(EBlock(c.block));
 			popLocals();
 		}
+		return mk(null, TTVoid);
 	}
 
-	function typeSwitch(subj:Expr, cases:Array<SwitchCase>) {
+	function typeSwitch(subj:Expr, cases:Array<SwitchCase>):TExpr {
 		typeExpr(subj);
 		for (c in cases) {
 			switch (c) {
@@ -235,90 +243,114 @@ class Typer {
 					}
 			}
 		}
+		return mk(null, TTVoid);
 	}
 
 	function typeAs(e:Expr, t:SyntaxType) {
 		typeExpr(e);
-		resolveType(t);
+		var type = resolveType(t);
+		return mk(null, type);
 	}
 
-	function typeIs(e:Expr, t:SyntaxType) {
+	function typeIs(e:Expr, t:SyntaxType):TExpr {
 		typeExpr(e);
 		// resolveType(t); // TODO: this can be also an expr O_o
+		return mk(null, TTBoolean);
 	}
 
-	function typeComma(a:Expr, b:Expr) {
+	function typeComma(a:Expr, b:Expr):TExpr {
+		var a = typeExpr(a);
+		var b = typeExpr(b);
+		return mk(null, b.type);
+	}
+
+	function typeBinop(a:Expr, op:Binop, b:Expr):TExpr {
 		typeExpr(a);
 		typeExpr(b);
+		return cast null;
 	}
 
-	function typeBinop(a:Expr, op:Binop, b:Expr) {
-		typeExpr(a);
-		typeExpr(b);
-	}
-
-	function typeForIn(iter:ForIter, body:Expr) {
+	function typeForIn(iter:ForIter, body:Expr):TExpr {
 		typeExpr(iter.eobj);
 		typeExpr(iter.eit);
 		typeExpr(body);
+		return mk(null, TTVoid);
 	}
 
-	function typeFor(einit:Null<Expr>, econd:Null<Expr>, eincr:Null<Expr>, body:Expr) {
+	function typeFor(einit:Null<Expr>, econd:Null<Expr>, eincr:Null<Expr>, body:Expr):TExpr {
 		if (einit != null) typeExpr(einit);
 		if (econd != null) typeExpr(econd);
 		if (eincr != null) typeExpr(eincr);
 		typeExpr(body);
+		return mk(null, TTVoid);
 	}
 
-	function typeWhile(econd:Expr, ebody:Expr) {
+	function typeWhile(econd:Expr, ebody:Expr):TExpr {
 		typeExpr(econd);
 		typeExpr(ebody);
+		return mk(null, TTVoid);
 	}
 
-	function typeDoWhile(ebody:Expr, econd:Expr) {
+	function typeDoWhile(ebody:Expr, econd:Expr):TExpr {
 		typeExpr(ebody);
 		typeExpr(econd);
+		return mk(null, TTVoid);
 	}
 
-	function typeIf(econd:Expr, ethen:Expr, eelse:Null<{keyword:Token, expr:Expr}>) {
+	function typeIf(econd:Expr, ethen:Expr, eelse:Null<{keyword:Token, expr:Expr}>):TExpr {
 		typeExpr(econd);
 		typeExpr(ethen);
 		if (eelse != null) {
 			typeExpr(eelse.expr);
 		}
+		return mk(null, TTVoid);
 	}
 
-	function typeTernary(econd:Expr, ethen:Expr, eelse:Expr) {
+	function typeTernary(econd:Expr, ethen:Expr, eelse:Expr):TExpr {
 		typeExpr(econd);
 		typeExpr(ethen);
 		typeExpr(eelse);
+		return cast null;
 	}
 
 	function typeCall(e:Expr, args:CallArgs) {
-		typeExpr(e);
-		if (args.args != null) iterSeparated(args.args, typeExpr);
+		var eobj = typeExpr(e);
+		var callArgs = if (args.args != null) foldSeparated(args.args, [], (e,acc) -> acc.push(typeExpr(e))) else [];
+		var type =
+			if (eobj == null) TTAny else // TODO: remove this
+			switch (eobj.type) {
+			case TTAny | TTFunction: TTAny;
+			case TTFun(_, ret): ret;
+			case TTStatic(cls): TTInst(cls); // ClassName(expr) cast (TODO: this should be TESafeCast expression)
+			case other: trace("unknown callable type: " + other); TTAny; // TODO: super, builtins, etc.
+		};
+		return mk(TECall({eobj: e, args: args}, eobj, callArgs), type);
 	}
 
-	function typeNew(e:Expr, args:Null<CallArgs>) {
+	function typeNew(e:Expr, args:Null<CallArgs>):TExpr {
 		typeExpr(e);
 		if (args != null && args.args != null) iterSeparated(args.args, typeExpr);
+		return cast null;
 	}
 
-	function typeBlock(b:BracedExprBlock) {
+	function typeBlock(b:BracedExprBlock):TExpr {
 		pushLocals();
 		for (e in b.exprs) {
 			typeExpr(e.expr);
 		}
 		popLocals();
+		return cast null;
 	}
 
-	function typeArrayAccess(e:Expr, eindex:Expr) {
+	function typeArrayAccess(e:Expr, eindex:Expr):TExpr {
 		typeExpr(e);
 		typeExpr(eindex);
+		return cast null;
 	}
 
-	function typeArrayDecl(d:ArrayDecl) {
-		if (d.elems != null) iterSeparated(d.elems, typeExpr);
+	function typeArrayDecl(d:ArrayDecl):TExpr {
+		var elems = if (d.elems != null) foldSeparated(d.elems, [], function(e, acc) acc.push(typeExpr(e))) else [];
+		return mk(TEArrayDecl(d, elems), TTArray);
 	}
 
 	function getTypeOfFunctionDecl(f:SFunDecl):TType {
@@ -339,7 +371,7 @@ class Typer {
 
 		return switch i.text {
 			case "this": mk(TEThis(e), TTInst(getCurrentClass("this")));
-			case "super": mk(TEThis(e), TTInst(structure.getClass(getCurrentClass("super").extensions[0])));
+			case "super": mk(TESuper(e), TTInst(structure.getClass(getCurrentClass("super").extensions[0])));
 			case "true" | "false": mk(TELiteral(TLBool(i)), TTBoolean);
 			case "null": mk(TELiteral(TLNull(i)), TTAny);
 			case "undefined": mk(TELiteral(TLUndefined(i)), TTAny);
@@ -448,15 +480,17 @@ class Typer {
 		}
 	}
 
-	function typeField(eobj:Expr, name:Token, e:Expr) {
+	function typeField(eobj:Expr, name:Token, e:Expr):TExpr {
 		typeExpr(eobj);
+		return cast null;
 	}
 
-	function typeObjectDecl(fields:Separated<ObjectField>) {
+	function typeObjectDecl(fields:Separated<ObjectField>):TExpr {
 		iterSeparated(fields, f -> typeExpr(f.value));
+		return mk(null, TTObject);
 	}
 
-	function typeVars(vars:Separated<VarDecl>) {
+	function typeVars(vars:Separated<VarDecl>):TExpr {
 		iterSeparated(vars, function(v) {
 			var type = if (v.type == null) TTAny else resolveType(v.type.type);
 			if (v.init != null) {
@@ -464,5 +498,6 @@ class Typer {
 			}
 			addLocal(v.name.text, type);
 		});
+		return mk(null, TTVoid);
 	}
 }
