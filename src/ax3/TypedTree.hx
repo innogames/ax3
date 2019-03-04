@@ -18,6 +18,7 @@ enum TExprKind {
 	TEDeclRef(c:SDecl);
 	TECall(syntax:{eobj:Expr, args:CallArgs}, eobj:TExpr, args:Array<TExpr>);
 	TEArrayDecl(syntax:ArrayDecl, elems:Array<TExpr>);
+	TEVectorDecl(type:TType, elems:Array<TExpr>);
 	TEReturn(keyword:Token, e:Null<TExpr>);
 	TEThrow(keyword:Token, e:TExpr);
 	TEDelete(keyword:Token, e:TExpr);
@@ -27,6 +28,13 @@ enum TExprKind {
 	TEObjectDecl(syntax:Expr, fields:Array<TObjectField>);
 	TEArrayAccess(eobj:TExpr, eindex:TExpr);
 	TEBlock(syntax:BracedExprBlock, exprs:Array<TExpr>);
+	TETry(expr:TExpr, catches:Array<TCatch>);
+	TEVector(type:TType);
+}
+
+typedef TCatch = {
+	var v:TVar;
+	var expr:TExpr;
 }
 
 typedef TObjectField = {

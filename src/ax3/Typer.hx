@@ -174,11 +174,11 @@ class Typer {
 			case EParens(openParen, e, closeParen): typeExpr(e);
 			case EArrayAccess(e, openBracket, eindex, closeBracket): typeArrayAccess(e, eindex);
 			case EArrayDecl(d): typeArrayDecl(d);
+			case EVectorDecl(newKeyword, t, d): typeVectorDecl(t.type, d);
 			case EReturn(keyword, e): mk(TEReturn(keyword, if (e != null) typeExpr(e) else null), TTVoid);
 			case EThrow(keyword, e): mk(TEThrow(keyword, typeExpr(e)), TTVoid);
 			case EDelete(keyword, e): mk(TEDelete(keyword, typeExpr(e)), TTVoid);
 			case ENew(keyword, e, args): typeNew(e, args);
-			case EVectorDecl(newKeyword, t, d): typeArrayDecl(d);
 			case EField(eobj, dot, fieldName): typeField(eobj, fieldName, e);
 			case EBlock(b): typeBlock(b);
 			case EObjectDecl(openBrace, fields, closeBrace): typeObjectDecl(e, fields);
@@ -214,20 +214,21 @@ class Typer {
 
 	function typeVector(v:VectorSyntax):TExpr {
 		var type = resolveType(v.t.type);
-		return mk(null, TTVector(type));
+		return mk(TEVector(type), TTFunction);
 	}
 
 	function typeTry(block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>):TExpr {
 		if (finally_ != null) throw "finally is unsupported";
-		typeExpr(EBlock(block));
+		var body = typeExpr(EBlock(block));
+		var tCatches = [];
 		for (c in catches) {
 			pushLocals();
-			addLocal(c.name.text, resolveType(c.type.type));
-			resolveType(c.type.type);
-			typeExpr(EBlock(c.block));
+			var v = addLocal(c.name.text, resolveType(c.type.type));
+			var e = typeExpr(EBlock(c.block));
 			popLocals();
+			tCatches.push({v: v, expr: e});
 		}
-		return mk(null, TTVoid);
+		return mk(TETry(body, tCatches), TTVoid);
 	}
 
 	function typeSwitch(subj:Expr, cases:Array<SwitchCase>):TExpr {
@@ -358,6 +359,12 @@ class Typer {
 	function typeArrayDecl(d:ArrayDecl):TExpr {
 		var elems = if (d.elems != null) foldSeparated(d.elems, [], function(e, acc) acc.push(typeExpr(e))) else [];
 		return mk(TEArrayDecl(d, elems), TTArray);
+	}
+
+	function typeVectorDecl(t:SyntaxType, d:ArrayDecl):TExpr {
+		var type = resolveType(t);
+		var elems = if (d.elems != null) foldSeparated(d.elems, [], function(e, acc) acc.push(typeExpr(e))) else [];
+		return mk(TEVectorDecl(type, elems), TTVector(type));
 	}
 
 	function getTypeOfFunctionDecl(f:SFunDecl):TType {
