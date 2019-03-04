@@ -21,6 +21,13 @@ enum TExprKind {
 	TEDelete(keyword:Token, e:TExpr);
 	TEBreak(keyword:Token);
 	TEContinue(keyword:Token);
+	TEVars(v:Array<TVarDecl>);
+}
+
+typedef TVarDecl = {
+	var syntax:VarDecl;
+	var v:TVar;
+	var init:Null<TExpr>;
 }
 
 enum TLiteral {

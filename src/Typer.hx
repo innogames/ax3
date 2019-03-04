@@ -31,8 +31,8 @@ class Typer {
 		locals = localsStack[localsStack.length - 1];
 	}
 
-	function addLocal(name:String, type:TType) {
-		locals[name] = {name: name, type: type};
+	function addLocal(name:String, type:TType):TVar {
+		return locals[name] = {name: name, type: type};
 	}
 
 	@:nullSafety(Off) var currentModule:SModule;
@@ -492,13 +492,16 @@ class Typer {
 	}
 
 	function typeVars(vars:Separated<VarDecl>):TExpr {
-		iterSeparated(vars, function(v) {
+		var vars = foldSeparated(vars, [], function(v, acc) {
 			var type = if (v.type == null) TTAny else resolveType(v.type.type);
-			if (v.init != null) {
-				typeExpr(v.init.expr);
-			}
-			addLocal(v.name.text, type);
+			var init = if (v.init != null) typeExpr(v.init.expr) else null;
+			var tvar = addLocal(v.name.text, type);
+			acc.push({
+				syntax: v,
+				v: tvar,
+				init: init
+			});
 		});
-		return mk(null, TTVoid);
+		return mk(TEVars(vars), TTVoid);
 	}
 }
