@@ -6,9 +6,11 @@ class Token {
 	public var leadTrivia:Array<Trivia>;
 	public var trailTrivia:Array<Trivia>;
 
-	public function new(kind, text) {
+	public function new(kind, text, leadTrivia, trailTrivia) {
 		this.kind = kind;
 		this.text = text;
+		this.leadTrivia = leadTrivia;
+		this.trailTrivia = trailTrivia;
 	}
 
 	public function toString() {
