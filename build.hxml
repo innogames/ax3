@@ -3,6 +3,7 @@
 -main ax3.Main
 -lib format
 -js main.js
+# --macro nullSafety("ax3")
 # --interp
 -D no-copt
 -debug
