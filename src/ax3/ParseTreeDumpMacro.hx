@@ -1,4 +1,6 @@
 #if macro
+package ax3;
+
 import haxe.macro.Context;
 import haxe.macro.Expr;
 import haxe.macro.Type;
@@ -7,7 +9,7 @@ using haxe.macro.Tools;
 class ParseTreeDumpMacro {
 	static function build() {
 		var buildFields = Context.getBuildFields();
-		var root = Context.getType("ParseTree.File");
+		var root = Context.getType("ax3.ParseTree.File");
 		var fields = new Map();
 		walk(root, root, fields, null);
 		for (field in fields)
@@ -17,7 +19,7 @@ class ParseTreeDumpMacro {
 
 	static function walk(type:Type, origType, fields:Map<String,Field>, name:Null<String>):Expr {
 		switch (type) {
-			case TInst(_.get() => {pack: [], name: "Token"}, _):
+			case TInst(_.get() => {pack: ["ax3"], name: "Token"}, _):
 				return macro printToken;
 
 			case TInst(_.get() => {pack: [], name: "String"}, _):
@@ -28,7 +30,7 @@ class ParseTreeDumpMacro {
 
 			case TType(_.get() => dt, params):
 				switch [dt, params] {
-					case [{pack: [], name: "Separated"}, [elemT]] if (name != null):
+					case [{pack: ["ax3"], name: "Separated"}, [elemT]] if (name != null):
 						return walkSeq(elemT, origType, name, macro printSeparated, fields);
 
 					case _:

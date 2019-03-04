@@ -1,9 +1,11 @@
+package ax3;
+
 import format.abc.Data.IName;
 import format.swf.Data.SWF;
 import format.abc.Data.MethodType;
 import format.abc.Data.Index;
 import format.abc.Data.ABCData;
-import Structure;
+import ax3.Structure;
 
 class SWCLoader {
 	public static function load(structure:Structure, file:String) {

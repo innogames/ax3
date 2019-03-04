@@ -1,3 +1,5 @@
+package ax3;
+
 class ParseTree {
 	public static function dotPathToString(d:DotPath):String {
 		return dotPathToArray(d).join(".");

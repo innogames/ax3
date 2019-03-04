@@ -1,4 +1,7 @@
-import Token;
+package ax3;
+
+import ax3.Token;
+
 using StringTools;
 
 enum ScanMode {

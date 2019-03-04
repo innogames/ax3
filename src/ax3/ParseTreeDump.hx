@@ -1,6 +1,8 @@
-import ParseTree;
+package ax3;
 
-@:build(ParseTreeDumpMacro.build())
+import ax3.ParseTree;
+
+@:build(ax3.ParseTreeDumpMacro.build())
 class ParseTreeDump {
 	public static function printToken(t:Token, indent:String):String {
 		return haxe.Json.stringify(t.text);

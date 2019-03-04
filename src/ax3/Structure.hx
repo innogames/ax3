@@ -1,5 +1,7 @@
-import ParseTree;
-import ParseTree.*;
+package ax3;
+
+import ax3.ParseTree;
+import ax3.ParseTree.*;
 
 class Structure {
 	public final packages:Map<String, SPackage>;

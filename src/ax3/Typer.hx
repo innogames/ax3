@@ -1,7 +1,9 @@
-import ParseTree;
-import ParseTree.*;
-import Structure;
-import TypedTree;
+package ax3;
+
+import ax3.ParseTree;
+import ax3.ParseTree.*;
+import ax3.Structure;
+import ax3.TypedTree;
 
 typedef Locals = Map<String, TVar>;
 

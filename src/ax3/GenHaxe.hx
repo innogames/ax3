@@ -1,6 +1,8 @@
-import ParseTree.VarInit;
-import ParseTree.PreUnop;
-import TypedTree;
+package ax3;
+
+import ax3.ParseTree.VarInit;
+import ax3.ParseTree.PreUnop;
+import ax3.TypedTree;
 
 class GenHaxe {
 	var buf:StringBuf;
@@ -125,7 +127,7 @@ class GenHaxe {
 		printToken(init.syntax.equals);
 		printExpr(init.expr);
 	}
-	
+
 	function printCallArgs(args:TCallArgs) {
 		printTextWithTrivia("(", args.openParen);
 		for (arg in args.args) {
@@ -355,7 +357,7 @@ class GenHaxe {
 	function printToken(t:Token) {
 		printTextWithTrivia(t.text, t);
 	}
-	
+
 	function printType(type:TType) {
 		buf.add(switch (type) {
 			case TString: "String";

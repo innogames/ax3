@@ -1,5 +1,7 @@
-import ParseTree;
-import Token;
+package ax3;
+
+import ax3.ParseTree;
+import ax3.Token;
 
 class Parser {
 	var scanner:Scanner;

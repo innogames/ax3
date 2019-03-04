@@ -1,6 +1,6 @@
 -lib hxnodejs
 -cp src
--main Main
+-main ax3.Main
 -lib format
 -js main.js
 # --interp

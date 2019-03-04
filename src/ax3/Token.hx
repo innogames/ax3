@@ -1,3 +1,5 @@
+package ax3;
+
 class Token {
 	public var kind:TokenKind;
 	public var text:String;

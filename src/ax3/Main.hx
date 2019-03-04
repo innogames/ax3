@@ -1,3 +1,5 @@
+package ax3;
+
 import sys.FileSystem;
 
 class Main {

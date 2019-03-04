@@ -1,5 +1,7 @@
-import ParseTree;
-import Structure;
+package ax3;
+
+import ax3.ParseTree;
+import ax3.Structure;
 
 typedef TExpr = {
 	var kind:TExprKind;
