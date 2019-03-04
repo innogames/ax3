@@ -23,6 +23,8 @@ enum TExprKind {
 	TEContinue(keyword:Token);
 	TEVars(v:Array<TVarDecl>);
 	TEObjectDecl(syntax:Expr, fields:Array<TObjectField>);
+	TEArrayAccess(eobj:TExpr, eindex:TExpr);
+	TEBlock(syntax:BracedExprBlock, exprs:Array<TExpr>);
 }
 
 typedef TObjectField = {

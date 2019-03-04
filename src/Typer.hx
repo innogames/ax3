@@ -335,17 +335,22 @@ class Typer {
 
 	function typeBlock(b:BracedExprBlock):TExpr {
 		pushLocals();
+		var exprs = [];
 		for (e in b.exprs) {
-			typeExpr(e.expr);
+			exprs.push(typeExpr(e.expr));
 		}
 		popLocals();
-		return cast null;
+		return mk(TEBlock(b, exprs), TTVoid);
 	}
 
 	function typeArrayAccess(e:Expr, eindex:Expr):TExpr {
-		typeExpr(e);
-		typeExpr(eindex);
-		return cast null;
+		var e = typeExpr(e);
+		var eindex = typeExpr(eindex);
+		var type = switch (e.type) {
+			case TTVector(t): t;
+			case _: TTAny;
+		};
+		return mk(TEArrayAccess(e, eindex), type);
 	}
 
 	function typeArrayDecl(d:ArrayDecl):TExpr {
