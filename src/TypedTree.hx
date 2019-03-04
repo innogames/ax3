@@ -22,6 +22,13 @@ enum TExprKind {
 	TEBreak(keyword:Token);
 	TEContinue(keyword:Token);
 	TEVars(v:Array<TVarDecl>);
+	TEObjectDecl(syntax:Expr, fields:Array<TObjectField>);
+}
+
+typedef TObjectField = {
+	var syntax:ObjectField;
+	var name:String;
+	var expr:TExpr;
 }
 
 typedef TVarDecl = {

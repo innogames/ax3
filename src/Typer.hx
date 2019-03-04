@@ -179,7 +179,7 @@ class Typer {
 			case EVectorDecl(newKeyword, t, d): typeArrayDecl(d);
 			case EField(eobj, dot, fieldName): typeField(eobj, fieldName, e);
 			case EBlock(b): typeBlock(b);
-			case EObjectDecl(openBrace, fields, closeBrace): typeObjectDecl(fields);
+			case EObjectDecl(openBrace, fields, closeBrace): typeObjectDecl(e, fields);
 			case EIf(keyword, openParen, econd, closeParen, ethen, eelse): typeIf(econd, ethen, eelse);
 			case ETernary(econd, question, ethen, colon, eelse): typeTernary(econd, ethen, eelse);
 			case EWhile(keyword, openParen, cond, closeParen, body): typeWhile(cond, body);
@@ -486,9 +486,9 @@ class Typer {
 		return cast null;
 	}
 
-	function typeObjectDecl(fields:Separated<ObjectField>):TExpr {
-		iterSeparated(fields, f -> typeExpr(f.value));
-		return mk(null, TTObject);
+	function typeObjectDecl(e:Expr, fields:Separated<ObjectField>):TExpr {
+		var fields = foldSeparated(fields, [], (f,acc) -> acc.push({syntax: f, name: f.name.text, expr: typeExpr(f.value)}));
+		return mk(TEObjectDecl(e, fields), TTObject);
 	}
 
 	function typeVars(vars:Separated<VarDecl>):TExpr {
