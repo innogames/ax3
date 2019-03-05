@@ -35,9 +35,17 @@ enum TExprKind {
 	TEWhile(econd:TExpr, ebody:TExpr);
 	TEDoWhile(ebody:TExpr, econd:TExpr);
 	TEFor(einit:Null<TExpr>, econd:Null<TExpr>, eincr:Null<TExpr>, ebody:TExpr);
+	TEForIn(eit:TExpr, eobj:TExpr, ebody:TExpr);
 	TEBinop(a:TExpr, op:Binop, b:TExpr);
 	TEComma(a:TExpr, b:TExpr);
 	TEIs(e:TExpr, etype:TExpr);
+	TEAs(e:TExpr, type:TType);
+	TESwitch(esubj:TExpr, cases:Array<TSwitchCase>, def:Null<Array<TExpr>>);
+}
+
+typedef TSwitchCase = {
+	var value:TExpr;
+	var body:Array<TExpr>;
 }
 
 typedef TCatch = {

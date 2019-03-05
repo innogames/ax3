@@ -231,28 +231,31 @@ class Typer {
 		return mk(TETry(body, tCatches), TTVoid);
 	}
 
-	function typeSwitch(subj:Expr, cases:Array<SwitchCase>):TExpr {
-		typeExpr(subj);
+	function typeSwitch(esubj:Expr, cases:Array<SwitchCase>):TExpr {
+		var esubj = typeExpr(esubj);
+		var tcases = [];
+		var def:Null<Array<TExpr>> = null;
 		for (c in cases) {
 			switch (c) {
 				case CCase(keyword, v, colon, body):
-					typeExpr(v);
-					for (e in body) {
-						typeExpr(e.expr);
-					}
+					var v = typeExpr(v);
+					var body = [for (e in body) typeExpr(e.expr)];
+					tcases.push({
+						value: v,
+						body: body
+					});
 				case CDefault(keyword, colon, body):
-					for (e in body) {
-						typeExpr(e.expr);
-					}
+					if (def != null) throw "double `default` in switch";
+					def = [for (e in body) typeExpr(e.expr)];
 			}
 		}
-		return mk(null, TTVoid);
+		return mk(TESwitch(esubj, tcases, def), TTVoid);
 	}
 
 	function typeAs(e:Expr, t:SyntaxType) {
-		typeExpr(e);
+		var e = typeExpr(e);
 		var type = resolveType(t);
-		return mk(null, type);
+		return mk(TEAs(e, type), type);
 	}
 
 	function typeIs(e:Expr, etype:Expr):TExpr {
@@ -274,11 +277,11 @@ class Typer {
 		return mk(TEBinop(a, op, b), type);
 	}
 
-	function typeForIn(iter:ForIter, body:Expr):TExpr {
-		typeExpr(iter.eobj);
-		typeExpr(iter.eit);
-		typeExpr(body);
-		return mk(null, TTVoid);
+	function typeForIn(iter:ForIter, ebody:Expr):TExpr {
+		var eobj = typeExpr(iter.eobj);
+		var eit = typeExpr(iter.eit);
+		var ebody = typeExpr(ebody);
+		return mk(TEForIn(eit, eobj, ebody), TTVoid);
 	}
 
 	function typeFor(einit:Null<Expr>, econd:Null<Expr>, eincr:Null<Expr>, ebody:Expr):TExpr {
