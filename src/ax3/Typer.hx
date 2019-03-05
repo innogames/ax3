@@ -392,13 +392,15 @@ class Typer {
 	}
 
 	function getFieldType(field:SClassField):TType {
-		return switch (field.kind) {
+		var t = switch (field.kind) {
 			case SFVar(v): typeType(v.type);
 			case SFFun(f): getTypeOfFunctionDecl(f);
 		};
+		if (t == TTVoid) throw "assert";
+		return t;
 	}
 
-	function typeIdent(i:Token, e:Expr):TExpr {
+	function tryTypeIdent(i:Token, e:Expr):Null<TExpr> {
 		inline function getCurrentClass(subj) return if (currentClass != null) currentClass else throw '`$subj` used outside of class';
 
 		return switch i.text {
@@ -520,8 +522,14 @@ class Typer {
 						}
 				}
 
-				throw 'Unknown ident: $ident';
+				return null;
 		}
+	}
+
+	function typeIdent(i:Token, e:Expr):TExpr {
+		var e = tryTypeIdent(i, e);
+		if (e == null) throw 'Unknown ident: ${i.text}';
+		return e;
 	}
 
 	function typeLiteral(l:Literal):TExpr {
@@ -533,9 +541,7 @@ class Typer {
 		}
 	}
 
-	function typeField(eobj:Expr, name:Token, e:Expr):TExpr {
-		var eobj = typeExpr(eobj);
-		var fieldName = name.text;
+	function getTypedField(eobj:TExpr, fieldName:String, e:Expr) {
 		var type =
 			switch fieldName { // TODO: be smarter about this
 				case "toString":
@@ -558,6 +564,40 @@ class Typer {
 					};
 		}
 		return mk(TEField(e, eobj, fieldName), type);
+	}
+
+	function typeField(eobj:Expr, name:Token, e:Expr):TExpr {
+		var acc = [name];
+		function loop(e:Expr):Bool {
+			return switch (e) {
+				case EIdent(i):
+					acc.push(i);
+					true;
+				case EField(e, dot, fieldName):
+					acc.push(fieldName);
+					return loop(e);
+				case _:
+					return false;
+			}
+		}
+
+		if (loop(eobj)) {
+			acc.reverse();
+			var e = tryTypeIdent(acc[0], EIdent(acc[0]));
+			if (e == null) {
+				// probably a fully-qualified type path then
+				var declName = @:nullSafety(Off) acc.pop().text;
+				var packName = [for (t in acc) t.text].join(".");
+				var decl = structure.getDecl(packName, declName);
+				return mkDeclRef(decl);
+			}
+
+			// TODO: we don't need to re-type stuff,
+			// can iterate over fields, but let's do it later :-)
+		}
+
+		var eobj = typeExpr(eobj);
+		return getTypedField(eobj, name.text, e);
 	}
 
 	function typeInstanceField(cls:SClassDecl, fieldName:String):TType {
