@@ -204,11 +204,11 @@ class Typer {
 			case EBreak(keyword): mk(TEBreak(keyword), TTVoid);
 			case EContinue(keyword): mk(TEContinue(keyword), TTVoid);
 
-			case EXmlAttr(e, dot, at, attrName): null;
-			case EXmlDescend(e, dotDot, childName): null;
-			case ECondCompValue(v): null;
-			case ECondCompBlock(v, b): null;
-			case EUseNamespace(n): null;
+			case EXmlAttr(e, dot, at, attrName): throw "EXmlAttr";
+			case EXmlDescend(e, dotDot, childName): throw "EXmlDescend";
+			case ECondCompValue(v): throw "ECondCompValue";
+			case ECondCompBlock(v, b): throw "ECondCompBlock";
+			case EUseNamespace(n): throw "EUseNamespace";
 		}
 	}
 
