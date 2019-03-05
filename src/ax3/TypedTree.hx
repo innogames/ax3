@@ -13,6 +13,7 @@ enum TExprKind {
 	TELocal(syntax:Token, v:TVar);
 	TEField(syntax:Expr, obj:TExpr, fieldName:String);
 	TEThis(syntax:Null<Expr>);
+	TEStaticThis;
 	TESuper(syntax:Expr);
 	TEBuiltin(syntax:Token, name:String);
 	TEDeclRef(c:SDecl);

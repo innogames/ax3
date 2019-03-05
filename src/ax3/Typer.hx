@@ -386,6 +386,13 @@ class Typer {
 		return mk(TEDeclRef(decl), type);
 	}
 
+	function getFieldType(field:SClassField):TType {
+		return switch (field.kind) {
+			case SFVar(v): typeType(v.type);
+			case SFFun(f): getTypeOfFunctionDecl(f);
+		};
+	}
+
 	function typeIdent(i:Token, e:Expr):TExpr {
 		inline function getCurrentClass(subj) return if (currentClass != null) currentClass else throw '`$subj` used outside of class';
 
@@ -425,14 +432,11 @@ class Typer {
 				if (currentClass != null) {
 					var currentClass:SClassDecl = currentClass; // TODO: this is here only to please the null-safety checker
 					function loop(c:SClassDecl):Null<TExpr> {
-						var field = c.getField(ident);
+						var field = c.fields.get(ident);
 						if (field != null) {
 							// found a field
 							var eobj = mk(TEThis(null), TTInst(currentClass));
-							var type = switch (field.kind) {
-								case SFVar(v): typeType(v.type);
-								case SFFun(f): getTypeOfFunctionDecl(f);
-							};
+							var type = getFieldType(field);
 							return mk(TEField(e, eobj, ident), type);
 						}
 						for (ext in c.extensions) {
@@ -443,9 +447,16 @@ class Typer {
 						}
 						return null;
 					}
-					var e = loop(currentClass);
-					if (e != null) {
-						return e;
+					var eField = loop(currentClass);
+					if (eField != null) {
+						return eField;
+					}
+
+					var staticField = currentClass.statics.get(ident);
+					if (staticField != null) {
+						var eobj = mk(TEStaticThis, TTStatic(currentClass));
+						var type = getFieldType(staticField);
+						return mk(TEField(e, eobj, ident), type);
 					}
 				}
 
@@ -502,8 +513,54 @@ class Typer {
 	}
 
 	function typeField(eobj:Expr, name:Token, e:Expr):TExpr {
-		typeExpr(eobj);
-		return cast null;
+		var eobj = typeExpr(eobj);
+		var fieldName = name.text;
+		var type = switch (eobj.type) {
+			case TTAny | TTObject: TTAny; // untyped field access
+			case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTClass | TTBuiltin | TTFun(_): throw 'Attempting to get field on type ${eobj.type.getName()}';
+			case TTString:  throw "TODO " + eobj.type.getName();
+			case TTArray:  throw "TODO " + eobj.type.getName();
+			case TTVector(t):  throw "TODO " + eobj.type.getName();
+			case TTFunction:  throw "TODO " + eobj.type.getName();
+			case TTRegExp:  throw "TODO " + eobj.type.getName();
+			case TTXML | TTXMLList: throw "TODO " + eobj.type.getName();
+			case TTInst(cls): typeInstanceField(cls, fieldName);
+			case TTStatic(cls): typeStaticField(cls, fieldName);
+		};
+		return mk(TEField(e, eobj, fieldName), type);
+	}
+
+	function typeInstanceField(cls:SClassDecl, fieldName:String):TType {
+
+		@:nullSafety(Off) // TODO: update haxe
+		function loop(cls:SClassDecl):Null<SClassField> {
+			var field = cls.fields.get(fieldName);
+			if (field != null) {
+				return field;
+			}
+			for (ext in cls.extensions) {
+				var field = loop(structure.getClass(ext));
+				if (field != null) {
+					return field;
+				}
+			}
+			return null;
+		}
+
+		var field = loop(cls);
+		if (field != null) {
+			return getFieldType(field);
+		}
+
+		throw 'Unknown instance field $fieldName on class ${cls.name}';
+	}
+
+	function typeStaticField(cls:SClassDecl, fieldName:String):TType {
+		var field = cls.statics.get(fieldName);
+		if (field != null) {
+			return getFieldType(field);
+		}
+		throw 'Unknown static field $fieldName on class ${cls.name}';
 	}
 
 	function typeObjectDecl(e:Expr, fields:Separated<ObjectField>):TExpr {

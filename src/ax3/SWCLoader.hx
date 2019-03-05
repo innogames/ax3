@@ -70,9 +70,9 @@ class SWCLoader {
 					}
 				}
 
-				for (f in cls.fields) {
+				function processField(f:format.abc.Data.Field, collection:FieldCollection) {
 					var n = getPublicName(abc, f.name);
-					if (n == null) continue;
+					if (n == null) return;
 					// TODO: sort out namespaces
 					// if (n.ns != "") throw "namespaced field name? " + n.ns;
 
@@ -83,7 +83,7 @@ class SWCLoader {
 					switch (f.kind) {
 						case FVar(type, _, _):
 							// trace("  " + n);
-							decl.addField({name: n.name, kind: SFVar({type: if (type != null) buildPublicType(type) else STAny})});
+							collection.add({name: n.name, kind: SFVar({type: if (type != null) buildPublicType(type) else STAny})});
 
 						case FMethod(type, KNormal, _, _):
 							var methType = getMethodType(abc, type);
@@ -94,25 +94,33 @@ class SWCLoader {
 								args.push({kind: SArgNormal("arg", false), type: type});
 							}
 							var ret = if (methType.ret != null) buildPublicType(methType.ret) else STAny;
-							decl.addField({name: n.name, kind: SFFun({args: args, ret: ret})});
+							collection.add({name: n.name, kind: SFFun({args: args, ret: ret})});
 
 						case FMethod(type, KGetter, _, _):
 							var methType = getMethodType(abc, type);
 							var type = if (methType.ret != null) buildPublicType(methType.ret) else STAny;
-							if (decl.getField(n.name) == null) {
-								decl.addField({name: n.name, kind: SFVar({type: type})});
+							if (collection.get(n.name) == null) {
+								collection.add({name: n.name, kind: SFVar({type: type})});
 							}
 
 						case FMethod(type, KSetter, _, _):
 							var methType = getMethodType(abc, type);
 							if (methType.args.length != 1) throw "assert";
 							var type = if (methType.args[0] != null) buildPublicType(methType.args[0]) else STAny;
-							if (decl.getField(n.name) == null) {
-								decl.addField({name: n.name, kind: SFVar({type: type})});
+							if (collection.get(n.name) == null) {
+								collection.add({name: n.name, kind: SFVar({type: type})});
 							}
 
 						case FClass(_) | FFunction(_): throw "should not happen";
 					}
+				}
+
+				for (f in cls.fields) {
+					processField(f, decl.fields);
+				}
+
+				for (f in cls.staticFields) {
+					processField(f, decl.statics);
 				}
 
 				mod.mainDecl = {name: n.name, kind: SClass(decl)};

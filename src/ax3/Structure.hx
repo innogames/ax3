@@ -110,6 +110,13 @@ class Structure {
 					v.type = resolveType(v.type);
 				}
 
+				function resolveField(f:SClassField) {
+					switch (f.kind) {
+						case SFVar(v): resolveVar(v);
+						case SFFun(f): resolveFun(f);
+					}
+				}
+
 				function resolveDecl(d:SDecl) {
 					switch (d.kind) {
 						case SVar(v):
@@ -130,13 +137,13 @@ class Structure {
 								}
 							];
 
-							for (f in f.fields) {
-								switch (f.kind) {
-									case SFVar(v): resolveVar(v);
-									case SFFun(f): resolveFun(f);
-
-								}
+							for (f in @:privateAccess f.fields) {
+								resolveField(f);
 							}
+							for (f in @:privateAccess f.statics) {
+								resolveField(f);
+							}
+
 					}
 				}
 
@@ -190,20 +197,23 @@ class Structure {
 		for (m in v.members) {
 			switch (m) {
 				case MField(f):
+					var isStatic = Lambda.exists(f.modifiers, m -> m.match(FMStatic(_)));
+					var fieldCollection = if (isStatic) cls.statics else cls.fields;
+
 					switch (f.kind) {
 						case FVar(_, vars, _):
 							foldSeparated(vars, null, function(v, _) {
 								var s = buildVarStructure(v);
-								cls.addField({name: v.name.text, kind: SFVar(s)});
+								fieldCollection.add({name: v.name.text, kind: SFVar(s)});
 							});
 						case FFun(_, name, fun):
 							var fun = buildFunctionStructure(fun.signature);
-							cls.addField({name: name.text, kind: SFFun(fun)});
+							fieldCollection.add({name: name.text, kind: SFFun(fun)});
 						case FProp(_, _, name, fun):
 							var type = buildTypeStructure(fun.signature.ret.type);
-							if (cls.getField(name.text) == null) {
+							if (fieldCollection.get(name.text) == null) {
 								// TODO: check if it was really a property getter/setter
-								cls.addField({name: name.text, kind: SFVar({type: type})});
+								fieldCollection.add({name: name.text, kind: SFVar({type: type})});
 							}
 					}
 
@@ -231,12 +241,12 @@ class Structure {
 					switch (f.kind) {
 						case IFFun(_, name, fun):
 							var fun = buildFunctionStructure(fun);
-							cls.addField({name: name.text, kind: SFFun(fun)});
+							cls.fields.add({name: name.text, kind: SFFun(fun)});
 						case IFProp(_, kind, name, fun):
 							var type = buildTypeStructure(fun.ret.type);
-							if (cls.getField(name.text) != null) {
+							if (cls.fields.get(name.text) != null) {
 								// TODO: check if it was really a property getter/setter
-								cls.addField({name: name.text, kind: SFVar({type: type})});
+								cls.fields.add({name: name.text, kind: SFVar({type: type})});
 							}
 					}
 				case MICondComp(v, openBrace, members, closeBrace):
@@ -473,8 +483,11 @@ class SModule {
 				if (f.extensions.length > 0) {
 					r.push(indent + " - EXT: " + f.extensions.join(", "));
 				}
-				for (field in f.fields) {
+				for (field in @:privateAccess f.fields) {
 					r.push(dumpClassField(field));
+				}
+				for (field in @:privateAccess f.statics) {
+					r.push(dumpClassField(field, "STATIC "));
 				}
 				return r.join("\n");
 		}
@@ -492,11 +505,11 @@ class SModule {
 		return "FUN " + name + "(" + args.join(", ") + "):" + dumpType(f.ret);
 	}
 
-	static function dumpClassField(f:SClassField):String {
-		var indent = indent + indent + indent + indent;
+	static function dumpClassField(f:SClassField, prefix = ""):String {
+		var prefix = indent + indent + indent + indent + prefix;
 		return switch (f.kind) {
-			case SFVar(v): indent + dumpVar(f.name, v);
-			case SFFun(fun): indent + dumpFun(f.name, fun);
+			case SFVar(v): prefix + dumpVar(f.name, v);
+			case SFFun(fun): prefix + dumpFun(f.name, fun);
 		}
 	}
 
@@ -548,28 +561,28 @@ enum SFunArgKind {
 	SArgRest(name:String);
 }
 
+@:forward(iterator)
+abstract FieldCollection(Map<String,SClassField>) {
+	public function new() this = new Map();
+
+	public function get(name) return this.get(name);
+
+	public function add(field:SClassField) {
+		if (this.exists(field.name)) throw 'Field `${field.name}` is already declared';
+		this.set(field.name, field);
+	}
+}
+
 class SClassDecl {
 	public var extensions:Array<String>;
+	public final name:String;
 
-	public final fields:Array<SClassField>;
-	final fieldMap:Map<String, SClassField>;
-	final name:String;
+	public final fields = new FieldCollection();
+	public final statics = new FieldCollection();
 
 	public function new(name) {
 		this.name = name;
 		this.extensions = [];
-		fields = [];
-		fieldMap = new Map();
-	}
-
-	public function addField(f:SClassField) {
-		if (fieldMap.exists(f.name)) throw 'Field `${f.name} is already declared in class `$name`';
-		fields.push(f);
-		fieldMap[f.name] = f;
-	}
-
-	public function getField(name:String):SClassField {
-		return fieldMap[name];
 	}
 }
 
