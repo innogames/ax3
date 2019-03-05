@@ -66,8 +66,7 @@ class Structure {
 
 		var imports = getImports(file);
 
-		// TODO: just skipping conditional-compiled ones for now
-		if (mainDecl == null) return;
+		if (mainDecl.match(DNamespace(_))) return;
 
 		var packName = getPackagePath(pack).join(".");
 		var sPack = getPackage(packName);
@@ -194,35 +193,40 @@ class Structure {
 		// 	iterSeparated(v.implement.paths, p -> cls.extensions.push(dotPathToString(p)));
 		// }
 
-		for (m in v.members) {
-			switch (m) {
-				case MField(f):
-					var isStatic = Lambda.exists(f.modifiers, m -> m.match(FMStatic(_)));
-					var fieldCollection = if (isStatic) cls.statics else cls.fields;
+		function loop(members:Array<ClassMember>) {
+			for (m in members) {
+				switch (m) {
+					case MField(f):
+						var isStatic = Lambda.exists(f.modifiers, m -> m.match(FMStatic(_)));
+						var fieldCollection = if (isStatic) cls.statics else cls.fields;
 
-					switch (f.kind) {
-						case FVar(_, vars, _):
-							foldSeparated(vars, null, function(v, _) {
-								var s = buildVarStructure(v);
-								fieldCollection.add({name: v.name.text, kind: SFVar(s)});
-							});
-						case FFun(_, name, fun):
-							var fun = buildFunctionStructure(fun.signature);
-							fieldCollection.add({name: name.text, kind: SFFun(fun)});
-						case FProp(_, _, name, fun):
-							var type = buildTypeStructure(fun.signature.ret.type);
-							if (fieldCollection.get(name.text) == null) {
-								// TODO: check if it was really a property getter/setter
-								fieldCollection.add({name: name.text, kind: SFVar({type: type})});
-							}
-					}
+						switch (f.kind) {
+							case FVar(_, vars, _):
+								foldSeparated(vars, null, function(v, _) {
+									var s = buildVarStructure(v);
+									fieldCollection.add({name: v.name.text, kind: SFVar(s)});
+								});
+							case FFun(_, name, fun):
+								var fun = buildFunctionStructure(fun.signature);
+								fieldCollection.add({name: name.text, kind: SFFun(fun)});
+							case FProp(_, _, name, fun):
+								var type = buildTypeStructure(fun.signature.ret.type);
+								if (fieldCollection.get(name.text) == null) {
+									// TODO: check if it was really a property getter/setter
+									fieldCollection.add({name: name.text, kind: SFVar({type: type})});
+								}
+						}
 
-				case MCondComp(v, openBrace, members, closeBrace):
-					// TODO:
+					case MCondComp(v, openBrace, members, closeBrace):
+						loop(members);
 
-				case MStaticInit(_) | MUseNamespace(_, _):
+					case MStaticInit(_) | MUseNamespace(_, _):
+				}
 			}
 		}
+
+		loop(v.members);
+
 		return {
 			name: v.name.text,
 			kind: SClass(cls)
@@ -235,24 +239,29 @@ class Structure {
 			iterSeparated(v.extend.paths, p -> cls.extensions.push(dotPathToString(p)));
 		}
 
-		for (m in v.members) {
-			switch (m) {
-				case MIField(f):
-					switch (f.kind) {
-						case IFFun(_, name, fun):
-							var fun = buildFunctionStructure(fun);
-							cls.fields.add({name: name.text, kind: SFFun(fun)});
-						case IFProp(_, kind, name, fun):
-							var type = buildTypeStructure(fun.ret.type);
-							if (cls.fields.get(name.text) == null) {
-								// TODO: check if it was really a property getter/setter
-								cls.fields.add({name: name.text, kind: SFVar({type: type})});
-							}
-					}
-				case MICondComp(v, openBrace, members, closeBrace):
-					// TODO
+		function loop(members:Array<InterfaceMember>) {
+			for (m in members) {
+				switch (m) {
+					case MIField(f):
+						switch (f.kind) {
+							case IFFun(_, name, fun):
+								var fun = buildFunctionStructure(fun);
+								cls.fields.add({name: name.text, kind: SFFun(fun)});
+							case IFProp(_, kind, name, fun):
+								var type = buildTypeStructure(fun.ret.type);
+								if (cls.fields.get(name.text) == null) {
+									// TODO: check if it was really a property getter/setter
+									cls.fields.add({name: name.text, kind: SFVar({type: type})});
+								}
+						}
+					case MICondComp(v, openBrace, members, closeBrace):
+						loop(members);
+				}
 			}
 		}
+
+		loop(v.members);
+
 		return {
 			name: v.name.text,
 			kind: SClass(cls)

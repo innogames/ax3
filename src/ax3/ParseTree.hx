@@ -40,43 +40,58 @@ class ParseTree {
 
 	public static function getPackageMainDecl(p:PackageDecl):Declaration {
 		var decl = null;
-		for (d in p.declarations) {
-			switch (d) {
-				case DPackage(p):
-					throw "Package inside package is not allowed";
 
-				case DClass(_) | DInterface(_) | DFunction(_) | DVar(_):
-					if (decl != null) throw "More than one declaration inside package";
-					decl = d;
+		function loop(decls:Array<Declaration>) {
+			for (d in decls) {
+				switch (d) {
+					case DPackage(p):
+						throw "Package inside package is not allowed";
 
-				// skip these for now
-				case DImport(_):
-				case DNamespace(_):
-				case DUseNamespace(_):
-				case DCondComp(_):
+					case DClass(_) | DInterface(_) | DFunction(_) | DVar(_) | DNamespace(_):
+						if (decl != null) throw "More than one declaration inside package";
+						decl = d;
+
+					case DCondComp(_, _, decls, _):
+						loop(decls);
+
+					// skip these for now
+					case DImport(_):
+					case DUseNamespace(_):
+				}
 			}
 		}
-		// TODO: just skipping conditional-compiled ones for now
-		// if (decl == null) throw "No declaration inside package";
+
+
+		loop(p.declarations);
+
+		if (decl == null) throw "No declaration inside package";
+
 		return decl;
 	}
 
 	public static function getPrivateDecls(file:File):Array<Declaration> {
 		var decls = [];
-		for (d in file.declarations) {
-			switch (d) {
-				case DPackage(p): // in-package is the main one
 
-				case DClass(_) | DInterface(_) | DFunction(_) | DVar(_):
-					decls.push(d);
+		function loop(declarations:Array<Declaration>) {
+			for (d in declarations) {
+				switch (d) {
+					case DPackage(p): // in-package is the main one
 
-				// skip these for now
-				case DImport(i):
-				case DNamespace(ns):
-				case DUseNamespace(n, semicolon):
-				case DCondComp(v, openBrace, decls, closeBrace):
+					case DClass(_) | DInterface(_) | DFunction(_) | DVar(_):
+						decls.push(d);
+
+					case DCondComp(_, _, decls, _):
+						loop(decls);
+
+					case DNamespace(ns):
+					case DImport(i):
+					case DUseNamespace(n, semicolon):
+				}
 			}
 		}
+
+		loop(file.declarations);
+
 		return decls;
 	}
 
@@ -87,7 +102,8 @@ class ParseTree {
 				switch (d) {
 					case DPackage(p): loop(p.declarations);
 					case DImport(i): result.push(i);
-					case _: // TODO: handle cond.compilation
+					case DCondComp(_, _, decls, _): loop(decls);
+					case _:
 				}
 			}
 		}

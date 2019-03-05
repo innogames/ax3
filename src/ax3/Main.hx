@@ -38,6 +38,8 @@ class Main {
 			"libs/spine-as3-1.0.0.swc",
 			"libs/tutorial-1.1.2.swc",
 			"libs/AS3Communicator-lib.swc",
+			"libs/previewui.swc",
+			"libs/DConsole-2.3.swc",
 		];
 
 		var files = [];

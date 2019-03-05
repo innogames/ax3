@@ -457,11 +457,27 @@ class Typer {
 						return eField;
 					}
 
-					var staticField = currentClass.statics.get(ident);
-					if (staticField != null) {
-						var eobj = mk(TEStaticThis, TTStatic(currentClass));
-						var type = getFieldType(staticField);
-						return mk(TEField(e, eobj, ident), type);
+					// TODO: copypasta
+
+					function loop(c:SClassDecl):Null<TExpr> {
+						var field = c.statics.get(ident);
+						if (field != null) {
+							// found a field
+							var eobj = mk(TEStaticThis, TTStatic(currentClass));
+							var type = getFieldType(field);
+							return mk(TEField(e, eobj, ident), type);
+						}
+						for (ext in c.extensions) {
+							var e = loop(structure.getClass(ext));
+							if (e != null) {
+								return e;
+							}
+						}
+						return null;
+					}
+					var eField = loop(currentClass);
+					if (eField != null) {
+						return eField;
 					}
 				}
 
