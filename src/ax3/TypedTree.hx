@@ -43,6 +43,7 @@ enum TExprKind {
 	TEAs(e:TExpr, type:TType);
 	TESwitch(esubj:TExpr, cases:Array<TSwitchCase>, def:Null<Array<TExpr>>);
 	TENew(eclass:TExpr, args:Array<TExpr>);
+	TECondCompBlock(ns:String, name:String, expr:TExpr);
 }
 
 typedef TSwitchCase = {

@@ -207,9 +207,14 @@ class Typer {
 			case EXmlAttr(e, dot, at, attrName): throw "EXmlAttr";
 			case EXmlDescend(e, dotDot, childName): throw "EXmlDescend";
 			case ECondCompValue(v): throw "ECondCompValue";
-			case ECondCompBlock(v, b): throw "ECondCompBlock";
+			case ECondCompBlock(v, b): typeCondCompBlock(v, b);
 			case EUseNamespace(n): throw "EUseNamespace";
 		}
+	}
+
+	function typeCondCompBlock(v:CondCompVar, block:BracedExprBlock):TExpr {
+		var expr = typeExpr(EBlock(block));
+		return mk(TECondCompBlock(v.ns.text, v.name.text, expr), TTVoid);
 	}
 
 	function typeVector(v:VectorSyntax):TExpr {
@@ -515,18 +520,27 @@ class Typer {
 	function typeField(eobj:Expr, name:Token, e:Expr):TExpr {
 		var eobj = typeExpr(eobj);
 		var fieldName = name.text;
-		var type = switch (eobj.type) {
-			case TTAny | TTObject: TTAny; // untyped field access
-			case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTClass | TTBuiltin | TTFun(_): throw 'Attempting to get field on type ${eobj.type.getName()}';
-			case TTString:  TTAny; // TODO
-			case TTArray:  TTAny; // TODO
-			case TTVector(t):  TTAny; // TODO
-			case TTFunction:  TTAny; // TODO
-			case TTRegExp:  TTAny; // TODO
-			case TTXML | TTXMLList: TTAny; // TODO
-			case TTInst(cls): typeInstanceField(cls, fieldName);
-			case TTStatic(cls): typeStaticField(cls, fieldName);
-		};
+		var type =
+			switch fieldName { // TODO: be smarter about this
+				case "toString":
+					TTFun([], TTString);
+				case "hasOwnProperty":
+					TTFun([TTString], TTBoolean);
+				case _:
+					switch (eobj.type) {
+						case TTAny | TTObject: TTAny; // untyped field access
+						case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTClass: throw 'Attempting to get field on type ${eobj.type.getName()}';
+						case TTBuiltin: trace(eobj); TTAny;
+						case TTString:  TTAny; // TODO
+						case TTArray:  TTAny; // TODO
+						case TTVector(t):  TTAny; // TODO
+						case TTFunction | TTFun(_):  TTAny; // TODO (.call, .apply)
+						case TTRegExp:  TTAny; // TODO
+						case TTXML | TTXMLList: TTAny; // TODO
+						case TTInst(cls): typeInstanceField(cls, fieldName);
+						case TTStatic(cls): typeStaticField(cls, fieldName);
+					};
+		}
 		return mk(TEField(e, eobj, fieldName), type);
 	}
 
