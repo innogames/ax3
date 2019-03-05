@@ -597,12 +597,31 @@ class Typer {
 		if (loop(eobj)) {
 			acc.reverse();
 			var e = tryTypeIdent(acc[0], EIdent(acc[0]));
-			if (e == null) {
+			if (e == null) @:nullSafety(Off) {
 				// probably a fully-qualified type path then
-				var declName = @:nullSafety(Off) acc.pop().text;
-				var packName = [for (t in acc) t.text].join(".");
-				var decl = structure.getDecl(packName, declName);
-				return mkDeclRef(decl);
+				var rest = [];
+				var declName = acc.pop();
+				var decl = null;
+				while (acc.length > 0) {
+					var packName = [for (t in acc) t.text].join(".");
+					var pack = structure.packages[packName];
+					if (pack != null) {
+						var mod = pack.getModule(declName.text);
+						decl = mod.mainDecl;
+						break;
+					} else {
+						rest.push(declName);
+						declName = acc.pop();
+					}
+				}
+
+				if (decl == null) {
+					throw "unknown declaration";
+				}
+
+				return Lambda.fold(rest, function(field, expr) {
+					return getTypedField(expr, field.text, EIdent(field));
+				}, mkDeclRef(decl));
 			}
 
 			// TODO: we don't need to re-type stuff,
