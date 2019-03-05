@@ -316,7 +316,7 @@ enum Expr {
 	EPostUnop(e:Expr, op:PostUnop);
 	EVars(kind:VarDeclKind, vars:Separated<VarDecl>);
 	EAs(e:Expr, keyword:Token, t:SyntaxType);
-	EIs(e:Expr, keyword:Token, t:SyntaxType);
+	EIs(e:Expr, keyword:Token, etype:Expr);
 	EComma(a:Expr, comma:Token, b:Expr);
 	EVector(v:VectorSyntax);
 	ESwitch(keyword:Token, openParen:Token, subj:Expr, closeParen:Token, openBrace:Token, cases:Array<SwitchCase>, closeBrace:Token);

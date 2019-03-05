@@ -910,7 +910,7 @@ class Parser {
 					case "in":
 						return parseBinop(first, OpIn, allowComma);
 					case "is":
-						return parseExprNext(EIs(first, scanner.consume(), parseSyntaxType(false)), allowComma);
+						return parseExprNext(EIs(first, scanner.consume(), parseExpr(allowComma)), allowComma);
 					case "as":
 						return parseExprNext(EAs(first, scanner.consume(), parseSyntaxType(false)), allowComma);
 					case _:

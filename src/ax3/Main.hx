@@ -87,15 +87,20 @@ class Main {
 			}
 		}
 		if (parseTree != null) {
-			// checkParseTree(content, parseTree);
+			// checkParseTree(path, content, parseTree);
 		}
 		return parseTree;
 	}
 
-	static function checkParseTree(expected:String, parseTree:ParseTree.File) {
+	static function checkParseTree(path:String, expected:String, parseTree:ParseTree.File) {
 		var actual = Printer.print(parseTree);
-		if (actual != expected)
-			throw "not the same: " + haxe.Json.stringify(actual);
+		if (actual != expected) {
+			printerr(actual);
+			printerr("-=-=-=-=-");
+			printerr(expected);
+			// throw "not the same: " + haxe.Json.stringify(actual);
+			throw '$path not the same';
+		}
 	}
 
 	static function stripBOM(text:String):String {

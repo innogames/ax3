@@ -34,6 +34,10 @@ enum TExprKind {
 	TEIf(econd:TExpr, ethen:TExpr, eelse:Null<TExpr>);
 	TEWhile(econd:TExpr, ebody:TExpr);
 	TEDoWhile(ebody:TExpr, econd:TExpr);
+	TEFor(einit:Null<TExpr>, econd:Null<TExpr>, eincr:Null<TExpr>, ebody:TExpr);
+	TEBinop(a:TExpr, op:Binop, b:TExpr);
+	TEComma(a:TExpr, b:TExpr);
+	TEIs(e:TExpr, etype:TExpr);
 }
 
 typedef TCatch = {

@@ -436,10 +436,10 @@ class Printer {
 				printExpr(e);
 				printTextWithTrivia("as", keyword);
 				printSyntaxType(t);
-			case EIs(e, keyword, t):
+			case EIs(e, keyword, etype):
 				printExpr(e);
 				printTextWithTrivia("is", keyword);
-				printSyntaxType(t);
+				printExpr(etype);
 			case EComma(a, comma, b):
 				printExpr(a);
 				printTextWithTrivia(",", comma);

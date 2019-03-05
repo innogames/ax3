@@ -255,22 +255,23 @@ class Typer {
 		return mk(null, type);
 	}
 
-	function typeIs(e:Expr, t:SyntaxType):TExpr {
-		typeExpr(e);
-		// resolveType(t); // TODO: this can be also an expr O_o
-		return mk(null, TTBoolean);
+	function typeIs(e:Expr, etype:Expr):TExpr {
+		var e = typeExpr(e);
+		var etype = typeExpr(etype);
+		return mk(TEIs(e, etype), TTBoolean);
 	}
 
 	function typeComma(a:Expr, b:Expr):TExpr {
 		var a = typeExpr(a);
 		var b = typeExpr(b);
-		return mk(null, b.type);
+		return mk(TEComma(a, b), b.type);
 	}
 
 	function typeBinop(a:Expr, op:Binop, b:Expr):TExpr {
-		typeExpr(a);
-		typeExpr(b);
-		return cast null;
+		var a = typeExpr(a);
+		var b = typeExpr(b);
+		var type = TTInt;
+		return mk(TEBinop(a, op, b), type);
 	}
 
 	function typeForIn(iter:ForIter, body:Expr):TExpr {
@@ -280,12 +281,12 @@ class Typer {
 		return mk(null, TTVoid);
 	}
 
-	function typeFor(einit:Null<Expr>, econd:Null<Expr>, eincr:Null<Expr>, body:Expr):TExpr {
-		if (einit != null) typeExpr(einit);
-		if (econd != null) typeExpr(econd);
-		if (eincr != null) typeExpr(eincr);
-		typeExpr(body);
-		return mk(null, TTVoid);
+	function typeFor(einit:Null<Expr>, econd:Null<Expr>, eincr:Null<Expr>, ebody:Expr):TExpr {
+		var einit = if (einit != null) typeExpr(einit) else null;
+		var econd = if (econd != null) typeExpr(econd) else null;
+		var eincr = if (eincr != null) typeExpr(eincr) else null;
+		var ebody = typeExpr(ebody);
+		return mk(TEFor(einit, econd, eincr, ebody), TTVoid);
 	}
 
 	function typeWhile(econd:Expr, ebody:Expr):TExpr {
