@@ -518,12 +518,12 @@ class Typer {
 		var type = switch (eobj.type) {
 			case TTAny | TTObject: TTAny; // untyped field access
 			case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTClass | TTBuiltin | TTFun(_): throw 'Attempting to get field on type ${eobj.type.getName()}';
-			case TTString:  throw "TODO " + eobj.type.getName();
-			case TTArray:  throw "TODO " + eobj.type.getName();
-			case TTVector(t):  throw "TODO " + eobj.type.getName();
-			case TTFunction:  throw "TODO " + eobj.type.getName();
-			case TTRegExp:  throw "TODO " + eobj.type.getName();
-			case TTXML | TTXMLList: throw "TODO " + eobj.type.getName();
+			case TTString:  TTAny; // TODO
+			case TTArray:  TTAny; // TODO
+			case TTVector(t):  TTAny; // TODO
+			case TTFunction:  TTAny; // TODO
+			case TTRegExp:  TTAny; // TODO
+			case TTXML | TTXMLList: TTAny; // TODO
 			case TTInst(cls): typeInstanceField(cls, fieldName);
 			case TTStatic(cls): typeStaticField(cls, fieldName);
 		};
@@ -531,8 +531,6 @@ class Typer {
 	}
 
 	function typeInstanceField(cls:SClassDecl, fieldName:String):TType {
-
-		@:nullSafety(Off) // TODO: update haxe
 		function loop(cls:SClassDecl):Null<SClassField> {
 			var field = cls.fields.get(fieldName);
 			if (field != null) {

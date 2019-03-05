@@ -241,10 +241,17 @@ class SWCLoader {
 						var ns = abc.get(abc.strings, ns);
 						var name = abc.get(abc.strings, name);
 						return {ns: ns, name: name};
-					case NNamespace(ns) if (abc.get(abc.strings, ns) == "http://adobe.com/AS3/2006/builtin"):
-						return {ns: "", name: abc.get(abc.strings, name)};
+					case NNamespace(ns):
+						var ns = abc.get(abc.strings, ns);
+						var name = abc.get(abc.strings, name);
+						if (ns == "http://adobe.com/AS3/2006/builtin") {
+							return {ns: "", name: name};
+						} else {
+							trace("Skipping namespaced: " +  ns + " " + name);
+							return null;
+						}
 					case _:
-						// trace("Skipping non-public: " +  ns.getName() + " " + abc.get(abc.strings, name));
+						trace("Skipping non-public: " +  ns.getName() + " " + abc.get(abc.strings, name));
 						return null;
 				}
 			case NMulti(name, nss):
