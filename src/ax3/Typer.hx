@@ -333,9 +333,13 @@ class Typer {
 	}
 
 	function typeNew(e:Expr, args:Null<CallArgs>):TExpr {
-		typeExpr(e);
-		if (args != null && args.args != null) iterSeparated(args.args, typeExpr);
-		return cast null;
+		var e = typeExpr(e);
+		var args = if (args != null && args.args != null) foldSeparated(args.args, [], (e,acc) -> acc.push(typeExpr(e))) else [];
+		var type = switch (e.type) {
+			case TTStatic(cls): TTInst(cls);
+			case _: TTObject; // TODO: is this correct?
+		}
+		return mk(TENew(e, args), type);
 	}
 
 	function typeBlock(b:BracedExprBlock):TExpr {
