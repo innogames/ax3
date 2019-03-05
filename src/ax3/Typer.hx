@@ -204,12 +204,23 @@ class Typer {
 			case EBreak(keyword): mk(TEBreak(keyword), TTVoid);
 			case EContinue(keyword): mk(TEContinue(keyword), TTVoid);
 
-			case EXmlAttr(e, dot, at, attrName): throw "EXmlAttr";
-			case EXmlDescend(e, dotDot, childName): throw "EXmlDescend";
+			case EXmlAttr(e, dot, at, attrName): typeXmlAttr(e, attrName);
+			case EXmlDescend(e, dotDot, childName): typeXmlDescend(e, childName);
 			case ECondCompValue(v): throw "ECondCompValue";
 			case ECondCompBlock(v, b): typeCondCompBlock(v, b);
-			case EUseNamespace(n): throw "EUseNamespace";
+			case EUseNamespace(n): mk(TENothing, TTVoid);
 		}
+	}
+
+	function typeXmlAttr(e:Expr, attrName:Token):TExpr {
+		var e = typeExpr(e);
+		return mk(TEXmlAttr(e, attrName.text), TTXMLList);
+	}
+
+
+	function typeXmlDescend(e:Expr, childName:Token):TExpr {
+		var e = typeExpr(e);
+		return mk(TEXmlDescend(e, childName.text), TTXMLList);
 	}
 
 	function typeCondCompBlock(v:CondCompVar, block:BracedExprBlock):TExpr {
@@ -548,10 +559,12 @@ class Typer {
 					TTFun([], TTString);
 				case "hasOwnProperty":
 					TTFun([TTString], TTBoolean);
+				case "prototype":
+					TTObject;
 				case _:
 					switch (eobj.type) {
 						case TTAny | TTObject: TTAny; // untyped field access
-						case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTClass: throw 'Attempting to get field on type ${eobj.type.getName()}';
+						case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTClass: trace('Attempting to get field on type ${eobj.type.getName()}'); TTAny;
 						case TTBuiltin: trace(eobj); TTAny;
 						case TTString:  TTAny; // TODO
 						case TTArray:  TTAny; // TODO

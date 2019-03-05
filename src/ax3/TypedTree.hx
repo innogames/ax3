@@ -44,6 +44,9 @@ enum TExprKind {
 	TESwitch(esubj:TExpr, cases:Array<TSwitchCase>, def:Null<Array<TExpr>>);
 	TENew(eclass:TExpr, args:Array<TExpr>);
 	TECondCompBlock(ns:String, name:String, expr:TExpr);
+	TEXmlAttr(e:TExpr, name:String);
+	TEXmlDescend(e:TExpr, name:String);
+	TENothing;
 }
 
 typedef TSwitchCase = {
