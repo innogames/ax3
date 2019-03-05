@@ -71,7 +71,7 @@ class SWCLoader {
 				}
 
 				function processField(f:format.abc.Data.Field, collection:FieldCollection) {
-					var n = getPublicName(abc, f.name);
+					var n = getPublicName(abc, f.name, n.ns + ":" + n.name);
 					if (n == null) return;
 					// TODO: sort out namespaces
 					// if (n.ns != "") throw "namespaced field name? " + n.ns;
@@ -231,7 +231,7 @@ class SWCLoader {
 		}
 	}
 
-	static function getPublicName(abc:ABCData, name:IName):{ns:String, name:String} {
+	static function getPublicName(abc:ABCData, name:IName, ?ifaceNS:String):{ns:String, name:String} {
 		var name = abc.get(abc.names, name);
 		switch (name) {
 			case NName(name, ns):
@@ -245,6 +245,8 @@ class SWCLoader {
 						var ns = abc.get(abc.strings, ns);
 						var name = abc.get(abc.strings, name);
 						if (ns == "http://adobe.com/AS3/2006/builtin") {
+							return {ns: "", name: name};
+						} else if (ns == ifaceNS) {
 							return {ns: "", name: name};
 						} else {
 							trace("Skipping namespaced: " +  ns + " " + name);

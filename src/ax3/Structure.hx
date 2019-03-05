@@ -244,7 +244,7 @@ class Structure {
 							cls.fields.add({name: name.text, kind: SFFun(fun)});
 						case IFProp(_, kind, name, fun):
 							var type = buildTypeStructure(fun.ret.type);
-							if (cls.fields.get(name.text) != null) {
+							if (cls.fields.get(name.text) == null) {
 								// TODO: check if it was really a property getter/setter
 								cls.fields.add({name: name.text, kind: SFVar({type: type})});
 							}
