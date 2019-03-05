@@ -289,31 +289,29 @@ class Typer {
 	}
 
 	function typeWhile(econd:Expr, ebody:Expr):TExpr {
-		typeExpr(econd);
-		typeExpr(ebody);
-		return mk(null, TTVoid);
+		var econd = typeExpr(econd);
+		var ebody = typeExpr(ebody);
+		return mk(TEWhile(econd, ebody), TTVoid);
 	}
 
 	function typeDoWhile(ebody:Expr, econd:Expr):TExpr {
-		typeExpr(ebody);
-		typeExpr(econd);
-		return mk(null, TTVoid);
+		var ebody = typeExpr(ebody);
+		var econd = typeExpr(econd);
+		return mk(TEDoWhile(ebody, econd), TTVoid);
 	}
 
 	function typeIf(econd:Expr, ethen:Expr, eelse:Null<{keyword:Token, expr:Expr}>):TExpr {
-		typeExpr(econd);
-		typeExpr(ethen);
-		if (eelse != null) {
-			typeExpr(eelse.expr);
-		}
-		return mk(null, TTVoid);
+		var econd = typeExpr(econd);
+		var ethen = typeExpr(ethen);
+		var eelse = if (eelse != null) typeExpr(eelse.expr) else null;
+		return mk(TEIf(econd, ethen, eelse), TTVoid);
 	}
 
 	function typeTernary(econd:Expr, ethen:Expr, eelse:Expr):TExpr {
-		typeExpr(econd);
-		typeExpr(ethen);
-		typeExpr(eelse);
-		return cast null;
+		var econd = typeExpr(econd);
+		var ethen = typeExpr(ethen);
+		var eelse = typeExpr(eelse);
+		return mk(TETernary(econd, ethen, eelse), ethen.type);
 	}
 
 	function typeCall(e:Expr, args:CallArgs) {

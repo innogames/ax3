@@ -30,6 +30,10 @@ enum TExprKind {
 	TEBlock(syntax:BracedExprBlock, exprs:Array<TExpr>);
 	TETry(expr:TExpr, catches:Array<TCatch>);
 	TEVector(type:TType);
+	TETernary(econd:TExpr, ethen:TExpr, eelse:TExpr);
+	TEIf(econd:TExpr, ethen:TExpr, eelse:Null<TExpr>);
+	TEWhile(econd:TExpr, ebody:TExpr);
+	TEDoWhile(ebody:TExpr, econd:TExpr);
 }
 
 typedef TCatch = {
