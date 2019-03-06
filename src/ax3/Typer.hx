@@ -300,17 +300,21 @@ class Typer {
 	}
 
 	function typeForIn(iter:ForIter, ebody:Expr):TExpr {
+		pushLocals();
 		var eobj = typeExpr(iter.eobj);
 		var eit = typeExpr(iter.eit);
 		var ebody = typeExpr(ebody);
+		popLocals();
 		return mk(TEForIn(eit, eobj, ebody), TTVoid);
 	}
 
 	function typeFor(einit:Null<Expr>, econd:Null<Expr>, eincr:Null<Expr>, ebody:Expr):TExpr {
+		pushLocals();
 		var einit = if (einit != null) typeExpr(einit) else null;
 		var econd = if (econd != null) typeExpr(econd) else null;
 		var eincr = if (eincr != null) typeExpr(eincr) else null;
 		var ebody = typeExpr(ebody);
+		popLocals();
 		return mk(TEFor(einit, econd, eincr, ebody), TTVoid);
 	}
 
