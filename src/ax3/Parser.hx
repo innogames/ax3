@@ -816,7 +816,15 @@ class Parser {
 				var dot = scanner.consume();
 				switch scanner.advance().kind {
 					case TkAt:
-						return parseExprNext(EXmlAttr(first, dot, scanner.consume(), expectKind(TkIdent)), allowComma);
+						var at = scanner.consume();
+						switch scanner.advance().kind {
+							case TkIdent:
+								return parseExprNext(EXmlAttr(first, dot, at, scanner.consume()), allowComma);
+							case TkBracketOpen:
+								return parseExprNext(EXmlAttrExpr(first, dot, at, scanner.consume(), parseExpr(true), expectKind(TkBracketClose)), allowComma);
+							case _:
+								throw "Invalid @ syntax: @field or @[expr] expected";
+						}
 					case TkIdent:
 						return parseExprNext(EField(first, dot, scanner.consume()), allowComma);
 					case _:

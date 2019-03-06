@@ -205,6 +205,7 @@ class Typer {
 			case EContinue(keyword): mk(TEContinue(keyword), TTVoid);
 
 			case EXmlAttr(e, dot, at, attrName): typeXmlAttr(e, attrName);
+			case EXmlAttrExpr(e, dot, at, openBrace, eattr, closeBrace): throw "EXmlAttrExpr";
 			case EXmlDescend(e, dotDot, childName): typeXmlDescend(e, childName);
 			case ECondCompValue(v): throw "ECondCompValue";
 			case ECondCompBlock(v, b): typeCondCompBlock(v, b);

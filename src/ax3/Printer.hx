@@ -353,6 +353,13 @@ class Printer {
 				printDot(dot);
 				printTextWithTrivia("@", at);
 				printIdent(attrName);
+			case EXmlAttrExpr(e, dot, at, openBrace, eattr, closeBrace):
+				printExpr(e);
+				printDot(dot);
+				printTextWithTrivia("@", at);
+				printTextWithTrivia("[", openBrace);
+				printExpr(eattr);
+				printTextWithTrivia("]", closeBrace);
 			case EXmlDescend(e, dotDot, childName):
 				printExpr(e);
 				printTextWithTrivia("..", dotDot);
