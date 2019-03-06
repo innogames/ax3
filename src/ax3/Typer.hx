@@ -52,7 +52,7 @@ class Typer {
 			var imports = getImports(file);
 
 			// TODO: just skipping conditional-compiled ones for now
-			if (mainDecl == null) continue;
+			if (mainDecl == null || mainDecl.match(DNamespace(_))) continue;
 
 			var packName = if (pack.name == null) "" else dotPathToString(pack.name);
 			var currentPackage = structure.packages[packName];
@@ -205,7 +205,7 @@ class Typer {
 			case EContinue(keyword): mk(TEContinue(keyword), TTVoid);
 
 			case EXmlAttr(e, dot, at, attrName): typeXmlAttr(e, attrName);
-			case EXmlAttrExpr(e, dot, at, openBrace, eattr, closeBrace): throw "EXmlAttrExpr";
+			case EXmlAttrExpr(e, dot, at, openBrace, eattr, closeBrace): typeXmlAttrExpr(e, eattr);
 			case EXmlDescend(e, dotDot, childName): typeXmlDescend(e, childName);
 			case ECondCompValue(v): throw "ECondCompValue";
 			case ECondCompBlock(v, b): typeCondCompBlock(v, b);
@@ -218,6 +218,11 @@ class Typer {
 		return mk(TEXmlAttr(e, attrName.text), TTXMLList);
 	}
 
+	function typeXmlAttrExpr(e:Expr, eattr:Expr):TExpr {
+		var e = typeExpr(e);
+		var eattr = typeExpr(eattr);
+		return mk(TEXmlAttrExpr(e, eattr), TTXMLList);
+	}
 
 	function typeXmlDescend(e:Expr, childName:Token):TExpr {
 		var e = typeExpr(e);

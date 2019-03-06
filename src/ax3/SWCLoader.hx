@@ -249,8 +249,8 @@ class SWCLoader {
 						} else if (ns == ifaceNS) {
 							return {ns: "", name: name};
 						} else {
-							trace("Skipping namespaced: " +  ns + " " + name);
-							return null;
+							trace("Ignoring namespace: " +  ns + " for " + name);
+							return {ns: "", name: name};
 						}
 					case _:
 						trace("Skipping non-public: " +  ns.getName() + " " + abc.get(abc.strings, name));

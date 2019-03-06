@@ -45,6 +45,7 @@ enum TExprKind {
 	TENew(eclass:TExpr, args:Array<TExpr>);
 	TECondCompBlock(ns:String, name:String, expr:TExpr);
 	TEXmlAttr(e:TExpr, name:String);
+	TEXmlAttrExpr(e:TExpr, eattr:TExpr);
 	TEXmlDescend(e:TExpr, name:String);
 	TENothing;
 }
