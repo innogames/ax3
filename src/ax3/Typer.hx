@@ -347,14 +347,19 @@ class Typer {
 	function typeCall(e:Expr, args:CallArgs) {
 		var eobj = typeExpr(e);
 		var callArgs = if (args.args != null) foldSeparated(args.args, [], (e,acc) -> acc.push(typeExpr(e))) else [];
-		var type =
-			if (eobj == null) TTAny else // TODO: remove this
-			switch (eobj.type) {
-			case TTAny | TTFunction: TTAny;
-			case TTFun(_, ret): ret;
-			case TTStatic(cls): TTInst(cls); // ClassName(expr) cast (TODO: this should be TESafeCast expression)
-			case other: trace("unknown callable type: " + other); TTAny; // TODO: super, builtins, etc.
-		};
+
+		var type = switch eobj.kind {
+			case TESuper(_): // super(...) call
+				TTVoid;
+			case _:
+				switch (eobj.type) {
+					case TTAny | TTFunction: TTAny;
+					case TTFun(_, ret): ret;
+					case TTStatic(cls): TTInst(cls); // ClassName(expr) cast (TODO: this should be TESafeCast expression)
+					case other: trace("unknown callable type: " + other); TTAny; // TODO: super, builtins, etc.
+				}
+		}
+
 		return mk(TECall({eobj: e, args: args}, eobj, callArgs), type);
 	}
 
