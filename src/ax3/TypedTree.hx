@@ -87,7 +87,7 @@ enum TExprKind {
 	TEObjectDecl(o:TObjectDecl);
 	TEArrayAccess(a:TArrayAccess);
 	TEBlock(block:TBlock);
-	TETry(expr:TExpr, catches:Array<TCatch>);
+	TETry(t:TTry);
 	TEVector(type:TType);
 	TETernary(e:TTernary);
 	TEIf(e:TIf);
@@ -106,7 +106,7 @@ enum TExprKind {
 	TEXmlAttr(e:TExpr, name:String);
 	TEXmlAttrExpr(e:TExpr, eattr:TExpr);
 	TEXmlDescend(e:TExpr, name:String);
-	TENothing;
+	TENothing(original:Expr);
 }
 
 typedef TArrayDecl = {
@@ -274,7 +274,20 @@ typedef TSwitchCase = {
 	var body:Array<TExpr>;
 }
 
+typedef TTry = {
+	var keyword:Token;
+	var expr:TExpr;
+	var catches:Array<TCatch>;
+}
+
 typedef TCatch = {
+	var syntax:{
+		var keyword:Token;
+		var openParen:Token;
+		var name:Token;
+		var type:TypeHint;
+		var closeParen:Token;
+	};
 	var v:TVar;
 	var expr:TExpr;
 }

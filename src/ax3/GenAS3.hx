@@ -100,7 +100,7 @@ class GenAS3 extends PrinterBase {
 			case TEObjectDecl(o): printObjectDecl(o);
 			case TEArrayAccess(a): printArrayAccess(a);
 			case TEBlock(block): printBlock(block);
-			case TETry(expr, catches):
+			case TETry(t): printTry(t);
 			case TEVector(type):
 			case TETernary(t): printTernary(t);
 			case TEIf(i): printIf(i);
@@ -119,7 +119,20 @@ class GenAS3 extends PrinterBase {
 			case TEXmlAttr(e, name):
 			case TEXmlAttrExpr(e, eattr):
 			case TEXmlDescend(e, name):
-			case TENothing:
+			case TENothing(_):
+		}
+	}
+
+	function printTry(t:TTry) {
+		printTextWithTrivia("try", t.keyword);
+		printExpr(t.expr);
+		for (c in t.catches) {
+			printTextWithTrivia("catch", c.syntax.keyword);
+			printOpenParen(c.syntax.openParen);
+			printTextWithTrivia(c.v.name, c.syntax.name);
+			printColon(c.syntax.type.colon);
+			printCloseParen(c.syntax.closeParen);
+			printExpr(c.expr);
 		}
 	}
 

@@ -261,7 +261,7 @@ class Typer {
 			case EComma(a, comma, b): typeComma(a, comma, b);
 			case EVector(v): typeVector(v);
 			case ESwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace): typeSwitch(subj, cases);
-			case ETry(keyword, block, catches, finally_): typeTry(block, catches, finally_);
+			case ETry(keyword, block, catches, finally_): typeTry(keyword, block, catches, finally_);
 			case EFunction(keyword, name, fun): mk(TEFunction(typeFunction(fun)), TTFunction);
 
 			case EBreak(keyword): mk(TEBreak(keyword), TTVoid);
@@ -272,7 +272,7 @@ class Typer {
 			case EXmlDescend(e, dotDot, childName): typeXmlDescend(e, childName);
 			case ECondCompValue(v): throw "ECondCompValue";
 			case ECondCompBlock(v, b): typeCondCompBlock(v, b);
-			case EUseNamespace(n): mk(TENothing, TTVoid);
+			case EUseNamespace(_): mk(TENothing(e), TTVoid);
 		}
 	}
 
@@ -302,18 +302,32 @@ class Typer {
 		return mk(TEVector(type), TTFunction);
 	}
 
-	function typeTry(block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>):TExpr {
+	function typeTry(keyword:Token, block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>):TExpr {
 		if (finally_ != null) throw "finally is unsupported";
 		var body = typeExpr(EBlock(block));
-		var tCatches = [];
+		var tCatches = new Array<TCatch>();
 		for (c in catches) {
 			pushLocals();
 			var v = addLocal(c.name.text, resolveType(c.type.type));
 			var e = typeExpr(EBlock(c.block));
 			popLocals();
-			tCatches.push({v: v, expr: e});
+			tCatches.push({
+				syntax: {
+					keyword: c.keyword,
+					openParen: c.openParen,
+					name: c.name,
+					type: c.type,
+					closeParen: c.closeParen
+				},
+				v: v,
+				expr: e
+			});
 		}
-		return mk(TETry(body, tCatches), TTVoid);
+		return mk(TETry({
+			keyword: keyword,
+			expr: body,
+			catches: tCatches
+		}), TTVoid);
 	}
 
 	function typeSwitch(esubj:Expr, cases:Array<SwitchCase>):TExpr {
