@@ -100,7 +100,7 @@ enum TExprKind {
 	TEIs(e:TExpr, etype:TExpr);
 	TEAs(e:TExpr, type:TType);
 	TESwitch(esubj:TExpr, cases:Array<TSwitchCase>, def:Null<Array<TExpr>>);
-	TENew(eclass:TExpr, args:Array<TExpr>);
+	TENew(keyword:Token, eclass:TExpr, args:Null<TCallArgs>);
 	TECondCompBlock(ns:String, name:String, expr:TExpr);
 	TEXmlAttr(e:TExpr, name:String);
 	TEXmlAttrExpr(e:TExpr, eattr:TExpr);

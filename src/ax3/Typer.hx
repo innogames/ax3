@@ -241,7 +241,7 @@ class Typer {
 			case EReturn(keyword, e): mk(TEReturn(keyword, if (e != null) typeExpr(e) else null), TTVoid);
 			case EThrow(keyword, e): mk(TEThrow(keyword, typeExpr(e)), TTVoid);
 			case EDelete(keyword, e): mk(TEDelete(keyword, typeExpr(e)), TTVoid);
-			case ENew(keyword, e, args): typeNew(e, args);
+			case ENew(keyword, e, args): typeNew(keyword, e, args);
 			case EField(eobj, dot, fieldName): typeField(eobj, dot, fieldName);
 			case EBlock(b): mk(TEBlock(typeBlock(b)), TTVoid);
 			case EObjectDecl(openBrace, fields, closeBrace): typeObjectDecl(openBrace, fields, closeBrace);
@@ -417,9 +417,8 @@ class Typer {
 		}), ethen.type);
 	}
 
-	function typeCall(e:Expr, args:CallArgs) {
-		var eobj = typeExpr(e);
-		var targs = {
+	function typeCallArgs(args:CallArgs):TCallArgs {
+		return {
 			openParen: args.openParen,
 			closeParen: args.closeParen,
 			args:
@@ -428,6 +427,11 @@ class Typer {
 				else
 					[]
 		};
+	}
+
+	function typeCall(e:Expr, args:CallArgs) {
+		var eobj = typeExpr(e);
+		var targs = typeCallArgs(args);
 
 		var type = switch eobj.kind {
 			case TELiteral(TLSuper(_)): // super(...) call
@@ -444,14 +448,14 @@ class Typer {
 		return mk(TECall(eobj, targs), type);
 	}
 
-	function typeNew(e:Expr, args:Null<CallArgs>):TExpr {
+	function typeNew(keyword:Token, e:Expr, args:Null<CallArgs>):TExpr {
 		var e = typeExpr(e);
-		var args = if (args != null && args.args != null) foldSeparated(args.args, [], (e,acc) -> acc.push(typeExpr(e))) else [];
+		var args = if (args != null) typeCallArgs(args) else null;
 		var type = switch (e.type) {
 			case TTStatic(cls): TTInst(cls);
 			case _: TTObject; // TODO: is this correct?
 		}
-		return mk(TENew(e, args), type);
+		return mk(TENew(keyword, e, args), type);
 	}
 
 	function typeBlock(b:BracedExprBlock):TBlock {

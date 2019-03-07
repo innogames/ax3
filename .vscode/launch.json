@@ -12,8 +12,8 @@
 			"name": "Launch Program",
 			"program": "${workspaceFolder}/main.js",
 			"args": [
-				// "eagerFail", "."
-				"c:/Users/nadako/Code/foe/Frontend/client/src"
+				// "config-local.json"
+				"config-foe.json"
 			],
 			"outFiles": ["${workspaceFolder}/main.js"],
 			"preLaunchTask": "build",

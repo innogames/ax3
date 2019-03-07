@@ -113,13 +113,19 @@ class GenAS3 extends PrinterBase {
 			case TEIs(e, etype):
 			case TEAs(e, type):
 			case TESwitch(esubj, cases, def):
-			case TENew(eclass, args):
+			case TENew(keyword, eclass, args): printNew(keyword, eclass, args);
 			case TECondCompBlock(ns, name, expr):
 			case TEXmlAttr(e, name):
 			case TEXmlAttrExpr(e, eattr):
 			case TEXmlDescend(e, name):
 			case TENothing:
 		}
+	}
+
+	function printNew(keyword:Token, eclass:TExpr, args:Null<TCallArgs>) {
+		printTextWithTrivia("new", keyword);
+		printExpr(eclass);
+		if (args != null) printCallArgs(args);
 	}
 
 	function printCallArgs(args:TCallArgs) {
