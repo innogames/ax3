@@ -83,7 +83,7 @@ enum TExprKind {
 	TEContinue(keyword:Token);
 	TEVars(v:Array<TVarDecl>);
 	TEObjectDecl(o:TObjectDecl);
-	TEArrayAccess(eobj:TExpr, eindex:TExpr);
+	TEArrayAccess(a:TArrayAccess);
 	TEBlock(block:TBlock);
 	TETry(expr:TExpr, catches:Array<TCatch>);
 	TEVector(type:TType);
@@ -104,6 +104,12 @@ enum TExprKind {
 	TEXmlAttrExpr(e:TExpr, eattr:TExpr);
 	TEXmlDescend(e:TExpr, name:String);
 	TENothing;
+}
+
+typedef TArrayAccess = {
+	var syntax:{openBracket:Token, closeBracket:Token};
+	var eobj:TExpr;
+	var eindex:TExpr;
 }
 
 typedef TObjectDecl = {

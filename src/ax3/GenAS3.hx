@@ -85,7 +85,7 @@ class GenAS3 extends PrinterBase {
 			case TEContinue(keyword): printTextWithTrivia("continue", keyword);
 			case TEVars(v):
 			case TEObjectDecl(o): printObjectDecl(o);
-			case TEArrayAccess(eobj, eindex):
+			case TEArrayAccess(a): printArrayAccess(a);
 			case TEBlock(block): printBlock(block);
 			case TETry(expr, catches):
 			case TEVector(type):
@@ -107,6 +107,13 @@ class GenAS3 extends PrinterBase {
 			case TEXmlDescend(e, name):
 			case TENothing:
 		}
+	}
+
+	function printArrayAccess(a:TArrayAccess) {
+		printExpr(a.eobj);
+		printOpenBracket(a.syntax.openBracket);
+		printExpr(a.eindex);
+		printCloseBracket(a.syntax.closeBracket);
 	}
 
 	function printObjectDecl(o:TObjectDecl) {

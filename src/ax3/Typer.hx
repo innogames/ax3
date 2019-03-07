@@ -232,7 +232,7 @@ class Typer {
 			case ELiteral(l): typeLiteral(l);
 			case ECall(e, args): typeCall(e, args);
 			case EParens(openParen, e, closeParen): typeExpr(e);
-			case EArrayAccess(e, openBracket, eindex, closeBracket): typeArrayAccess(e, eindex);
+			case EArrayAccess(e, openBracket, eindex, closeBracket): typeArrayAccess(e, openBracket, eindex, closeBracket);
 			case EArrayDecl(d): typeArrayDecl(d);
 			case EVectorDecl(newKeyword, t, d): typeVectorDecl(t.type, d);
 			case EReturn(keyword, e): mk(TEReturn(keyword, if (e != null) typeExpr(e) else null), TTVoid);
@@ -449,14 +449,18 @@ class Typer {
 		};
 	}
 
-	function typeArrayAccess(e:Expr, eindex:Expr):TExpr {
+	function typeArrayAccess(e:Expr, openBracket:Token, eindex:Expr, closeBracket:Token):TExpr {
 		var e = typeExpr(e);
 		var eindex = typeExpr(eindex);
 		var type = switch (e.type) {
 			case TTVector(t): t;
 			case _: TTAny;
 		};
-		return mk(TEArrayAccess(e, eindex), type);
+		return mk(TEArrayAccess({
+			syntax: {openBracket: openBracket, closeBracket: closeBracket},
+			eobj: e,
+			eindex: eindex
+		}), type);
 	}
 
 	function typeArrayDecl(d:ArrayDecl):TExpr {

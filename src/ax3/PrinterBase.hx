@@ -28,6 +28,14 @@ class PrinterBase {
 		printTextWithTrivia(";", s);
 	}
 
+	inline function printOpenBracket(s:Token) {
+		printTextWithTrivia("[", s);
+	}
+
+	inline function printCloseBracket(s:Token) {
+		printTextWithTrivia("]", s);
+	}
+
 	inline function printOpenBrace(s:Token) {
 		printTextWithTrivia("{", s);
 	}
