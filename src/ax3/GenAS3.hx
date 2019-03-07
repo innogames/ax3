@@ -75,7 +75,7 @@ class GenAS3 extends PrinterBase {
 			case TELocal(syntax, v): printTextWithTrivia(syntax.text, syntax);
 			case TEField(object, fieldName, fieldToken): printFieldAccess(object, fieldName, fieldToken);
 			case TEBuiltin(syntax, name):
-			case TEDeclRef(c):
+			case TEDeclRef(dotPath, c): printDotPath(dotPath);
 			case TECall(eobj, args): printExpr(eobj); printCallArgs(args);
 			case TEArrayDecl(syntax, elems):
 			case TEVectorDecl(type, elems):

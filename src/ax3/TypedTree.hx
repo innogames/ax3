@@ -72,7 +72,7 @@ enum TExprKind {
 	TELocal(syntax:Token, v:TVar);
 	TEField(obj:TFieldObject, fieldName:String, fieldToken:Token);
 	TEBuiltin(syntax:Token, name:String);
-	TEDeclRef(c:SDecl);
+	TEDeclRef(path:DotPath, c:SDecl);
 	TECall(eobj:TExpr, args:TCallArgs);
 	TEArrayDecl(syntax:ArrayDecl, elems:Array<TExpr>);
 	TEVectorDecl(type:TType, elems:Array<TExpr>);

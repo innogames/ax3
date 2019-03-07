@@ -486,13 +486,13 @@ class Typer {
 		return TTFun([for (a in f.args) typeType(a.type)], typeType(f.ret));
 	}
 
-	function mkDeclRef(decl:SDecl):TExpr {
+	function mkDeclRef(path:DotPath, decl:SDecl):TExpr {
 		var type = switch (decl.kind) {
 			case SVar(v): typeType(v.type);
 			case SFun(f): getTypeOfFunctionDecl(f);
 			case SClass(c): TTStatic(c);
 		};
-		return mk(TEDeclRef(decl), type);
+		return mk(TEDeclRef(path, decl), type);
 	}
 
 	function getFieldType(field:SClassField):TType {
@@ -593,9 +593,11 @@ class Typer {
 					}
 				}
 
+				var dotPath = {first: i, rest: []};
+
 				var decl = currentModule.getDecl(ident);
 				if (decl != null) {
-					return mkDeclRef(decl);
+					return mkDeclRef(dotPath, decl);
 				}
 
 				for (i in currentModule.imports) {
@@ -603,7 +605,7 @@ class Typer {
 						case SISingle(pack, name):
 							if (name == ident) {
 								// trace('Found imported decl: $pack::$name');
-								return mkDeclRef(structure.getDecl(pack, name));
+								return mkDeclRef(dotPath, structure.getDecl(pack, name));
 							}
 						case SIAll(pack):
 							switch structure.packages[pack] {
@@ -612,7 +614,7 @@ class Typer {
 									var m = p.getModule(ident);
 									if (m != null) {
 										// trace('Found imported decl: $pack::$ident');
-										return mkDeclRef(m.mainDecl);
+										return mkDeclRef(dotPath, m.mainDecl);
 									}
 							}
 					}
@@ -620,7 +622,7 @@ class Typer {
 
 				var modInPack = currentModule.pack.getModule(ident);
 				if (modInPack != null) {
-					return mkDeclRef(modInPack.mainDecl);
+					return mkDeclRef(dotPath, modInPack.mainDecl);
 				}
 
 				switch structure.packages[""] {
@@ -628,7 +630,7 @@ class Typer {
 					case pack:
 						var toplevel = pack.getModule(ident);
 						if (toplevel != null) {
-							return mkDeclRef(toplevel.mainDecl);
+							return mkDeclRef(dotPath, toplevel.mainDecl);
 						}
 				}
 
@@ -710,7 +712,12 @@ class Typer {
 						throw "unknown declaration";
 					}
 
-					var eDeclRef = mkDeclRef(decl);
+					acc.push(declName);
+					var dotPath = {
+						first: acc[0].token,
+						rest: [for (i in 1...acc.length) {sep: acc[i].dot, element: acc[i].token}]
+					};
+					var eDeclRef = mkDeclRef(dotPath, decl);
 
 					return Lambda.fold(rest, function(f, expr) {
 						return getTypedField({kind: TOExplicit(f.dot, expr), type: expr.type}, f.token);
