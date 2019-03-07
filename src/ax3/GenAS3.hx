@@ -69,14 +69,32 @@ class GenAS3 extends PrinterBase {
 
 	function printSignature(sig:TFunctionSignature) {
 		printOpenParen(sig.syntax.openParen);
+		for (arg in sig.args) {
+			switch (arg.kind) {
+				case TArgNormal(hint, init):
+					printTextWithTrivia(arg.name, arg.syntax.name);
+					if (hint != null) printSyntaxTypeHint(hint);
+					if (init != null) printVarInit(init);
+
+				case TArgRest(dots):
+					printTextWithTrivia("...", dots);
+					printTextWithTrivia(arg.name, arg.syntax.name);
+			}
+			if (arg.comma != null) printComma(arg.comma);
+		}
 		printCloseParen(sig.syntax.closeParen);
 		printTypeHint(sig.ret);
 	}
 
 	function printTypeHint(hint:TTypeHint) {
 		if (hint.syntax != null) {
-			printColon(hint.syntax.colon);
+			printSyntaxTypeHint(hint.syntax);
 		}
+	}
+
+	function printSyntaxTypeHint(t:TypeHint) {
+		printColon(t.colon);
+		printSyntaxType(t.type);
 	}
 
 	function printExpr(e:TExpr) {
@@ -90,7 +108,7 @@ class GenAS3 extends PrinterBase {
 			case TEDeclRef(dotPath, c): printDotPath(dotPath);
 			case TECall(eobj, args): printExpr(eobj); printCallArgs(args);
 			case TEArrayDecl(d): printArrayDecl(d);
-			case TEVectorDecl(type, elems):
+			case TEVectorDecl(v): printVectorDecl(v);
 			case TEReturn(keyword, e): printTextWithTrivia("return", keyword); if (e != null) printExpr(e);
 			case TEThrow(keyword, e): printTextWithTrivia("throw", keyword); printExpr(e);
 			case TEDelete(keyword, e): printTextWithTrivia("delete", keyword); printExpr(e);
@@ -101,7 +119,7 @@ class GenAS3 extends PrinterBase {
 			case TEArrayAccess(a): printArrayAccess(a);
 			case TEBlock(block): printBlock(block);
 			case TETry(t): printTry(t);
-			case TEVector(type):
+			case TEVector(syntax, type): printVectorSyntax(syntax);
 			case TETernary(t): printTernary(t);
 			case TEIf(i): printIf(i);
 			case TEWhile(w): printWhile(w);
@@ -121,6 +139,26 @@ class GenAS3 extends PrinterBase {
 			case TEXmlAttrExpr(e, eattr):
 			case TEXmlDescend(e, name):
 			case TEUseNamespace(ns): printUseNamespace(ns);
+		}
+	}
+
+	function printVectorSyntax(syntax:VectorSyntax) {
+		printTextWithTrivia("Vector", syntax.name);
+		printDot(syntax.dot);
+		printTypeParam(syntax.t);
+	}
+
+	function printTypeParam(t:TypeParam) {
+		printTextWithTrivia("<", t.lt);
+		printSyntaxType(t.type);
+		printTextWithTrivia(">", t.gt);
+	}
+
+	function printSyntaxType(t:SyntaxType) {
+		switch (t) {
+			case TAny(star): printTextWithTrivia("*", star);
+			case TPath(path): printDotPath(path);
+			case TVector(v): printVectorSyntax(v);
 		}
 	}
 
@@ -205,6 +243,12 @@ class GenAS3 extends PrinterBase {
 		printTextWithTrivia("new", keyword);
 		printExpr(eclass);
 		if (args != null) printCallArgs(args);
+	}
+
+	function printVectorDecl(d:TVectorDecl) {
+		printTextWithTrivia("new", d.syntax.newKeyword);
+		printTypeParam(d.syntax.typeParam);
+		printArrayDecl(d.elements);
 	}
 
 	function printArrayDecl(d:TArrayDecl) {
@@ -303,7 +347,7 @@ class GenAS3 extends PrinterBase {
 		for (v in vars) {
 			printTextWithTrivia(v.v.name, v.syntax.name);
 			if (v.syntax.type != null) {
-				printColon(v.syntax.type.colon);
+				printSyntaxTypeHint(v.syntax.type);
 			}
 			if (v.init != null) printVarInit(v.init);
 			if (v.comma != null) printComma(v.comma);

@@ -77,7 +77,7 @@ enum TExprKind {
 	TEDeclRef(path:DotPath, c:SDecl);
 	TECall(eobj:TExpr, args:TCallArgs);
 	TEArrayDecl(a:TArrayDecl);
-	TEVectorDecl(type:TType, elems:Array<TExpr>);
+	TEVectorDecl(v:TVectorDecl);
 	TEReturn(keyword:Token, e:Null<TExpr>);
 	TEThrow(keyword:Token, e:TExpr);
 	TEDelete(keyword:Token, e:TExpr);
@@ -88,7 +88,7 @@ enum TExprKind {
 	TEArrayAccess(a:TArrayAccess);
 	TEBlock(block:TBlock);
 	TETry(t:TTry);
-	TEVector(type:TType);
+	TEVector(syntax:VectorSyntax, type:TType);
 	TETernary(e:TTernary);
 	TEIf(e:TIf);
 	TEWhile(w:TWhile);
@@ -108,6 +108,15 @@ enum TExprKind {
 	TEXmlAttrExpr(e:TExpr, eattr:TExpr);
 	TEXmlDescend(e:TExpr, name:String);
 	TEUseNamespace(ns:UseNamespace);
+}
+
+typedef TVectorDecl = {
+	var syntax:{
+		var newKeyword:Token;
+		var typeParam:TypeParam;
+	}
+	var elements:TArrayDecl;
+	var type:TType;
 }
 
 typedef TCondCompVar = {
@@ -266,14 +275,18 @@ typedef TTypeHint = {
 }
 
 typedef TFunctionArg = {
+	var syntax:{
+		var name:Token;
+	}
 	var name:String;
 	var type:TType;
 	var kind:TFunctionArgKind;
+	var comma:Null<Token>;
 }
 
 enum TFunctionArgKind {
-	TArgNormal;
-	TArgRest;
+	TArgNormal(typeHint:Null<TypeHint>, init:Null<TVarInit>);
+	TArgRest(dots:Token);
 }
 
 typedef TSwitchCase = {

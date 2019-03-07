@@ -186,20 +186,23 @@ class Typer {
 	function typeFunction(fun:Function):TFunction {
 		pushLocals();
 
-		var targs = new Array<TFunctionArg>();
-		if (fun.signature.args != null) {
-			iterSeparated(fun.signature.args, function(arg) {
-				switch (arg) {
-					case ArgNormal(a):
-						var type = if (a.type == null) TTAny else resolveType(a.type.type);
-						addLocal(a.name.text, type);
-						targs.push({name: a.name.text, type: type, kind: TArgNormal});
-					case ArgRest(dots, name):
-						addLocal(name.text, TTArray);
-						targs.push({name: name.text, type: TTArray, kind: TArgRest});
-				}
-			});
-		}
+		var targs =
+			if (fun.signature.args != null) {
+				separatedToArray(fun.signature.args, function(arg, comma) {
+					return switch (arg) {
+						case ArgNormal(a):
+							var type = if (a.type == null) TTAny else resolveType(a.type.type);
+							var init = if (a.init == null) null else typeVarInit(a.init);
+							addLocal(a.name.text, type);
+							{syntax: {name: a.name}, name: a.name.text, type: type, kind: TArgNormal(a.type, init), comma: comma};
+						case ArgRest(dots, name):
+							addLocal(name.text, TTArray);
+							{syntax: {name: name}, name: name.text, type: TTArray, kind: TArgRest(dots), comma: comma};
+					}
+				});
+			} else {
+				[];
+			};
 
 		var tret:TTypeHint;
 		if (fun.signature.ret != null) {
@@ -237,7 +240,7 @@ class Typer {
 				mk(TEParens(openParen, e, closeParen), e.type);
 			case EArrayAccess(e, openBracket, eindex, closeBracket): typeArrayAccess(e, openBracket, eindex, closeBracket);
 			case EArrayDecl(d): typeArrayDecl(d);
-			case EVectorDecl(newKeyword, t, d): typeVectorDecl(t.type, d);
+			case EVectorDecl(newKeyword, t, d): typeVectorDecl(newKeyword, t, d);
 			case EReturn(keyword, e): mk(TEReturn(keyword, if (e != null) typeExpr(e) else null), TTVoid);
 			case EThrow(keyword, e): mk(TEThrow(keyword, typeExpr(e)), TTVoid);
 			case EDelete(keyword, e): mk(TEDelete(keyword, typeExpr(e)), TTVoid);
@@ -303,7 +306,7 @@ class Typer {
 
 	function typeVector(v:VectorSyntax):TExpr {
 		var type = resolveType(v.t.type);
-		return mk(TEVector(type), TTFunction);
+		return mk(TEVector(v, type), TTFunction);
 	}
 
 	function typeTry(keyword:Token, block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>):TExpr {
@@ -538,18 +541,26 @@ class Typer {
 		}), type);
 	}
 
-	function typeArrayDecl(d:ArrayDecl):TExpr {
+	function typeArrayDeclElements(d:ArrayDecl) {
 		var elems = if (d.elems == null) [] else separatedToArray(d.elems, (e, comma) -> {expr: typeExpr(e), comma: comma});
-		return mk(TEArrayDecl({
+		return {
 			syntax: {openBracket: d.openBracket, closeBracket: d.closeBracket},
 			elements: elems
-		}), TTArray);
+		};
 	}
 
-	function typeVectorDecl(t:SyntaxType, d:ArrayDecl):TExpr {
-		var type = resolveType(t);
-		var elems = if (d.elems != null) foldSeparated(d.elems, [], function(e, acc) acc.push(typeExpr(e))) else [];
-		return mk(TEVectorDecl(type, elems), TTVector(type));
+	function typeArrayDecl(d:ArrayDecl):TExpr {
+		return mk(TEArrayDecl(typeArrayDeclElements(d)), TTArray);
+	}
+
+	function typeVectorDecl(newKeyword:Token, t:TypeParam, d:ArrayDecl):TExpr {
+		var type = resolveType(t.type);
+		var elems = typeArrayDeclElements(d);
+		return mk(TEVectorDecl({
+			syntax: {newKeyword: newKeyword, typeParam: t},
+			elements: elems,
+			type: type
+		}), TTVector(type));
 	}
 
 	function getTypeOfFunctionDecl(f:SFunDecl):TType {
