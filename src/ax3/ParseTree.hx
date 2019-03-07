@@ -530,6 +530,6 @@ enum Literal {
 typedef Metadata = {
 	var openBracket:Token;
 	var name:Token;
-	var args:Null<CallArgs>;
+	var args:Null<CallArgs>; // TODO: metadata probably only supports literals, not any exprs
 	var closeBracket:Token;
 }

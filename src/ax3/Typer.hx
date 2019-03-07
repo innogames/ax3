@@ -192,6 +192,8 @@ class Typer {
 				TFProp;
 		}
 		return {
+			metadata: f.metadata,
+			namespace: f.namespace,
 			modifiers: f.modifiers,
 			kind: kind
 		};

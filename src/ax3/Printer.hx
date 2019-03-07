@@ -217,7 +217,7 @@ class Printer extends PrinterBase {
 		printSemicolon(f.semicolon);
 	}
 
-	function printMetadata(metadata:Array<Metadata>) {
+	public function printMetadata(metadata:Array<Metadata>) {
 		for (m in metadata) {
 			printTextWithTrivia("[", m.openBracket);
 			printIdent(m.name);

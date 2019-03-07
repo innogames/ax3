@@ -45,6 +45,10 @@ class GenAS3 extends PrinterBase {
 	}
 
 	function printClassField(f:TClassField) {
+		printMetadata(f.metadata);
+
+		if (f.namespace != null) printTextWithTrivia(f.namespace.text, f.namespace);
+
 		for (m in f.modifiers) {
 			switch (m) {
 				case FMPublic(t): printTextWithTrivia("public", t);
@@ -56,6 +60,7 @@ class GenAS3 extends PrinterBase {
 				case FMFinal(t): printTextWithTrivia("final", t);
 			}
 		}
+
 		switch (f.kind) {
 			case TFVar(v):
 				printVarKind(v.kind);
@@ -75,6 +80,12 @@ class GenAS3 extends PrinterBase {
 				printSignature(f.fun.sig);
 				printBlock(f.fun.block);
 		}
+	}
+
+	function printMetadata(m:Array<Metadata>) {
+		var p = new Printer();
+		p.printMetadata(m);
+		buf.add(p.toString());
 	}
 
 	function printSignature(sig:TFunctionSignature) {
