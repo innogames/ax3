@@ -3,6 +3,39 @@ package ax3;
 import ax3.ParseTree;
 import ax3.Structure;
 
+typedef TModule = {
+	var pack:TPackageDecl;
+	var name:String;
+}
+
+typedef TPackageDecl = {
+	var name:String;
+	var decl:TDecl;
+}
+
+enum TDecl {
+	TDClass(c:TClassDecl);
+}
+
+typedef TClassDecl = {
+	var name:String;
+	var members:Array<TClassMember>;
+}
+
+enum TClassMember {
+	TMField(f:TClassField);
+}
+
+typedef TClassField = {
+	var kind:TClassFieldKind;
+}
+
+enum TClassFieldKind {
+	TFVar;
+	TFFun;
+	TFProp;
+}
+
 typedef TExpr = {
 	var kind:TExprKind;
 	var type:TType;

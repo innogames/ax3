@@ -40,7 +40,9 @@ class Typer {
 	@:nullSafety(Off) var currentModule:SModule;
 	var currentClass:Null<SClassDecl>;
 
-	public function process(files:Array<File>) {
+	public function process(files:Array<File>):Array<TModule> {
+		var modules = new Array<TModule>();
+
 		for (file in files) {
 
 			var pack = getPackageDecl(file);
@@ -62,6 +64,7 @@ class Typer {
 			if (mod == null) throw "assert";
 			currentModule = mod;
 
+			var decl:Null<TDecl> = null;
 			switch (mainDecl) {
 				case DPackage(p):
 				case DImport(i):
@@ -70,7 +73,7 @@ class Typer {
 						case null: throw "assert";
 						case cls: currentClass = cls;
 					}
-					typeClass(c);
+					decl = TDClass(typeClass(c));
 					currentClass = null;
 				case DInterface(i):
 				case DFunction(f):
@@ -80,7 +83,18 @@ class Typer {
 				case DCondComp(v, openBrace, decls, closeBrace):
 			}
 
+			if (decl != null) // TODO
+			modules.push({
+				name: file.name,
+				pack: {
+					name: packName,
+					decl: (decl : TDecl), // TODO: null-safety is not perfect
+				}
+			});
+
 		}
+
+		return modules;
 	}
 
 	function typeType(t:SType):TType {
@@ -111,38 +125,50 @@ class Typer {
 
 	inline function mk(e:TExprKind, t:TType):TExpr return {kind: e, type: t};
 
-	function typeClass(c:ClassDecl) {
+	function typeClass(c:ClassDecl):TClassDecl {
 		trace("cls", c.name.text);
 
+		var members = [];
 		for (m in c.members) {
 			switch (m) {
 				case MCondComp(v, openBrace, members, closeBrace):
 				case MUseNamespace(n, semicolon):
 				case MField(f):
-					typeClassField(f);
+					members.push(TMField(typeClassField(f)));
 				case MStaticInit(block):
 			}
 		}
+
+		return {
+			name: c.name.text,
+			members: members
+		}
 	}
 
-	function typeClassField(f:ClassField) {
-		switch (f.kind) {
+	function typeClassField(f:ClassField):TClassField {
+		var kind = switch (f.kind) {
 			case FVar(kind, vars, semicolon):
 				iterSeparated(vars, function(v) {
 					// TODO: check what is allowed to be resolved
 					if (v.init != null) typeExpr(v.init.expr);
 				});
+				TFVar;
 			case FFun(keyword, name, fun):
 				trace(" - " + name.text);
 				initLocals();
 				// TODO: can use structure to get arg types (speedup \o/)
 				typeFunction(fun);
+				TFFun;
 			case FProp(keyword, kind, name, fun):
 				trace(" - " + name.text);
 				initLocals();
 				// TODO: can use structure to get arg types (speedup \o/)
 				typeFunction(fun);
+				TFProp;
 		}
+		return {
+			kind: kind
+		};
 	}
 
 	function typeFunction(fun:Function):TExpr {

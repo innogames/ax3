@@ -49,7 +49,24 @@ class Main {
 		sys.io.File.saveContent("structure.txt", structure.dump());
 
 		var typer = new Typer(structure);
-		typer.process(files);
+
+		var modules = typer.process(files);
+		var outDir = FileSystem.absolutePath("OUT");
+		for (mod in modules) {
+			var gen = new ax3.GenAS3();
+			gen.writeModule(mod);
+			var out = gen.getString();
+
+			var dir = haxe.io.Path.join({
+				var parts = mod.pack.name.split(".");
+				parts.unshift(outDir);
+				parts;
+			});
+			Utils.createDirectory(dir);
+
+			var path = dir + "/" + mod.name + ".as";
+			sys.io.File.saveContent(path, out);
+		}
 	}
 
 	static function walk(dir:String, files:Array<ParseTree.File>) {
