@@ -57,7 +57,17 @@ class GenAS3 extends PrinterBase {
 			}
 		}
 		switch (f.kind) {
-			case TFVar:
+			case TFVar(v):
+				printVarKind(v.kind);
+				for (v in v.vars) {
+					printTextWithTrivia(v.name, v.syntax.name);
+					if (v.syntax.type != null) {
+						printSyntaxTypeHint(v.syntax.type);
+					}
+					if (v.init != null) printVarInit(v.init);
+					if (v.comma != null) printComma(v.comma);
+				}
+				printSemicolon(v.semicolon);
 			case TFProp:
 			case TFFun(f):
 				printTextWithTrivia("function", f.syntax.keyword);
@@ -339,11 +349,15 @@ class GenAS3 extends PrinterBase {
 		printCloseBracket(a.syntax.closeBracket);
 	}
 
-	function printVars(kind:VarDeclKind, vars:Array<TVarDecl>) {
+	function printVarKind(kind:VarDeclKind) {
 		switch (kind) {
 			case VVar(t): printTextWithTrivia("var", t);
 			case VConst(t): printTextWithTrivia("const", t);
 		}
+	}
+
+	function printVars(kind:VarDeclKind, vars:Array<TVarDecl>) {
+		printVarKind(kind);
 		for (v in vars) {
 			printTextWithTrivia(v.v.name, v.syntax.name);
 			if (v.syntax.type != null) {

@@ -48,7 +48,7 @@ typedef TClassField = {
 }
 
 enum TClassFieldKind {
-	TFVar;
+	TFVar(f:TVarField);
 	TFFun(f:TFunctionField);
 	TFProp;
 }
@@ -60,6 +60,23 @@ typedef TFunctionField = {
 	};
 	var name:String;
 	var fun:TFunction;
+}
+
+typedef TVarField = {
+	var kind:VarDeclKind;
+	var vars:Array<TVarFieldDecl>;
+	var semicolon:Token;
+}
+
+typedef TVarFieldDecl = {
+	var syntax:{
+		var name:Token;
+		var type:Null<TypeHint>;
+	}
+	var name:String;
+	var type:TType;
+	var init:Null<TVarInit>;
+	var comma:Null<Token>;
 }
 
 typedef TExpr = {

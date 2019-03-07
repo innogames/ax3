@@ -152,11 +152,25 @@ class Typer {
 	function typeClassField(f:ClassField):TClassField {
 		var kind = switch (f.kind) {
 			case FVar(kind, vars, semicolon):
-				iterSeparated(vars, function(v) {
-					// TODO: check what is allowed to be resolved
-					if (v.init != null) typeExpr(v.init.expr);
+				var vars = separatedToArray(vars, function(v, comma) {
+					var type = if (v.type == null) TTAny else resolveType(v.type.type);
+					var init = if (v.init != null) typeVarInit(v.init) else null;
+					return {
+						syntax:{
+							name: v.name,
+							type: v.type
+						},
+						name: v.name.text,
+						type: type,
+						init: init,
+						comma: comma,
+					};
 				});
-				TFVar;
+				TFVar({
+					kind: kind,
+					vars: vars,
+					semicolon: semicolon
+				});
 			case FFun(keyword, name, fun):
 				trace(" - " + name.text);
 				initLocals();
