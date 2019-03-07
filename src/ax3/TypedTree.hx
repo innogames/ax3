@@ -81,7 +81,7 @@ enum TExprKind {
 	TEDelete(keyword:Token, e:TExpr);
 	TEBreak(keyword:Token);
 	TEContinue(keyword:Token);
-	TEVars(v:Array<TVarDecl>);
+	TEVars(kind:VarDeclKind, v:Array<TVarDecl>);
 	TEObjectDecl(o:TObjectDecl);
 	TEArrayAccess(a:TArrayAccess);
 	TEBlock(block:TBlock);
@@ -191,9 +191,18 @@ typedef TObjectField = {
 }
 
 typedef TVarDecl = {
-	var syntax:VarDecl;
+	var syntax:{
+		var name:Token;
+		var type:Null<TypeHint>;
+	}
 	var v:TVar;
-	var init:Null<TExpr>;
+	var init:Null<TVarInit>;
+	var comma:Null<Token>;
+}
+
+typedef TVarInit = {
+	var equals:Token;
+	var expr:TExpr;
 }
 
 enum TLiteral {

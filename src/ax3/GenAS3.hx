@@ -84,7 +84,7 @@ class GenAS3 extends PrinterBase {
 			case TEDelete(keyword, e): printTextWithTrivia("delete", keyword); printExpr(e);
 			case TEBreak(keyword): printTextWithTrivia("break", keyword);
 			case TEContinue(keyword): printTextWithTrivia("continue", keyword);
-			case TEVars(v):
+			case TEVars(kind, vars): printVars(kind, vars);
 			case TEObjectDecl(o): printObjectDecl(o);
 			case TEArrayAccess(a): printArrayAccess(a);
 			case TEBlock(block): printBlock(block);
@@ -167,6 +167,26 @@ class GenAS3 extends PrinterBase {
 		printOpenBracket(a.syntax.openBracket);
 		printExpr(a.eindex);
 		printCloseBracket(a.syntax.closeBracket);
+	}
+
+	function printVars(kind:VarDeclKind, vars:Array<TVarDecl>) {
+		switch (kind) {
+			case VVar(t): printTextWithTrivia("var", t);
+			case VConst(t): printTextWithTrivia("const", t);
+		}
+		for (v in vars) {
+			printTextWithTrivia(v.v.name, v.syntax.name);
+			if (v.syntax.type != null) {
+				printColon(v.syntax.type.colon);
+			}
+			if (v.init != null) printVarInit(v.init);
+			if (v.comma != null) printComma(v.comma);
+		}
+	}
+
+	function printVarInit(init:TVarInit) {
+		printTextWithTrivia("=", init.equals);
+		printExpr(init.expr);
 	}
 
 	function printObjectDecl(o:TObjectDecl) {

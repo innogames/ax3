@@ -252,7 +252,7 @@ class Typer {
 			case EBinop(a, op, b): typeBinop(a, op, b);
 			case EPreUnop(op, e): typeExpr(e);
 			case EPostUnop(e, op): typeExpr(e);
-			case EVars(kind, vars): typeVars(vars);
+			case EVars(kind, vars): typeVars(kind, vars);
 			case EAs(e, keyword, t): typeAs(e, t);
 			case EIs(e, keyword, t): typeIs(e, t);
 			case EComma(a, comma, b): typeComma(a, b);
@@ -781,17 +781,22 @@ class Typer {
 		}), TTObject);
 	}
 
-	function typeVars(vars:Separated<VarDecl>):TExpr {
-		var vars = foldSeparated(vars, [], function(v, acc) {
+	function typeVarInit(init:VarInit):TVarInit {
+		return {equals: init.equals, expr: typeExpr(init.expr)};
+	}
+
+	function typeVars(kind:VarDeclKind, vars:Separated<VarDecl>):TExpr {
+		var vars = separatedToArray(vars, function(v, comma) {
 			var type = if (v.type == null) TTAny else resolveType(v.type.type);
-			var init = if (v.init != null) typeExpr(v.init.expr) else null;
+			var init = if (v.init != null) typeVarInit(v.init) else null;
 			var tvar = addLocal(v.name.text, type);
-			acc.push({
+			return {
 				syntax: v,
 				v: tvar,
-				init: init
-			});
+				init: init,
+				comma: comma,
+			};
 		});
-		return mk(TEVars(vars), TTVoid);
+		return mk(TEVars(kind, vars), TTVoid);
 	}
 }
