@@ -119,8 +119,14 @@ class GenAS3 extends PrinterBase {
 			case TEXmlAttr(e, name):
 			case TEXmlAttrExpr(e, eattr):
 			case TEXmlDescend(e, name):
-			case TENothing(_):
+			case TEUseNamespace(ns): printUseNamespace(ns);
 		}
+	}
+
+	function printUseNamespace(ns:UseNamespace) {
+		printTextWithTrivia("use", ns.useKeyword);
+		printTextWithTrivia("namespace", ns.namespaceKeyword);
+		printTextWithTrivia(ns.name.text, ns.name);
 	}
 
 	function printTry(t:TTry) {

@@ -272,7 +272,7 @@ class Typer {
 			case EXmlDescend(e, dotDot, childName): typeXmlDescend(e, childName);
 			case ECondCompValue(v): throw "ECondCompValue";
 			case ECondCompBlock(v, b): typeCondCompBlock(v, b);
-			case EUseNamespace(_): mk(TENothing(e), TTVoid);
+			case EUseNamespace(ns): mk(TEUseNamespace(ns), TTVoid);
 		}
 	}
 

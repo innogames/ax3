@@ -106,7 +106,7 @@ enum TExprKind {
 	TEXmlAttr(e:TExpr, name:String);
 	TEXmlAttrExpr(e:TExpr, eattr:TExpr);
 	TEXmlDescend(e:TExpr, name:String);
-	TENothing(original:Expr);
+	TEUseNamespace(ns:UseNamespace);
 }
 
 typedef TArrayDecl = {
