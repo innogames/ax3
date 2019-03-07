@@ -270,7 +270,7 @@ class Typer {
 			case EXmlAttr(e, dot, at, attrName): typeXmlAttr(e, attrName);
 			case EXmlAttrExpr(e, dot, at, openBrace, eattr, closeBrace): typeXmlAttrExpr(e, eattr);
 			case EXmlDescend(e, dotDot, childName): typeXmlDescend(e, childName);
-			case ECondCompValue(v): throw "ECondCompValue";
+			case ECondCompValue(v): mk(TECondCompValue(typeCondCompVar(v)), TTAny);
 			case ECondCompBlock(v, b): typeCondCompBlock(v, b);
 			case EUseNamespace(ns): mk(TEUseNamespace(ns), TTVoid);
 		}
@@ -292,9 +292,13 @@ class Typer {
 		return mk(TEXmlDescend(e, childName.text), TTXMLList);
 	}
 
+	function typeCondCompVar(v:CondCompVar):TCondCompVar {
+		return {syntax: v, ns: v.ns.text, name: v.name.text};
+	}
+
 	function typeCondCompBlock(v:CondCompVar, block:BracedExprBlock):TExpr {
 		var expr = typeExpr(EBlock(block));
-		return mk(TECondCompBlock(v.ns.text, v.name.text, expr), TTVoid);
+		return mk(TECondCompBlock(typeCondCompVar(v), expr), TTVoid);
 	}
 
 	function typeVector(v:VectorSyntax):TExpr {

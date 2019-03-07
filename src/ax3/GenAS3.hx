@@ -115,12 +115,19 @@ class GenAS3 extends PrinterBase {
 			case TEAs(e, keyword, type): printExpr(e); printTextWithTrivia("is", keyword);
 			case TESwitch(esubj, cases, def):
 			case TENew(keyword, eclass, args): printNew(keyword, eclass, args);
-			case TECondCompBlock(ns, name, expr):
+			case TECondCompValue(v): printCondCompVar(v);
+			case TECondCompBlock(v, expr): printCondCompVar(v); printExpr(expr);
 			case TEXmlAttr(e, name):
 			case TEXmlAttrExpr(e, eattr):
 			case TEXmlDescend(e, name):
 			case TEUseNamespace(ns): printUseNamespace(ns);
 		}
+	}
+
+	function printCondCompVar(v:TCondCompVar) {
+		printTextWithTrivia(v.ns, v.syntax.ns);
+		printTextWithTrivia("::", v.syntax.sep);
+		printTextWithTrivia(v.name, v.syntax.name);
 	}
 
 	function printUseNamespace(ns:UseNamespace) {

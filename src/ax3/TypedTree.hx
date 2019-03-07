@@ -102,11 +102,18 @@ enum TExprKind {
 	TEAs(e:TExpr, keyword:Token, type:TType);
 	TESwitch(esubj:TExpr, cases:Array<TSwitchCase>, def:Null<Array<TExpr>>);
 	TENew(keyword:Token, eclass:TExpr, args:Null<TCallArgs>);
-	TECondCompBlock(ns:String, name:String, expr:TExpr);
+	TECondCompValue(v:TCondCompVar);
+	TECondCompBlock(v:TCondCompVar, expr:TExpr);
 	TEXmlAttr(e:TExpr, name:String);
 	TEXmlAttrExpr(e:TExpr, eattr:TExpr);
 	TEXmlDescend(e:TExpr, name:String);
 	TEUseNamespace(ns:UseNamespace);
+}
+
+typedef TCondCompVar = {
+	var syntax:CondCompVar;
+	var ns:String;
+	var name:String;
 }
 
 typedef TArrayDecl = {
