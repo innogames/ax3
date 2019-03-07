@@ -20,11 +20,12 @@ class GenAS3 extends PrinterBase {
 
 	function printDecl(d:TDecl) {
 		switch (d) {
-			case TDClass(c): printClassClass(c);
+			case TDClass(c): printClassDecl(c);
 		}
 	}
 
-	function printClassClass(c:TClassDecl) {
+	function printClassDecl(c:TClassDecl) {
+		printMetadata(c.metadata);
 		for (m in c.modifiers) {
 			switch (m) {
 				case DMPublic(t): printTextWithTrivia(t.text, t);
@@ -149,6 +150,8 @@ class GenAS3 extends PrinterBase {
 			case TEForIn(f): printForIn(f);
 			case TEForEach(f): printForEach(f);
 			case TEBinop(a, op, b): printBinop(a, op, b);
+			case TEPreUnop(op, e): printPreUnop(op, e);
+			case TEPostUnop(e, op): printPostUnop(e, op);
 			case TEComma(a, comma, b): printExpr(a); printComma(comma); printExpr(b);
 			case TEIs(e, keyword, etype): printExpr(e); printTextWithTrivia("is", keyword); printExpr(etype);
 			case TEAs(e, keyword, type): printExpr(e); printTextWithTrivia("is", keyword);
@@ -307,6 +310,25 @@ class GenAS3 extends PrinterBase {
 		if (i.eelse != null) {
 			printTextWithTrivia("else", i.eelse.keyword);
 			printExpr(i.eelse.expr);
+		}
+	}
+
+	function printPreUnop(op:PreUnop, e:TExpr) {
+		switch (op) {
+			case PreNot(t): printTextWithTrivia("!", t);
+			case PreNeg(t): printTextWithTrivia("-", t);
+			case PreIncr(t): printTextWithTrivia("++", t);
+			case PreDecr(t): printTextWithTrivia("--", t);
+			case PreBitNeg(t): printTextWithTrivia("~", t);
+		}
+		printExpr(e);
+	}
+
+	function printPostUnop(e:TExpr, op:PostUnop) {
+		printExpr(e);
+		switch (op) {
+			case PostIncr(t): printTextWithTrivia("++", t);
+			case PostDecr(t): printTextWithTrivia("--", t);
 		}
 	}
 

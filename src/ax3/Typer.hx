@@ -144,6 +144,7 @@ class Typer {
 		return {
 			syntax: c,
 			name: c.name.text,
+			metadata: c.metadata,
 			modifiers: c.modifiers,
 			members: members
 		}
@@ -272,8 +273,8 @@ class Typer {
 			case EForIn(f): typeForIn(f);
 			case EForEach(f): typeForIn(f);
 			case EBinop(a, op, b): typeBinop(a, op, b);
-			case EPreUnop(op, e): typeExpr(e);
-			case EPostUnop(e, op): typeExpr(e);
+			case EPreUnop(op, e): typePreUnop(op, e);
+			case EPostUnop(e, op): typePostUnop(e, op);
 			case EVars(kind, vars): typeVars(kind, vars);
 			case EAs(e, keyword, t): typeAs(e, keyword, t);
 			case EIs(e, keyword, et): typeIs(e, keyword, et);
@@ -293,6 +294,27 @@ class Typer {
 			case ECondCompBlock(v, b): typeCondCompBlock(v, b);
 			case EUseNamespace(ns): mk(TEUseNamespace(ns), TTVoid);
 		}
+	}
+
+	function typePreUnop(op:PreUnop, e:Expr):TExpr {
+		var e = typeExpr(e);
+		var type = switch (op) {
+			case PreNot(_): TTBoolean;
+			case PreNeg(_): e.type;
+			case PreIncr(_): e.type;
+			case PreDecr(_): e.type;
+			case PreBitNeg(_): e.type;
+		}
+		return mk(TEPreUnop(op, e), type);
+	}
+
+	function typePostUnop(e:Expr, op:PostUnop):TExpr {
+		var e = typeExpr(e);
+		var type = switch (op) {
+			case PostIncr(_): e.type;
+			case PostDecr(_): e.type;
+		}
+		return mk(TEPostUnop(e, op), type);
 	}
 
 	function typeXmlAttr(e:Expr, attrName:Token):TExpr {

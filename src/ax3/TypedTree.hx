@@ -33,6 +33,7 @@ typedef TClassDecl = {
 		var openBrace:Token;
 		var closeBrace:Token;
 	};
+	var metadata:Array<Metadata>;
 	var modifiers:Array<DeclModifier>;
 	var name:String;
 	var members:Array<TClassMember>;
@@ -116,6 +117,8 @@ enum TExprKind {
 	TEForIn(f:TForIn);
 	TEForEach(f:TForEach);
 	TEBinop(a:TExpr, op:Binop, b:TExpr);
+	TEPreUnop(op:PreUnop, e:TExpr);
+	TEPostUnop(e:TExpr, op:PostUnop);
 	TEComma(a:TExpr, comma:Token, b:TExpr);
 	TEIs(e:TExpr, keyword:Token, etype:TExpr);
 	TEAs(e:TExpr, keyword:Token, type:TType);
