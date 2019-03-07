@@ -406,7 +406,15 @@ class Typer {
 
 	function typeCall(e:Expr, args:CallArgs) {
 		var eobj = typeExpr(e);
-		var callArgs = if (args.args != null) foldSeparated(args.args, [], (e,acc) -> acc.push(typeExpr(e))) else [];
+		var targs = {
+			openParen: args.openParen,
+			closeParen: args.closeParen,
+			args:
+				if (args.args != null)
+					separatedToArray(args.args, (expr, comma) -> {expr: typeExpr(expr), comma: comma})
+				else
+					[]
+		};
 
 		var type = switch eobj.kind {
 			case TELiteral(TLSuper(_)): // super(...) call
@@ -420,7 +428,7 @@ class Typer {
 				}
 		}
 
-		return mk(TECall({eobj: e, args: args}, eobj, callArgs), type);
+		return mk(TECall(eobj, targs), type);
 	}
 
 	function typeNew(e:Expr, args:Null<CallArgs>):TExpr {

@@ -73,7 +73,7 @@ enum TExprKind {
 	TEField(obj:TFieldObject, fieldName:String, fieldToken:Token);
 	TEBuiltin(syntax:Token, name:String);
 	TEDeclRef(c:SDecl);
-	TECall(syntax:{eobj:Expr, args:CallArgs}, eobj:TExpr, args:Array<TExpr>);
+	TECall(eobj:TExpr, args:TCallArgs);
 	TEArrayDecl(syntax:ArrayDecl, elems:Array<TExpr>);
 	TEVectorDecl(type:TType, elems:Array<TExpr>);
 	TEReturn(keyword:Token, e:Null<TExpr>);
@@ -104,6 +104,12 @@ enum TExprKind {
 	TEXmlAttrExpr(e:TExpr, eattr:TExpr);
 	TEXmlDescend(e:TExpr, name:String);
 	TENothing;
+}
+
+typedef TCallArgs = {
+	var openParen:Token;
+	var args:Array<{expr:TExpr, comma:Null<Token>}>;
+	var closeParen:Token;
 }
 
 typedef TArrayAccess = {

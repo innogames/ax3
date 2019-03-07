@@ -1,5 +1,6 @@
 package ax3;
 
+import ax3.ParseTree;
 import ax3.TypedTree;
 
 @:nullSafety
@@ -75,7 +76,7 @@ class GenAS3 extends PrinterBase {
 			case TEField(object, fieldName, fieldToken): printFieldAccess(object, fieldName, fieldToken);
 			case TEBuiltin(syntax, name):
 			case TEDeclRef(c):
-			case TECall(syntax, eobj, args):
+			case TECall(eobj, args): printExpr(eobj); printCallArgs(args);
 			case TEArrayDecl(syntax, elems):
 			case TEVectorDecl(type, elems):
 			case TEReturn(keyword, e): printTextWithTrivia("return", keyword); if (e != null) printExpr(e);
@@ -95,7 +96,7 @@ class GenAS3 extends PrinterBase {
 			case TEDoWhile(ebody, econd):
 			case TEFor(einit, econd, eincr, ebody):
 			case TEForIn(eit, eobj, ebody):
-			case TEBinop(a, op, b):
+			case TEBinop(a, op, b): printBinop(a, op, b);
 			case TEComma(a, b):
 			case TEIs(e, etype):
 			case TEAs(e, type):
@@ -107,6 +108,58 @@ class GenAS3 extends PrinterBase {
 			case TEXmlDescend(e, name):
 			case TENothing:
 		}
+	}
+
+	function printCallArgs(args:TCallArgs) {
+		printOpenParen(args.openParen);
+		for (a in args.args) {
+			printExpr(a.expr);
+			if (a.comma != null) printComma(a.comma);
+		}
+		printCloseParen(args.closeParen);
+	}
+
+	function printBinop(a:TExpr, op:Binop, b:TExpr) {
+		printExpr(a);
+		switch (op) {
+			case OpAdd(t): printTextWithTrivia("+", t);
+			case OpSub(t): printTextWithTrivia("-", t);
+			case OpDiv(t): printTextWithTrivia("/", t);
+			case OpMul(t): printTextWithTrivia("*", t);
+			case OpMod(t): printTextWithTrivia("%", t);
+			case OpAssign(t): printTextWithTrivia("=", t);
+			case OpAssignAdd(t): printTextWithTrivia("+=", t);
+			case OpAssignSub(t): printTextWithTrivia("-=", t);
+			case OpAssignMul(t): printTextWithTrivia("*=", t);
+			case OpAssignDiv(t): printTextWithTrivia("/=", t);
+			case OpAssignMod(t): printTextWithTrivia("%=", t);
+			case OpAssignAnd(t): printTextWithTrivia("&&=", t);
+			case OpAssignOr(t): printTextWithTrivia("||=", t);
+			case OpAssignBitAnd(t): printTextWithTrivia("&=", t);
+			case OpAssignBitOr(t): printTextWithTrivia("|=", t);
+			case OpAssignBitXor(t): printTextWithTrivia("^=", t);
+			case OpAssignShl(t): printTextWithTrivia("<<=", t);
+			case OpAssignShr(t): printTextWithTrivia(">>=", t);
+			case OpAssignUshr(t): printTextWithTrivia(">>>=", t);
+			case OpEquals(t): printTextWithTrivia("==", t);
+			case OpNotEquals(t): printTextWithTrivia("!=", t);
+			case OpStrictEquals(t): printTextWithTrivia("===", t);
+			case OpNotStrictEquals(t): printTextWithTrivia("!==", t);
+			case OpGt(t): printTextWithTrivia(">", t);
+			case OpGte(t): printTextWithTrivia(">=", t);
+			case OpLt(t): printTextWithTrivia("<", t);
+			case OpLte(t): printTextWithTrivia("<=", t);
+			case OpIn(t): printTextWithTrivia("in", t);
+			case OpAnd(t): printTextWithTrivia("&&", t);
+			case OpOr(t): printTextWithTrivia("||", t);
+			case OpShl(t): printTextWithTrivia("<<", t);
+			case OpShr(t): printTextWithTrivia(">>", t);
+			case OpUshr(t): printTextWithTrivia(">>>", t);
+			case OpBitAnd(t): printTextWithTrivia("&", t);
+			case OpBitOr(t): printTextWithTrivia("|", t);
+			case OpBitXor(t): printTextWithTrivia("^", t);
+		}
+		printExpr(b);
 	}
 
 	function printArrayAccess(a:TArrayAccess) {
