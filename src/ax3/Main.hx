@@ -55,7 +55,7 @@ class Main {
 		for (mod in modules) {
 			var gen = new ax3.GenAS3();
 			gen.writeModule(mod);
-			var out = gen.getString();
+			var out = gen.toString();
 
 			var dir = haxe.io.Path.join({
 				var parts = mod.pack.name.split(".");

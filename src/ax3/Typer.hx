@@ -89,7 +89,8 @@ class Typer {
 				pack: {
 					name: packName,
 					decl: (decl : TDecl), // TODO: null-safety is not perfect
-				}
+				},
+				eof: file.eof
 			});
 
 		}

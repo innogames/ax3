@@ -3,13 +3,7 @@ package ax3;
 import ax3.ParseTree;
 import ax3.Token;
 
-class Printer {
-	var buf:StringBuf;
-
-	public function new() {
-		buf = new StringBuf();
-	}
-
+class Printer extends PrinterBase {
 	public static function print(f:File):String {
 		var p = new Printer();
 		p.printFile(f);
@@ -600,18 +594,6 @@ class Printer {
 		}
 	}
 
-	inline function printDot(s:Token) {
-		printTextWithTrivia(".", s);
-	}
-
-	inline function printComma(c:Token) {
-		printTextWithTrivia(",", c);
-	}
-
-	inline function printSemicolon(s:Token) {
-		printTextWithTrivia(";", s);
-	}
-
 	function printDotPath(p:DotPath) {
 		printSeparated(p, t -> printTextWithTrivia(t.text, t), t -> printTextWithTrivia(".", t));
 	}
@@ -627,18 +609,4 @@ class Printer {
 	inline function printIdent(token:Token) {
 		printTextWithTrivia(token.text, token);
 	}
-
-	function printTextWithTrivia(text:String, triviaToken:Token) {
-		printTrivia(triviaToken.leadTrivia);
-		buf.add(text);
-		printTrivia(triviaToken.trailTrivia);
-	}
-
-	function printTrivia(trivia:Array<Trivia>) {
-		for (item in trivia) {
-			buf.add(item.text);
-		}
-	}
-
-	public function toString() return buf.toString();
 }

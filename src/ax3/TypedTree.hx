@@ -6,6 +6,7 @@ import ax3.Structure;
 typedef TModule = {
 	var pack:TPackageDecl;
 	var name:String;
+	var eof:Token;
 }
 
 typedef TPackageDecl = {
