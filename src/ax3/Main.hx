@@ -2,56 +2,29 @@ package ax3;
 
 import sys.FileSystem;
 
+private typedef Config = {
+	var src:String;
+	var out:String;
+	var swc:Array<String>;
+}
+
 class Main {
-	static var eagerFail = false;
-
-	// static var typer:Typer;
-
 	static function main() {
 		var args = Sys.args();
-		var dir = switch args {
-			case ["eagerFail", path]:
-				eagerFail = true;
-				path;
-			case [path]:
-				path;
-			case _:
-				throw "invalid args";
+		if (args.length != 1) {
+			throw "invalid args";
 		}
-		var libs = [
-			"playerglobal32_0.swc",
-			"libs/starling-1.7.1-20151208.155452-1.swc",
-			"libs/starling-extensions-scrollimg_foe.swc",
-			"libs/starling-ffparticlesystem-1.0.0.swc",
-			"libs/robotlegs-framework-v1.5.2.swc",
-			"libs/robotlegs-utilities-Modular.swc",
-			"libs/robotlegs-starling-utilities-Modular-v0.5.3.swc",
-			"libs/robotlegs-utilities-StateMachine.swc",
-			"libs/robotlegs-plugin-starling-0.3.swc",
-			"libs/common.swc",
-			"libs/Collections.swc",
-			"libs/snake-0.7.0.swc",
-			"libs/openfl-tilemap.swc",
-			"libs/greensock.swc",
-			"libs/Flint2d_4.0.1.swc",
-			"libs/as3-gettext-0.9.6.innogames-custom.swc",
-			"libs/spine-as3-1.0.0.swc",
-			"libs/tutorial-1.1.2.swc",
-			"libs/AS3Communicator-lib.swc",
-			"libs/previewui.swc",
-			"libs/DConsole-2.3.swc",
-		];
-
+		var config:Config = haxe.Json.parse(sys.io.File.getContent(args[0]));
 		var files = [];
-		walk(dir, files);
+		walk(config.src, files);
 
-		var structure = Structure.build(files, libs);
+		var structure = Structure.build(files, config.swc);
 		sys.io.File.saveContent("structure.txt", structure.dump());
 
 		var typer = new Typer(structure);
 
 		var modules = typer.process(files);
-		var outDir = FileSystem.absolutePath("OUT");
+		var outDir = FileSystem.absolutePath(config.out);
 		for (mod in modules) {
 			var gen = new ax3.GenAS3();
 			gen.writeModule(mod);
@@ -92,18 +65,14 @@ class Main {
 		var scanner = new Scanner(content);
 		var parser = new Parser(scanner, new haxe.io.Path(path).file);
 		var parseTree = null;
-		if (eagerFail) {
+		try {
 			parseTree = parser.parse();
 			// var dump = ParseTreeDump.printFile(parseTree, "");
 			// Sys.println(dump);
-		} else {
-			try {
-				parseTree = parser.parse();
-			} catch (e:Any) {
-				var pos = @:privateAccess scanner.pos;
-				var line = getLine(content, pos);
-				printerr('$path:$line: $e');
-			}
+		} catch (e:Any) {
+			var pos = @:privateAccess scanner.pos;
+			var line = getLine(content, pos);
+			printerr('$path:$line: $e');
 		}
 		if (parseTree != null) {
 			// checkParseTree(path, content, parseTree);

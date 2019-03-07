@@ -4,8 +4,9 @@
 -lib format
 -js main.js
 # --macro nullSafety("ax3")
-# --interp
 -D no-copt
 -debug
--cmd node main.js c:/Users/nadako/Code/foe/Frontend/client/src
-# -cmd node main.js eagerFail .
+-cmd node main.js config-foe.json
+# -cmd node main.js config-local.json
+
+
