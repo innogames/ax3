@@ -74,9 +74,20 @@ class GenAS3 extends PrinterBase {
 					if (v.comma != null) printComma(v.comma);
 				}
 				printSemicolon(v.semicolon);
-			case TFProp:
 			case TFFun(f):
 				printTextWithTrivia("function", f.syntax.keyword);
+				printTextWithTrivia(f.name, f.syntax.name);
+				printSignature(f.fun.sig);
+				printBlock(f.fun.block);
+			case TFGetter(f):
+				printTextWithTrivia("function", f.syntax.functionKeyword);
+				printTextWithTrivia("get", f.syntax.accessorKeyword);
+				printTextWithTrivia(f.name, f.syntax.name);
+				printSignature(f.fun.sig);
+				printBlock(f.fun.block);
+			case TFSetter(f):
+				printTextWithTrivia("function", f.syntax.functionKeyword);
+				printTextWithTrivia("set", f.syntax.accessorKeyword);
 				printTextWithTrivia(f.name, f.syntax.name);
 				printSignature(f.fun.sig);
 				printBlock(f.fun.block);
@@ -154,7 +165,7 @@ class GenAS3 extends PrinterBase {
 			case TEPostUnop(e, op): printPostUnop(e, op);
 			case TEComma(a, comma, b): printExpr(a); printComma(comma); printExpr(b);
 			case TEIs(e, keyword, etype): printExpr(e); printTextWithTrivia("is", keyword); printExpr(etype);
-			case TEAs(e, keyword, type): printExpr(e); printTextWithTrivia("is", keyword);
+			case TEAs(e, keyword, type): printExpr(e); printTextWithTrivia("as", keyword);
 			case TESwitch(esubj, cases, def):
 			case TENew(keyword, eclass, args): printNew(keyword, eclass, args);
 			case TECondCompValue(v): printCondCompVar(v);

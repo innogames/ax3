@@ -53,7 +53,8 @@ typedef TClassField = {
 enum TClassFieldKind {
 	TFVar(f:TVarField);
 	TFFun(f:TFunctionField);
-	TFProp;
+	TFGetter(f:TAccessorField);
+	TFSetter(f:TAccessorField);
 }
 
 typedef TFunctionField = {
@@ -61,6 +62,16 @@ typedef TFunctionField = {
 		var keyword:Token;
 		var name:Token;
 	};
+	var name:String;
+	var fun:TFunction;
+}
+
+typedef TAccessorField = {
+	var syntax:{
+		var functionKeyword:Token;
+		var accessorKeyword:Token;
+		var name:Token;
+	}
 	var name:String;
 	var fun:TFunction;
 }

@@ -185,12 +185,34 @@ class Typer {
 					name: name.text,
 					fun: f
 				});
-			case FGetter(_, _, name, fun) | FSetter(_, _, name, fun):
+			case FGetter(keyword, get, name, fun):
 				trace(" - " + name.text);
 				initLocals();
 				// TODO: can use structure to get arg types (speedup \o/)
-				typeFunction(fun);
-				TFProp;
+				var f = typeFunction(fun);
+				TFGetter({
+					syntax: {
+						functionKeyword: keyword,
+						accessorKeyword: get,
+						name: name,
+					},
+					name: name.text,
+					fun: f
+				});
+			case FSetter(keyword, set, name, fun):
+				trace(" - " + name.text);
+				initLocals();
+				// TODO: can use structure to get arg types (speedup \o/)
+				var f = typeFunction(fun);
+				TFSetter({
+					syntax: {
+						functionKeyword: keyword,
+						accessorKeyword: set,
+						name: name,
+					},
+					name: name.text,
+					fun: f
+				});
 		}
 		return {
 			metadata: f.metadata,
@@ -271,7 +293,7 @@ class Typer {
 			case EDoWhile(w): typeDoWhile(w);
 			case EFor(f): typeFor(f);
 			case EForIn(f): typeForIn(f);
-			case EForEach(f): typeForIn(f);
+			case EForEach(f): typeForEach(f);
 			case EBinop(a, op, b): typeBinop(a, op, b);
 			case EPreUnop(op, e): typePreUnop(op, e);
 			case EPostUnop(e, op): typePostUnop(e, op);
@@ -430,6 +452,29 @@ class Typer {
 		return mk(TEForIn({
 			syntax: {
 				forKeyword: f.forKeyword,
+				openParen: f.openParen,
+				closeParen: f.closeParen
+			},
+			iter: {
+				eit: eit,
+				inKeyword: f.iter.inKeyword,
+				eobj: eobj
+			},
+			body: ebody
+		}), TTVoid);
+	}
+
+
+	function typeForEach(f:ForEach):TExpr {
+		pushLocals();
+		var eobj = typeExpr(f.iter.eobj);
+		var eit = typeExpr(f.iter.eit);
+		var ebody = typeExpr(f.body);
+		popLocals();
+		return mk(TEForEach({
+			syntax: {
+				forKeyword: f.forKeyword,
+				eachKeyword: f.eachKeyword,
 				openParen: f.openParen,
 				closeParen: f.closeParen
 			},
