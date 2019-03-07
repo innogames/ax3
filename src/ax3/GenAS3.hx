@@ -45,6 +45,17 @@ class GenAS3 extends PrinterBase {
 	}
 
 	function printClassField(f:TClassField) {
+		for (m in f.modifiers) {
+			switch (m) {
+				case FMPublic(t): printTextWithTrivia("public", t);
+				case FMPrivate(t): printTextWithTrivia("private", t);
+				case FMProtected(t): printTextWithTrivia("protected", t);
+				case FMInternal(t): printTextWithTrivia("internal", t);
+				case FMOverride(t): printTextWithTrivia("override", t);
+				case FMStatic(t): printTextWithTrivia("static", t);
+				case FMFinal(t): printTextWithTrivia("final", t);
+			}
+		}
 		switch (f.kind) {
 			case TFVar:
 			case TFProp:

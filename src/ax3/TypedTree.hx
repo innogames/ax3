@@ -43,6 +43,7 @@ enum TClassMember {
 }
 
 typedef TClassField = {
+	var modifiers:Array<ClassFieldModifier>;
 	var kind:TClassFieldKind;
 }
 

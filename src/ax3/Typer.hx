@@ -178,6 +178,7 @@ class Typer {
 				TFProp;
 		}
 		return {
+			modifiers: f.modifiers,
 			kind: kind
 		};
 	}
