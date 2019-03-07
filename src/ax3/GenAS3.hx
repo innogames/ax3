@@ -1,6 +1,5 @@
 package ax3;
 
-import ax3.ParseTree;
 import ax3.TypedTree;
 
 @:nullSafety
@@ -85,7 +84,7 @@ class GenAS3 extends PrinterBase {
 			case TEBreak(keyword): printTextWithTrivia("break", keyword);
 			case TEContinue(keyword): printTextWithTrivia("continue", keyword);
 			case TEVars(v):
-			case TEObjectDecl(syntax, fields):
+			case TEObjectDecl(o): printObjectDecl(o);
 			case TEArrayAccess(eobj, eindex):
 			case TEBlock(block): printBlock(block);
 			case TETry(expr, catches):
@@ -108,6 +107,17 @@ class GenAS3 extends PrinterBase {
 			case TEXmlDescend(e, name):
 			case TENothing:
 		}
+	}
+
+	function printObjectDecl(o:TObjectDecl) {
+		printOpenBrace(o.syntax.openBrace);
+		for (f in o.fields) {
+			printTextWithTrivia(f.name, f.syntax.name); // TODO: quoted fields
+			printColon(f.syntax.colon);
+			printExpr(f.expr);
+			if (f.syntax.comma != null) printComma(f.syntax.comma);
+		}
+		printCloseBrace(o.syntax.closeBrace);
 	}
 
 	function printFieldAccess(obj:TFieldObject, name:String, token:Token) {

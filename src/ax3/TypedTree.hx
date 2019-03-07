@@ -82,7 +82,7 @@ enum TExprKind {
 	TEBreak(keyword:Token);
 	TEContinue(keyword:Token);
 	TEVars(v:Array<TVarDecl>);
-	TEObjectDecl(syntax:Expr, fields:Array<TObjectField>);
+	TEObjectDecl(o:TObjectDecl);
 	TEArrayAccess(eobj:TExpr, eindex:TExpr);
 	TEBlock(block:TBlock);
 	TETry(expr:TExpr, catches:Array<TCatch>);
@@ -104,6 +104,11 @@ enum TExprKind {
 	TEXmlAttrExpr(e:TExpr, eattr:TExpr);
 	TEXmlDescend(e:TExpr, name:String);
 	TENothing;
+}
+
+typedef TObjectDecl = {
+	var syntax:{openBrace:Token, closeBrace:Token};
+	var fields:Array<TObjectField>;
 }
 
 typedef TFieldObject = {
@@ -168,7 +173,7 @@ typedef TCatch = {
 }
 
 typedef TObjectField = {
-	var syntax:ObjectField;
+	var syntax:{name:Token, colon:Token, comma:Null<Token>};
 	var name:String;
 	var expr:TExpr;
 }

@@ -241,7 +241,7 @@ class Typer {
 			case ENew(keyword, e, args): typeNew(e, args);
 			case EField(eobj, dot, fieldName): typeField(eobj, dot, fieldName);
 			case EBlock(b): mk(TEBlock(typeBlock(b)), TTVoid);
-			case EObjectDecl(openBrace, fields, closeBrace): typeObjectDecl(e, fields);
+			case EObjectDecl(openBrace, fields, closeBrace): typeObjectDecl(openBrace, fields, closeBrace);
 			case EIf(keyword, openParen, econd, closeParen, ethen, eelse): typeIf(econd, ethen, eelse);
 			case ETernary(econd, question, ethen, colon, eelse): typeTernary(econd, ethen, eelse);
 			case EWhile(keyword, openParen, cond, closeParen, body): typeWhile(cond, body);
@@ -748,9 +748,18 @@ class Typer {
 		throw 'Unknown static field $fieldName on class ${cls.name}';
 	}
 
-	function typeObjectDecl(e:Expr, fields:Separated<ObjectField>):TExpr {
-		var fields = foldSeparated(fields, [], (f,acc) -> acc.push({syntax: f, name: f.name.text, expr: typeExpr(f.value)}));
-		return mk(TEObjectDecl(e, fields), TTObject);
+	function typeObjectDecl(openBrace:Token, fields:Separated<ObjectField>, closeBrace:Token):TExpr {
+		var fields = separatedToArray(fields, function(f, comma) {
+			return {
+				syntax: {name: f.name, colon: f.colon, comma: comma},
+				name: f.name.text,
+				expr: typeExpr(f.value)
+			};
+		});
+		return mk(TEObjectDecl({
+			syntax: {openBrace: openBrace, closeBrace: closeBrace},
+			fields: fields
+		}), TTObject);
 	}
 
 	function typeVars(vars:Separated<VarDecl>):TExpr {

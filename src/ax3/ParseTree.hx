@@ -26,6 +26,17 @@ class ParseTree {
 		return loop(e);
 	}
 
+	public static function separatedToArray<T,S>(s:Separated<T>, f:(T,Null<Token>)->S):Array<S> {
+		var r = [];
+		var sep = if (s.rest.length > 0) s.rest[0].sep else null;
+		r.push(f(s.first, sep));
+		for (i in 0...s.rest.length) {
+			var sep = if (i == s.rest.length - 1) null else s.rest[i + 1].sep;
+			r.push(f(s.rest[i].element, sep));
+		}
+		return r;
+	}
+
 	public static function iterSeparated<T>(d:Separated<T>, f:T->Void) {
 		f(d.first);
 		for (p in d.rest) {
