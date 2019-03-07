@@ -93,12 +93,13 @@ enum TExprKind {
 	TEIf(e:TIf);
 	TEWhile(econd:TExpr, ebody:TExpr);
 	TEDoWhile(ebody:TExpr, econd:TExpr);
-	TEFor(einit:Null<TExpr>, econd:Null<TExpr>, eincr:Null<TExpr>, ebody:TExpr);
-	TEForIn(eit:TExpr, eobj:TExpr, ebody:TExpr);
+	TEFor(f:TFor);
+	TEForIn(f:TForIn);
+	TEForEach(f:TForEach);
 	TEBinop(a:TExpr, op:Binop, b:TExpr);
 	TEComma(a:TExpr, comma:Token, b:TExpr);
-	TEIs(e:TExpr, etype:TExpr);
-	TEAs(e:TExpr, type:TType);
+	TEIs(e:TExpr, keyword:Token, etype:TExpr);
+	TEAs(e:TExpr, keyword:Token, type:TType);
 	TESwitch(esubj:TExpr, cases:Array<TSwitchCase>, def:Null<Array<TExpr>>);
 	TENew(keyword:Token, eclass:TExpr, args:Null<TCallArgs>);
 	TECondCompBlock(ns:String, name:String, expr:TExpr);
@@ -106,6 +107,47 @@ enum TExprKind {
 	TEXmlAttrExpr(e:TExpr, eattr:TExpr);
 	TEXmlDescend(e:TExpr, name:String);
 	TENothing;
+}
+
+typedef TFor = {
+	var syntax:{
+		var keyword:Token;
+		var openParen:Token;
+		var initSep:Token;
+		var condSep:Token;
+		var closeParen:Token;
+	}
+	var einit:Null<TExpr>;
+	var econd:Null<TExpr>;
+	var eincr:Null<TExpr>;
+	var body:TExpr;
+}
+
+typedef TForIn = {
+	var syntax:{
+		var forKeyword:Token;
+		var openParen:Token;
+		var closeParen:Token;
+	}
+	var iter:TForInIter;
+	var body:TExpr;
+}
+
+typedef TForEach = {
+	var syntax:{
+		var forKeyword:Token;
+		var eachKeyword:Token;
+		var openParen:Token;
+		var closeParen:Token;
+	}
+	var iter:TForInIter;
+	var body:TExpr;
+}
+
+typedef TForInIter = {
+	var eit:TExpr;
+	var inKeyword:Token;
+	var eobj:TExpr;
 }
 
 typedef TTernary = {

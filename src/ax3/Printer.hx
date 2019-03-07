@@ -397,29 +397,29 @@ class Printer extends PrinterBase {
 				printTextWithTrivia("(", openParen);
 				printExpr(cond);
 				printTextWithTrivia(")", closeParen);
-			case EFor(keyword, openParen, einit, initSep, econd, condSep, eincr, closeParen, body):
-				printTextWithTrivia("for", keyword);
-				printTextWithTrivia("(", openParen);
-				if (einit != null) printExpr(einit);
-				printSemicolon(initSep);
-				if (econd != null) printExpr(econd);
-				printSemicolon(condSep);
-				if (eincr != null) printExpr(eincr);
-				printTextWithTrivia(")", closeParen);
-				printExpr(body);
-			case EForIn(forKeyword, openParen, iter, closeParen, body):
-				printTextWithTrivia("for", forKeyword);
-				printTextWithTrivia("(", openParen);
-				printForIter(iter);
-				printTextWithTrivia(")", closeParen);
-				printExpr(body);
-			case EForEach(forKeyword, eachKeyword, openParen, iter, closeParen, body):
-				printTextWithTrivia("for", forKeyword);
-				printTextWithTrivia("each", eachKeyword);
-				printTextWithTrivia("(", openParen);
-				printForIter(iter);
-				printTextWithTrivia(")", closeParen);
-				printExpr(body);
+			case EFor(f):
+				printTextWithTrivia("for", f.keyword);
+				printTextWithTrivia("(", f.openParen);
+				if (f.einit != null) printExpr(f.einit);
+				printSemicolon(f.initSep);
+				if (f.econd != null) printExpr(f.econd);
+				printSemicolon(f.condSep);
+				if (f.eincr != null) printExpr(f.eincr);
+				printTextWithTrivia(")", f.closeParen);
+				printExpr(f.body);
+			case EForIn(f):
+				printTextWithTrivia("for", f.forKeyword);
+				printTextWithTrivia("(", f.openParen);
+				printForIter(f.iter);
+				printTextWithTrivia(")", f.closeParen);
+				printExpr(f.body);
+			case EForEach(f):
+				printTextWithTrivia("for", f.forKeyword);
+				printTextWithTrivia("each", f.eachKeyword);
+				printTextWithTrivia("(", f.openParen);
+				printForIter(f.iter);
+				printTextWithTrivia(")", f.closeParen);
+				printExpr(f.body);
 			case EBinop(a, op, b):
 				printExpr(a);
 				printBinop(op);

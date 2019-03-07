@@ -353,9 +353,9 @@ enum Expr {
 	ETernary(econd:Expr, question:Token, ethen:Expr, colon:Token, eelse:Expr);
 	EWhile(keyword:Token, openParen:Token, cond:Expr, closeParen:Token, body:Expr);
 	EDoWhile(doKeyword:Token, body:Expr, whileKeyword:Token, openParen:Token, cond:Expr, closeParen:Token);
-	EFor(keyword:Token, openParen:Token, einit:Null<Expr>, initSep:Token, econd:Null<Expr>, condSep:Token, eincr:Null<Expr>, closeParen:Token, body:Expr);
-	EForIn(forKeyword:Token, openParen:Token, iter:ForIter, closeParen:Token, body:Expr);
-	EForEach(forKeyword:Token, eachKeyword:Token, openParen:Token, iter:ForIter, closeParen:Token, body:Expr);
+	EFor(f:For);
+	EForIn(f:ForIn);
+	EForEach(f:ForEach);
 	EBinop(a:Expr, op:Binop, b:Expr);
 	EPreUnop(op:PreUnop, e:Expr);
 	EPostUnop(e:Expr, op:PostUnop);
@@ -371,6 +371,10 @@ enum Expr {
 	EFunction(keyword:Token, name:Null<Token>, fun:Function);
 	EUseNamespace(n:UseNamespace);
 }
+
+typedef For = {keyword:Token, openParen:Token, einit:Null<Expr>, initSep:Token, econd:Null<Expr>, condSep:Token, eincr:Null<Expr>, closeParen:Token, body:Expr}
+typedef ForIn = {forKeyword:Token, openParen:Token, iter:ForIter, closeParen:Token, body:Expr}
+typedef ForEach = {forKeyword:Token, eachKeyword:Token, openParen:Token, iter:ForIter, closeParen:Token, body:Expr}
 
 enum VarDeclKind {
 	VVar(t:Token);

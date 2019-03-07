@@ -106,12 +106,13 @@ class GenAS3 extends PrinterBase {
 			case TEIf(i): printIf(i);
 			case TEWhile(econd, ebody):
 			case TEDoWhile(ebody, econd):
-			case TEFor(einit, econd, eincr, ebody):
-			case TEForIn(eit, eobj, ebody):
+			case TEFor(f): printFor(f);
+			case TEForIn(f): printForIn(f);
+			case TEForEach(f): printForEach(f);
 			case TEBinop(a, op, b): printBinop(a, op, b);
 			case TEComma(a, comma, b): printExpr(a); printComma(comma); printExpr(b);
-			case TEIs(e, etype):
-			case TEAs(e, type):
+			case TEIs(e, keyword, etype): printExpr(e); printTextWithTrivia("is", keyword); printExpr(etype);
+			case TEAs(e, keyword, type): printExpr(e); printTextWithTrivia("is", keyword);
 			case TESwitch(esubj, cases, def):
 			case TENew(keyword, eclass, args): printNew(keyword, eclass, args);
 			case TECondCompBlock(ns, name, expr):
@@ -120,6 +121,41 @@ class GenAS3 extends PrinterBase {
 			case TEXmlDescend(e, name):
 			case TENothing:
 		}
+	}
+
+	function printFor(f:TFor) {
+		printTextWithTrivia("for", f.syntax.keyword);
+		printOpenParen(f.syntax.openParen);
+		if (f.einit != null) printExpr(f.einit);
+		printSemicolon(f.syntax.initSep);
+		if (f.econd != null) printExpr(f.econd);
+		printSemicolon(f.syntax.condSep);
+		if (f.eincr != null) printExpr(f.eincr);
+		printCloseParen(f.syntax.closeParen);
+		printExpr(f.body);
+	}
+
+	function printForIn(f:TForIn) {
+		printTextWithTrivia("for", f.syntax.forKeyword);
+		printOpenParen(f.syntax.openParen);
+		printForInIter(f.iter);
+		printCloseParen(f.syntax.closeParen);
+		printExpr(f.body);
+	}
+
+	function printForEach(f:TForEach) {
+		printTextWithTrivia("for", f.syntax.forKeyword);
+		printTextWithTrivia("each", f.syntax.eachKeyword);
+		printOpenParen(f.syntax.openParen);
+		printForInIter(f.iter);
+		printCloseParen(f.syntax.closeParen);
+		printExpr(f.body);
+	}
+
+	function printForInIter(i:TForInIter) {
+		printExpr(i.eit);
+		printTextWithTrivia("in", i.inKeyword);
+		printExpr(i.eobj);
 	}
 
 	function printNew(keyword:Token, eclass:TExpr, args:Null<TCallArgs>) {

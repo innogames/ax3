@@ -249,15 +249,15 @@ class Typer {
 			case ETernary(econd, question, ethen, colon, eelse): typeTernary(econd, question, ethen, colon, eelse);
 			case EWhile(keyword, openParen, cond, closeParen, body): typeWhile(cond, body);
 			case EDoWhile(doKeyword, body, whileKeyword, openParen, cond, closeParen): typeDoWhile(body, cond);
-			case EFor(keyword, openParen, einit, initSep, econd, condSep, eincr, closeParen, body): typeFor(einit, econd, eincr, body);
-			case EForIn(forKeyword, openParen, iter, closeParen, body): typeForIn(iter, body);
-			case EForEach(forKeyword, eachKeyword, openParen, iter, closeParen, body): typeForIn(iter, body);
+			case EFor(f): typeFor(f);
+			case EForIn(f): typeForIn(f);
+			case EForEach(f): typeForIn(f);
 			case EBinop(a, op, b): typeBinop(a, op, b);
 			case EPreUnop(op, e): typeExpr(e);
 			case EPostUnop(e, op): typeExpr(e);
 			case EVars(kind, vars): typeVars(kind, vars);
-			case EAs(e, keyword, t): typeAs(e, t);
-			case EIs(e, keyword, t): typeIs(e, t);
+			case EAs(e, keyword, t): typeAs(e, keyword, t);
+			case EIs(e, keyword, et): typeIs(e, keyword, et);
 			case EComma(a, comma, b): typeComma(a, comma, b);
 			case EVector(v): typeVector(v);
 			case ESwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace): typeSwitch(subj, cases);
@@ -337,16 +337,16 @@ class Typer {
 		return mk(TESwitch(esubj, tcases, def), TTVoid);
 	}
 
-	function typeAs(e:Expr, t:SyntaxType) {
+	function typeAs(e:Expr, keyword:Token, t:SyntaxType) {
 		var e = typeExpr(e);
 		var type = resolveType(t);
-		return mk(TEAs(e, type), type);
+		return mk(TEAs(e, keyword, type), type);
 	}
 
-	function typeIs(e:Expr, etype:Expr):TExpr {
+	function typeIs(e:Expr, keyword:Token, etype:Expr):TExpr {
 		var e = typeExpr(e);
 		var etype = typeExpr(etype);
-		return mk(TEIs(e, etype), TTBoolean);
+		return mk(TEIs(e, keyword, etype), TTBoolean);
 	}
 
 	function typeComma(a:Expr, comma:Token, b:Expr):TExpr {
@@ -362,23 +362,47 @@ class Typer {
 		return mk(TEBinop(a, op, b), type);
 	}
 
-	function typeForIn(iter:ForIter, ebody:Expr):TExpr {
+	function typeForIn(f:ForIn):TExpr {
 		pushLocals();
-		var eobj = typeExpr(iter.eobj);
-		var eit = typeExpr(iter.eit);
-		var ebody = typeExpr(ebody);
+		var eobj = typeExpr(f.iter.eobj);
+		var eit = typeExpr(f.iter.eit);
+		var ebody = typeExpr(f.body);
 		popLocals();
-		return mk(TEForIn(eit, eobj, ebody), TTVoid);
+		return mk(TEForIn({
+			syntax: {
+				forKeyword: f.forKeyword,
+				openParen: f.openParen,
+				closeParen: f.closeParen
+			},
+			iter: {
+				eit: eit,
+				inKeyword: f.iter.inKeyword,
+				eobj: eobj
+			},
+			body: ebody
+		}), TTVoid);
 	}
 
-	function typeFor(einit:Null<Expr>, econd:Null<Expr>, eincr:Null<Expr>, ebody:Expr):TExpr {
+	function typeFor(f:For):TExpr {
 		pushLocals();
-		var einit = if (einit != null) typeExpr(einit) else null;
-		var econd = if (econd != null) typeExpr(econd) else null;
-		var eincr = if (eincr != null) typeExpr(eincr) else null;
-		var ebody = typeExpr(ebody);
+		var einit = if (f.einit != null) typeExpr(f.einit) else null;
+		var econd = if (f.econd != null) typeExpr(f.econd) else null;
+		var eincr = if (f.eincr != null) typeExpr(f.eincr) else null;
+		var ebody = typeExpr(f.body);
 		popLocals();
-		return mk(TEFor(einit, econd, eincr, ebody), TTVoid);
+		return mk(TEFor({
+			syntax: {
+				keyword: f.keyword,
+				openParen: f.openParen,
+				initSep: f.initSep,
+				condSep: f.condSep,
+				closeParen: f.closeParen
+			},
+			einit: einit,
+			econd: econd,
+			eincr: eincr,
+			body: ebody
+		}), TTVoid);
 	}
 
 	function typeWhile(econd:Expr, ebody:Expr):TExpr {

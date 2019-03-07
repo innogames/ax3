@@ -753,7 +753,13 @@ class Parser {
  					} else {
 						var closeParen = expectKind(TkParenClose);
 						var ebody = parseExpr(true);
-						EForIn(keyword, openParen, forIter, closeParen, ebody);
+						EForIn({
+							forKeyword: keyword,
+							openParen: openParen,
+							iter: forIter,
+							closeParen: closeParen,
+							body: ebody
+						});
 					}
 				}
 		}
@@ -780,7 +786,14 @@ class Parser {
 			throw "`a in b` expression expected for the `for each` loop";
 		var closeParen = expectKind(TkParenClose);
 		var body = parseExpr(true);
-		return EForEach(forKeyword, eachKeyword, openParen, iter, closeParen, body);
+		return EForEach({
+			forKeyword: forKeyword,
+			eachKeyword: eachKeyword,
+			openParen: openParen,
+			iter: iter,
+			closeParen: closeParen,
+			body: body
+		});
 	}
 
 	function parseCFor(forKeyword:Token, openParen:Token, einit:Expr):Expr {
@@ -790,7 +803,17 @@ class Parser {
 		var eincr = parseOptionalExpr(true);
 		var closeParen = expectKind(TkParenClose);
 		var ebody = parseExpr(true);
-		return EFor(forKeyword, openParen, einit, einitSep, econd, econdSep, eincr, closeParen, ebody);
+		return EFor({
+			keyword: forKeyword,
+			openParen: openParen,
+			einit: einit,
+			initSep: einitSep,
+			econd: econd,
+			condSep: econdSep,
+			eincr: eincr,
+			closeParen: closeParen,
+			body: ebody
+		});
 	}
 
 	function parseNewNext(keyword:Token):Expr {
