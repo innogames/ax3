@@ -348,8 +348,8 @@ enum Expr {
 	EObjectDecl(openBrace:Token, fields:Separated<ObjectField>, closeBrace:Token);
 	EIf(keyword:Token, openParen:Token, econd:Expr, closeParen:Token, ethen:Expr, eelse:Null<{keyword:Token, expr:Expr}>);
 	ETernary(econd:Expr, question:Token, ethen:Expr, colon:Token, eelse:Expr);
-	EWhile(keyword:Token, openParen:Token, cond:Expr, closeParen:Token, body:Expr);
-	EDoWhile(doKeyword:Token, body:Expr, whileKeyword:Token, openParen:Token, cond:Expr, closeParen:Token);
+	EWhile(w:While);
+	EDoWhile(w:DoWhile);
 	EFor(f:For);
 	EForIn(f:ForIn);
 	EForEach(f:ForEach);
@@ -367,6 +367,23 @@ enum Expr {
 	ETry(keyword:Token, block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>);
 	EFunction(keyword:Token, name:Null<Token>, fun:Function);
 	EUseNamespace(n:UseNamespace);
+}
+
+typedef While = {
+	var keyword:Token;
+	var openParen:Token;
+	var cond:Expr;
+	var closeParen:Token;
+	var body:Expr;
+}
+
+typedef DoWhile = {
+	var doKeyword:Token;
+	var body:Expr;
+	var whileKeyword:Token;
+	var openParen:Token;
+	var cond:Expr;
+	var closeParen:Token;
 }
 
 typedef For = {keyword:Token, openParen:Token, einit:Null<Expr>, initSep:Token, econd:Null<Expr>, condSep:Token, eincr:Null<Expr>, closeParen:Token, body:Expr}

@@ -247,8 +247,8 @@ class Typer {
 			case EObjectDecl(openBrace, fields, closeBrace): typeObjectDecl(openBrace, fields, closeBrace);
 			case EIf(keyword, openParen, econd, closeParen, ethen, eelse): typeIf(keyword, openParen, econd, closeParen, ethen, eelse);
 			case ETernary(econd, question, ethen, colon, eelse): typeTernary(econd, question, ethen, colon, eelse);
-			case EWhile(keyword, openParen, cond, closeParen, body): typeWhile(cond, body);
-			case EDoWhile(doKeyword, body, whileKeyword, openParen, cond, closeParen): typeDoWhile(body, cond);
+			case EWhile(w): typeWhile(w);
+			case EDoWhile(w): typeDoWhile(w);
 			case EFor(f): typeFor(f);
 			case EForIn(f): typeForIn(f);
 			case EForEach(f): typeForIn(f);
@@ -405,16 +405,24 @@ class Typer {
 		}), TTVoid);
 	}
 
-	function typeWhile(econd:Expr, ebody:Expr):TExpr {
-		var econd = typeExpr(econd);
-		var ebody = typeExpr(ebody);
-		return mk(TEWhile(econd, ebody), TTVoid);
+	function typeWhile(w:While):TExpr {
+		var econd = typeExpr(w.cond);
+		var ebody = typeExpr(w.body);
+		return mk(TEWhile({
+			syntax: {keyword: w.keyword, openParen: w.openParen, closeParen: w.closeParen},
+			cond: econd,
+			body: ebody
+		}), TTVoid);
 	}
 
-	function typeDoWhile(ebody:Expr, econd:Expr):TExpr {
-		var ebody = typeExpr(ebody);
-		var econd = typeExpr(econd);
-		return mk(TEDoWhile(ebody, econd), TTVoid);
+	function typeDoWhile(w:DoWhile):TExpr {
+		var ebody = typeExpr(w.body);
+		var econd = typeExpr(w.cond);
+		return mk(TEDoWhile({
+			syntax: {doKeyword: w.doKeyword, whileKeyword: w.whileKeyword, openParen: w.openParen, closeParen: w.closeParen},
+			body: ebody,
+			cond: econd
+		}), TTVoid);
 	}
 
 	function typeIf(keyword:Token, openParen:Token, econd:Expr, closeParen:Token, ethen:Expr, eelse:Null<{keyword:Token, expr:Expr}>):TExpr {

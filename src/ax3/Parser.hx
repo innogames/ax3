@@ -726,7 +726,13 @@ class Parser {
 		var econd = parseExpr(true);
 		var closeParen = expectKind(TkParenClose);
 		var ebody = parseExpr(true);
-		return EWhile(keyword, openParen, econd, closeParen, ebody);
+		return EWhile({
+			keyword: keyword,
+			openParen: openParen,
+			cond: econd,
+			closeParen: closeParen,
+			body: ebody
+		});
 	}
 
 	function parseDoWhile(doKeyword:Token):Expr {
@@ -735,7 +741,14 @@ class Parser {
 		var openParen = expectKind(TkParenOpen);
 		var econd = parseExpr(true);
 		var closeParen = expectKind(TkParenClose);
-		return EDoWhile(doKeyword, ebody, whileKeyword, openParen, econd, closeParen);
+		return EDoWhile({
+			doKeyword: doKeyword,
+			body: ebody,
+			whileKeyword: whileKeyword,
+			openParen: openParen,
+			cond: econd,
+			closeParen: closeParen
+		});
 	}
 
 	function parseFor(keyword:Token):Expr {

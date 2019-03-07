@@ -86,7 +86,7 @@ class GenAS3 extends PrinterBase {
 			case TELiteral(l): printLiteral(l);
 			case TELocal(syntax, v): printTextWithTrivia(syntax.text, syntax);
 			case TEField(object, fieldName, fieldToken): printFieldAccess(object, fieldName, fieldToken);
-			case TEBuiltin(syntax, name):
+			case TEBuiltin(syntax, name): printTextWithTrivia(syntax.text, syntax);
 			case TEDeclRef(dotPath, c): printDotPath(dotPath);
 			case TECall(eobj, args): printExpr(eobj); printCallArgs(args);
 			case TEArrayDecl(d): printArrayDecl(d);
@@ -104,8 +104,8 @@ class GenAS3 extends PrinterBase {
 			case TEVector(type):
 			case TETernary(t): printTernary(t);
 			case TEIf(i): printIf(i);
-			case TEWhile(econd, ebody):
-			case TEDoWhile(ebody, econd):
+			case TEWhile(w): printWhile(w);
+			case TEDoWhile(w): printDoWhile(w);
 			case TEFor(f): printFor(f);
 			case TEForIn(f): printForIn(f);
 			case TEForEach(f): printForEach(f);
@@ -121,6 +121,23 @@ class GenAS3 extends PrinterBase {
 			case TEXmlDescend(e, name):
 			case TENothing:
 		}
+	}
+
+	function printWhile(w:TWhile) {
+		printTextWithTrivia("while", w.syntax.keyword);
+		printOpenParen(w.syntax.openParen);
+		printExpr(w.cond);
+		printCloseParen(w.syntax.closeParen);
+		printExpr(w.body);
+	}
+
+	function printDoWhile(w:TDoWhile) {
+		printTextWithTrivia("do", w.syntax.doKeyword);
+		printExpr(w.body);
+		printTextWithTrivia("while", w.syntax.whileKeyword);
+		printOpenParen(w.syntax.openParen);
+		printExpr(w.cond);
+		printCloseParen(w.syntax.closeParen);
 	}
 
 	function printFor(f:TFor) {

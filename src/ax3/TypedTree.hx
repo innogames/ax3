@@ -91,8 +91,8 @@ enum TExprKind {
 	TEVector(type:TType);
 	TETernary(e:TTernary);
 	TEIf(e:TIf);
-	TEWhile(econd:TExpr, ebody:TExpr);
-	TEDoWhile(ebody:TExpr, econd:TExpr);
+	TEWhile(w:TWhile);
+	TEDoWhile(w:TDoWhile);
 	TEFor(f:TFor);
 	TEForIn(f:TForIn);
 	TEForEach(f:TForEach);
@@ -115,6 +115,27 @@ typedef TArrayDecl = {
 		var closeBracket:Token;
 	};
 	var elements:Array<{expr:TExpr, comma:Null<Token>}>;
+}
+
+typedef TWhile = {
+	var syntax:{
+		var keyword:Token;
+		var openParen:Token;
+		var closeParen:Token;
+	};
+	var cond:TExpr;
+	var body:TExpr;
+}
+
+typedef TDoWhile = {
+	var syntax:{
+		var doKeyword:Token;
+		var whileKeyword:Token;
+		var openParen:Token;
+		var closeParen:Token;
+	};
+	var body:TExpr;
+	var cond:TExpr;
 }
 
 typedef TFor = {

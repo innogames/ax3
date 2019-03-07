@@ -388,19 +388,19 @@ class Printer extends PrinterBase {
 				printExpr(ethen);
 				printTextWithTrivia(":", colon);
 				printExpr(eelse);
-			case EWhile(keyword, openParen, cond, closeParen, body):
-				printTextWithTrivia("while", keyword);
-				printTextWithTrivia("(", openParen);
-				printExpr(cond);
-				printTextWithTrivia(")", closeParen);
-				printExpr(body);
-			case EDoWhile(doKeyword, body, whileKeyword, openParen, cond, closeParen):
-				printTextWithTrivia("do", doKeyword);
-				printExpr(body);
-				printTextWithTrivia("while", whileKeyword);
-				printTextWithTrivia("(", openParen);
-				printExpr(cond);
-				printTextWithTrivia(")", closeParen);
+			case EWhile(w):
+				printTextWithTrivia("while", w.keyword);
+				printTextWithTrivia("(", w.openParen);
+				printExpr(w.cond);
+				printTextWithTrivia(")", w.closeParen);
+				printExpr(w.body);
+			case EDoWhile(w):
+				printTextWithTrivia("do", w.doKeyword);
+				printExpr(w.body);
+				printTextWithTrivia("while", w.whileKeyword);
+				printTextWithTrivia("(", w.openParen);
+				printExpr(w.cond);
+				printTextWithTrivia(")", w.closeParen);
 			case EFor(f):
 				printTextWithTrivia("for", f.keyword);
 				printTextWithTrivia("(", f.openParen);
