@@ -76,7 +76,7 @@ enum TExprKind {
 	TEBuiltin(syntax:Token, name:String);
 	TEDeclRef(path:DotPath, c:SDecl);
 	TECall(eobj:TExpr, args:TCallArgs);
-	TEArrayDecl(syntax:ArrayDecl, elems:Array<TExpr>);
+	TEArrayDecl(a:TArrayDecl);
 	TEVectorDecl(type:TType, elems:Array<TExpr>);
 	TEReturn(keyword:Token, e:Null<TExpr>);
 	TEThrow(keyword:Token, e:TExpr);
@@ -107,6 +107,14 @@ enum TExprKind {
 	TEXmlAttrExpr(e:TExpr, eattr:TExpr);
 	TEXmlDescend(e:TExpr, name:String);
 	TENothing;
+}
+
+typedef TArrayDecl = {
+	var syntax:{
+		var openBracket:Token;
+		var closeBracket:Token;
+	};
+	var elements:Array<{expr:TExpr, comma:Null<Token>}>;
 }
 
 typedef TFor = {

@@ -89,7 +89,7 @@ class GenAS3 extends PrinterBase {
 			case TEBuiltin(syntax, name):
 			case TEDeclRef(dotPath, c): printDotPath(dotPath);
 			case TECall(eobj, args): printExpr(eobj); printCallArgs(args);
-			case TEArrayDecl(syntax, elems):
+			case TEArrayDecl(d): printArrayDecl(d);
 			case TEVectorDecl(type, elems):
 			case TEReturn(keyword, e): printTextWithTrivia("return", keyword); if (e != null) printExpr(e);
 			case TEThrow(keyword, e): printTextWithTrivia("throw", keyword); printExpr(e);
@@ -162,6 +162,15 @@ class GenAS3 extends PrinterBase {
 		printTextWithTrivia("new", keyword);
 		printExpr(eclass);
 		if (args != null) printCallArgs(args);
+	}
+
+	function printArrayDecl(d:TArrayDecl) {
+		printOpenBracket(d.syntax.openBracket);
+		for (e in d.elements) {
+			printExpr(e.expr);
+			if (e.comma != null) printComma(e.comma);
+		}
+		printCloseBracket(d.syntax.closeBracket);
 	}
 
 	function printCallArgs(args:TCallArgs) {

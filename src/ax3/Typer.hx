@@ -513,8 +513,11 @@ class Typer {
 	}
 
 	function typeArrayDecl(d:ArrayDecl):TExpr {
-		var elems = if (d.elems != null) foldSeparated(d.elems, [], function(e, acc) acc.push(typeExpr(e))) else [];
-		return mk(TEArrayDecl(d, elems), TTArray);
+		var elems = if (d.elems == null) [] else separatedToArray(d.elems, (e, comma) -> {expr: typeExpr(e), comma: comma});
+		return mk(TEArrayDecl({
+			syntax: {openBracket: d.openBracket, closeBracket: d.closeBracket},
+			elements: elems
+		}), TTArray);
 	}
 
 	function typeVectorDecl(t:SyntaxType, d:ArrayDecl):TExpr {
