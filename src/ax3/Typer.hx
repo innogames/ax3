@@ -231,7 +231,9 @@ class Typer {
 			case EIdent(i): typeIdent(i, e);
 			case ELiteral(l): typeLiteral(l);
 			case ECall(e, args): typeCall(e, args);
-			case EParens(openParen, e, closeParen): typeExpr(e);
+			case EParens(openParen, e, closeParen):
+				var e = typeExpr(e);
+				mk(TEParens(openParen, e, closeParen), e.type);
 			case EArrayAccess(e, openBracket, eindex, closeBracket): typeArrayAccess(e, openBracket, eindex, closeBracket);
 			case EArrayDecl(d): typeArrayDecl(d);
 			case EVectorDecl(newKeyword, t, d): typeVectorDecl(t.type, d);
@@ -242,8 +244,8 @@ class Typer {
 			case EField(eobj, dot, fieldName): typeField(eobj, dot, fieldName);
 			case EBlock(b): mk(TEBlock(typeBlock(b)), TTVoid);
 			case EObjectDecl(openBrace, fields, closeBrace): typeObjectDecl(openBrace, fields, closeBrace);
-			case EIf(keyword, openParen, econd, closeParen, ethen, eelse): typeIf(econd, ethen, eelse);
-			case ETernary(econd, question, ethen, colon, eelse): typeTernary(econd, ethen, eelse);
+			case EIf(keyword, openParen, econd, closeParen, ethen, eelse): typeIf(keyword, openParen, econd, closeParen, ethen, eelse);
+			case ETernary(econd, question, ethen, colon, eelse): typeTernary(econd, question, ethen, colon, eelse);
 			case EWhile(keyword, openParen, cond, closeParen, body): typeWhile(cond, body);
 			case EDoWhile(doKeyword, body, whileKeyword, openParen, cond, closeParen): typeDoWhile(body, cond);
 			case EFor(keyword, openParen, einit, initSep, econd, condSep, eincr, closeParen, body): typeFor(einit, econd, eincr, body);
@@ -255,7 +257,7 @@ class Typer {
 			case EVars(kind, vars): typeVars(kind, vars);
 			case EAs(e, keyword, t): typeAs(e, t);
 			case EIs(e, keyword, t): typeIs(e, t);
-			case EComma(a, comma, b): typeComma(a, b);
+			case EComma(a, comma, b): typeComma(a, comma, b);
 			case EVector(v): typeVector(v);
 			case ESwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace): typeSwitch(subj, cases);
 			case ETry(keyword, block, catches, finally_): typeTry(block, catches, finally_);
@@ -346,10 +348,10 @@ class Typer {
 		return mk(TEIs(e, etype), TTBoolean);
 	}
 
-	function typeComma(a:Expr, b:Expr):TExpr {
+	function typeComma(a:Expr, comma:Token, b:Expr):TExpr {
 		var a = typeExpr(a);
 		var b = typeExpr(b);
-		return mk(TEComma(a, b), b.type);
+		return mk(TEComma(a, comma, b), b.type);
 	}
 
 	function typeBinop(a:Expr, op:Binop, b:Expr):TExpr {
@@ -390,18 +392,28 @@ class Typer {
 		return mk(TEDoWhile(ebody, econd), TTVoid);
 	}
 
-	function typeIf(econd:Expr, ethen:Expr, eelse:Null<{keyword:Token, expr:Expr}>):TExpr {
+	function typeIf(keyword:Token, openParen:Token, econd:Expr, closeParen:Token, ethen:Expr, eelse:Null<{keyword:Token, expr:Expr}>):TExpr {
 		var econd = typeExpr(econd);
 		var ethen = typeExpr(ethen);
-		var eelse = if (eelse != null) typeExpr(eelse.expr) else null;
-		return mk(TEIf(econd, ethen, eelse), TTVoid);
+		var eelse = if (eelse != null) {keyword: eelse.keyword, expr: typeExpr(eelse.expr)} else null;
+		return mk(TEIf({
+			syntax: {keyword: keyword, openParen: openParen, closeParen: closeParen},
+			econd: econd,
+			ethen: ethen,
+			eelse: eelse
+		}), TTVoid);
 	}
 
-	function typeTernary(econd:Expr, ethen:Expr, eelse:Expr):TExpr {
+	function typeTernary(econd:Expr, question:Token, ethen:Expr, colon:Token, eelse:Expr):TExpr {
 		var econd = typeExpr(econd);
 		var ethen = typeExpr(ethen);
 		var eelse = typeExpr(eelse);
-		return mk(TETernary(econd, ethen, eelse), ethen.type);
+		return mk(TETernary({
+			syntax: {question: question, colon: colon},
+			econd: econd,
+			ethen: ethen,
+			eelse: eelse
+		}), ethen.type);
 	}
 
 	function typeCall(e:Expr, args:CallArgs) {

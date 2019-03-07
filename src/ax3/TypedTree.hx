@@ -67,6 +67,7 @@ typedef TExpr = {
 }
 
 enum TExprKind {
+	TEParens(openParen:Token, e:TExpr, closeParen:Token);
 	TEFunction(f:TFunction);
 	TELiteral(l:TLiteral);
 	TELocal(syntax:Token, v:TVar);
@@ -87,14 +88,14 @@ enum TExprKind {
 	TEBlock(block:TBlock);
 	TETry(expr:TExpr, catches:Array<TCatch>);
 	TEVector(type:TType);
-	TETernary(econd:TExpr, ethen:TExpr, eelse:TExpr);
-	TEIf(econd:TExpr, ethen:TExpr, eelse:Null<TExpr>);
+	TETernary(e:TTernary);
+	TEIf(e:TIf);
 	TEWhile(econd:TExpr, ebody:TExpr);
 	TEDoWhile(ebody:TExpr, econd:TExpr);
 	TEFor(einit:Null<TExpr>, econd:Null<TExpr>, eincr:Null<TExpr>, ebody:TExpr);
 	TEForIn(eit:TExpr, eobj:TExpr, ebody:TExpr);
 	TEBinop(a:TExpr, op:Binop, b:TExpr);
-	TEComma(a:TExpr, b:TExpr);
+	TEComma(a:TExpr, comma:Token, b:TExpr);
 	TEIs(e:TExpr, etype:TExpr);
 	TEAs(e:TExpr, type:TType);
 	TESwitch(esubj:TExpr, cases:Array<TSwitchCase>, def:Null<Array<TExpr>>);
@@ -104,6 +105,28 @@ enum TExprKind {
 	TEXmlAttrExpr(e:TExpr, eattr:TExpr);
 	TEXmlDescend(e:TExpr, name:String);
 	TENothing;
+}
+
+typedef TTernary = {
+	var syntax:{
+		question:Token,
+		colon:Token,
+	};
+	var econd:TExpr;
+	var ethen:TExpr;
+	var eelse:TExpr;
+}
+
+
+typedef TIf = {
+	var syntax:{
+		keyword:Token,
+		openParen:Token,
+		closeParen:Token,
+	};
+	var econd:TExpr;
+	var ethen:TExpr;
+	var eelse:Null<{keyword:Token, expr:TExpr}>;
 }
 
 typedef TCallArgs = {

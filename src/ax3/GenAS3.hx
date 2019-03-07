@@ -70,6 +70,7 @@ class GenAS3 extends PrinterBase {
 
 	function printExpr(e:TExpr) {
 		switch (e.kind) {
+			case TEParens(openParen, e, closeParen): printOpenParen(openParen); printExpr(e); printCloseParen(closeParen);
 			case TEFunction(f):
 			case TELiteral(l): printLiteral(l);
 			case TELocal(syntax, v): printTextWithTrivia(syntax.text, syntax);
@@ -90,14 +91,14 @@ class GenAS3 extends PrinterBase {
 			case TEBlock(block): printBlock(block);
 			case TETry(expr, catches):
 			case TEVector(type):
-			case TETernary(econd, ethen, eelse):
-			case TEIf(econd, ethen, eelse):
+			case TETernary(t): printTernary(t);
+			case TEIf(i): printIf(i);
 			case TEWhile(econd, ebody):
 			case TEDoWhile(ebody, econd):
 			case TEFor(einit, econd, eincr, ebody):
 			case TEForIn(eit, eobj, ebody):
 			case TEBinop(a, op, b): printBinop(a, op, b);
-			case TEComma(a, b):
+			case TEComma(a, comma, b): printExpr(a); printComma(comma); printExpr(b);
 			case TEIs(e, etype):
 			case TEAs(e, type):
 			case TESwitch(esubj, cases, def):
@@ -117,6 +118,26 @@ class GenAS3 extends PrinterBase {
 			if (a.comma != null) printComma(a.comma);
 		}
 		printCloseParen(args.closeParen);
+	}
+
+	function printTernary(t:TTernary) {
+		printExpr(t.econd);
+		printTextWithTrivia("?", t.syntax.question);
+		printExpr(t.ethen);
+		printColon(t.syntax.colon);
+		printExpr(t.eelse);
+	}
+
+	function printIf(i:TIf) {
+		printTextWithTrivia("if", i.syntax.keyword);
+		printOpenParen(i.syntax.openParen);
+		printExpr(i.econd);
+		printCloseParen(i.syntax.closeParen);
+		printExpr(i.ethen);
+		if (i.eelse != null) {
+			printTextWithTrivia("else", i.eelse.keyword);
+			printExpr(i.eelse.expr);
+		}
 	}
 
 	function printBinop(a:TExpr, op:Binop, b:TExpr) {
