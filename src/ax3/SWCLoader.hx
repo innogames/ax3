@@ -252,6 +252,9 @@ class SWCLoader {
 							trace("Ignoring namespace: " +  ns + " for " + name);
 							return {ns: "", name: name};
 						}
+					case NPrivate(_):
+						// privates are not accessible in any way, so silently skip them
+						return null;
 					case _:
 						trace("Skipping non-public: " +  ns.getName() + " " + abc.get(abc.strings, name));
 						return null;
