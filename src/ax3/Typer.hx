@@ -170,7 +170,7 @@ class Typer {
 					name: name.text,
 					fun: f
 				});
-			case FProp(keyword, kind, name, fun):
+			case FGetter(_, _, name, fun) | FSetter(_, _, name, fun):
 				trace(" - " + name.text);
 				initLocals();
 				// TODO: can use structure to get arg types (speedup \o/)

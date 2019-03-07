@@ -362,23 +362,24 @@ class Parser {
 	}
 
 	function parseClassFunNext(metadata:Array<Metadata>, namespace:Null<Token>, modifiers:Array<ClassFieldModifier>, keyword:Token):ClassField {
-		var name, propKind;
+		var kind;
 		var nameToken = expectKind(TkIdent);
 		switch nameToken.text {
 			case type = "get" | "set" if (scanner.advance().kind == TkIdent):
-				name = scanner.consume();
-				propKind = if (type == "get") PGet(nameToken) else PSet(nameToken);
+				var name = scanner.consume();
+				var fun = parseFunctionNext();
+				kind =
+					if (type == "get") FGetter(keyword, nameToken, name, fun)
+					else FSetter(keyword, nameToken, name, fun);
 			case _:
-				name = nameToken;
-				propKind = null;
+				kind = FFun(keyword, nameToken, parseFunctionNext());
 		}
 
-		var fun = parseFunctionNext();
 		return {
 			metadata: metadata,
 			namespace: namespace,
 			modifiers: modifiers,
-			kind: if (propKind == null) FFun(keyword, name, fun) else FProp(keyword, propKind, name, fun)
+			kind: kind
 		};
 	}
 
@@ -1057,23 +1058,24 @@ class Parser {
 	}
 
 	function parseInterfaceFunNext(metadata:Array<Metadata>, keyword:Token):InterfaceField {
-		var name, propKind;
+		var kind;
 		var nameToken = expectKind(TkIdent);
 		switch nameToken.text {
 			case type = "get" | "set" if (scanner.advance().kind == TkIdent):
-				name = scanner.consume();
-				propKind = if (type == "get") PGet(nameToken) else PSet(nameToken);
+				var name = scanner.consume();
+				var signature = parseFunctionSignature();
+				kind =
+					if (type == "get") IFGetter(keyword, nameToken, name, signature)
+					else IFSetter(keyword, nameToken, name, signature);
 			case _:
-				name = nameToken;
-				propKind = null;
+				kind = IFFun(keyword, nameToken, parseFunctionSignature());
 		}
 
-		var signature = parseFunctionSignature();
 		var semicolon = expectKind(TkSemicolon);
 
 		return {
 			metadata: metadata,
-			kind: if (propKind == null) IFFun(keyword, name, signature) else IFProp(keyword, propKind, name, signature),
+			kind: kind,
 			semicolon: semicolon
 		};
 	}

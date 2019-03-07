@@ -139,12 +139,14 @@ class Printer extends PrinterBase {
 				printTextWithTrivia("function", keyword);
 				printIdent(name);
 				printFunction(fun);
-			case FProp(keyword, kind, name, fun):
+			case FGetter(keyword, get, name, fun):
 				printTextWithTrivia("function", keyword);
-				switch (kind) {
-					case PGet(keyword): printTextWithTrivia("get", keyword);
-					case PSet(keyword): printTextWithTrivia("set", keyword);
-				}
+				printTextWithTrivia("get", get);
+				printIdent(name);
+				printFunction(fun);
+			case FSetter(keyword, set, name, fun):
+				printTextWithTrivia("function", keyword);
+				printTextWithTrivia("set", set);
 				printIdent(name);
 				printFunction(fun);
 		}
@@ -201,12 +203,14 @@ class Printer extends PrinterBase {
 				printTextWithTrivia("function", keyword);
 				printIdent(name);
 				printFunctionSignature(sig);
-			case IFProp(keyword, kind, name, sig):
+			case IFGetter(keyword, get, name, sig):
 				printTextWithTrivia("function", keyword);
-				switch (kind) {
-					case PGet(keyword): printTextWithTrivia("get", keyword);
-					case PSet(keyword): printTextWithTrivia("set", keyword);
-				}
+				printTextWithTrivia("get", get);
+				printIdent(name);
+				printFunctionSignature(sig);
+			case IFSetter(keyword, set, name, sig):
+				printTextWithTrivia("function", keyword);
+				printTextWithTrivia("set", set);
 				printIdent(name);
 				printFunctionSignature(sig);
 		}

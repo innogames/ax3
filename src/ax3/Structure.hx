@@ -209,13 +209,16 @@ class Structure {
 							case FFun(_, name, fun):
 								var fun = buildFunctionStructure(fun.signature);
 								fieldCollection.add({name: name.text, kind: SFFun(fun)});
-							case FProp(_, kind, name, fun):
-								var type = switch (kind) {
-									case PGet(_): buildTypeStructure(fun.signature.ret.type);
-									case PSet(_): switch (fun.signature.args.first) {
-										case ArgNormal(a): buildTypeStructure(a.type.type);
-										case ArgRest(_, _): throw "assert";
-									}
+							case FGetter(_, _, name, fun):
+								var type = buildTypeStructure(fun.signature.ret.type);
+								if (fieldCollection.get(name.text) == null) {
+									// TODO: check if it was really a property getter/setter
+									fieldCollection.add({name: name.text, kind: SFVar({type: type})});
+								}
+							case FSetter(_, _, name, fun):
+								var type = switch (fun.signature.args.first) {
+									case ArgNormal(a): buildTypeStructure(a.type.type);
+									case ArgRest(_, _): throw "assert";
 								};
 								if (fieldCollection.get(name.text) == null) {
 									// TODO: check if it was really a property getter/setter
@@ -253,13 +256,16 @@ class Structure {
 							case IFFun(_, name, fun):
 								var fun = buildFunctionStructure(fun);
 								cls.fields.add({name: name.text, kind: SFFun(fun)});
-							case IFProp(_, kind, name, fun):
-								var type = switch (kind) {
-									case PGet(_): buildTypeStructure(fun.ret.type);
-									case PSet(_): switch (fun.args.first) {
-										case ArgNormal(a): buildTypeStructure(a.type.type);
-										case ArgRest(_, _): throw "assert";
-									}
+							case IFGetter(_, _, name, fun):
+								var type = buildTypeStructure(fun.ret.type);
+								if (cls.fields.get(name.text) == null) {
+									// TODO: check if it was really a property getter/setter
+									cls.fields.add({name: name.text, kind: SFVar({type: type})});
+								}
+							case IFSetter(_, _, name, fun):
+								var type = switch (fun.args.first) {
+									case ArgNormal(a): buildTypeStructure(a.type.type);
+									case ArgRest(_, _): throw "assert";
 								};
 								if (cls.fields.get(name.text) == null) {
 									// TODO: check if it was really a property getter/setter

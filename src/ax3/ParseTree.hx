@@ -266,12 +266,8 @@ enum ClassFieldModifier {
 enum ClassFieldKind {
 	FVar(kind:VarDeclKind, vars:Separated<VarDecl>, semicolon:Token);
 	FFun(keyword:Token, name:Token, fun:Function);
-	FProp(keyword:Token, kind:PropKind, name:Token, fun:Function);
-}
-
-enum PropKind {
-	PGet(keyword:Token);
-	PSet(keyword:Token);
+	FGetter(keyword:Token, getKeyword:Token, name:Token, fun:Function);
+	FSetter(keyword:Token, setKeyword:Token, name:Token, fun:Function);
 }
 
 typedef BracedExprBlock = {
@@ -310,7 +306,8 @@ typedef InterfaceField = {
 
 enum InterfaceFieldKind {
 	IFFun(keyword:Token, name:Token, fun:FunctionSignature);
-	IFProp(keyword:Token, kind:PropKind, name:Token, fun:FunctionSignature);
+	IFGetter(keyword:Token, getKeyword:Token, name:Token, fun:FunctionSignature);
+	IFSetter(keyword:Token, setKeyword:Token, name:Token, fun:FunctionSignature);
 }
 
 typedef TypeHint = {
