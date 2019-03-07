@@ -594,18 +594,6 @@ class Printer extends PrinterBase {
 		}
 	}
 
-	function printDotPath(p:DotPath) {
-		printSeparated(p, t -> printTextWithTrivia(t.text, t), t -> printTextWithTrivia(".", t));
-	}
-
-	function printSeparated<T>(s:Separated<T>, f:T->Void, fsep:Token->Void) {
-		f(s.first);
-		for (v in s.rest) {
-			fsep(v.sep);
-			f(v.element);
-		}
-	}
-
 	inline function printIdent(token:Token) {
 		printTextWithTrivia(token.text, token);
 	}

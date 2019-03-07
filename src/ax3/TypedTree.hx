@@ -10,6 +10,12 @@ typedef TModule = {
 }
 
 typedef TPackageDecl = {
+	var syntax:{
+		var keyword:Token;
+		var name:Null<DotPath>;
+		var openBrace:Token;
+		var closeBrace:Token;
+	};
 	var name:String;
 	var decl:TDecl;
 }
@@ -19,6 +25,15 @@ enum TDecl {
 }
 
 typedef TClassDecl = {
+	var syntax:{
+		var keyword:Token;
+		var name:Token;
+		var extend:Null<{keyword:Token, path:DotPath}>;
+		var implement:Null<{keyword:Token, paths:Separated<DotPath>}>;
+		var openBrace:Token;
+		var closeBrace:Token;
+	};
+	var modifiers:Array<DeclModifier>;
 	var name:String;
 	var members:Array<TClassMember>;
 }
@@ -33,8 +48,17 @@ typedef TClassField = {
 
 enum TClassFieldKind {
 	TFVar;
-	TFFun;
+	TFFun(f:TFunctionField);
 	TFProp;
+}
+
+typedef TFunctionField = {
+	var syntax:{
+		var keyword:Token;
+		var name:Token;
+	};
+	var name:String;
+	var fun:TFunction;
 }
 
 typedef TExpr = {
@@ -43,6 +67,7 @@ typedef TExpr = {
 }
 
 enum TExprKind {
+	TEFunction(f:TFunction);
 	TELiteral(l:TLiteral);
 	TELocal(syntax:Token, v:TVar);
 	TEField(syntax:Expr, obj:TExpr, fieldName:String);
@@ -62,7 +87,7 @@ enum TExprKind {
 	TEVars(v:Array<TVarDecl>);
 	TEObjectDecl(syntax:Expr, fields:Array<TObjectField>);
 	TEArrayAccess(eobj:TExpr, eindex:TExpr);
-	TEBlock(syntax:BracedExprBlock, exprs:Array<TExpr>);
+	TEBlock(block:TBlock);
 	TETry(expr:TExpr, catches:Array<TCatch>);
 	TEVector(type:TType);
 	TETernary(econd:TExpr, ethen:TExpr, eelse:TExpr);
@@ -82,6 +107,46 @@ enum TExprKind {
 	TEXmlAttrExpr(e:TExpr, eattr:TExpr);
 	TEXmlDescend(e:TExpr, name:String);
 	TENothing;
+}
+
+typedef TBlock = {
+	var syntax:{openBrace:Token, closeBrace:Token};
+	var exprs:Array<TBlockExpr>;
+}
+
+typedef TBlockExpr = {
+	var expr:TExpr;
+	var semicolon:Null<Token>;
+}
+
+typedef TFunction = {
+	var sig:TFunctionSignature;
+	var block:TBlock;
+}
+
+typedef TFunctionSignature = {
+	var syntax:{
+		var openParen:Token;
+		var closeParen:Token;
+	};
+	var args:Array<TFunctionArg>;
+	var ret:TTypeHint;
+}
+
+typedef TTypeHint = {
+	var type:TType;
+	var syntax:Null<TypeHint>;
+}
+
+typedef TFunctionArg = {
+	var name:String;
+	var type:TType;
+	var kind:TFunctionArgKind;
+}
+
+enum TFunctionArgKind {
+	TArgNormal;
+	TArgRest;
 }
 
 typedef TSwitchCase = {

@@ -89,6 +89,7 @@ class Typer {
 				pack: {
 					name: packName,
 					decl: (decl : TDecl), // TODO: null-safety is not perfect
+					syntax: pack
 				},
 				eof: file.eof
 			});
@@ -141,7 +142,9 @@ class Typer {
 		}
 
 		return {
+			syntax: c,
 			name: c.name.text,
+			modifiers: c.modifiers,
 			members: members
 		}
 	}
@@ -158,8 +161,15 @@ class Typer {
 				trace(" - " + name.text);
 				initLocals();
 				// TODO: can use structure to get arg types (speedup \o/)
-				typeFunction(fun);
-				TFFun;
+				var f = typeFunction(fun);
+				TFFun({
+					syntax: {
+						keyword: keyword,
+						name: name,
+					},
+					name: name.text,
+					fun: f
+				});
 			case FProp(keyword, kind, name, fun):
 				trace(" - " + name.text);
 				initLocals();
@@ -172,25 +182,48 @@ class Typer {
 		};
 	}
 
-	function typeFunction(fun:Function):TExpr {
+	function typeFunction(fun:Function):TFunction {
 		pushLocals();
 
+		var targs = new Array<TFunctionArg>();
 		if (fun.signature.args != null) {
 			iterSeparated(fun.signature.args, function(arg) {
 				switch (arg) {
 					case ArgNormal(a):
 						var type = if (a.type == null) TTAny else resolveType(a.type.type);
 						addLocal(a.name.text, type);
+						targs.push({name: a.name.text, type: type, kind: TArgNormal});
 					case ArgRest(dots, name):
 						addLocal(name.text, TTArray);
+						targs.push({name: name.text, type: TTArray, kind: TArgRest});
 				}
 			});
 		}
 
-		typeExpr(EBlock(fun.block));
+		var tret:TTypeHint;
+		if (fun.signature.ret != null) {
+			tret = {
+				type: resolveType(fun.signature.ret.type),
+				syntax: fun.signature.ret
+			};
+		} else {
+			tret = {type: TTAny, syntax: null};
+		}
+		var block = typeBlock(fun.block);
+
 		popLocals();
 
-		return mk(null, TTFunction); // TODO: return TTFun instead (we need to coerce args on call)
+		return {
+			sig: {
+				syntax: {
+					openParen: fun.signature.openParen,
+					closeParen: fun.signature.closeParen,
+				},
+				args: targs,
+				ret: tret,
+			},
+			block: block
+		};
 	}
 
 	function typeExpr(e:Expr):TExpr {
@@ -207,7 +240,7 @@ class Typer {
 			case EDelete(keyword, e): mk(TEDelete(keyword, typeExpr(e)), TTVoid);
 			case ENew(keyword, e, args): typeNew(e, args);
 			case EField(eobj, dot, fieldName): typeField(eobj, fieldName, e);
-			case EBlock(b): typeBlock(b);
+			case EBlock(b): mk(TEBlock(typeBlock(b)), TTVoid);
 			case EObjectDecl(openBrace, fields, closeBrace): typeObjectDecl(e, fields);
 			case EIf(keyword, openParen, econd, closeParen, ethen, eelse): typeIf(econd, ethen, eelse);
 			case ETernary(econd, question, ethen, colon, eelse): typeTernary(econd, ethen, eelse);
@@ -226,7 +259,7 @@ class Typer {
 			case EVector(v): typeVector(v);
 			case ESwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace): typeSwitch(subj, cases);
 			case ETry(keyword, block, catches, finally_): typeTry(block, catches, finally_);
-			case EFunction(keyword, name, fun): typeFunction(fun);
+			case EFunction(keyword, name, fun): mk(TEFunction(typeFunction(fun)), TTFunction);
 
 			case EBreak(keyword): mk(TEBreak(keyword), TTVoid);
 			case EContinue(keyword): mk(TEContinue(keyword), TTVoid);
@@ -400,14 +433,20 @@ class Typer {
 		return mk(TENew(e, args), type);
 	}
 
-	function typeBlock(b:BracedExprBlock):TExpr {
+	function typeBlock(b:BracedExprBlock):TBlock {
 		pushLocals();
 		var exprs = [];
 		for (e in b.exprs) {
-			exprs.push(typeExpr(e.expr));
+			exprs.push({
+				expr: typeExpr(e.expr),
+				semicolon: e.semicolon
+			});
 		}
 		popLocals();
-		return mk(TEBlock(b, exprs), TTVoid);
+		return {
+			syntax: {openBrace: b.openBrace, closeBrace: b.closeBrace},
+			exprs: exprs
+		};
 	}
 
 	function typeArrayAccess(e:Expr, eindex:Expr):TExpr {
