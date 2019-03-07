@@ -5,20 +5,21 @@ import ax3.TypedTree;
 
 class GenAS3 extends PrinterBase {
 	public function writeModule(m:TModule) {
-		writePackage(m.pack);
+		printPackage(m.pack);
+		printTrivia(m.eof.leadTrivia);
 	}
 
-	function writePackage(p:TPackageDecl) {
-		writeDecl(p.decl);
+	function printPackage(p:TPackageDecl) {
+		printDecl(p.decl);
 	}
 
-	function writeDecl(d:TDecl) {
+	function printDecl(d:TDecl) {
 		switch (d) {
-			case TDClass(c):
+			case TDClass(c): printClassClass(c);
 		}
 	}
 
-	function writeClass(c:TClassDecl) {
+	function printClassClass(c:TClassDecl) {
 
 	}
 }
