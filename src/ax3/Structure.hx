@@ -25,7 +25,13 @@ class Structure {
 	}
 
 	public function getDecl(pack:String, name:String):SDecl {
-		return packages[pack].getModule(name).mainDecl;
+		switch packages[pack] {
+			case null: throw 'declaration not found $pack::$name';
+			case p:
+				var mod = p.getModule(name);
+				if (mod == null) throw 'declaration not found $pack::$name';
+				return mod.mainDecl;
+		}
 	}
 
 	public function getPackage(path:String):SPackage {
