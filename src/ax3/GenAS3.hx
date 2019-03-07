@@ -59,27 +59,31 @@ class GenAS3 extends PrinterBase {
 	function printSignature(sig:TFunctionSignature) {
 		printOpenParen(sig.syntax.openParen);
 		printCloseParen(sig.syntax.closeParen);
+		printTypeHint(sig.ret);
+	}
+
+	function printTypeHint(hint:TTypeHint) {
+		if (hint.syntax != null) {
+			printColon(hint.syntax.colon);
+		}
 	}
 
 	function printExpr(e:TExpr) {
 		switch (e.kind) {
 			case TEFunction(f):
-			case TELiteral(l):
-			case TELocal(syntax, v):
-			case TEField(syntax, obj, fieldName):
-			case TEThis(syntax):
-			case TEStaticThis:
-			case TESuper(syntax):
+			case TELiteral(l): printLiteral(l);
+			case TELocal(syntax, v): printTextWithTrivia(syntax.text, syntax);
+			case TEField(object, fieldName, fieldToken): printFieldAccess(object, fieldName, fieldToken);
 			case TEBuiltin(syntax, name):
 			case TEDeclRef(c):
 			case TECall(syntax, eobj, args):
 			case TEArrayDecl(syntax, elems):
 			case TEVectorDecl(type, elems):
-			case TEReturn(keyword, e):
-			case TEThrow(keyword, e):
-			case TEDelete(keyword, e):
-			case TEBreak(keyword):
-			case TEContinue(keyword):
+			case TEReturn(keyword, e): printTextWithTrivia("return", keyword); if (e != null) printExpr(e);
+			case TEThrow(keyword, e): printTextWithTrivia("throw", keyword); printExpr(e);
+			case TEDelete(keyword, e): printTextWithTrivia("delete", keyword); printExpr(e);
+			case TEBreak(keyword): printTextWithTrivia("break", keyword);
+			case TEContinue(keyword): printTextWithTrivia("continue", keyword);
 			case TEVars(v):
 			case TEObjectDecl(syntax, fields):
 			case TEArrayAccess(eobj, eindex):
@@ -103,6 +107,31 @@ class GenAS3 extends PrinterBase {
 			case TEXmlAttrExpr(e, eattr):
 			case TEXmlDescend(e, name):
 			case TENothing:
+		}
+	}
+
+	function printFieldAccess(obj:TFieldObject, name:String, token:Token) {
+		switch (obj.kind) {
+			case TOExplicit(dot, e):
+				printExpr(e);
+				printDot(dot);
+			case TOImplicitThis(_):
+			case TOImplicitClass(_):
+		}
+		printTextWithTrivia(name, token);
+	}
+
+	function printLiteral(l:TLiteral) {
+		switch (l) {
+			case TLSuper(syntax): printTextWithTrivia("super", syntax);
+			case TLThis(syntax): printTextWithTrivia("this", syntax);
+			case TLBool(syntax): printTextWithTrivia(syntax.text, syntax);
+			case TLNull(syntax): printTextWithTrivia("null", syntax);
+			case TLUndefined(syntax): printTextWithTrivia("undefined", syntax);
+			case TLInt(syntax): printTextWithTrivia(syntax.text, syntax);
+			case TLNumber(syntax): printTextWithTrivia(syntax.text, syntax);
+			case TLString(syntax): printTextWithTrivia(syntax.text, syntax);
+			case TLRegExp(syntax): printTextWithTrivia(syntax.text, syntax);
 		}
 	}
 

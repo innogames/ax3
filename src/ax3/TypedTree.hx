@@ -70,10 +70,7 @@ enum TExprKind {
 	TEFunction(f:TFunction);
 	TELiteral(l:TLiteral);
 	TELocal(syntax:Token, v:TVar);
-	TEField(syntax:Expr, obj:TExpr, fieldName:String);
-	TEThis(syntax:Null<Expr>);
-	TEStaticThis;
-	TESuper(syntax:Expr);
+	TEField(obj:TFieldObject, fieldName:String, fieldToken:Token);
 	TEBuiltin(syntax:Token, name:String);
 	TEDeclRef(c:SDecl);
 	TECall(syntax:{eobj:Expr, args:CallArgs}, eobj:TExpr, args:Array<TExpr>);
@@ -107,6 +104,17 @@ enum TExprKind {
 	TEXmlAttrExpr(e:TExpr, eattr:TExpr);
 	TEXmlDescend(e:TExpr, name:String);
 	TENothing;
+}
+
+typedef TFieldObject = {
+	var type:TType;
+	var kind:TFieldObjectKind;
+}
+
+enum TFieldObjectKind {
+	TOImplicitThis(c:SClassDecl);
+	TOImplicitClass(c:SClassDecl);
+	TOExplicit(dot:Token, e:TExpr);
 }
 
 typedef TBlock = {
@@ -172,6 +180,8 @@ typedef TVarDecl = {
 }
 
 enum TLiteral {
+	TLThis(syntax:Token);
+	TLSuper(syntax:Token);
 	TLBool(syntax:Token);
 	TLNull(syntax:Token);
 	TLUndefined(syntax:Token);

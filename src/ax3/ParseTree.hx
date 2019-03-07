@@ -9,6 +9,23 @@ class ParseTree {
 		return foldSeparated(d, [], (part, acc) -> acc.push(part.text));
 	}
 
+	public static function exprToDotPath(e:Expr):Null<DotPath> {
+		var acc = [];
+		function loop(e:Expr) {
+			switch e {
+				case EIdent(i):
+					acc.reverse();
+					return {first: i, rest: acc};
+				case EField(e, dot, fieldName):
+					acc.push({sep: dot, element: fieldName});
+					return loop(e);
+				case _:
+					return null;
+			}
+		}
+		return loop(e);
+	}
+
 	public static function iterSeparated<T>(d:Separated<T>, f:T->Void) {
 		f(d.first);
 		for (p in d.rest) {

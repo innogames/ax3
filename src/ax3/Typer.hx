@@ -239,7 +239,7 @@ class Typer {
 			case EThrow(keyword, e): mk(TEThrow(keyword, typeExpr(e)), TTVoid);
 			case EDelete(keyword, e): mk(TEDelete(keyword, typeExpr(e)), TTVoid);
 			case ENew(keyword, e, args): typeNew(e, args);
-			case EField(eobj, dot, fieldName): typeField(eobj, fieldName, e);
+			case EField(eobj, dot, fieldName): typeField(eobj, dot, fieldName);
 			case EBlock(b): mk(TEBlock(typeBlock(b)), TTVoid);
 			case EObjectDecl(openBrace, fields, closeBrace): typeObjectDecl(e, fields);
 			case EIf(keyword, openParen, econd, closeParen, ethen, eelse): typeIf(econd, ethen, eelse);
@@ -409,7 +409,7 @@ class Typer {
 		var callArgs = if (args.args != null) foldSeparated(args.args, [], (e,acc) -> acc.push(typeExpr(e))) else [];
 
 		var type = switch eobj.kind {
-			case TESuper(_): // super(...) call
+			case TELiteral(TLSuper(_)): // super(...) call
 				TTVoid;
 			case _:
 				switch (eobj.type) {
@@ -492,12 +492,12 @@ class Typer {
 		return t;
 	}
 
-	function tryTypeIdent(i:Token, e:Expr):Null<TExpr> {
+	function tryTypeIdent(i:Token):Null<TExpr> {
 		inline function getCurrentClass(subj) return if (currentClass != null) currentClass else throw '`$subj` used outside of class';
 
 		return switch i.text {
-			case "this": mk(TEThis(e), TTInst(getCurrentClass("this")));
-			case "super": mk(TESuper(e), TTInst(structure.getClass(getCurrentClass("super").extensions[0])));
+			case "this": mk(TELiteral(TLThis(i)), TTInst(getCurrentClass("this")));
+			case "super": mk(TELiteral(TLSuper(i)), TTInst(structure.getClass(getCurrentClass("super").extensions[0])));
 			case "true" | "false": mk(TELiteral(TLBool(i)), TTBoolean);
 			case "null": mk(TELiteral(TLNull(i)), TTAny);
 			case "undefined": mk(TELiteral(TLUndefined(i)), TTAny);
@@ -534,9 +534,12 @@ class Typer {
 						var field = c.fields.get(ident);
 						if (field != null) {
 							// found a field
-							var eobj = mk(TEThis(null), TTInst(currentClass));
+							var eobj = {
+								kind: TOImplicitThis(currentClass),
+								type: TTInst(currentClass)
+							};
 							var type = getFieldType(field);
-							return mk(TEField(e, eobj, ident), type);
+							return mk(TEField(eobj, ident, i), type);
 						}
 						for (ext in c.extensions) {
 							var e = loop(structure.getClass(ext));
@@ -557,9 +560,12 @@ class Typer {
 						var field = c.statics.get(ident);
 						if (field != null) {
 							// found a field
-							var eobj = mk(TEStaticThis, TTStatic(currentClass));
+							var eobj = {
+								kind: TOImplicitClass(currentClass),
+								type: TTStatic(currentClass),
+							};
 							var type = getFieldType(field);
-							return mk(TEField(e, eobj, ident), type);
+							return mk(TEField(eobj, ident, i), type);
 						}
 						for (ext in c.extensions) {
 							var e = loop(structure.getClass(ext));
@@ -619,7 +625,7 @@ class Typer {
 	}
 
 	function typeIdent(i:Token, e:Expr):TExpr {
-		var e = tryTypeIdent(i, e);
+		var e = tryTypeIdent(i);
 		if (e == null) throw 'Unknown ident: ${i.text}';
 		return e;
 	}
@@ -633,7 +639,8 @@ class Typer {
 		}
 	}
 
-	function getTypedField(eobj:TExpr, fieldName:String, e:Expr) {
+	function getTypedField(obj:TFieldObject, fieldToken:Token) {
+		var fieldName = fieldToken.text;
 		var type =
 			switch fieldName { // TODO: be smarter about this
 				case "toString":
@@ -643,10 +650,10 @@ class Typer {
 				case "prototype":
 					TTObject;
 				case _:
-					switch (eobj.type) {
+					switch (obj.type) {
 						case TTAny | TTObject: TTAny; // untyped field access
-						case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTClass: trace('Attempting to get field on type ${eobj.type.getName()}'); TTAny;
-						case TTBuiltin: trace(eobj); TTAny;
+						case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTClass: trace('Attempting to get field on type ${obj.type.getName()}'); TTAny;
+						case TTBuiltin: trace(obj); TTAny;
 						case TTString:  TTAny; // TODO
 						case TTArray:  TTAny; // TODO
 						case TTVector(t):  TTAny; // TODO
@@ -657,60 +664,57 @@ class Typer {
 						case TTStatic(cls): typeStaticField(cls, fieldName);
 					};
 		}
-		return mk(TEField(e, eobj, fieldName), type);
+		return mk(TEField(obj, fieldName, fieldToken), type);
 	}
 
-	function typeField(eobj:Expr, name:Token, e:Expr):TExpr {
-		var acc = [name];
-		function loop(e:Expr):Bool {
-			return switch (e) {
-				case EIdent(i):
-					acc.push(i);
-					true;
-				case EField(e, dot, fieldName):
-					acc.push(fieldName);
-					return loop(e);
-				case _:
-					return false;
-			}
-		}
+	function typeField(eobj:Expr, dot:Token, name:Token):TExpr {
+		switch exprToDotPath(eobj) {
+			case null:
+			case prefixDotPath:
+				var e = tryTypeIdent(prefixDotPath.first);
+				if (e == null) @:nullSafety(Off) {
+					// probably a fully-qualified type path then
 
-		if (loop(eobj)) {
-			acc.reverse();
-			var e = tryTypeIdent(acc[0], EIdent(acc[0]));
-			if (e == null) @:nullSafety(Off) {
-				// probably a fully-qualified type path then
-				var rest = [];
-				var declName = acc.pop();
-				var decl = null;
-				while (acc.length > 0) {
-					var packName = [for (t in acc) t.text].join(".");
-					var pack = structure.packages[packName];
-					if (pack != null) {
-						var mod = pack.getModule(declName.text);
-						decl = mod.mainDecl;
-						break;
-					} else {
-						rest.push(declName);
-						declName = acc.pop();
+					var acc = [{dot: null, token: prefixDotPath.first}];
+					for (r in prefixDotPath.rest) acc.push({dot: r.sep, token: r.element});
+
+					var declName = {dot: dot, token: name};
+					var decl = null;
+					var rest = [];
+					while (acc.length > 0) {
+						var packName = [for (t in acc) t.token.text].join(".");
+						var pack = structure.packages[packName];
+						if (pack != null) {
+							var mod = pack.getModule(declName.token.text);
+							decl = mod.mainDecl;
+							break;
+						} else {
+							rest.push(declName);
+							declName = acc.pop();
+						}
 					}
+
+					if (decl == null) {
+						throw "unknown declaration";
+					}
+
+					var eDeclRef = mkDeclRef(decl);
+
+					return Lambda.fold(rest, function(f, expr) {
+						return getTypedField({kind: TOExplicit(f.dot, expr), type: expr.type}, f.token);
+					}, eDeclRef);
 				}
-
-				if (decl == null) {
-					throw "unknown declaration";
-				}
-
-				return Lambda.fold(rest, function(field, expr) {
-					return getTypedField(expr, field.text, EIdent(field));
-				}, mkDeclRef(decl));
-			}
-
-			// TODO: we don't need to re-type stuff,
-			// can iterate over fields, but let's do it later :-)
 		}
+
+		// TODO: we don't need to re-type stuff,
+		// can iterate over fields, but let's do it later :-)
 
 		var eobj = typeExpr(eobj);
-		return getTypedField(eobj, name.text, e);
+		var obj = {
+			type: eobj.type,
+			kind: TOExplicit(dot, eobj)
+		};
+		return getTypedField(obj, name);
 	}
 
 	function typeInstanceField(cls:SClassDecl, fieldName:String):TType {
