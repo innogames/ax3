@@ -41,19 +41,19 @@ class GenAS3 extends PrinterBase {
 		switch (d) {
 			case TDClass(c): printClassDecl(c);
 			case TDInterface(i): printInterfaceDecl(i);
+			case TDVar(v): printModuleVarDecl(v);
 		}
+	}
+
+	function printModuleVarDecl(v:TModuleVarDecl) {
+		printMetadata(v.metadata);
+		printDeclModifiers(v.modifiers);
+		printVarField(v);
 	}
 
 	function printInterfaceDecl(i:TInterfaceDecl) {
 		printMetadata(i.metadata);
-		for (m in i.modifiers) {
-			switch (m) {
-				case DMPublic(t): printTextWithTrivia(t.text, t);
-				case DMInternal(t): printTextWithTrivia(t.text, t);
-				case DMFinal(t): printTextWithTrivia(t.text, t);
-				case DMDynamic(t): printTextWithTrivia(t.text, t);
-			}
-		}
+		printDeclModifiers(i.modifiers);
 		printTextWithTrivia("interface", i.syntax.keyword);
 		printTextWithTrivia(i.name, i.syntax.name);
 		if (i.extend != null) {
@@ -99,14 +99,7 @@ class GenAS3 extends PrinterBase {
 
 	function printClassDecl(c:TClassDecl) {
 		printMetadata(c.metadata);
-		for (m in c.modifiers) {
-			switch (m) {
-				case DMPublic(t): printTextWithTrivia(t.text, t);
-				case DMInternal(t): printTextWithTrivia(t.text, t);
-				case DMFinal(t): printTextWithTrivia(t.text, t);
-				case DMDynamic(t): printTextWithTrivia(t.text, t);
-			}
-		}
+		printDeclModifiers(c.modifiers);
 		printTextWithTrivia("class", c.syntax.keyword);
 		printTextWithTrivia(c.name, c.syntax.name);
 		if (c.extend != null) {
@@ -142,6 +135,17 @@ class GenAS3 extends PrinterBase {
 		printCloseBrace(e.closeBrace);
 	}
 
+	function printDeclModifiers(modifiers:Array<DeclModifier>) {
+		for (m in modifiers) {
+			switch (m) {
+				case DMPublic(t): printTextWithTrivia("public", t);
+				case DMInternal(t): printTextWithTrivia("internal", t);
+				case DMFinal(t): printTextWithTrivia("final", t);
+				case DMDynamic(t): printTextWithTrivia("dynamic", t);
+			}
+		}
+	}
+
 	function printClassField(f:TClassField) {
 		printMetadata(f.metadata);
 
@@ -161,16 +165,7 @@ class GenAS3 extends PrinterBase {
 
 		switch (f.kind) {
 			case TFVar(v):
-				printVarKind(v.kind);
-				for (v in v.vars) {
-					printTextWithTrivia(v.name, v.syntax.name);
-					if (v.syntax.type != null) {
-						printSyntaxTypeHint(v.syntax.type);
-					}
-					if (v.init != null) printVarInit(v.init);
-					if (v.comma != null) printComma(v.comma);
-				}
-				printSemicolon(v.semicolon);
+				printVarField(v);
 			case TFFun(f):
 				printTextWithTrivia("function", f.syntax.keyword);
 				printTextWithTrivia(f.name, f.syntax.name);
@@ -189,6 +184,19 @@ class GenAS3 extends PrinterBase {
 				printSignature(f.fun.sig);
 				printBlock(f.fun.block);
 		}
+	}
+
+	function printVarField(v:TVarField) {
+		printVarKind(v.kind);
+		for (v in v.vars) {
+			printTextWithTrivia(v.name, v.syntax.name);
+			if (v.syntax.type != null) {
+				printSyntaxTypeHint(v.syntax.type);
+			}
+			if (v.init != null) printVarInit(v.init);
+			if (v.comma != null) printComma(v.comma);
+		}
+		printSemicolon(v.semicolon);
 	}
 
 	function printMetadata(m:Array<Metadata>) {

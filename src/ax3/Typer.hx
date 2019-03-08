@@ -76,6 +76,7 @@ class Typer {
 					decl = TDInterface(typeInterface(i));
 				case DFunction(f):
 				case DVar(v):
+					decl = TDVar(typeModuleVars(v));
 				case DNamespace(ns):
 				case DUseNamespace(n, semicolon):
 				case DCondComp(v, openBrace, decls, closeBrace):
@@ -97,6 +98,16 @@ class Typer {
 		}
 
 		return modules;
+	}
+
+	function typeModuleVars(v:ModuleVarDecl):TModuleVarDecl {
+		return {
+			metadata: v.metadata,
+			modifiers: v.modifiers,
+			kind: v.kind,
+			vars: typeVarFieldDecls(v.vars),
+			semicolon: v.semicolon
+		}
 	}
 
 	function typeImports(file:File):Array<TImport> {
@@ -305,26 +316,29 @@ class Typer {
 		}
 	}
 
+	function typeVarFieldDecls(vars:Separated<VarDecl>):Array<TVarFieldDecl> {
+		return separatedToArray(vars, function(v, comma) {
+			var type = if (v.type == null) TTAny else resolveType(v.type.type);
+			var init = if (v.init != null) typeVarInit(v.init) else null;
+			return {
+				syntax:{
+					name: v.name,
+					type: v.type
+				},
+				name: v.name.text,
+				type: type,
+				init: init,
+				comma: comma,
+			};
+		});
+	}
+
 	function typeClassField(f:ClassField):TClassField {
 		var kind = switch (f.kind) {
 			case FVar(kind, vars, semicolon):
-				var vars = separatedToArray(vars, function(v, comma) {
-					var type = if (v.type == null) TTAny else resolveType(v.type.type);
-					var init = if (v.init != null) typeVarInit(v.init) else null;
-					return {
-						syntax:{
-							name: v.name,
-							type: v.type
-						},
-						name: v.name.text,
-						type: type,
-						init: init,
-						comma: comma,
-					};
-				});
 				TFVar({
 					kind: kind,
-					vars: vars,
+					vars: typeVarFieldDecls(vars),
 					semicolon: semicolon
 				});
 			case FFun(keyword, name, fun):

@@ -38,6 +38,12 @@ typedef TCondCompEnd = {closeBrace:Token}
 enum TDecl {
 	TDClass(c:TClassDecl);
 	TDInterface(c:TInterfaceDecl);
+	TDVar(v:TModuleVarDecl);
+}
+
+typedef TModuleVarDecl = TVarField & {
+	var metadata:Array<Metadata>;
+	var modifiers:Array<DeclModifier>;
 }
 
 typedef TInterfaceDecl = {
