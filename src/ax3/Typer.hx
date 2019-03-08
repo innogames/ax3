@@ -136,14 +136,18 @@ class Typer {
 				interfaces: separatedToArray(i.extend.paths, (path, comma) -> {syntax: path, comma: comma})
 			};
 
-		var members = [];
-		for (m in i.members) {
-			switch (m) {
-				case MICondComp(v, openBrace, members, closeBrace):
-				case MIField(f):
-					members.push(TIMField(typeInterfaceField(f)));
+		var tMembers = [];
+		function loop(members:Array<InterfaceMember>) {
+			for (m in members) {
+				switch (m) {
+					case MICondComp(v, openBrace, members, closeBrace):
+						loop(members);
+					case MIField(f):
+						tMembers.push(TIMField(typeInterfaceField(f)));
+				}
 			}
 		}
+		loop(i.members);
 
 		return {
 			syntax: {
@@ -156,7 +160,7 @@ class Typer {
 			extend: extend,
 			metadata: i.metadata,
 			modifiers: i.modifiers,
-			members: members,
+			members: tMembers,
 		}
 	}
 
