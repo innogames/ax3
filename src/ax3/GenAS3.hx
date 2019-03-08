@@ -7,6 +7,9 @@ import ax3.TypedTree;
 class GenAS3 extends PrinterBase {
 	public function writeModule(m:TModule) {
 		printPackage(m.pack);
+		for (d in m.privateDecls) {
+			printDecl(d);
+		}
 		printTrivia(m.eof.leadTrivia);
 	}
 

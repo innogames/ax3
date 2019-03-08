@@ -66,39 +66,41 @@ class Typer {
 			if (mod == null) throw "assert";
 			currentModule = mod;
 
-			var decl:Null<TDecl> = null;
-			switch (mainDecl) {
-				case DPackage(p):
-				case DImport(i):
-				case DClass(c):
-					decl = TDClass(typeClass(c));
-				case DInterface(i):
-					decl = TDInterface(typeInterface(i));
-				case DFunction(f):
-					decl = TDFunction(typeModuleFunction(f));
-				case DVar(v):
-					decl = TDVar(typeModuleVars(v));
-				case DNamespace(ns):
-				case DUseNamespace(n, semicolon):
-				case DCondComp(v, openBrace, decls, closeBrace):
-			}
+			var decl = typeDecl(mainDecl);
+			var tPrivateDecls = [for (d in privateDecls) typeDecl(d)];
 
-			if (decl != null) // TODO
 			modules.push({
 				name: file.name,
 				pack: {
+					syntax: pack,
 					name: packName,
 					imports: imports,
 					namespaceUses: namespaceUses,
-					decl: (decl : TDecl), // TODO: null-safety is not perfect
-					syntax: pack
+					decl: decl,
 				},
+				privateDecls: tPrivateDecls,
 				eof: file.eof
 			});
 
 		}
 
 		return modules;
+	}
+
+	function typeDecl(d:Declaration):TDecl {
+		return switch (d) {
+			case DPackage(_) | DImport(_) | DUseNamespace(_): throw "assert";
+			case DClass(c):
+				TDClass(typeClass(c));
+			case DInterface(i):
+				TDInterface(typeInterface(i));
+			case DFunction(f):
+				TDFunction(typeModuleFunction(f));
+			case DVar(v):
+				TDVar(typeModuleVars(v));
+			case DCondComp(v, openBrace, decls, closeBrace): throw "TODO";
+			case DNamespace(ns): throw "assert"; // TODO
+		}
 	}
 
 	function typeModuleFunction(v:FunctionDecl):TFunctionDecl {
@@ -280,9 +282,10 @@ class Typer {
 	function typeClass(c:ClassDecl):TClassDecl {
 		trace("cls", c.name.text);
 
-		switch currentModule.getMainClass(c.name.text) {
-			case null: throw "assert";
-			case cls: currentClass = cls;
+		switch currentModule.getDecl(c.name.text) {
+			case null: throw "assert"; // no way
+			case {kind: SClass(cls)}: currentClass = cls;
+			case _:
 		}
 
 		var extend:Null<TClassExtend> =
