@@ -39,6 +39,15 @@ enum TDecl {
 	TDClass(c:TClassDecl);
 	TDInterface(c:TInterfaceDecl);
 	TDVar(v:TModuleVarDecl);
+	TDFunction(v:TFunctionDecl);
+}
+
+typedef TFunctionDecl = {
+	var metadata:Array<Metadata>;
+	var modifiers:Array<DeclModifier>;
+	var syntax:{keyword:Token, name:Token};
+	var name:String;
+	var fun:TFunction;
 }
 
 typedef TModuleVarDecl = TVarField & {

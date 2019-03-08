@@ -75,6 +75,7 @@ class Typer {
 				case DInterface(i):
 					decl = TDInterface(typeInterface(i));
 				case DFunction(f):
+					decl = TDFunction(typeModuleFunction(f));
 				case DVar(v):
 					decl = TDVar(typeModuleVars(v));
 				case DNamespace(ns):
@@ -98,6 +99,16 @@ class Typer {
 		}
 
 		return modules;
+	}
+
+	function typeModuleFunction(v:FunctionDecl):TFunctionDecl {
+		return {
+			metadata: v.metadata,
+			modifiers: v.modifiers,
+			syntax: {keyword: v.keyword, name: v.name},
+			name: v.name.text,
+			fun: typeFunction(v.fun)
+		};
 	}
 
 	function typeModuleVars(v:ModuleVarDecl):TModuleVarDecl {

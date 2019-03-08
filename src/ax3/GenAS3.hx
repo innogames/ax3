@@ -42,7 +42,17 @@ class GenAS3 extends PrinterBase {
 			case TDClass(c): printClassDecl(c);
 			case TDInterface(i): printInterfaceDecl(i);
 			case TDVar(v): printModuleVarDecl(v);
+			case TDFunction(f): printFunctionDecl(f);
 		}
+	}
+
+	function printFunctionDecl(f:TFunctionDecl) {
+		printMetadata(f.metadata);
+		printDeclModifiers(f.modifiers);
+		printTextWithTrivia("function", f.syntax.keyword);
+		printTextWithTrivia(f.name, f.syntax.name);
+		printSignature(f.fun.sig);
+		printBlock(f.fun.block);
 	}
 
 	function printModuleVarDecl(v:TModuleVarDecl) {
