@@ -55,9 +55,6 @@ class Typer {
 
 			var namespaceUses = getNamespaceUses(pack);
 
-			// TODO: just skipping conditional-compiled ones for now
-			if (mainDecl == null || mainDecl.match(DNamespace(_))) continue;
-
 			var packName = if (pack.name == null) "" else dotPathToString(pack.name);
 			var currentPackage = structure.packages[packName];
 			if (currentPackage == null) throw "assert";
@@ -68,6 +65,8 @@ class Typer {
 
 			var decl = typeDecl(mainDecl);
 			var tPrivateDecls = [for (d in privateDecls) typeDecl(d)];
+
+			@:nullSafety(Off) currentModule = null;
 
 			modules.push({
 				name: file.name,
@@ -98,8 +97,9 @@ class Typer {
 				TDFunction(typeModuleFunction(f));
 			case DVar(v):
 				TDVar(typeModuleVars(v));
+			case DNamespace(ns):
+				TDNamespace(ns);
 			case DCondComp(v, openBrace, decls, closeBrace): throw "TODO";
-			case DNamespace(ns): throw "assert"; // TODO
 		}
 	}
 
@@ -890,6 +890,7 @@ class Typer {
 			case SVar(v): typeType(v.type);
 			case SFun(f): getTypeOfFunctionDecl(f);
 			case SClass(c): TTStatic(c);
+			case SNamespace: throw "assert"; // should NOT happen :)
 		};
 		return mk(TEDeclRef(path, decl), type);
 	}

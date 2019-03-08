@@ -41,6 +41,7 @@ enum TDecl {
 	TDInterface(c:TInterfaceDecl);
 	TDVar(v:TModuleVarDecl);
 	TDFunction(v:TFunctionDecl);
+	TDNamespace(n:NamespaceDecl);
 }
 
 typedef TFunctionDecl = {

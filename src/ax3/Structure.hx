@@ -90,8 +90,6 @@ class Structure {
 
 		var imports = getImports(file);
 
-		if (mainDecl.match(DNamespace(_))) return;
-
 		var packName = getPackagePath(pack).join(".");
 		var sPack = getPackage(packName);
 		var sModule = sPack.createModule(file.name);
@@ -143,6 +141,8 @@ class Structure {
 
 				function resolveDecl(d:SDecl) {
 					switch (d.kind) {
+						case SNamespace:
+							// nothing to resolve
 						case SVar(v):
 							resolveVar(v);
 						case SFun(f):
@@ -202,7 +202,9 @@ class Structure {
 				return [{name: f.name.text, kind: SFun(buildFunctionStructure(f.fun.signature))}];
 			case DVar(v):
 				return foldSeparated(v.vars, [], (v, acc) -> acc.push({name: v.name.text, kind: SVar(buildVarStructure(v))}));
-			case DPackage(_) | DImport(_) | DNamespace(_) | DUseNamespace(_, _) | DCondComp(_, _, _, _):
+			case DNamespace(n):
+				return [{name: n.name.text, kind: SNamespace}];
+			case DPackage(_) | DImport(_) | DUseNamespace(_, _) | DCondComp(_, _, _, _):
 				throw "Unexpected module declaration";
 		}
 	}
@@ -530,6 +532,8 @@ class SModule {
 				return indent + dumpVar(d.name, v);
 			case SFun(f):
 				return indent + dumpFun(d.name, f);
+			case SNamespace:
+				return indent + "NS " + d.name;
 			case SClass(f):
 				var r = [indent + "CLS " + d.name];
 				if (f.extensions.length > 0) {
@@ -598,6 +602,7 @@ enum SDeclKind {
 	SVar(v:SVarDecl);
 	SFun(f:SFunDecl);
 	SClass(f:SClassDecl);
+	SNamespace;
 }
 
 typedef SVarDecl = {

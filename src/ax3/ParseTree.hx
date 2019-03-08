@@ -111,7 +111,7 @@ class ParseTree {
 					case DCondComp(_, _, decls, _):
 						loop(decls);
 
-					case DNamespace(ns):
+					case DNamespace(ns): throw "assert";
 					case DImport(i):
 					case DUseNamespace(n, semicolon):
 				}
