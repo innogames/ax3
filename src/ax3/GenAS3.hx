@@ -61,6 +61,8 @@ class GenAS3 extends PrinterBase {
 		for (m in i.members) {
 			switch (m) {
 				case TIMField(f): printInterfaceField(f);
+				case TIMCondCompBegin(b): printCondCompBegin(b);
+				case TIMCondCompEnd(b): printCompCondEnd(b);
 			}
 		}
 		printCloseBrace(i.syntax.closeBrace);
@@ -115,11 +117,22 @@ class GenAS3 extends PrinterBase {
 		printOpenBrace(c.syntax.openBrace);
 		for (m in c.members) {
 			switch (m) {
+				case TMCondCompBegin(b): printCondCompBegin(b);
+				case TMCondCompEnd(b): printCompCondEnd(b);
 				case TMField(f): printClassField(f);
 				case TMUseNamespace(n, semicolon): printUseNamespace(n); printSemicolon(semicolon);
 			}
 		}
 		printCloseBrace(c.syntax.closeBrace);
+	}
+
+	function printCondCompBegin(e:TCondCompBegin) {
+		printCondCompVar(e.v);
+		printCloseBrace(e.openBrace);
+	}
+
+	function printCompCondEnd(e:TCondCompEnd) {
+		printCloseBrace(e.closeBrace);
 	}
 
 	function printClassField(f:TClassField) {

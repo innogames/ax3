@@ -141,7 +141,9 @@ class Typer {
 			for (m in members) {
 				switch (m) {
 					case MICondComp(v, openBrace, members, closeBrace):
+						tMembers.push(TIMCondCompBegin({v: typeCondCompVar(v), openBrace: openBrace}));
 						loop(members);
+						tMembers.push(TIMCondCompEnd({closeBrace: closeBrace}));
 					case MIField(f):
 						tMembers.push(TIMField(typeInterfaceField(f)));
 				}
@@ -239,7 +241,9 @@ class Typer {
 			for (m in members) {
 				switch (m) {
 					case MCondComp(v, openBrace, members, closeBrace):
+						tMembers.push(TMCondCompBegin({v: typeCondCompVar(v), openBrace: openBrace}));
 						loop(members);
+						tMembers.push(TMCondCompEnd({closeBrace: closeBrace}));
 					case MUseNamespace(n, semicolon):
 						tMembers.push(TMUseNamespace(n, semicolon));
 					case MField(f):

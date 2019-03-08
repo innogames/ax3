@@ -25,6 +25,13 @@ typedef TImport = {
 	var syntax:ImportDecl;
 }
 
+typedef TCondCompBegin = {
+	var v:TCondCompVar;
+	var openBrace:Token;
+}
+
+typedef TCondCompEnd = {closeBrace:Token}
+
 enum TDecl {
 	TDClass(c:TClassDecl);
 	TDInterface(c:TInterfaceDecl);
@@ -63,6 +70,8 @@ typedef TClassDecl = {
 
 enum TInterfaceMember {
 	TIMField(f:TInterfaceField);
+	TIMCondCompBegin(b:TCondCompBegin);
+	TIMCondCompEnd(b:TCondCompEnd);
 }
 
 typedef TInterfaceField = {
@@ -110,6 +119,8 @@ typedef TClassImplement = {
 
 enum TClassMember {
 	TMUseNamespace(n:UseNamespace, semicolon:Token);
+	TMCondCompBegin(b:TCondCompBegin);
+	TMCondCompEnd(b:TCondCompEnd);
 	TMField(f:TClassField);
 }
 
