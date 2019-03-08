@@ -255,7 +255,7 @@ class GenAS3 extends PrinterBase {
 
 	function printXmlDescend(x:TXmlDescend) {
 		printExpr(x.eobj);
-		printDot(x.syntax.dotDot);
+		printTextWithTrivia("..", x.syntax.dotDot);
 		printTextWithTrivia(x.name, x.syntax.name);
 	}
 
