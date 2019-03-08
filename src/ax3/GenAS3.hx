@@ -132,7 +132,7 @@ class GenAS3 extends PrinterBase {
 
 	function printCondCompBegin(e:TCondCompBegin) {
 		printCondCompVar(e.v);
-		printCloseBrace(e.openBrace);
+		printOpenBrace(e.openBrace);
 	}
 
 	function printCompCondEnd(e:TCondCompEnd) {
