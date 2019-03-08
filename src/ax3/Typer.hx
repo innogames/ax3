@@ -73,6 +73,7 @@ class Typer {
 				case DClass(c):
 					decl = TDClass(typeClass(c));
 				case DInterface(i):
+					decl = TDInterface(typeInterface(i));
 				case DFunction(f):
 				case DVar(v):
 				case DNamespace(ns):
@@ -124,6 +125,91 @@ class Typer {
 	}
 
 	inline function mk(e:TExprKind, t:TType):TExpr return {kind: e, type: t};
+
+	function typeInterface(i:InterfaceDecl):TInterfaceDecl {
+		trace("iface", i.name.text);
+
+		var extend:Null<TClassImplement> =
+			if (i.extend == null) null
+			else {
+				syntax: {keyword: i.extend.keyword},
+				interfaces: separatedToArray(i.extend.paths, (path, comma) -> {syntax: path, comma: comma})
+			};
+
+		var members = [];
+		for (m in i.members) {
+			switch (m) {
+				case MICondComp(v, openBrace, members, closeBrace):
+				case MIField(f):
+					members.push(TIMField(typeInterfaceField(f)));
+			}
+		}
+
+		return {
+			syntax: {
+				keyword: i.keyword,
+				name: i.name,
+				openBrace: i.openBrace,
+				closeBrace: i.closeBrace,
+			},
+			name: i.name.text,
+			extend: extend,
+			metadata: i.metadata,
+			modifiers: i.modifiers,
+			members: members,
+		}
+	}
+
+	function typeInterfaceField(f:InterfaceField):TInterfaceField {
+		var kind = switch (f.kind) {
+			case IFFun(keyword, name, sig):
+				trace(" - " + name.text);
+				initLocals();
+				// TODO: can use structure to get arg types (speedup \o/)
+				var sig = typeFunctionSignature(sig, false);
+				TIFFun({
+					syntax: {
+						keyword: keyword,
+						name: name,
+					},
+					name: name.text,
+					sig: sig
+				});
+			case IFGetter(keyword, get, name, sig):
+				trace(" - " + name.text);
+				initLocals();
+				// TODO: can use structure to get arg types (speedup \o/)
+				var sig = typeFunctionSignature(sig, false);
+				TIFGetter({
+					syntax: {
+						functionKeyword: keyword,
+						accessorKeyword: get,
+						name: name,
+					},
+					name: name.text,
+					sig: sig
+				});
+			case IFSetter(keyword, set, name, sig):
+				trace(" - " + name.text);
+				initLocals();
+				// TODO: can use structure to get arg types (speedup \o/)
+				var sig = typeFunctionSignature(sig, false);
+				TIFSetter({
+					syntax: {
+						functionKeyword: keyword,
+						accessorKeyword: set,
+						name: name,
+					},
+					name: name.text,
+					sig: sig
+				});
+		}
+		return {
+			metadata: f.metadata,
+			kind: kind,
+			semicolon: f.semicolon
+		};
+	}
 
 	function typeClass(c:ClassDecl):TClassDecl {
 		trace("cls", c.name.text);
@@ -240,20 +326,18 @@ class Typer {
 		};
 	}
 
-	function typeFunction(fun:Function):TFunction {
-		pushLocals();
-
+	function typeFunctionSignature(sig:FunctionSignature, addArgLocals:Bool):TFunctionSignature {
 		var targs =
-			if (fun.signature.args != null) {
-				separatedToArray(fun.signature.args, function(arg, comma) {
+			if (sig.args != null) {
+				separatedToArray(sig.args, function(arg, comma) {
 					return switch (arg) {
 						case ArgNormal(a):
 							var type = if (a.type == null) TTAny else resolveType(a.type.type);
 							var init = if (a.init == null) null else typeVarInit(a.init);
-							addLocal(a.name.text, type);
+							if (addArgLocals) addLocal(a.name.text, type);
 							{syntax: {name: a.name}, name: a.name.text, type: type, kind: TArgNormal(a.type, init), comma: comma};
 						case ArgRest(dots, name):
-							addLocal(name.text, TTArray);
+							if (addArgLocals) addLocal(name.text, TTArray);
 							{syntax: {name: name}, name: name.text, type: TTArray, kind: TArgRest(dots), comma: comma};
 					}
 				});
@@ -262,27 +346,32 @@ class Typer {
 			};
 
 		var tret:TTypeHint;
-		if (fun.signature.ret != null) {
+		if (sig.ret != null) {
 			tret = {
-				type: resolveType(fun.signature.ret.type),
-				syntax: fun.signature.ret
+				type: resolveType(sig.ret.type),
+				syntax: sig.ret
 			};
 		} else {
 			tret = {type: TTAny, syntax: null};
 		}
-		var block = typeBlock(fun.block);
-
-		popLocals();
 
 		return {
-			sig: {
-				syntax: {
-					openParen: fun.signature.openParen,
-					closeParen: fun.signature.closeParen,
-				},
-				args: targs,
-				ret: tret,
+			syntax: {
+				openParen: sig.openParen,
+				closeParen: sig.closeParen,
 			},
+			args: targs,
+			ret: tret,
+		};
+	}
+
+	function typeFunction(fun:Function):TFunction {
+		pushLocals();
+		var sig = typeFunctionSignature(fun.signature, true);
+		var block = typeBlock(fun.block);
+		popLocals();
+		return {
+			sig: sig,
 			block: block
 		};
 	}

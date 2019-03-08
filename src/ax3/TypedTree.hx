@@ -27,6 +27,21 @@ typedef TImport = {
 
 enum TDecl {
 	TDClass(c:TClassDecl);
+	TDInterface(c:TInterfaceDecl);
+}
+
+typedef TInterfaceDecl = {
+	var syntax:{
+		var keyword:Token;
+		var name:Token;
+		var openBrace:Token;
+		var closeBrace:Token;
+	};
+	var metadata:Array<Metadata>;
+	var modifiers:Array<DeclModifier>;
+	var name:String;
+	var extend:Null<TClassImplement>;
+	var members:Array<TInterfaceMember>;
 }
 
 typedef TClassDecl = {
@@ -44,6 +59,41 @@ typedef TClassDecl = {
 	var extend:Null<TClassExtend>;
 	var implement:Null<TClassImplement>;
 	var members:Array<TClassMember>;
+}
+
+enum TInterfaceMember {
+	TIMField(f:TInterfaceField);
+}
+
+typedef TInterfaceField = {
+	var metadata:Array<Metadata>;
+	var kind:TInterfaceFieldKind;
+	var semicolon:Token;
+}
+
+enum TInterfaceFieldKind {
+	TIFFun(f:TIFunctionField);
+	TIFGetter(f:TIAccessorField);
+	TIFSetter(f:TIAccessorField);
+}
+
+typedef TIFunctionField = {
+	var syntax:{
+		var keyword:Token;
+		var name:Token;
+	};
+	var name:String;
+	var sig:TFunctionSignature;
+}
+
+typedef TIAccessorField = {
+	var syntax:{
+		var functionKeyword:Token;
+		var accessorKeyword:Token;
+		var name:Token;
+	}
+	var name:String;
+	var sig:TFunctionSignature;
 }
 
 typedef TClassExtend = {

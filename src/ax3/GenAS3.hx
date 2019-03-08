@@ -34,7 +34,59 @@ class GenAS3 extends PrinterBase {
 	function printDecl(d:TDecl) {
 		switch (d) {
 			case TDClass(c): printClassDecl(c);
+			case TDInterface(i): printInterfaceDecl(i);
 		}
+	}
+
+	function printInterfaceDecl(i:TInterfaceDecl) {
+		printMetadata(i.metadata);
+		for (m in i.modifiers) {
+			switch (m) {
+				case DMPublic(t): printTextWithTrivia(t.text, t);
+				case DMInternal(t): printTextWithTrivia(t.text, t);
+				case DMFinal(t): printTextWithTrivia(t.text, t);
+				case DMDynamic(t): printTextWithTrivia(t.text, t);
+			}
+		}
+		printTextWithTrivia("interface", i.syntax.keyword);
+		printTextWithTrivia(i.name, i.syntax.name);
+		if (i.extend != null) {
+			printTextWithTrivia("extends", i.extend.syntax.keyword);
+			for (i in i.extend.interfaces) {
+				printDotPath(i.syntax);
+				if (i.comma != null) printComma(i.comma);
+			}
+		}
+		printOpenBrace(i.syntax.openBrace);
+		for (m in i.members) {
+			switch (m) {
+				case TIMField(f): printInterfaceField(f);
+			}
+		}
+		printCloseBrace(i.syntax.closeBrace);
+	}
+
+	function printInterfaceField(f:TInterfaceField) {
+		printMetadata(f.metadata);
+
+		switch (f.kind) {
+			case TIFFun(f):
+				printTextWithTrivia("function", f.syntax.keyword);
+				printTextWithTrivia(f.name, f.syntax.name);
+				printSignature(f.sig);
+			case TIFGetter(f):
+				printTextWithTrivia("function", f.syntax.functionKeyword);
+				printTextWithTrivia("get", f.syntax.accessorKeyword);
+				printTextWithTrivia(f.name, f.syntax.name);
+				printSignature(f.sig);
+			case TIFSetter(f):
+				printTextWithTrivia("function", f.syntax.functionKeyword);
+				printTextWithTrivia("set", f.syntax.accessorKeyword);
+				printTextWithTrivia(f.name, f.syntax.name);
+				printSignature(f.sig);
+		}
+
+		printSemicolon(f.semicolon);
 	}
 
 	function printClassDecl(c:TClassDecl) {
