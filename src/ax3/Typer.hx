@@ -264,6 +264,7 @@ class Typer {
 					case MField(f):
 						tMembers.push(TMField(typeClassField(f)));
 					case MStaticInit(block):
+						tMembers.push(TMStaticInit(typeBlock(block)));
 				}
 			}
 		}

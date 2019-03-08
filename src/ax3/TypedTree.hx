@@ -123,6 +123,7 @@ enum TClassMember {
 	TMCondCompBegin(b:TCondCompBegin);
 	TMCondCompEnd(b:TCondCompEnd);
 	TMField(f:TClassField);
+	TMStaticInit(b:TBlock);
 }
 
 typedef TClassField = {
