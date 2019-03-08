@@ -14,8 +14,21 @@ class GenAS3 extends PrinterBase {
 		printTextWithTrivia("package", p.syntax.keyword);
 		if (p.syntax.name != null) printDotPath(p.syntax.name);
 		printOpenBrace(p.syntax.openBrace);
+		for (i in p.imports) {
+			printImport(i);
+		}
 		printDecl(p.decl);
 		printCloseBrace(p.syntax.closeBrace);
+	}
+
+	function printImport(i:TImport) {
+		printTextWithTrivia("import", i.syntax.keyword);
+		printDotPath(i.syntax.path);
+		if (i.syntax.wildcard != null) {
+			printDot(i.syntax.wildcard.dot);
+			printTextWithTrivia("*", i.syntax.wildcard.asterisk);
+		}
+		printSemicolon(i.syntax.semicolon);
 	}
 
 	function printDecl(d:TDecl) {
@@ -36,6 +49,17 @@ class GenAS3 extends PrinterBase {
 		}
 		printTextWithTrivia("class", c.syntax.keyword);
 		printTextWithTrivia(c.name, c.syntax.name);
+		if (c.extend != null) {
+			printTextWithTrivia("extends", c.extend.syntax.keyword);
+			printDotPath(c.extend.syntax.path);
+		}
+		if (c.implement != null) {
+			printTextWithTrivia("implements", c.implement.syntax.keyword);
+			for (i in c.implement.interfaces) {
+				printDotPath(i.syntax);
+				if (i.comma != null) printComma(i.comma);
+			}
+		}
 		printOpenBrace(c.syntax.openBrace);
 		for (m in c.members) {
 			switch (m) {
@@ -241,6 +265,7 @@ class GenAS3 extends PrinterBase {
 			printOpenParen(c.syntax.openParen);
 			printTextWithTrivia(c.v.name, c.syntax.name);
 			printColon(c.syntax.type.colon);
+			printSyntaxType(c.syntax.type.type);
 			printCloseParen(c.syntax.closeParen);
 			printExpr(c.expr);
 		}

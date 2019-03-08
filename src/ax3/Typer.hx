@@ -56,6 +56,8 @@ class Typer {
 			// TODO: just skipping conditional-compiled ones for now
 			if (mainDecl == null || mainDecl.match(DNamespace(_))) continue;
 
+			var tImports = [for (i in imports) {syntax: i}];
+
 			var packName = if (pack.name == null) "" else dotPathToString(pack.name);
 			var currentPackage = structure.packages[packName];
 			if (currentPackage == null) throw "assert";
@@ -69,12 +71,7 @@ class Typer {
 				case DPackage(p):
 				case DImport(i):
 				case DClass(c):
-					switch currentModule.getMainClass(c.name.text) {
-						case null: throw "assert";
-						case cls: currentClass = cls;
-					}
 					decl = TDClass(typeClass(c));
-					currentClass = null;
 				case DInterface(i):
 				case DFunction(f):
 				case DVar(v):
@@ -88,6 +85,7 @@ class Typer {
 				name: file.name,
 				pack: {
 					name: packName,
+					imports: tImports,
 					decl: (decl : TDecl), // TODO: null-safety is not perfect
 					syntax: pack
 				},
@@ -130,6 +128,22 @@ class Typer {
 	function typeClass(c:ClassDecl):TClassDecl {
 		trace("cls", c.name.text);
 
+		switch currentModule.getMainClass(c.name.text) {
+			case null: throw "assert";
+			case cls: currentClass = cls;
+		}
+
+		var extend:Null<TClassExtend> =
+			if (c.extend == null) null
+			else {syntax: c.extend};
+
+		var implement:Null<TClassImplement> =
+			if (c.implement == null) null
+			else {
+				syntax: {keyword: c.implement.keyword},
+				interfaces: separatedToArray(c.implement.paths, (path, comma) -> {syntax: path, comma: comma})
+			};
+
 		var members = [];
 		for (m in c.members) {
 			switch (m) {
@@ -141,12 +155,16 @@ class Typer {
 			}
 		}
 
+		currentClass = null;
+
 		return {
 			syntax: c,
 			name: c.name.text,
 			metadata: c.metadata,
+			extend: extend,
+			implement: implement,
 			modifiers: c.modifiers,
-			members: members
+			members: members,
 		}
 	}
 

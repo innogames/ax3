@@ -16,8 +16,13 @@ typedef TPackageDecl = {
 		var openBrace:Token;
 		var closeBrace:Token;
 	};
+	var imports:Array<TImport>;
 	var name:String;
 	var decl:TDecl;
+}
+
+typedef TImport = {
+	var syntax:ImportDecl;
 }
 
 enum TDecl {
@@ -36,7 +41,21 @@ typedef TClassDecl = {
 	var metadata:Array<Metadata>;
 	var modifiers:Array<DeclModifier>;
 	var name:String;
+	var extend:Null<TClassExtend>;
+	var implement:Null<TClassImplement>;
 	var members:Array<TClassMember>;
+}
+
+typedef TClassExtend = {
+	var syntax:{
+		var keyword:Token;
+		var path:DotPath;
+	};
+}
+
+typedef TClassImplement = {
+	var syntax:{keyword:Token};
+	var interfaces:Array<{syntax: DotPath, comma:Null<Token>}>;
 }
 
 enum TClassMember {
