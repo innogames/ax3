@@ -22,7 +22,7 @@ class Filters {
 
 	static function processExpr(e1:TExpr):TExpr {
 		return switch (e1.kind) {
-			case TELiteral(_) | TEUseNamespace(_) | TELocal(_) | TEBuiltin(_) | TEDeclRef(_) | TEReturn(_, null) | TEBreak(_) | TEContinue(_):
+			case TELiteral(_) | TEUseNamespace(_) | TELocal(_) | TEBuiltin(_) | TEDeclRef(_) | TEReturn(_, null) | TEBreak(_) | TEContinue(_) | TECondCompValue(_):
 				e1;
 
 			case TEParens(openParen, e, closeParen):
@@ -52,9 +52,14 @@ class Filters {
 					))
 				);
 
-			case TEReturn(keyword, e): e1.with(kind = TEReturn(keyword, f(e)));
-			case TEThrow(keyword, e): e1.with(kind = TEThrow(keyword, f(e)));
-			case TEDelete(keyword, e): e1.with(kind = TEDelete(keyword, f(e)));
+			case TEReturn(keyword, e):
+				e1.with(kind = TEReturn(keyword, f(e)));
+
+			case TEThrow(keyword, e):
+				e1.with(kind = TEThrow(keyword, f(e)));
+
+			case TEDelete(keyword, e):
+				e1.with(kind = TEDelete(keyword, f(e)));
 
 			case TEBlock(block):
 				e1.with(
@@ -72,13 +77,20 @@ class Filters {
 					))
 				);
 
+			case TETry(t):
+				e1.with(
+					kind = TETry(t.with(
+						expr = f(t.expr),
+						catches = [for (c in t.catches) c.with(expr = f(c.expr))]
+					))
+				);
+
 			case TELocalFunction(f): e1;
 
 			case TEVectorDecl(v): e1;
 			case TEVars(kind, v): e1;
 			case TEObjectDecl(o): e1;
 			case TEArrayAccess(a): e1;
-			case TETry(t): e1;
 			case TEVector(syntax, type): e1;
 			case TETernary(e): e1;
 			case TEWhile(w): e1;
@@ -87,14 +99,13 @@ class Filters {
 			case TEForIn(f): e1;
 			case TEForEach(f): e1;
 			case TEBinop(a, op, b): e1;
-			case TEPreUnop(op, e): e1;
-			case TEPostUnop(e, op): e1;
-			case TEComma(a, comma, b): e1;
+			case TEPreUnop(op, e): e1.with(kind = TEPreUnop(op, f(e)));
+			case TEPostUnop(e, op): e1.with(kind = TEPostUnop(f(e), op));
+			case TEComma(a, comma, b): e1.with(kind = TEComma(f(a), comma, f(b)));
 			case TEIs(e, keyword, etype): e1;
 			case TEAs(e, keyword, type): e1;
 			case TESwitch(s): e1;
 			case TENew(keyword, eclass, args): e1;
-			case TECondCompValue(v): e1;
 			case TECondCompBlock(v, expr): e1;
 			case TEXmlAttr(x): e1;
 			case TEXmlAttrExpr(x): e1;
