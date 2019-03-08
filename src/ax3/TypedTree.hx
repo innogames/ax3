@@ -109,6 +109,7 @@ typedef TClassImplement = {
 }
 
 enum TClassMember {
+	TMUseNamespace(n:UseNamespace, semicolon:Token);
 	TMField(f:TClassField);
 }
 

@@ -241,6 +241,7 @@ class Typer {
 					case MCondComp(v, openBrace, members, closeBrace):
 						loop(members);
 					case MUseNamespace(n, semicolon):
+						tMembers.push(TMUseNamespace(n, semicolon));
 					case MField(f):
 						tMembers.push(TMField(typeClassField(f)));
 					case MStaticInit(block):

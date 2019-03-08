@@ -116,6 +116,7 @@ class GenAS3 extends PrinterBase {
 		for (m in c.members) {
 			switch (m) {
 				case TMField(f): printClassField(f);
+				case TMUseNamespace(n, semicolon): printUseNamespace(n); printSemicolon(semicolon);
 			}
 		}
 		printCloseBrace(c.syntax.closeBrace);
