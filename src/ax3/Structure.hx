@@ -24,6 +24,24 @@ class Structure {
 		}
 	}
 
+	public function getPrivateClass(mod:String, cls:String):SClassDecl {
+		var pack, name;
+		switch mod.lastIndexOf(".") {
+			case -1: pack = ""; name = mod;
+			case index:
+				pack = mod.substring(0, index);
+				name = mod.substring(index + 1);
+		}
+
+		return switch packages[pack] {
+			case null: throw "no such package " + pack;
+			case p:
+				var mod = p.getModule(name);
+				if (mod == null) throw 'no such module $pack::$name';
+				return mod.getPrivateClass(cls);
+		}
+	}
+
 	public function getDecl(pack:String, name:String):SDecl {
 		switch packages[pack] {
 			case null: throw 'declaration not found $pack::$name';
@@ -99,6 +117,7 @@ class Structure {
 				function resolveType(t:SType) {
 					return switch (t) {
 						case STVoid | STAny | STBoolean | STNumber | STInt | STUint | STString | STArray | STFunction | STClass | STObject | STXML | STXMLList | STRegExp | STUnresolved(_): t;
+						case STPrivate(_): throw "assert"; // this is only produces as a result of resolution
 						case STVector(t): STVector(resolveType(t));
 						case STPath(path): mod.resolveTypePath(path);
 					};
@@ -447,7 +466,7 @@ class SModule {
 		}
 		for (decl in privateDecls) {
 			if (decl.name == path) {
-				return STPath(fq(pack.name, path));
+				return STPrivate(fq(pack.name, name), path);
 			}
 		}
 
@@ -564,6 +583,7 @@ class SModule {
 			case STRegExp: "RegExp";
 			case STVector(t): "Vector.<" + dumpType(t) + ">";
 			case STPath(path): path;
+			case STPrivate(path, name): 'PRIVATE<$path::$name>';
 			case STUnresolved(path): 'UNRESOLVED<$path>';
 		}
 	}
@@ -646,5 +666,6 @@ enum SType {
 	STRegExp;
 	STVector(t:SType);
 	STPath(path:String);
+	STPrivate(mod:String, name:String);
 	STUnresolved(path:String);
 }

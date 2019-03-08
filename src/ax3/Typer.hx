@@ -175,6 +175,7 @@ class Typer {
 			case STRegExp: TTRegExp;
 			case STVector(t): TTVector(typeType(t));
 			case STPath(path): TTInst(structure.getClass(path));
+			case STPrivate(mod, name): TTInst(structure.getPrivateClass(mod, name));
 			case STUnresolved(path):  throw "Unresolved type " + path;
 		}
 	}
