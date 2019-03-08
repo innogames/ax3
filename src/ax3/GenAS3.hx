@@ -246,11 +246,33 @@ class GenAS3 extends PrinterBase {
 			case TENew(keyword, eclass, args): printNew(keyword, eclass, args);
 			case TECondCompValue(v): printCondCompVar(v);
 			case TECondCompBlock(v, expr): printCondCompVar(v); printExpr(expr);
-			case TEXmlAttr(e, name):
-			case TEXmlAttrExpr(e, eattr):
-			case TEXmlDescend(e, name):
+			case TEXmlAttr(x): printXmlAttr(x);
+			case TEXmlAttrExpr(x): printXmlAttrExpr(x);
+			case TEXmlDescend(x): printXmlDescend(x);
 			case TEUseNamespace(ns): printUseNamespace(ns);
 		}
+	}
+
+	function printXmlDescend(x:TXmlDescend) {
+		printExpr(x.eobj);
+		printDot(x.syntax.dotDot);
+		printTextWithTrivia(x.name, x.syntax.name);
+	}
+
+	function printXmlAttr(x:TXmlAttr) {
+		printExpr(x.eobj);
+		printDot(x.syntax.dot);
+		printTextWithTrivia("@", x.syntax.at);
+		printTextWithTrivia(x.name, x.syntax.name);
+	}
+
+	function printXmlAttrExpr(x:TXmlAttrExpr) {
+		printExpr(x.eobj);
+		printDot(x.syntax.dot);
+		printTextWithTrivia("@", x.syntax.at);
+		printOpenBracket(x.syntax.openBracket);
+		printExpr(x.eattr);
+		printCloseBracket(x.syntax.closeBracket);
 	}
 
 	function printSwitch(s:TSwitch) {

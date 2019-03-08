@@ -206,12 +206,41 @@ enum TExprKind {
 	TENew(keyword:Token, eclass:TExpr, args:Null<TCallArgs>);
 	TECondCompValue(v:TCondCompVar);
 	TECondCompBlock(v:TCondCompVar, expr:TExpr);
-	TEXmlAttr(e:TExpr, name:String);
-	TEXmlAttrExpr(e:TExpr, eattr:TExpr);
-	TEXmlDescend(e:TExpr, name:String);
+	TEXmlAttr(x:TXmlAttr);
+	TEXmlAttrExpr(x:TXmlAttrExpr);
+	TEXmlDescend(x:TXmlDescend);
 	TEUseNamespace(ns:UseNamespace);
 }
 
+typedef TXmlDescend = {
+	var syntax:{
+		var dotDot:Token;
+		var name:Token;
+	};
+	var eobj:TExpr;
+	var name:String;
+}
+
+typedef TXmlAttr = {
+	var syntax:{
+		var dot:Token;
+		var at:Token;
+		var name:Token;
+	};
+	var eobj:TExpr;
+	var name:String;
+}
+
+typedef TXmlAttrExpr = {
+	var syntax:{
+		var dot:Token;
+		var at:Token;
+		var openBracket:Token;
+		var closeBracket:Token;
+	};
+	var eobj:TExpr;
+	var eattr:TExpr;
+}
 typedef TVectorDecl = {
 	var syntax:{
 		var newKeyword:Token;

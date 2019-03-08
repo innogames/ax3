@@ -342,7 +342,7 @@ enum Expr {
 	EVectorDecl(newKeyword:Token, t:TypeParam, d:ArrayDecl);
 	EField(e:Expr, dot:Token, fieldName:Token);
 	EXmlAttr(e:Expr, dot:Token, at:Token, attrName:Token);
-	EXmlAttrExpr(e:Expr, dot:Token, at:Token, openBrace:Token, eattr:Expr, closeBrace:Token);
+	EXmlAttrExpr(e:Expr, dot:Token, at:Token, openBracket:Token, eattr:Expr, closeBracket:Token);
 	EXmlDescend(e:Expr, dotDot:Token, childName:Token);
 	EBlock(b:BracedExprBlock);
 	EObjectDecl(openBrace:Token, fields:Separated<ObjectField>, closeBrace:Token);

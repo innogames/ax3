@@ -416,9 +416,9 @@ class Typer {
 			case EBreak(keyword): mk(TEBreak(keyword), TTVoid);
 			case EContinue(keyword): mk(TEContinue(keyword), TTVoid);
 
-			case EXmlAttr(e, dot, at, attrName): typeXmlAttr(e, attrName);
-			case EXmlAttrExpr(e, dot, at, openBrace, eattr, closeBrace): typeXmlAttrExpr(e, eattr);
-			case EXmlDescend(e, dotDot, childName): typeXmlDescend(e, childName);
+			case EXmlAttr(e, dot, at, attrName): typeXmlAttr(e, dot, at, attrName);
+			case EXmlAttrExpr(e, dot, at, openBracket, eattr, closeBracket): typeXmlAttrExpr(e, dot, at, openBracket, eattr, closeBracket);
+			case EXmlDescend(e, dotDot, childName): typeXmlDescend(e, dotDot, childName);
 			case ECondCompValue(v): mk(TECondCompValue(typeCondCompVar(v)), TTAny);
 			case ECondCompBlock(v, b): typeCondCompBlock(v, b);
 			case EUseNamespace(ns): mk(TEUseNamespace(ns), TTVoid);
@@ -446,20 +446,41 @@ class Typer {
 		return mk(TEPostUnop(e, op), type);
 	}
 
-	function typeXmlAttr(e:Expr, attrName:Token):TExpr {
+	function typeXmlAttr(e:Expr, dot:Token, at:Token, attrName:Token):TExpr {
 		var e = typeExpr(e);
-		return mk(TEXmlAttr(e, attrName.text), TTXMLList);
+		return mk(TEXmlAttr({
+			syntax: {
+				dot: dot,
+				at: at,
+				name: attrName
+			},
+			eobj: e,
+			name: attrName.text
+		}), TTXMLList);
 	}
 
-	function typeXmlAttrExpr(e:Expr, eattr:Expr):TExpr {
+	function typeXmlAttrExpr(e:Expr, dot:Token, at:Token, openBracket:Token, eattr:Expr, closeBracket:Token):TExpr {
 		var e = typeExpr(e);
 		var eattr = typeExpr(eattr);
-		return mk(TEXmlAttrExpr(e, eattr), TTXMLList);
+		return mk(TEXmlAttrExpr({
+			syntax: {
+				dot: dot,
+				at: at,
+				openBracket: openBracket,
+				closeBracket: closeBracket
+			},
+			eobj: e,
+			eattr: eattr,
+		}), TTXMLList);
 	}
 
-	function typeXmlDescend(e:Expr, childName:Token):TExpr {
+	function typeXmlDescend(e:Expr, dotDot:Token, childName:Token):TExpr {
 		var e = typeExpr(e);
-		return mk(TEXmlDescend(e, childName.text), TTXMLList);
+		return mk(TEXmlDescend({
+			syntax: {dotDot: dotDot, name: childName},
+			eobj: e,
+			name: childName.text
+		}), TTXMLList);
 	}
 
 	function typeCondCompVar(v:CondCompVar):TCondCompVar {
