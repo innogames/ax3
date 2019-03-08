@@ -132,8 +132,8 @@ enum TExprKind {
 	TEPostUnop(e:TExpr, op:PostUnop);
 	TEComma(a:TExpr, comma:Token, b:TExpr);
 	TEIs(e:TExpr, keyword:Token, etype:TExpr);
-	TEAs(e:TExpr, keyword:Token, type:TType);
-	TESwitch(esubj:TExpr, cases:Array<TSwitchCase>, def:Null<Array<TExpr>>);
+	TEAs(e:TExpr, keyword:Token, type:TTypeRef);
+	TESwitch(s:TSwitch);
 	TENew(keyword:Token, eclass:TExpr, args:Null<TCallArgs>);
 	TECondCompValue(v:TCondCompVar);
 	TECondCompBlock(v:TCondCompVar, expr:TExpr);
@@ -307,6 +307,11 @@ typedef TTypeHint = {
 	var syntax:Null<TypeHint>;
 }
 
+typedef TTypeRef = {
+	var type:TType;
+	var syntax:SyntaxType;
+}
+
 typedef TFunctionArg = {
 	var syntax:{
 		var name:Token;
@@ -322,9 +327,34 @@ enum TFunctionArgKind {
 	TArgRest(dots:Token);
 }
 
+typedef TSwitch = {
+	var syntax:{
+		var keyword:Token;
+		var openParen:Token;
+		var closeParen:Token;
+		var openBrace:Token;
+		var closeBrace:Token;
+	}
+	var subj:TExpr;
+	var cases:Array<TSwitchCase>;
+	var def:Null<TSwitchDefault>;
+}
+
 typedef TSwitchCase = {
+	var syntax:{
+		var keyword:Token;
+		var colon:Token;
+	}
 	var value:TExpr;
-	var body:Array<TExpr>;
+	var body:Array<TBlockExpr>;
+}
+
+typedef TSwitchDefault = {
+	var syntax:{
+		var keyword:Token;
+		var colon:Token;
+	}
+	var body:Array<TBlockExpr>;
 }
 
 typedef TTry = {

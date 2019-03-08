@@ -165,8 +165,8 @@ class GenAS3 extends PrinterBase {
 			case TEPostUnop(e, op): printPostUnop(e, op);
 			case TEComma(a, comma, b): printExpr(a); printComma(comma); printExpr(b);
 			case TEIs(e, keyword, etype): printExpr(e); printTextWithTrivia("is", keyword); printExpr(etype);
-			case TEAs(e, keyword, type): printExpr(e); printTextWithTrivia("as", keyword);
-			case TESwitch(esubj, cases, def):
+			case TEAs(e, keyword, type): printExpr(e); printTextWithTrivia("as", keyword); printSyntaxType(type.syntax);
+			case TESwitch(s): printSwitch(s);
 			case TENew(keyword, eclass, args): printNew(keyword, eclass, args);
 			case TECondCompValue(v): printCondCompVar(v);
 			case TECondCompBlock(v, expr): printCondCompVar(v); printExpr(expr);
@@ -175,6 +175,30 @@ class GenAS3 extends PrinterBase {
 			case TEXmlDescend(e, name):
 			case TEUseNamespace(ns): printUseNamespace(ns);
 		}
+	}
+
+	function printSwitch(s:TSwitch) {
+		printTextWithTrivia("switch", s.syntax.keyword);
+		printOpenParen(s.syntax.openParen);
+		printExpr(s.subj);
+		printCloseParen(s.syntax.closeParen);
+		printOpenBrace(s.syntax.openBrace);
+		for (c in s.cases) {
+			printTextWithTrivia("case", c.syntax.keyword);
+			printExpr(c.value);
+			printColon(c.syntax.colon);
+			for (e in c.body) {
+				printBlockExpr(e);
+			}
+		}
+		if (s.def != null) {
+			printTextWithTrivia("default", s.def.syntax.keyword);
+			printColon(s.def.syntax.colon);
+			for (e in s.def.body) {
+				printBlockExpr(e);
+			}
+		}
+		printCloseBrace(s.syntax.closeBrace);
 	}
 
 	function printVectorSyntax(syntax:VectorSyntax) {
@@ -456,9 +480,13 @@ class GenAS3 extends PrinterBase {
 	function printBlock(block:TBlock) {
 		printOpenBrace(block.syntax.openBrace);
 		for (e in block.exprs) {
-			printExpr(e.expr);
-			if (e.semicolon != null) printSemicolon(e.semicolon);
+			printBlockExpr(e);
 		}
 		printCloseBrace(block.syntax.closeBrace);
+	}
+
+	function printBlockExpr(e:TBlockExpr) {
+		printExpr(e.expr);
+		if (e.semicolon != null) printSemicolon(e.semicolon);
 	}
 }

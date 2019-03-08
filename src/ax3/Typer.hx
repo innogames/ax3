@@ -302,7 +302,7 @@ class Typer {
 			case EIs(e, keyword, et): typeIs(e, keyword, et);
 			case EComma(a, comma, b): typeComma(a, comma, b);
 			case EVector(v): typeVector(v);
-			case ESwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace): typeSwitch(subj, cases);
+			case ESwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace): typeSwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace);
 			case ETry(keyword, block, catches, finally_): typeTry(keyword, block, catches, finally_);
 			case EFunction(keyword, name, fun): mk(TEFunction(typeFunction(fun)), TTFunction);
 
@@ -397,31 +397,50 @@ class Typer {
 		}), TTVoid);
 	}
 
-	function typeSwitch(esubj:Expr, cases:Array<SwitchCase>):TExpr {
-		var esubj = typeExpr(esubj);
-		var tcases = [];
-		var def:Null<Array<TExpr>> = null;
+	function typeSwitch(keyword:Token, openParen:Token, subj:Expr, closeParen:Token, openBrace:Token, cases:Array<SwitchCase>, closeBrace:Token):TExpr {
+		var subj = typeExpr(subj);
+		var tcases = new Array<TSwitchCase>();
+		var def:Null<TSwitchDefault> = null;
 		for (c in cases) {
 			switch (c) {
 				case CCase(keyword, v, colon, body):
-					var v = typeExpr(v);
-					var body = [for (e in body) typeExpr(e.expr)];
 					tcases.push({
-						value: v,
-						body: body
+						syntax: {
+							keyword: keyword,
+							colon: colon,
+						},
+						value: typeExpr(v),
+						body: [for (e in body) {expr: typeExpr(e.expr), semicolon: e.semicolon}]
 					});
 				case CDefault(keyword, colon, body):
 					if (def != null) throw "double `default` in switch";
-					def = [for (e in body) typeExpr(e.expr)];
+					def = {
+						syntax: {
+							keyword: keyword,
+							colon: colon,
+						},
+						body: [for (e in body) {expr: typeExpr(e.expr), semicolon: e.semicolon}]
+					};
 			}
 		}
-		return mk(TESwitch(esubj, tcases, def), TTVoid);
+		return mk(TESwitch({
+			syntax: {
+				keyword: keyword,
+				openParen: openParen,
+				closeParen: closeParen,
+				openBrace: openBrace,
+				closeBrace: closeBrace
+			},
+			subj: subj,
+			cases: tcases,
+			def: def
+		}), TTVoid);
 	}
 
 	function typeAs(e:Expr, keyword:Token, t:SyntaxType) {
 		var e = typeExpr(e);
 		var type = resolveType(t);
-		return mk(TEAs(e, keyword, type), type);
+		return mk(TEAs(e, keyword, {syntax: t, type: type}), type);
 	}
 
 	function typeIs(e:Expr, keyword:Token, etype:Expr):TExpr {
