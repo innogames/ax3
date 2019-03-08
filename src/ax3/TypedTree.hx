@@ -23,7 +23,9 @@ typedef TPackageDecl = {
 }
 
 typedef TImport = {
+	var condCompBegin:Null<TCondCompBegin>;
 	var syntax:ImportDecl;
+	var condCompEnd:Null<TCondCompEnd>;
 }
 
 typedef TCondCompBegin = {

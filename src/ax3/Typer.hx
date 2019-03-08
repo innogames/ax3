@@ -51,14 +51,12 @@ class Typer {
 
 			var privateDecls = getPrivateDecls(file);
 
-			var imports = getImports(file);
+			var imports = typeImports(file);
 
 			var namespaceUses = getNamespaceUses(pack);
 
 			// TODO: just skipping conditional-compiled ones for now
 			if (mainDecl == null || mainDecl.match(DNamespace(_))) continue;
-
-			var tImports = [for (i in imports) {syntax: i}];
 
 			var packName = if (pack.name == null) "" else dotPathToString(pack.name);
 			var currentPackage = structure.packages[packName];
@@ -88,7 +86,7 @@ class Typer {
 				name: file.name,
 				pack: {
 					name: packName,
-					imports: tImports,
+					imports: imports,
 					namespaceUses: namespaceUses,
 					decl: (decl : TDecl), // TODO: null-safety is not perfect
 					syntax: pack
@@ -99,6 +97,30 @@ class Typer {
 		}
 
 		return modules;
+	}
+
+	function typeImports(file:File):Array<TImport> {
+		var result = [];
+		function loop(decls:Array<Declaration>, condCompBegin:Null<TCondCompBegin>, condCompEnd:Null<TCondCompEnd>) {
+			var len = decls.length;
+			for (i in 0...len) {
+				switch (decls[i]) {
+					case DPackage(p): loop(p.declarations, null, null);
+					case DImport(imp):
+						var condCompBegin = if (i == 0) condCompBegin else null;
+						var condCompEnd = if (i == len - 1) condCompEnd else null;
+						result.push({
+							syntax: imp,
+							condCompBegin: condCompBegin,
+							condCompEnd: condCompEnd
+						});
+					case DCondComp(v, openBrace, decls, closeBrace): loop(decls, {v: typeCondCompVar(v), openBrace: openBrace}, {closeBrace: closeBrace});
+					case _:
+				}
+			}
+		}
+		loop(file.declarations, null, null);
+		return result;
 	}
 
 	function getNamespaceUses(pack:PackageDecl):Array<{n:UseNamespace, semicolon:Token}> {

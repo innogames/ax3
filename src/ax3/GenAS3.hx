@@ -26,6 +26,7 @@ class GenAS3 extends PrinterBase {
 	}
 
 	function printImport(i:TImport) {
+		if (i.condCompBegin != null) printCondCompBegin(i.condCompBegin);
 		printTextWithTrivia("import", i.syntax.keyword);
 		printDotPath(i.syntax.path);
 		if (i.syntax.wildcard != null) {
@@ -33,6 +34,7 @@ class GenAS3 extends PrinterBase {
 			printTextWithTrivia("*", i.syntax.wildcard.asterisk);
 		}
 		printSemicolon(i.syntax.semicolon);
+		if (i.condCompEnd != null) printCompCondEnd(i.condCompEnd);
 	}
 
 	function printDecl(d:TDecl) {
