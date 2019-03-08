@@ -619,6 +619,7 @@ class Typer {
 		for (c in cases) {
 			switch (c) {
 				case CCase(keyword, v, colon, body):
+					if (def != null) throw "`case` after `default` in switch";
 					tcases.push({
 						syntax: {
 							keyword: keyword,
