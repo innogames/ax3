@@ -230,16 +230,20 @@ class Typer {
 				interfaces: separatedToArray(c.implement.paths, (path, comma) -> {syntax: path, comma: comma})
 			};
 
-		var members = [];
-		for (m in c.members) {
-			switch (m) {
-				case MCondComp(v, openBrace, members, closeBrace):
-				case MUseNamespace(n, semicolon):
-				case MField(f):
-					members.push(TMField(typeClassField(f)));
-				case MStaticInit(block):
+		var tMembers = [];
+		function loop(members:Array<ClassMember>) {
+			for (m in members) {
+				switch (m) {
+					case MCondComp(v, openBrace, members, closeBrace):
+						loop(members);
+					case MUseNamespace(n, semicolon):
+					case MField(f):
+						tMembers.push(TMField(typeClassField(f)));
+					case MStaticInit(block):
+				}
 			}
 		}
+		loop(c.members);
 
 		currentClass = null;
 
@@ -250,7 +254,7 @@ class Typer {
 			extend: extend,
 			implement: implement,
 			modifiers: c.modifiers,
-			members: members,
+			members: tMembers,
 		}
 	}
 
