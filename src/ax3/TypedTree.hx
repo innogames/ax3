@@ -169,7 +169,7 @@ typedef TExpr = {
 
 enum TExprKind {
 	TEParens(openParen:Token, e:TExpr, closeParen:Token);
-	TEFunction(f:TFunction);
+	TELocalFunction(f:TLocalFunction);
 	TELiteral(l:TLiteral);
 	TELocal(syntax:Token, v:TVar);
 	TEField(obj:TFieldObject, fieldName:String, fieldToken:Token);
@@ -210,6 +210,12 @@ enum TExprKind {
 	TEXmlAttrExpr(x:TXmlAttrExpr);
 	TEXmlDescend(x:TXmlDescend);
 	TEUseNamespace(ns:UseNamespace);
+}
+
+typedef TLocalFunction = {
+	var syntax:{keyword:Token};
+	var name:{syntax:Token, name:String};
+	var fun:TFunction;
 }
 
 typedef TXmlDescend = {

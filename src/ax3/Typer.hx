@@ -419,8 +419,7 @@ class Typer {
 			case EVector(v): typeVector(v);
 			case ESwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace): typeSwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace);
 			case ETry(keyword, block, catches, finally_): typeTry(keyword, block, catches, finally_);
-			case EFunction(keyword, name, fun): mk(TEFunction(typeFunction(fun)), TTFunction);
-
+			case EFunction(keyword, name, fun): typeLocalFunction(keyword, name, fun);
 			case EBreak(keyword): mk(TEBreak(keyword), TTVoid);
 			case EContinue(keyword): mk(TEContinue(keyword), TTVoid);
 
@@ -431,6 +430,14 @@ class Typer {
 			case ECondCompBlock(v, b): typeCondCompBlock(v, b);
 			case EUseNamespace(ns): mk(TEUseNamespace(ns), TTVoid);
 		}
+	}
+
+	function typeLocalFunction(keyword:Token, name:Null<Token>, fun:Function):TExpr {
+		return mk(TELocalFunction({
+			syntax: {keyword: keyword},
+			name: if (name == null) null else {name: name.text, syntax: name},
+			fun: typeFunction(fun),
+		}), TTFunction); // TODO: TTFun, why not?
 	}
 
 	function typePreUnop(op:PreUnop, e:Expr):TExpr {
