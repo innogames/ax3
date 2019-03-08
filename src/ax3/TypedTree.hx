@@ -17,6 +17,7 @@ typedef TPackageDecl = {
 		var closeBrace:Token;
 	};
 	var imports:Array<TImport>;
+	var namespaceUses:Array<{n:UseNamespace, semicolon:Token}>;
 	var name:String;
 	var decl:TDecl;
 }

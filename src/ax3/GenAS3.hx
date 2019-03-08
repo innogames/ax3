@@ -17,6 +17,10 @@ class GenAS3 extends PrinterBase {
 		for (i in p.imports) {
 			printImport(i);
 		}
+		for (n in p.namespaceUses) {
+			printUseNamespace(n.n);
+			printSemicolon(n.semicolon);
+		}
 		printDecl(p.decl);
 		printCloseBrace(p.syntax.closeBrace);
 	}

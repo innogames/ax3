@@ -53,6 +53,8 @@ class Typer {
 
 			var imports = getImports(file);
 
+			var namespaceUses = getNamespaceUses(pack);
+
 			// TODO: just skipping conditional-compiled ones for now
 			if (mainDecl == null || mainDecl.match(DNamespace(_))) continue;
 
@@ -87,6 +89,7 @@ class Typer {
 				pack: {
 					name: packName,
 					imports: tImports,
+					namespaceUses: namespaceUses,
 					decl: (decl : TDecl), // TODO: null-safety is not perfect
 					syntax: pack
 				},
@@ -96,6 +99,18 @@ class Typer {
 		}
 
 		return modules;
+	}
+
+	function getNamespaceUses(pack:PackageDecl):Array<{n:UseNamespace, semicolon:Token}> {
+		var r = [];
+		for (d in pack.declarations) {
+			switch d {
+				case DUseNamespace(n, semicolon):
+					r.push({n: n, semicolon: semicolon});
+				case _:
+			}
+		}
+		return r;
 	}
 
 	function typeType(t:SType):TType {
