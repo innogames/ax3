@@ -24,6 +24,9 @@ class Main {
 		var typer = new Typer(structure);
 
 		var modules = typer.process(files);
+
+		Filters.run(structure, modules);
+
 		var outDir = FileSystem.absolutePath(config.out);
 		for (mod in modules) {
 			var gen = new ax3.GenAS3();
