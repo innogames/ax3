@@ -189,8 +189,6 @@ class Typer {
 	inline function mk(e:TExprKind, t:TType):TExpr return {kind: e, type: t};
 
 	function typeInterface(i:InterfaceDecl):TInterfaceDecl {
-		trace("iface", i.name.text);
-
 		var extend:Null<TClassImplement> =
 			if (i.extend == null) null
 			else {
@@ -231,7 +229,6 @@ class Typer {
 	function typeInterfaceField(f:InterfaceField):TInterfaceField {
 		var kind = switch (f.kind) {
 			case IFFun(keyword, name, sig):
-				trace(" - " + name.text);
 				initLocals();
 				// TODO: can use structure to get arg types (speedup \o/)
 				var sig = typeFunctionSignature(sig, false);
@@ -244,7 +241,6 @@ class Typer {
 					sig: sig
 				});
 			case IFGetter(keyword, get, name, sig):
-				trace(" - " + name.text);
 				initLocals();
 				// TODO: can use structure to get arg types (speedup \o/)
 				var sig = typeFunctionSignature(sig, false);
@@ -258,7 +254,6 @@ class Typer {
 					sig: sig
 				});
 			case IFSetter(keyword, set, name, sig):
-				trace(" - " + name.text);
 				initLocals();
 				// TODO: can use structure to get arg types (speedup \o/)
 				var sig = typeFunctionSignature(sig, false);
@@ -280,8 +275,6 @@ class Typer {
 	}
 
 	function typeClass(c:ClassDecl):TClassDecl {
-		trace("cls", c.name.text);
-
 		switch currentModule.getDecl(c.name.text) {
 			case null: throw "assert"; // no way
 			case {kind: SClass(cls)}: currentClass = cls;
@@ -357,7 +350,6 @@ class Typer {
 					semicolon: semicolon
 				});
 			case FFun(keyword, name, fun):
-				trace(" - " + name.text);
 				initLocals();
 				// TODO: can use structure to get arg types (speedup \o/)
 				var f = typeFunction(fun);
@@ -370,7 +362,6 @@ class Typer {
 					fun: f
 				});
 			case FGetter(keyword, get, name, fun):
-				trace(" - " + name.text);
 				initLocals();
 				// TODO: can use structure to get arg types (speedup \o/)
 				var f = typeFunction(fun);
@@ -384,7 +375,6 @@ class Typer {
 					fun: f
 				});
 			case FSetter(keyword, set, name, fun):
-				trace(" - " + name.text);
 				initLocals();
 				// TODO: can use structure to get arg types (speedup \o/)
 				var f = typeFunction(fun);
@@ -1004,7 +994,6 @@ class Typer {
 					switch (i) {
 						case SISingle(pack, name):
 							if (name == ident) {
-								// trace('Found imported decl: $pack::$name');
 								return mkDeclRef(dotPath, structure.getDecl(pack, name));
 							}
 						case SIAll(pack):
@@ -1013,7 +1002,6 @@ class Typer {
 								case p:
 									var m = p.getModule(ident);
 									if (m != null) {
-										// trace('Found imported decl: $pack::$ident');
 										return mkDeclRef(dotPath, m.mainDecl);
 									}
 							}
