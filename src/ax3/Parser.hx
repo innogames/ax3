@@ -5,18 +5,19 @@ import ax3.Token;
 
 class Parser {
 	var scanner:Scanner;
-	var name:String;
+	var path:String;
 
-	public function new(scanner, name) {
+	public function new(scanner, path) {
 		this.scanner = scanner;
-		this.name = name;
+		this.path = path;
 	}
 
 	public inline function parse() return parseFile();
 
 	function parseFile():File {
 		return {
-			name: name,
+			path: path,
+			name: new haxe.io.Path(path).file,
 			declarations: parseSequence(parseDeclaration),
 			eof: expectKind(TkEof),
 		};

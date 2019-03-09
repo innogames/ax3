@@ -15,7 +15,7 @@ class Filters {
 						e;
 					case _:
 						i = i.with(
-							econd = {kind: TELiteral(TLString(new Token(TkStringDouble, '"TODO"', [], []))), type: TTBoolean},
+							econd = {kind: TELiteral(TLString(new Token(0, TkStringDouble, '"TODO"', [], []))), type: TTBoolean},
 							ethen = i.ethen,
 							eelse = i.eelse
 						);

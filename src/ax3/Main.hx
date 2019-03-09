@@ -9,6 +9,13 @@ private typedef Config = {
 }
 
 class Main {
+	static final loader = new FileLoader();
+
+	static function reportError(path:String, pos:Int, message:String) {
+		var posStr = loader.formatPosition(path, pos);
+		printerr('$posStr: $message');
+	}
+
 	static function main() {
 		var args = Sys.args();
 		if (args.length != 1) {
@@ -21,7 +28,7 @@ class Main {
 		var structure = Structure.build(files, config.swc);
 		sys.io.File.saveContent("structure.txt", structure.dump());
 
-		var typer = new Typer(structure);
+		var typer = new Typer(structure, reportError);
 
 		var modules = typer.process(files);
 
@@ -64,18 +71,16 @@ class Main {
 
 	static function parseFile(path:String):ParseTree.File {
 		// print('Parsing $path');
-		var content = stripBOM(sys.io.File.getContent(path));
+		var content = stripBOM(loader.getContent(path));
 		var scanner = new Scanner(content);
-		var parser = new Parser(scanner, new haxe.io.Path(path).file);
+		var parser = new Parser(scanner, path);
 		var parseTree = null;
 		try {
 			parseTree = parser.parse();
 			// var dump = ParseTreeDump.printFile(parseTree, "");
 			// Sys.println(dump);
 		} catch (e:Any) {
-			var pos = @:privateAccess scanner.pos;
-			var line = getLine(content, pos);
-			printerr('$path:$line: $e');
+			reportError(path, @:privateAccess scanner.pos, Std.string(e));
 		}
 		if (parseTree != null) {
 			// checkParseTree(path, content, parseTree);
@@ -100,19 +105,4 @@ class Main {
 
 	static function print(s:String) #if hxnodejs js.Node.console.log(s) #else Sys.println(s) #end;
 	static function printerr(s:String) #if hxnodejs js.Node.console.error(s) #else Sys.println(s) #end;
-
-	static function getLine(content:String, pos:Int):Int {
-		var line = 1;
-		var p = 0;
-		while (p < pos) {
-			switch StringTools.fastCodeAt(content, p++) {
-				case '\n'.code:
-					line++;
-				case '\r'.code:
-					p++;
-					line++;
-			}
-		}
-		return line;
-	}
 }

@@ -9,6 +9,32 @@ class ParseTree {
 		return foldSeparated(d, [], (part, acc) -> acc.push(part.text));
 	}
 
+	public static function exprPos(e:Expr):Int {
+		return switch (e) {
+			case EIdent(t) | ELiteral(LString(t) | LDecInt(t) | LHexInt(t) | LFloat(t) | LRegExp(t)): t.pos;
+			case ECall(e, _) | EArrayAccess(e, _, _, _) | EField(e, _, _)  | EXmlAttr(e, _, _, _) | EXmlAttrExpr(e, _, _, _, _, _) | EXmlDescend(e, _, _): exprPos(e);
+			case ETry(keyword, _) | EFunction(keyword, _) | EIf(keyword, _, _, _, _, _) | ESwitch(keyword, _) | EReturn(keyword, _) | EThrow(keyword, _) | EDelete(keyword, _) | EBreak(keyword) | EContinue(keyword) | ENew(keyword, _, _) | EVectorDecl(keyword, _, _): keyword.pos;
+			case EParens(openParen, _, _): openParen.pos;
+			case EArrayDecl(d): d.openBracket.pos;
+			case EBlock(b): b.openBrace.pos;
+			case EObjectDecl(openBrace, _, _): openBrace.pos;
+			case ETernary(econd, _, _, _, _): exprPos(econd);
+			case EWhile(w): w.keyword.pos;
+			case EDoWhile(w): w.doKeyword.pos;
+			case EFor(f): f.keyword.pos;
+			case EForIn(f): f.forKeyword.pos;
+			case EForEach(f): f.forKeyword.pos;
+			case EBinop(a, _, _) | EComma(a, _, _): exprPos(a);
+			case EPreUnop(PreNot(t) | PreNeg(t) | PreIncr(t) | PreDecr(t) | PreBitNeg(t), e): t.pos;
+			case EPostUnop(e, _): exprPos(e);
+			case EVars(VVar(t) | VConst(t), _): t.pos;
+			case EAs(e, _, _) | EIs(e, _, _): exprPos(e);
+			case EVector(v): v.name.pos;
+			case ECondCompValue(v) | ECondCompBlock(v, _): v.name.pos;
+			case EUseNamespace(n): n.useKeyword.pos;
+		}
+	}
+
 	public static function exprToDotPath(e:Expr):Null<DotPath> {
 		var acc = [];
 		function loop(e:Expr) {
@@ -141,6 +167,7 @@ class ParseTree {
 }
 
 typedef File = {
+	var path:String;
 	var name:String;
 	var declarations:Array<Declaration>;
 	var eof:Token;

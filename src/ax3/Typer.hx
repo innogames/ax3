@@ -7,16 +7,27 @@ import ax3.TypedTree;
 
 typedef Locals = Map<String, TVar>;
 
+typedef ErrorReporter = (path:String,pos:Int,error:String)->Void;
+
 @:nullSafety
 class Typer {
 	final structure:Structure;
+	final reportError:ErrorReporter;
 
 	@:nullSafety(Off) var locals:Locals;
 	@:nullSafety(Off) var localsStack:Array<Locals>;
 
-	public function new(structure) {
+	@:nullSafety(Off) var currentModule:SModule;
+
+	var currentClass:Null<SClassDecl>;
+	var currentPath:String = "<unknown>";
+
+	public function new(structure, reportError) {
 		this.structure = structure;
+		this.reportError = reportError;
 	}
+
+	public inline function err(msg, pos) reportError(currentPath, pos, msg);
 
 	function initLocals() {
 		locals = new Map();
@@ -37,13 +48,11 @@ class Typer {
 		return locals[name] = {name: name, type: type};
 	}
 
-	@:nullSafety(Off) var currentModule:SModule;
-	var currentClass:Null<SClassDecl>;
-
 	public function process(files:Array<File>):Array<TModule> {
 		var modules = new Array<TModule>();
 
 		for (file in files) {
+			currentPath = file.path;
 
 			var pack = getPackageDecl(file);
 
@@ -69,6 +78,7 @@ class Typer {
 			@:nullSafety(Off) currentModule = null;
 
 			modules.push({
+				path: file.path,
 				name: file.name,
 				pack: {
 					syntax: pack,
@@ -802,7 +812,7 @@ class Typer {
 					case TTAny | TTFunction: TTAny;
 					case TTFun(_, ret): ret;
 					case TTStatic(cls): TTInst(cls); // ClassName(expr) cast (TODO: this should be TESafeCast expression)
-					case other: trace("unknown callable type: " + other); TTAny; // TODO: super, builtins, etc.
+					case other: err("unknown callable type: " + other, exprPos(e)); TTAny; // TODO: super, builtins, etc.
 				}
 		}
 
@@ -1054,8 +1064,7 @@ class Typer {
 				case _:
 					switch (obj.type) {
 						case TTAny | TTObject: TTAny; // untyped field access
-						case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTClass: trace('Attempting to get field on type ${obj.type.getName()}'); TTAny;
-						case TTBuiltin: trace(obj); TTAny;
+						case TTBuiltin | TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTClass: err('Attempting to get field on type ${obj.type.getName()}', fieldToken.pos); TTAny;
 						case TTString:  TTAny; // TODO
 						case TTArray:  TTAny; // TODO
 						case TTVector(t):  TTAny; // TODO

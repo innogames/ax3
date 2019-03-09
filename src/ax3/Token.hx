@@ -1,12 +1,14 @@
 package ax3;
 
 class Token {
-	public var kind:TokenKind;
-	public var text:String;
-	public var leadTrivia:Array<Trivia>;
-	public var trailTrivia:Array<Trivia>;
+	public final pos:Int;
+	public final kind:TokenKind;
+	public final text:String;
+	public final leadTrivia:Array<Trivia>;
+	public final trailTrivia:Array<Trivia>;
 
-	public function new(kind, text, leadTrivia, trailTrivia) {
+	public function new(pos, kind, text, leadTrivia, trailTrivia) {
+		this.pos = pos;
 		this.kind = kind;
 		this.text = text;
 		this.leadTrivia = leadTrivia;

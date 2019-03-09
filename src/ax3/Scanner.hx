@@ -629,6 +629,6 @@ class Scanner {
 
 	function mk(kind:TokenKind):Token {
 		var text = text.substring(tokenStartPos, pos);
-		return new Token(kind, text, leadTrivia, scanTrivia(true));
+		return new Token(tokenStartPos, kind, text, leadTrivia, scanTrivia(true));
 	}
 }

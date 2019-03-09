@@ -4,6 +4,7 @@ import ax3.ParseTree;
 import ax3.Structure;
 
 typedef TModule = {
+	var path:String;
 	var pack:TPackageDecl;
 	var name:String;
 	var privateDecls:Array<TDecl>;
