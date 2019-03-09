@@ -6,21 +6,35 @@ using ax3.WithMacro;
 
 class Filters {
 
-	static function f(e:TExpr):TExpr {
-		return e;
-	}
+	static function f2(e:TExpr):TExpr {
+		return switch (e.kind) {
+			case TEIf(i):
+				switch (i.econd.type) {
+					case TTBoolean:
+						e;
+					case _:
+						i = i.with(
+							econd = {kind: TELiteral(TLString(new Token(TkStringDouble, '"TODO"', [], []))), type: TTBoolean},
+							ethen = i.ethen,
+							eelse = i.eelse
+						);
+						e.with(kind = TEIf(i));
+				}
 
-	static function processBlock(b:TBlock) {
-		for (i in 0...b.exprs.length) {
-			b.exprs[i].expr = processExpr(b.exprs[i].expr);
+			case _:
+				mapExpr(f2, e);
 		}
 	}
 
-	static function processBlockExpr(e:TBlockExpr):TBlockExpr {
+	static function mapBlock(f:TExpr->TExpr, b:TBlock):TBlock {
+		return b.with(exprs = [for (e in b.exprs) e.with(expr = f(e.expr))]);
+	}
+
+	static function mapBlockExpr(f:TExpr->TExpr, e:TBlockExpr):TBlockExpr {
 		return e.with(expr = f(e.expr));
 	}
 
-	static function processExpr(e1:TExpr):TExpr {
+	static function mapExpr(f:TExpr->TExpr, e1:TExpr):TExpr {
 		return switch (e1.kind) {
 			case TELiteral(_) | TEUseNamespace(_) | TELocal(_) | TEBuiltin(_) | TEDeclRef(_) | TEReturn(_, null) | TEBreak(_) | TEContinue(_) | TECondCompValue(_):
 				e1;
@@ -62,11 +76,7 @@ class Filters {
 				e1.with(kind = TEDelete(keyword, f(e)));
 
 			case TEBlock(block):
-				e1.with(
-					kind = TEBlock(block.with(
-						exprs = [for (e in block.exprs) processBlockExpr(e)]
-					))
-				);
+				e1.with(kind = TEBlock(mapBlock(f, block)));
 
 			case TEIf(e):
 				e1.with(
@@ -85,7 +95,12 @@ class Filters {
 					))
 				);
 
-			case TELocalFunction(f): e1;
+			case TELocalFunction(fun):
+				e1.with(
+					kind = TELocalFunction(fun.with(
+						fun = fun.fun.with(block = mapBlock(f, fun.fun.block))
+					))
+				);
 
 			case TEVectorDecl(v): e1;
 			case TEVars(kind, v): e1;
@@ -113,16 +128,16 @@ class Filters {
 		}
 	}
 
-	static function processClass(c:TClassDecl) {
+	static function processClass(f:TExpr->TExpr, c:TClassDecl) {
 		for (m in c.members) {
 			switch (m) {
-				case TMField(f):
-					switch (f.kind) {
-						case TFVar(v): processVars(v.vars);
-						case TFFun(f): processFunction(f.fun);
-						case TFGetter(f) | TFSetter(f): processFunction(f.fun);
+				case TMField(field):
+					switch (field.kind) {
+						case TFVar(v): processVars(f, v.vars);
+						case TFFun(field): processFunction(f, field.fun);
+						case TFGetter(field) | TFSetter(field): processFunction(f, field.fun);
 					}
-				case TMStaticInit(b): processBlock(b);
+				case TMStaticInit(b): processBlock(f, b);
 				case TMUseNamespace(_):
 				case TMCondCompBegin(_):
 				case TMCondCompEnd(_):
@@ -130,23 +145,29 @@ class Filters {
 		}
 	}
 
-	static function processVars(vars:Array<TVarFieldDecl>) {
+	static function processVars(f:TExpr->TExpr, vars:Array<TVarFieldDecl>) {
 		for (v in vars) {
 			if (v.init != null) {
-				v.init.expr = processExpr(v.init.expr);
+				v.init.expr = mapExpr(f, v.init.expr);
 			}
 		}
 	}
 
-	static function processFunction(f:TFunction) {
-		processBlock(f.block);
+	static function processFunction(f:TExpr->TExpr, fun:TFunction) {
+		processBlock(f, fun.block);
 	}
 
-	static function processDecl(decl:TDecl) {
+	static function processBlock(f:TExpr->TExpr, b:TBlock) {
+		for (i in 0...b.exprs.length) {
+			b.exprs[i].expr = f(b.exprs[i].expr);
+		}
+	}
+
+	static function processDecl(f:TExpr->TExpr, decl:TDecl) {
 		switch (decl) {
-			case TDClass(c): processClass(c);
-			case TDVar(v): processVars(v.vars);
-			case TDFunction(f): processFunction(f.fun);
+			case TDClass(c): processClass(f, c);
+			case TDVar(v): processVars(f, v.vars);
+			case TDFunction(fun): processFunction(f, fun.fun);
 			case TDInterface(_):
 			case TDNamespace(_):
 		}
@@ -154,9 +175,9 @@ class Filters {
 
 	public static function run(structure:Structure, modules:Array<TModule>) {
 		for (mod in modules) {
-			processDecl(mod.pack.decl);
+			processDecl(f2, mod.pack.decl);
 			for (decl in mod.privateDecls) {
-				processDecl(decl);
+				processDecl(f2, decl);
 			}
 		}
 	}
