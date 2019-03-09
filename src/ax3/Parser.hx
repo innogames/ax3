@@ -839,8 +839,10 @@ class Parser {
 				EVectorDecl(keyword, t, decl);
 			case _:
 				switch parseExpr(false) {
-					case ECall(e, args): ENew(keyword, e, args);
-					case e: ENew(keyword, e, null);
+					case ECall(e, args):
+						ENew(keyword, e, args);
+					case e:
+						ENew(keyword, e, null);
 				}
 		}
 	}

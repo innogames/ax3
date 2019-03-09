@@ -210,6 +210,7 @@ enum TExprKind {
 	TEBuiltin(syntax:Token, name:String);
 	TEDeclRef(path:DotPath, c:SDecl);
 	TECall(eobj:TExpr, args:TCallArgs);
+	TECast(c:TCast);
 	TEArrayDecl(a:TArrayDecl);
 	TEVectorDecl(v:TVectorDecl);
 	TEReturn(keyword:Token, e:Null<TExpr>);
@@ -244,6 +245,16 @@ enum TExprKind {
 	TEXmlAttrExpr(x:TXmlAttrExpr);
 	TEXmlDescend(x:TXmlDescend);
 	TEUseNamespace(ns:UseNamespace);
+}
+
+typedef TCast = {
+	var syntax:{
+		var openParen:Token;
+		var closeParen:Token;
+		var path:DotPath;
+	};
+	var c:SClassDecl;
+	var e:TExpr;
 }
 
 typedef TLocalFunction = {

@@ -804,16 +804,27 @@ class Typer {
 		var eobj = typeExpr(e);
 		var targs = typeCallArgs(args);
 
-		var type = switch eobj.kind {
-			case TELiteral(TLSuper(_)): // super(...) call
-				TTVoid;
+		var type;
+		switch eobj {
+			case {kind: TELiteral(TLSuper(_))}: // super(...) call
+				type = TTVoid;
+			case {type: TTAny | TTFunction}: // untyped call
+				type = TTAny;
+			case {type: TTFun(_, ret)}: // known function type call
+				type = ret;
+			case {kind: TEDeclRef(path, _), type: TTStatic(cls)}: // ClassName(expr) cast
+				var e = switch targs.args {
+					case [{expr: e, comma: null}]: e;
+					case _: throw "assert"; // should NOT happen
+				};
+				return mk(TECast({
+					syntax: {openParen: args.openParen, closeParen: args.closeParen, path: path},
+					c: cls,
+					e: e
+				}), TTInst(cls));
 			case _:
-				switch (eobj.type) {
-					case TTAny | TTFunction: TTAny;
-					case TTFun(_, ret): ret;
-					case TTStatic(cls): TTInst(cls); // ClassName(expr) cast (TODO: this should be TESafeCast expression)
-					case other: err("unknown callable type: " + other, exprPos(e)); TTAny; // TODO: super, builtins, etc.
-				}
+				err("unknown callable type: " + eobj.type, exprPos(e));
+				type = TTAny; // TODO: builtins, etc.
 		}
 
 		return mk(TECall(eobj, targs), type);

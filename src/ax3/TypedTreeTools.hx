@@ -18,6 +18,9 @@ class TypedTreeTools {
 			case TELiteral(_) | TEUseNamespace(_) | TELocal(_) | TEBuiltin(_) | TEDeclRef(_) | TEReturn(_, null) | TEBreak(_) | TEContinue(_) | TECondCompValue(_):
 				e1;
 
+			case TECast(c):
+				e1.with(kind = TECast(c.with(e = f(c.e))));
+
 			case TEParens(openParen, e, closeParen):
 				e1.with(kind = TEParens(openParen, f(e), closeParen));
 

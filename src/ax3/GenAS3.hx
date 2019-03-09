@@ -259,6 +259,7 @@ class GenAS3 extends PrinterBase {
 	function printExpr(e:TExpr) {
 		switch (e.kind) {
 			case TEParens(openParen, e, closeParen): printOpenParen(openParen); printExpr(e); printCloseParen(closeParen);
+			case TECast(c): printCast(c);
 			case TELocalFunction(f): printLocalFunction(f);
 			case TELiteral(l): printLiteral(l);
 			case TELocal(syntax, v): printTextWithTrivia(syntax.text, syntax);
@@ -301,6 +302,13 @@ class GenAS3 extends PrinterBase {
 			case TEXmlDescend(x): printXmlDescend(x);
 			case TEUseNamespace(ns): printUseNamespace(ns);
 		}
+	}
+
+	function printCast(c:TCast) {
+		printDotPath(c.syntax.path);
+		printOpenParen(c.syntax.openParen);
+		printExpr(c.e);
+		printCloseParen(c.syntax.closeParen);
 	}
 
 	function printLocalFunction(f:TLocalFunction) {

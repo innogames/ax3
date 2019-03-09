@@ -9,18 +9,18 @@ class Filters {
 
 	static function f2(e:TExpr):TExpr {
 		return switch (e.kind) {
-			case TEIf(i):
-				switch (i.econd.type) {
-					case TTBoolean:
-						e;
-					case _:
-						i = i.with(
-							econd = {kind: TELiteral(TLString(new Token(0, TkStringDouble, '"TODO"', [], []))), type: TTBoolean},
-							ethen = i.ethen,
-							eelse = i.eelse
-						);
-						e.with(kind = TEIf(i));
-				}
+			// case TEIf(i):
+			// 	switch (i.econd.type) {
+			// 		case TTBoolean:
+			// 			e;
+			// 		case _:
+			// 			i = i.with(
+			// 				econd = {kind: TELiteral(TLString(new Token(0, TkStringDouble, '"TODO"', [], []))), type: TTBoolean},
+			// 				ethen = i.ethen,
+			// 				eelse = i.eelse
+			// 			);
+			// 			e.with(kind = TEIf(i));
+			// 	}
 
 			case _:
 				mapExpr(f2, e);
