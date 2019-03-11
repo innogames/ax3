@@ -1122,15 +1122,23 @@ class Typer {
 						case {type: TTInt | TTUint | TTNumber}: getNumericInstanceFieldType(fieldToken, obj.type);
 						case {type: TTString}: getStringInstanceFieldType(fieldToken);
 						case {type: TTArray}: getArrayInstanceFieldType(fieldToken);
-						case {type: TTVector(t)}: TTAny; // TODO
+						case {type: TTVector(t)}: getVectorInstanceFieldType(fieldToken, t);
 						case {type: TTFunction | TTFun(_)}: TTAny; // TODO (.call, .apply)
-						case {type: TTRegExp}:  TTAny; // TODO
+						case {type: TTRegExp}: getRegExpInstanceFieldType(fieldToken);
 						case {type: TTXML | TTXMLList}: TTAny; // TODO
 						case {type: TTInst(cls)}: typeInstanceField(cls, fieldName);
 						case {type: TTStatic(cls)}: typeStaticField(cls, fieldName);
 					};
 		}
 		return mk(TEField({kind: TOExplicit(dot, obj), type: obj.type}, fieldName, fieldToken), type);
+	}
+
+	function getRegExpInstanceFieldType(field:Token):TType {
+		return switch field.text {
+			case "test": TTFun([TTString], TTBoolean);
+			case "exec": TTFun([TTString], TTObject);
+			case other: err('Unknown RegExp instance field: $other', field.pos); TTAny;
+		}
 	}
 
 	function getStringStaticFieldType(field:Token):TType {
@@ -1153,7 +1161,7 @@ class Typer {
 
 	function getArrayInstanceFieldType(field:Token):TType {
 		return switch field.text {
-			case "length": TTInt;
+			case "length": TTUint;
 			case "join": TTFun([TTAny], TTString);
 			case "push" | "unshift": TTFun([TTAny], TTUint);
 			case "pop" | "shift": TTFun([], TTAny);
@@ -1164,6 +1172,23 @@ class Typer {
 			case "sort": TTFun([TTAny], TTArray);
 			case "sortOn": TTFun([TTString, TTObject], TTArray);
 			case other: err('Unknown Array instance field $other', field.pos); TTAny;
+		}
+	}
+
+	function getVectorInstanceFieldType(field:Token, t:TType):TType {
+		return switch field.text {
+			case "length": TTUint;
+			case "push" | "unshift": TTFun([t], TTUint);
+			case "pop" | "shift": TTFun([], t);
+			case "indexOf" | "lastIndexOf": TTFun([t, TTInt], TTInt);
+			case "splice": TTFun([TTInt, TTUint, t], TTVector(t));
+			case "slice": TTFun([TTInt, TTInt], TTVector(t));
+			case "join": TTFun([TTString], TTString);
+			case "sort": TTFun([TTAny], TTVector(t));
+			case "concat": TTFun([TTVector(t)], TTVector(t));
+			case "reverse": TTFun([], TTVector(t));
+			case "forEach": TTFun([TTFunction, TTObject], TTVoid);
+			case other: err('Unknown Vector instance field $other', field.pos); TTAny;
 		}
 	}
 
