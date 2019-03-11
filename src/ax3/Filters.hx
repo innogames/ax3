@@ -29,6 +29,8 @@ class Filters {
 	}
 
 	static function coerceToBool(e:TExpr):TExpr {
+		return e; // TODO: disabled
+
 		function modify(e:TExpr):TExpr {
 			e = coerceToBool(e);
 			return switch (e.type) {
