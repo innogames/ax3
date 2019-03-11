@@ -4,6 +4,7 @@ import ax3.ParseTree;
 import ax3.ParseTree.*;
 import ax3.Structure;
 import ax3.TypedTree;
+import ax3.TypedTreeTools.mk;
 
 typedef Locals = Map<String, TVar>;
 
@@ -195,8 +196,6 @@ class Typer {
 	function resolveType(t:SyntaxType):TType {
 		return typeType(structure.buildTypeStructure(t, currentModule));
 	}
-
-	inline function mk(e:TExprKind, t:TType):TExpr return {kind: e, type: t};
 
 	function typeInterface(i:InterfaceDecl):TInterfaceDecl {
 		var extend:Null<TClassImplement> =

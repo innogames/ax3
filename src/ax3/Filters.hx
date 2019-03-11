@@ -1,32 +1,56 @@
 package ax3;
 
+import ax3.Token.Trivia;
 import ax3.TypedTree;
+import ax3.TypedTreeTools.mk;
 import ax3.TypedTreeTools.mapExpr;
 import ax3.Structure;
 using ax3.WithMacro;
 
 class Filters {
-
-	static function f2(e:TExpr):TExpr {
-		return switch (e.kind) {
-			// case TEIf(i):
-			// 	switch (i.econd.type) {
-			// 		case TTBoolean:
-			// 			e;
-			// 		case _:
-			// 			i = i.with(
-			// 				econd = {kind: TELiteral(TLString(new Token(0, TkStringDouble, '"TODO"', [], []))), type: TTBoolean},
-			// 				ethen = i.ethen,
-			// 				eelse = i.eelse
-			// 			);
-			// 			e.with(kind = TEIf(i));
-			// 	}
-
-			case _:
-				mapExpr(f2, e);
-		}
+	static function mkTokenWithSpaces(kind, text) {
+		return new Token(0, kind, text, [new Trivia(TrWhitespace, " ")], [new Trivia(TrWhitespace, " ")]);
 	}
 
+	static inline function mkEqualsEqualsToken() {
+		return mkTokenWithSpaces(TkEqualsEquals, "==");
+	}
+
+	static inline function mkNotEqualsToken() {
+		return mkTokenWithSpaces(TkExclamationEquals, "!=");
+	}
+
+	static inline function mkNullExpr(t = TTAny) {
+		return mk(TELiteral(TLNull(new Token(0, TkIdent, "null", [], []))), t);
+	}
+
+	static function coerceToBool(e:TExpr):TExpr {
+		return switch (e.kind) {
+			case TEIf(i):
+				var econd = mapExpr(coerceToBool, i.econd); // recurse into the condition expression
+				switch (econd.type) {
+					case TTBoolean:
+						// already a boolean - nothing to do
+					case TTInst(_) | TTFunction | TTFun(_):
+						// instances should be checked for != null
+						econd = mk(TEBinop(econd, OpNotEquals(mkNotEqualsToken()), mkNullExpr()), TTBoolean);
+					case _:
+						// something temporary
+						var comment = new Trivia(TrBlockComment, "/*TODO*/");
+						econd = mk(TELiteral(TLBool(new Token(0, TkIdent, "false", [comment], []))), TTBoolean);
+
+				}
+				e.with(kind = TEIf(i.with(
+					econd = econd,
+					// don't forget to recurse into then and else exprs
+					ethen = coerceToBool(i.ethen),
+					eelse = if (i.eelse == null) null else i.eelse.with(expr = coerceToBool(i.eelse.expr))
+				)));
+
+			case _:
+				mapExpr(coerceToBool, e);
+		}
+	}
 
 	static function processClass(f:TExpr->TExpr, c:TClassDecl) {
 		for (m in c.members) {
@@ -75,9 +99,9 @@ class Filters {
 
 	public static function run(structure:Structure, modules:Array<TModule>) {
 		for (mod in modules) {
-			processDecl(f2, mod.pack.decl);
+			processDecl(coerceToBool, mod.pack.decl);
 			for (decl in mod.privateDecls) {
-				processDecl(f2, decl);
+				processDecl(coerceToBool, decl);
 			}
 		}
 	}

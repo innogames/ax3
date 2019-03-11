@@ -4,6 +4,8 @@ import ax3.TypedTree;
 using ax3.WithMacro;
 
 class TypedTreeTools {
+	public static inline function mk(e:TExprKind, t:TType):TExpr return {kind: e, type: t};
+
 	public static function mapExpr(f:TExpr->TExpr, e1:TExpr):TExpr {
 		return switch (e1.kind) {
 			case TEVector(_) | TELiteral(_) | TEUseNamespace(_) | TELocal(_) | TEBuiltin(_) | TEDeclRef(_) | TEReturn(_, null) | TEBreak(_) | TEContinue(_) | TECondCompValue(_):
