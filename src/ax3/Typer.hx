@@ -1111,6 +1111,7 @@ class Typer {
 					TTObject;
 				case _:
 					switch (obj) {
+						case {kind: TEBuiltin(_, "Array")}: getArrayStaticFieldType(fieldToken);
 						case {kind: TEBuiltin(_, "Number")}: getNumericStaticFieldType(fieldToken, TTNumber);
 						case {kind: TEBuiltin(_, "int")}: getNumericStaticFieldType(fieldToken, TTInt);
 						case {kind: TEBuiltin(_, "uint")}: getNumericStaticFieldType(fieldToken, TTUint);
@@ -1135,6 +1136,17 @@ class Typer {
 		return switch field.text {
 			case "fromCharCode": TTFun([TTInt], TTString);
 			case other: err('Unknown static String field: $other', field.pos); TTAny;
+		}
+	}
+
+	function getArrayStaticFieldType(field:Token):TType {
+		return switch field.text {
+			case "NUMERIC": TTUint;
+			case "DESCENDING": TTUint;
+			case "CASEINSENSITIVE": TTUint;
+			case "UNIQUESORT": TTUint;
+			case "RETURNINDEXEDARRAY": TTUint;
+			case other: err('Unknown Array static field $other', field.pos); TTAny;
 		}
 	}
 
