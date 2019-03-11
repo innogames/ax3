@@ -5,6 +5,7 @@ import ax3.ParseTree.*;
 import ax3.Structure;
 import ax3.TypedTree;
 import ax3.TypedTreeTools.mk;
+import ax3.TypedTreeTools.skipParens;
 
 typedef Locals = Map<String, TVar>;
 
@@ -828,7 +829,7 @@ class Typer {
 		inline function mkDotPath(ident:Token):DotPath return {first: ident, rest: []};
 
 		var type;
-		switch eobj {
+		switch skipParens(eobj) {
 			case {kind: TELiteral(TLSuper(_))}: // super(...) call
 				type = TTVoid;
 
@@ -1110,7 +1111,7 @@ class Typer {
 				case "prototype":
 					TTObject;
 				case _:
-					switch (obj) {
+					switch skipParens(obj) {
 						case {kind: TEBuiltin(_, "Array")}: getArrayStaticFieldType(fieldToken);
 						case {kind: TEBuiltin(_, "Number")}: getNumericStaticFieldType(fieldToken, TTNumber);
 						case {kind: TEBuiltin(_, "int")}: getNumericStaticFieldType(fieldToken, TTInt);

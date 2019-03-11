@@ -6,6 +6,13 @@ using ax3.WithMacro;
 class TypedTreeTools {
 	public static inline function mk(e:TExprKind, t:TType):TExpr return {kind: e, type: t};
 
+	public static function skipParens(e:TExpr):TExpr {
+		return switch e.kind {
+			case TEParens(_, einner, _): einner;
+			case _: e;
+		};
+	}
+
 	public static function mapExpr(f:TExpr->TExpr, e1:TExpr):TExpr {
 		return switch (e1.kind) {
 			case TEVector(_) | TELiteral(_) | TEUseNamespace(_) | TELocal(_) | TEBuiltin(_) | TEDeclRef(_) | TEReturn(_, null) | TEBreak(_) | TEContinue(_) | TECondCompValue(_):
