@@ -1099,7 +1099,7 @@ class Typer {
 		}
 	}
 
-	function getTypedField(obj:TFieldObject, fieldToken:Token) {
+	function getTypedField(obj:TExpr, dot:Token, fieldToken:Token) {
 		var fieldName = fieldToken.text;
 		var type =
 			switch fieldName { // TODO: be smarter about this
@@ -1110,20 +1110,44 @@ class Typer {
 				case "prototype":
 					TTObject;
 				case _:
-					switch (obj.type) {
-						case TTAny | TTObject: TTAny; // untyped field access
-						case TTBuiltin | TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTClass: err('Attempting to get field on type ${obj.type.getName()}', fieldToken.pos); TTAny;
-						case TTString:  TTAny; // TODO
-						case TTArray:  TTAny; // TODO
-						case TTVector(t):  TTAny; // TODO
-						case TTFunction | TTFun(_):  TTAny; // TODO (.call, .apply)
-						case TTRegExp:  TTAny; // TODO
-						case TTXML | TTXMLList: TTAny; // TODO
-						case TTInst(cls): typeInstanceField(cls, fieldName);
-						case TTStatic(cls): typeStaticField(cls, fieldName);
+					switch (obj) {
+						case {kind: TEBuiltin(_, "Number")}: getNumericStaticFieldType(fieldToken, TTNumber);
+						case {kind: TEBuiltin(_, "int")}: getNumericStaticFieldType(fieldToken, TTInt);
+						case {kind: TEBuiltin(_, "uint")}: getNumericStaticFieldType(fieldToken, TTUint);
+						case {kind: TEBuiltin(_, "String")}:
+							switch fieldName {
+								case "fromCharCode": TTFun([TTInt], TTString);
+								case _: err('Unknown static String field: $fieldName', fieldToken.pos); TTAny;
+							}
+						case {type: TTAny | TTObject}: TTAny; // untyped field access
+						case {type: TTBuiltin | TTVoid | TTBoolean | TTClass}: err('Attempting to get field on type ${obj.type.getName()}', fieldToken.pos); TTAny;
+						case {type: TTInt | TTUint | TTNumber}: getNumericInstanceFieldType(fieldToken, obj.type);
+						case {type: TTString}:  TTAny; // TODO
+						case {type: TTArray}:  TTAny; // TODO
+						case {type: TTVector(t)}:  TTAny; // TODO
+						case {type: TTFunction | TTFun(_)}:  TTAny; // TODO (.call, .apply)
+						case {type: TTRegExp}:  TTAny; // TODO
+						case {type: TTXML | TTXMLList}: TTAny; // TODO
+						case {type: TTInst(cls)}: typeInstanceField(cls, fieldName);
+						case {type: TTStatic(cls)}: typeStaticField(cls, fieldName);
 					};
 		}
-		return mk(TEField(obj, fieldName, fieldToken), type);
+		return mk(TEField({kind: TOExplicit(dot, obj), type: obj.type}, fieldName, fieldToken), type);
+	}
+
+	function getNumericInstanceFieldType(field:Token, type:TType):TType {
+		return switch field.text {
+			case "toFixed": TTFun([TTUint], TTString);
+			case other: err('Unknown field $other on type ${type.getName()}', field.pos); TTAny;
+		}
+	}
+
+	function getNumericStaticFieldType(field:Token, type:TType):TType {
+		return switch field.text {
+			case "MIN_VALUE": type;
+			case "MAX_VALUE": type;
+			case other: err('Unknown field $other on type ${type.getName()}', field.pos); TTAny;
+		}
 	}
 
 	function typeField(eobj:Expr, dot:Token, name:Token):TExpr {
@@ -1165,7 +1189,7 @@ class Typer {
 					var eDeclRef = mkDeclRef(dotPath, decl);
 
 					return Lambda.fold(rest, function(f, expr) {
-						return getTypedField({kind: TOExplicit(f.dot, expr), type: expr.type}, f.token);
+						return getTypedField(expr, f.dot, f.token);
 					}, eDeclRef);
 				}
 		}
@@ -1174,11 +1198,7 @@ class Typer {
 		// can iterate over fields, but let's do it later :-)
 
 		var eobj = typeExpr(eobj);
-		var obj = {
-			type: eobj.type,
-			kind: TOExplicit(dot, eobj)
-		};
-		return getTypedField(obj, name);
+		return getTypedField(eobj, dot, name);
 	}
 
 	function typeInstanceField(cls:SClassDecl, fieldName:String):TType {
