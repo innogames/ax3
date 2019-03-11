@@ -1114,18 +1114,14 @@ class Typer {
 						case {kind: TEBuiltin(_, "Number")}: getNumericStaticFieldType(fieldToken, TTNumber);
 						case {kind: TEBuiltin(_, "int")}: getNumericStaticFieldType(fieldToken, TTInt);
 						case {kind: TEBuiltin(_, "uint")}: getNumericStaticFieldType(fieldToken, TTUint);
-						case {kind: TEBuiltin(_, "String")}:
-							switch fieldName {
-								case "fromCharCode": TTFun([TTInt], TTString);
-								case _: err('Unknown static String field: $fieldName', fieldToken.pos); TTAny;
-							}
+						case {kind: TEBuiltin(_, "String")}: getStringStaticFieldType(fieldToken);
 						case {type: TTAny | TTObject}: TTAny; // untyped field access
 						case {type: TTBuiltin | TTVoid | TTBoolean | TTClass}: err('Attempting to get field on type ${obj.type.getName()}', fieldToken.pos); TTAny;
 						case {type: TTInt | TTUint | TTNumber}: getNumericInstanceFieldType(fieldToken, obj.type);
-						case {type: TTString}:  TTAny; // TODO
-						case {type: TTArray}:  TTAny; // TODO
-						case {type: TTVector(t)}:  TTAny; // TODO
-						case {type: TTFunction | TTFun(_)}:  TTAny; // TODO (.call, .apply)
+						case {type: TTString}: getStringInstanceFieldType(fieldToken); // TODO
+						case {type: TTArray}: TTAny; // TODO
+						case {type: TTVector(t)}: TTAny; // TODO
+						case {type: TTFunction | TTFun(_)}: TTAny; // TODO (.call, .apply)
 						case {type: TTRegExp}:  TTAny; // TODO
 						case {type: TTXML | TTXMLList}: TTAny; // TODO
 						case {type: TTInst(cls)}: typeInstanceField(cls, fieldName);
@@ -1133,6 +1129,30 @@ class Typer {
 					};
 		}
 		return mk(TEField({kind: TOExplicit(dot, obj), type: obj.type}, fieldName, fieldToken), type);
+	}
+
+	function getStringStaticFieldType(field:Token):TType {
+		return switch field.text {
+			case "fromCharCode": TTFun([TTInt], TTString);
+			case other: err('Unknown static String field: $other', field.pos); TTAny;
+		}
+	}
+
+	function getStringInstanceFieldType(field:Token):TType {
+		return switch field.text {
+			case "length": TTInt;
+			case "substr" | "substring" | "slice": TTFun([TTNumber, TTNumber], TTString);
+			case "toLowerCase" | "toUpperCase" | "toLocaleLowerCase" | "toLocaleUpperCase": TTFun([], TTString);
+			case "indexOf" | "lastIndexOf": TTFun([TTString, TTNumber], TTInt);
+			case "split": TTFun([TTAny, TTNumber], TTArray);
+			case "charAt": TTFun([TTNumber], TTString);
+			case "charCodeAt": TTFun([TTNumber], TTNumber);
+			case "concat": TTFun([TTAny], TTString);
+			case "search": TTFun([TTAny], TTInt);
+			case "replace": TTFun([TTAny, TTObject], TTString);
+			case "match": TTFun([TTAny], TTArray);
+			case other: err('Unknown String instance field $other', field.pos); TTAny;
+		}
 	}
 
 	function getNumericInstanceFieldType(field:Token, type:TType):TType {
