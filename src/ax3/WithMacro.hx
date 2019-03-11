@@ -13,9 +13,9 @@ class WithMacro {
 
 		This provides an OCaml-like `with` syntax:
 		```haxe
-		object.with(field = 13)
+		object.with(a = 13, b = "hi")
 		// is the same as
-		{field: 13, otherField: object.otherField}
+		{a: 13, b: "hi", otherField: object.otherField}
 		```
 	**/
 	public static macro function with<T:{}>(object:ExprOf<T>, overrides:Array<Expr>):ExprOf<T> {
