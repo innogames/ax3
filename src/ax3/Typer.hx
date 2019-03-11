@@ -833,7 +833,11 @@ class Typer {
 			case {kind: TELiteral(TLSuper(_))}: // super(...) call
 				type = TTVoid;
 
-			case {type: TTAny | TTFunction}: // untyped call
+			case {type: TTAny}: // bad untyped call :-)
+				err("Untyped call", args.openParen.pos);
+				type = TTAny;
+
+			case {type: TTFunction}: // also untyped call, but inevitable
 				type = TTAny;
 
 			case {type: TTFun(_, ret)}: // known function type call
