@@ -813,25 +813,52 @@ class Typer {
 		var eobj = typeExpr(e);
 		var targs = typeCallArgs(args);
 
+		inline function mkCast(path, t) return {
+			var e = switch targs.args {
+				case [{expr: e, comma: null}]: e;
+				case _: throw "assert"; // should NOT happen
+			};
+			return mk(TECast({
+				syntax: {openParen: args.openParen, closeParen: args.closeParen, path: path},
+				type: t,
+				expr: e
+			}), t);
+		}
+
+		inline function mkDotPath(ident:Token):DotPath return {first: ident, rest: []};
+
 		var type;
 		switch eobj {
 			case {kind: TELiteral(TLSuper(_))}: // super(...) call
 				type = TTVoid;
+
 			case {type: TTAny | TTFunction}: // untyped call
 				type = TTAny;
+
 			case {type: TTFun(_, ret)}: // known function type call
 				type = ret;
+
+			case {kind: TEBuiltin(syntax, "int")}:
+				return mkCast(mkDotPath(syntax), TTInt);
+
+			case {kind: TEBuiltin(syntax, "uint")}:
+				return mkCast(mkDotPath(syntax), TTUint);
+
+			case {kind: TEBuiltin(syntax, "Boolean")}:
+				return mkCast(mkDotPath(syntax), TTBoolean);
+
+			case {kind: TEBuiltin(syntax, "String")}:
+				return mkCast(mkDotPath(syntax), TTString);
+
+			case {kind: TEBuiltin(syntax, "Number")}:
+				return mkCast(mkDotPath(syntax), TTNumber);
+
+			case {kind: TEBuiltin(syntax, "XML")}:
+				return mkCast(mkDotPath(syntax), TTXML);
+
 			case {kind: TEDeclRef(path, _), type: TTStatic(cls)}: // ClassName(expr) cast
-				var e = switch targs.args {
-					case [{expr: e, comma: null}]: e;
-					case _: throw "assert"; // should NOT happen
-				};
-				var t = TTInst(cls);
-				return mk(TECast({
-					syntax: {openParen: args.openParen, closeParen: args.closeParen, path: path},
-					type: t,
-					expr: e
-				}), t);
+				return mkCast(path, TTInst(cls));
+
 			case _:
 				err("unknown callable type: " + eobj.type, exprPos(e));
 				type = TTAny; // TODO: builtins, etc.
