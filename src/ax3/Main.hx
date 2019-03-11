@@ -47,7 +47,7 @@ class Main {
 			});
 			Utils.createDirectory(dir);
 
-			sys.io.File.saveContent(dir + "/" + mod.name + ".dump", TypedTreeDump.printTModule(mod, ""));
+			// sys.io.File.saveContent(dir + "/" + mod.name + ".dump", TypedTreeDump.printTModule(mod, ""));
 
 			var path = dir + "/" + mod.name + ".as";
 			sys.io.File.saveContent(path, out);

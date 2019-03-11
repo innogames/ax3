@@ -119,14 +119,18 @@ class Parser {
 		}
 	}
 
-	function parseMetadataNext(openBracket:Token):Metadata {
-		var name = expectKind(TkIdent);
-		var args = switch scanner.advance().kind {
+	function parseOptionalCallArgs():Null<CallArgs> {
+		return switch scanner.advance().kind {
 			case TkParenOpen:
 				parseCallArgsNext(scanner.consume());
 			case _:
 				null;
 		}
+	}
+
+	function parseMetadataNext(openBracket:Token):Metadata {
+		var name = expectKind(TkIdent);
+		var args = parseOptionalCallArgs();
 		var closeBracket = expectKind(TkBracketClose);
 		return {
 			openBracket: openBracket,
@@ -838,12 +842,34 @@ class Parser {
 				var decl = parseArrayDecl(expectKind(TkBracketOpen));
 				EVectorDecl(keyword, t, decl);
 			case _:
-				switch parseExpr(false) {
-					case ECall(e, args):
-						ENew(keyword, e, args);
-					case e:
-						ENew(keyword, e, null);
-				}
+				var newObject = parseNewObject();
+				var args = parseOptionalCallArgs();
+				parseExprNext(ENew(keyword, newObject, args), true);
+		}
+	}
+
+	// parse limited set of expressions for the `new` operator
+	function parseNewObject():Expr {
+		var token = scanner.advance();
+		return switch token.kind {
+			case TkParenOpen:
+				// anything in parens
+				EParens(scanner.consume(), parseExpr(true), expectKind(TkParenClose));
+			case TkIdent if (token.text == "Vector"):
+				// new Vector.<type>
+				EVector(parseVectorSyntax(scanner.consume()));
+			case TkIdent:
+				// some or some.Field
+				parseFieldsNext(EIdent(scanner.consume()));
+			case other:
+				throw "unexpected token: " + other;
+		}
+	}
+
+	function parseFieldsNext(first:Expr):Expr {
+		return switch scanner.advance().kind {
+			case TkDot: parseFieldsNext(EField(first, scanner.consume(), expectKind(TkIdent)));
+			case _: first;
 		}
 	}
 
