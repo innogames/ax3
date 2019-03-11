@@ -24,29 +24,38 @@ class Filters {
 		return mk(TELiteral(TLNull(new Token(0, TkIdent, "null", [], []))), t);
 	}
 
-	static function coerceToBool(e:TExpr):TExpr {
-		return switch (e.kind) {
-			case TEIf(i):
-				var econd = mapExpr(coerceToBool, i.econd); // recurse into the condition expression
-				switch (econd.type) {
-					case TTBoolean:
-						// already a boolean - nothing to do
-					case TTInst(_) | TTFunction | TTFun(_):
-						// instances should be checked for != null
-						econd = mk(TEBinop(econd, OpNotEquals(mkNotEqualsToken()), mkNullExpr()), TTBoolean);
-					case _:
-						// something temporary
-						var comment = new Trivia(TrBlockComment, "/*TODO*/");
-						econd = mk(TELiteral(TLBool(new Token(0, TkIdent, "false", [comment], []))), TTBoolean);
+	static function debugExpr(prefix = "", e:TExpr) {
+		trace(prefix, {var g = new GenAS3(); @:privateAccess g.printExpr(e); g.toString();}, e.type.getName());
+	}
 
-				}
+	static function coerceToBool(e:TExpr):TExpr {
+		function modify(e:TExpr):TExpr {
+			e = coerceToBool(e);
+			return switch (e.type) {
+				case TTBoolean:
+					// already a boolean - nothing to do
+					e;
+				case TTInst(_) | TTFunction | TTFun(_):
+					// instances should be checked for != null
+					mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), mkNullExpr()), TTBoolean);
+				case _:
+					// something temporary
+					var comment = new Trivia(TrBlockComment, "/*TODO*/");
+					return mk(TELiteral(TLBool(new Token(0, TkIdent, "false", [comment], []))), TTBoolean);
+			}
+			return e;
+		}
+
+		return switch (e.kind) {
+			case TEBinop(a, op = OpAnd(_) | OpOr(_), b):
+				e.with(kind = TEBinop(modify(a), op, modify(b)), type = TTBoolean);
+			case TEIf(i):
 				e.with(kind = TEIf(i.with(
-					econd = econd,
+					econd = modify(i.econd),
 					// don't forget to recurse into then and else exprs
 					ethen = coerceToBool(i.ethen),
 					eelse = if (i.eelse == null) null else i.eelse.with(expr = coerceToBool(i.eelse.expr))
 				)));
-
 			case _:
 				mapExpr(coerceToBool, e);
 		}
