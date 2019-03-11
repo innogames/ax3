@@ -1118,8 +1118,8 @@ class Typer {
 						case {type: TTAny | TTObject}: TTAny; // untyped field access
 						case {type: TTBuiltin | TTVoid | TTBoolean | TTClass}: err('Attempting to get field on type ${obj.type.getName()}', fieldToken.pos); TTAny;
 						case {type: TTInt | TTUint | TTNumber}: getNumericInstanceFieldType(fieldToken, obj.type);
-						case {type: TTString}: getStringInstanceFieldType(fieldToken); // TODO
-						case {type: TTArray}: TTAny; // TODO
+						case {type: TTString}: getStringInstanceFieldType(fieldToken);
+						case {type: TTArray}: getArrayInstanceFieldType(fieldToken);
 						case {type: TTVector(t)}: TTAny; // TODO
 						case {type: TTFunction | TTFun(_)}: TTAny; // TODO (.call, .apply)
 						case {type: TTRegExp}:  TTAny; // TODO
@@ -1135,6 +1135,22 @@ class Typer {
 		return switch field.text {
 			case "fromCharCode": TTFun([TTInt], TTString);
 			case other: err('Unknown static String field: $other', field.pos); TTAny;
+		}
+	}
+
+	function getArrayInstanceFieldType(field:Token):TType {
+		return switch field.text {
+			case "length": TTInt;
+			case "join": TTFun([TTAny], TTString);
+			case "push" | "unshift": TTFun([TTAny], TTUint);
+			case "pop" | "shift": TTFun([], TTAny);
+			case "concat": TTFun([TTArray], TTArray);
+			case "indexOf" | "lastIndexOf": TTFun([TTAny, TTInt], TTInt);
+			case "slice": TTFun([TTInt, TTInt], TTArray);
+			case "splice": TTFun([TTInt, TTUint, TTAny], TTArray);
+			case "sort": TTFun([TTAny], TTArray);
+			case "sortOn": TTFun([TTString, TTObject], TTArray);
+			case other: err('Unknown Array instance field $other', field.pos); TTAny;
 		}
 	}
 
