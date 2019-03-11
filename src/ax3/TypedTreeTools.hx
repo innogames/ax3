@@ -4,22 +4,6 @@ import ax3.TypedTree;
 using ax3.WithMacro;
 
 class TypedTreeTools {
-	static function mapArrayDecl(f:TExpr->TExpr, a:TArrayDecl):TArrayDecl {
-		return a.with(elements = [for (e in a.elements) e.with(expr = f(e.expr))]);
-	}
-
-	static function mapBlock(f:TExpr->TExpr, b:TBlock):TBlock {
-		return b.with(exprs = mapBlockExprs(f, b.exprs));
-	}
-
-	static function mapBlockExprs(f:TExpr->TExpr, exprs:Array<TBlockExpr>):Array<TBlockExpr> {
-		return [for (e in exprs) e.with(expr = f(e.expr))];
-	}
-
-	static function mapCallArgs(f:TExpr->TExpr, a:TCallArgs):TCallArgs {
-		return a.with(args = [for (arg in a.args) arg.with(expr = f(arg.expr))]);
-	}
-
 	public static function mapExpr(f:TExpr->TExpr, e1:TExpr):TExpr {
 		return switch (e1.kind) {
 			case TEVector(_) | TELiteral(_) | TEUseNamespace(_) | TELocal(_) | TEBuiltin(_) | TEDeclRef(_) | TEReturn(_, null) | TEBreak(_) | TEContinue(_) | TECondCompValue(_):
@@ -190,5 +174,21 @@ class TypedTreeTools {
 			case TEXmlDescend(x):
 				e1.with(kind = TEXmlDescend(x.with(eobj = f(x.eobj))));
 		}
+	}
+
+	static function mapArrayDecl(f:TExpr->TExpr, a:TArrayDecl):TArrayDecl {
+		return a.with(elements = [for (e in a.elements) e.with(expr = f(e.expr))]);
+	}
+
+	static function mapCallArgs(f:TExpr->TExpr, a:TCallArgs):TCallArgs {
+		return a.with(args = [for (arg in a.args) arg.with(expr = f(arg.expr))]);
+	}
+
+	static function mapBlock(f:TExpr->TExpr, b:TBlock):TBlock {
+		return b.with(exprs = mapBlockExprs(f, b.exprs));
+	}
+
+	static function mapBlockExprs(f:TExpr->TExpr, exprs:Array<TBlockExpr>):Array<TBlockExpr> {
+		return [for (e in exprs) e.with(expr = f(e.expr))];
 	}
 }
