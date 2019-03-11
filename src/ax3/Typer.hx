@@ -674,7 +674,17 @@ class Typer {
 	function typeBinop(a:Expr, op:Binop, b:Expr):TExpr {
 		var a = typeExpr(a);
 		var b = typeExpr(b);
-		var type = TTInt;
+		var type = switch (op) {
+			case OpEquals(_) | OpNotEquals(_) | OpStrictEquals(_) | OpNotStrictEquals(_): TTBoolean;
+			case OpAdd(_) | OpSub(_) | OpDiv(_) | OpMul(_) | OpMod(_): a.type;
+			case OpAssignAdd(_) | OpAssignSub(_) | OpAssignMul(_) | OpAssignDiv(_) | OpAssignMod(_): a.type;
+			case OpAssignBitAnd(_) | OpAssignBitOr(_) | OpAssignBitXor(_): a.type;
+			case OpAssignShl(_) | OpAssignShr(_) | OpAssignUshr(_) | OpAssign(_): a.type;
+			case OpAssignAnd(_) | OpAssignOr(_): a.type;
+			case OpGt(_) | OpGte(_) | OpLt(_) | OpLte(_) | OpIn(_): TTBoolean;
+			case OpAnd(_) | OpOr(_) | OpShl(_) | OpShr(_) | OpUshr(_): a.type;
+			case OpBitAnd(_) | OpBitOr(_) | OpBitXor(_): a.type;
+		}
 		return mk(TEBinop(a, op, b), type);
 	}
 
