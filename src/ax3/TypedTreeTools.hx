@@ -43,39 +43,31 @@ class TypedTreeTools {
 				e1.with(kind = TEBlock(mapBlock(f, block)));
 
 			case TEIf(e):
-				e1.with(
-					kind = TEIf(e.with(
-						econd = f(e.econd),
-						ethen = f(e.ethen),
-						eelse = if (e.eelse == null) null else e.eelse.with(expr = f(e.eelse.expr))
-					))
-				);
+				e1.with(kind = TEIf(e.with(
+					econd = f(e.econd),
+					ethen = f(e.ethen),
+					eelse = if (e.eelse == null) null else e.eelse.with(expr = f(e.eelse.expr))
+				)));
 
 			case TETry(t):
-				e1.with(
-					kind = TETry(t.with(
-						expr = f(t.expr),
-						catches = [for (c in t.catches) c.with(expr = f(c.expr))]
-					))
-				);
+				e1.with(kind = TETry(t.with(
+					expr = f(t.expr),
+					catches = [for (c in t.catches) c.with(expr = f(c.expr))]
+				)));
 
 			case TELocalFunction(fun):
-				e1.with(
-					kind = TELocalFunction(fun.with(
-						fun = fun.fun.with(block = mapBlock(f, fun.fun.block))
-					))
-				);
+				e1.with(kind = TELocalFunction(fun.with(
+					fun = fun.fun.with(block = mapBlock(f, fun.fun.block))
+				)));
 
 			case TEVectorDecl(v):
 				e1.with(kind = TEVectorDecl(v.with(elements = mapArrayDecl(f, v.elements))));
 
 			case TEArrayAccess(a):
-				e1.with(kind =
-					TEArrayAccess(a.with(
-						eobj = f(a.eobj),
-						eindex = f(a.eindex)
-					))
-				);
+				e1.with(kind = TEArrayAccess(a.with(
+					eobj = f(a.eobj),
+					eindex = f(a.eindex)
+				)));
 
 			case TEVars(kind, vars):
 				e1.with(kind = TEVars(kind, [
