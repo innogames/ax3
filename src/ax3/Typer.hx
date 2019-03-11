@@ -826,11 +826,12 @@ class Typer {
 					case [{expr: e, comma: null}]: e;
 					case _: throw "assert"; // should NOT happen
 				};
+				var t = TTInst(cls);
 				return mk(TECast({
 					syntax: {openParen: args.openParen, closeParen: args.closeParen, path: path},
-					c: cls,
-					e: e
-				}), TTInst(cls));
+					type: t,
+					expr: e
+				}), t);
 			case _:
 				err("unknown callable type: " + eobj.type, exprPos(e));
 				type = TTAny; // TODO: builtins, etc.

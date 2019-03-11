@@ -253,8 +253,8 @@ typedef TCast = {
 		var closeParen:Token;
 		var path:DotPath;
 	};
-	var c:SClassDecl;
-	var e:TExpr;
+	var expr:TExpr;
+	var type:TType;
 }
 
 typedef TLocalFunction = {

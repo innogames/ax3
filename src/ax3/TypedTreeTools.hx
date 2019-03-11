@@ -12,7 +12,7 @@ class TypedTreeTools {
 				e1;
 
 			case TECast(c):
-				e1.with(kind = TECast(c.with(e = f(c.e))));
+				e1.with(kind = TECast(c.with(expr = f(c.expr))));
 
 			case TEParens(openParen, e, closeParen):
 				e1.with(kind = TEParens(openParen, f(e), closeParen));

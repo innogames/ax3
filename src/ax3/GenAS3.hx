@@ -307,7 +307,7 @@ class GenAS3 extends PrinterBase {
 	function printCast(c:TCast) {
 		printDotPath(c.syntax.path);
 		printOpenParen(c.syntax.openParen);
-		printExpr(c.e);
+		printExpr(c.expr);
 		printCloseParen(c.syntax.closeParen);
 	}
 
