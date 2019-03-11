@@ -241,6 +241,7 @@ enum TExprKind {
 	TENew(keyword:Token, eclass:TExpr, args:Null<TCallArgs>);
 	TECondCompValue(v:TCondCompVar);
 	TECondCompBlock(v:TCondCompVar, expr:TExpr);
+	TEXmlChild(x:TXmlChild);
 	TEXmlAttr(x:TXmlAttr);
 	TEXmlAttrExpr(x:TXmlAttrExpr);
 	TEXmlDescend(x:TXmlDescend);
@@ -272,6 +273,14 @@ typedef TXmlDescend = {
 	var name:String;
 }
 
+typedef TXmlChild = {
+	var syntax:{
+		var dot:Token;
+		var name:Token;
+	};
+	var eobj:TExpr;
+	var name:String;
+}
 typedef TXmlAttr = {
 	var syntax:{
 		var dot:Token;

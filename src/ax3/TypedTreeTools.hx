@@ -166,6 +166,9 @@ class TypedTreeTools {
 			case TEXmlAttr(x):
 				e1.with(kind = TEXmlAttr(x.with(eobj = f(x.eobj))));
 
+			case TEXmlChild(x):
+				e1.with(kind = TEXmlChild(x.with(eobj = f(x.eobj))));
+
 			case TEXmlAttrExpr(x):
 				e1.with(kind = TEXmlAttrExpr(x.with(
 					eobj = f(x.eobj),

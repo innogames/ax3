@@ -1105,6 +1105,10 @@ class Typer {
 		}
 	}
 
+	inline function mkExplicitFieldAccess(obj:TExpr, dot:Token, fieldToken:Token, type:TType):TExpr {
+		return mk(TEField({kind: TOExplicit(dot, obj), type: obj.type}, fieldToken.text, fieldToken), type);
+	}
+
 	function getTypedField(obj:TExpr, dot:Token, fieldToken:Token) {
 		var fieldName = fieldToken.text;
 		var type =
@@ -1130,12 +1134,55 @@ class Typer {
 						case {type: TTVector(t)}: getVectorInstanceFieldType(fieldToken, t);
 						case {type: TTFunction | TTFun(_)}: getFunctionInstanceFieldType(fieldToken);
 						case {type: TTRegExp}: getRegExpInstanceFieldType(fieldToken);
-						case {type: TTXML | TTXMLList}: TTAny; // TODO
+						case {type: TTXML}:
+							return typeXMLFieldAccess(obj, dot, fieldToken);
+						case {type: TTXMLList}:
+							return typeXMLListFieldAccess(obj, dot, fieldToken);
 						case {type: TTInst(cls)}: typeInstanceField(cls, fieldName);
 						case {type: TTStatic(cls)}: typeStaticField(cls, fieldName);
 					};
 		}
-		return mk(TEField({kind: TOExplicit(dot, obj), type: obj.type}, fieldName, fieldToken), type);
+		return mkExplicitFieldAccess(obj, dot, fieldToken, type);
+	}
+
+	function typeXMLFieldAccess(xml:TExpr, dot:Token, field:Token):TExpr {
+		var fieldType = switch field.text {
+			case "addNamespace": TTFun([TTObject], TTXML);
+			case "appendChild": TTFun([TTObject], TTXML);
+			case "attribute": TTFun([TTAny], TTXMLList);
+			case "attributes": TTFun([], TTXMLList);
+			case "child": TTFun([TTObject], TTXMLList);
+			case "childIndex": TTFun([], TTInt);
+			case "children": TTFun([], TTXMLList);
+			case "comments": TTFun([], TTXMLList);
+			case "contains": TTFun([TTXML], TTBoolean);
+			case "copy": TTFun([], TTXML);
+			case "descendants": TTFun([TTObject], TTXMLList);
+			case "elements": TTFun([TTObject], TTXMLList);
+			case "length": TTFun([], TTInt);
+			case "toXMLString": TTFun([], TTString);
+			case _: null;
+		}
+		if (fieldType != null) {
+			return mkExplicitFieldAccess(xml, dot, field, TTFun([TTObject], TTXML));
+		} else {
+			err('TODO XML instance field: ${field.text} assumed to be a child', field.pos);
+			return mk(TEXmlChild({syntax: {dot: dot, name: field}, eobj: xml, name: field.text}), TTXMLList);
+		}
+	}
+
+	function typeXMLListFieldAccess(xml:TExpr, dot:Token, field:Token):TExpr {
+		var fieldType = switch field.text {
+			case "attribute": TTFun([], TTString);
+			case "toXMLString": TTFun([], TTString);
+			case _: null;
+		}
+		if (fieldType != null) {
+			return mkExplicitFieldAccess(xml, dot, field, TTFun([TTObject], TTXML));
+		} else {
+			err('TODO XMLList instance field: ${field.text} assumed to be a child', field.pos);
+			return mk(TEXmlChild({syntax: {dot: dot, name: field}, eobj: xml, name: field.text}), TTXMLList);
+		}
 	}
 
 	function getFunctionInstanceFieldType(field:Token):TType {

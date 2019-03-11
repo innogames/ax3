@@ -297,6 +297,7 @@ class GenAS3 extends PrinterBase {
 			case TENew(keyword, eclass, args): printNew(keyword, eclass, args);
 			case TECondCompValue(v): printCondCompVar(v);
 			case TECondCompBlock(v, expr): printCondCompVar(v); printExpr(expr);
+			case TEXmlChild(x): printXmlChild(x);
 			case TEXmlAttr(x): printXmlAttr(x);
 			case TEXmlAttrExpr(x): printXmlAttrExpr(x);
 			case TEXmlDescend(x): printXmlDescend(x);
@@ -321,6 +322,12 @@ class GenAS3 extends PrinterBase {
 	function printXmlDescend(x:TXmlDescend) {
 		printExpr(x.eobj);
 		printTextWithTrivia("..", x.syntax.dotDot);
+		printTextWithTrivia(x.name, x.syntax.name);
+	}
+
+	function printXmlChild(x:TXmlChild) {
+		printExpr(x.eobj);
+		printDot(x.syntax.dot);
 		printTextWithTrivia(x.name, x.syntax.name);
 	}
 
