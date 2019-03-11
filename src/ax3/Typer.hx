@@ -862,7 +862,7 @@ class Typer {
 
 			case _:
 				err("unknown callable type: " + eobj.type, exprPos(e));
-				type = TTAny; // TODO: builtins, etc.
+				type = TTAny;
 		}
 
 		return mk(TECall(eobj, targs), type);
