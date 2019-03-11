@@ -992,6 +992,11 @@ class Typer {
 				if (currentClass != null) {
 					var currentClass:SClassDecl = currentClass; // TODO: this is here only to please the null-safety checker
 					function loop(c:SClassDecl):Null<TExpr> {
+						if (ident == c.name) {
+							// class constructor is never resolved like that, so this is definitely a declaration reference
+							return mkDeclRef({first: i, rest: []}, {name: ident, kind: SClass(c)});
+						}
+
 						var field = c.fields.get(ident);
 						if (field != null) {
 							// found a field
@@ -1123,7 +1128,7 @@ class Typer {
 						case {type: TTString}: getStringInstanceFieldType(fieldToken);
 						case {type: TTArray}: getArrayInstanceFieldType(fieldToken);
 						case {type: TTVector(t)}: getVectorInstanceFieldType(fieldToken, t);
-						case {type: TTFunction | TTFun(_)}: TTAny; // TODO (.call, .apply)
+						case {type: TTFunction | TTFun(_)}: getFunctionInstanceFieldType(fieldToken);
 						case {type: TTRegExp}: getRegExpInstanceFieldType(fieldToken);
 						case {type: TTXML | TTXMLList}: TTAny; // TODO
 						case {type: TTInst(cls)}: typeInstanceField(cls, fieldName);
@@ -1131,6 +1136,13 @@ class Typer {
 					};
 		}
 		return mk(TEField({kind: TOExplicit(dot, obj), type: obj.type}, fieldName, fieldToken), type);
+	}
+
+	function getFunctionInstanceFieldType(field:Token):TType {
+		return switch field.text {
+			case "call" | "apply": TTFunction;
+			case other: err('Unknown Function instance field: $other', field.pos); TTAny;
+		}
 	}
 
 	function getRegExpInstanceFieldType(field:Token):TType {
