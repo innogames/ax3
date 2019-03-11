@@ -9,11 +9,15 @@ class TypedTreeTools {
 	}
 
 	static function mapBlock(f:TExpr->TExpr, b:TBlock):TBlock {
-		return b.with(exprs = [for (e in b.exprs) e.with(expr = f(e.expr))]);
+		return b.with(exprs = mapBlockExprs(f, b.exprs));
 	}
 
-	static function mapBlockExpr(f:TExpr->TExpr, e:TBlockExpr):TBlockExpr {
-		return e.with(expr = f(e.expr));
+	static function mapBlockExprs(f:TExpr->TExpr, exprs:Array<TBlockExpr>):Array<TBlockExpr> {
+		return [for (e in exprs) e.with(expr = f(e.expr))];
+	}
+
+	static function mapCallArgs(f:TExpr->TExpr, a:TCallArgs):TCallArgs {
+		return a.with(args = [for (arg in a.args) arg.with(expr = f(arg.expr))]);
 	}
 
 	public static function mapExpr(f:TExpr->TExpr, e1:TExpr):TExpr {
@@ -37,9 +41,7 @@ class TypedTreeTools {
 				e1.with(kind = TEField(obj, fieldName, fieldToken));
 
 			case TECall(eobj, args):
-				var eobj = f(eobj);
-				var args = args.with(args = [for (arg in args.args) arg.with(expr = f(arg.expr))]);
-				e1.with(kind = TECall(eobj, args));
+				e1.with(kind = TECall(f(eobj), mapCallArgs(f, args)));
 
 			case TEArrayDecl(a):
 				e1.with(kind = TEArrayDecl(mapArrayDecl(f, a)));
@@ -98,7 +100,6 @@ class TypedTreeTools {
 					}
 				]));
 
-
 			case TEObjectDecl(o):
 				e1.with(kind = TEObjectDecl(o.with(
 					fields = [for (field in o.fields) field.with(expr = f(field.expr))]
@@ -110,7 +111,6 @@ class TypedTreeTools {
 					ethen = f(t.ethen),
 					eelse = f(t.eelse)
 				)));
-
 
 			case TEWhile(w):
 				e1.with(kind = TEWhile(w.with(
@@ -132,9 +132,17 @@ class TypedTreeTools {
 					body = f(l.body)
 				)));
 
-			case TEForIn(f): e1;
+			case TEForIn(l):
+				e1.with(kind = TEForIn(l.with(
+					iter = l.iter.with(eit = f(l.iter.eit), eobj = f(l.iter.eobj)),
+					body = f(l.body)
+				)));
 
-			case TEForEach(f): e1;
+			case TEForEach(l):
+				e1.with(kind = TEForEach(l.with(
+					iter = l.iter.with(eit = f(l.iter.eit), eobj = f(l.iter.eobj)),
+					body = f(l.body)
+				)));
 
 			case TEBinop(a, op, b):
 				e1.with(kind = TEBinop(f(a), op, f(b)));
@@ -148,21 +156,39 @@ class TypedTreeTools {
 			case TEComma(a, comma, b):
 				e1.with(kind = TEComma(f(a), comma, f(b)));
 
-			case TEIs(e, keyword, etype): e1;
+			case TEIs(e, keyword, etype):
+				e1.with(kind = TEIs(f(e), keyword, f(etype)));
 
-			case TEAs(e, keyword, type): e1;
+			case TEAs(e, keyword, type):
+				e1.with(kind = TEAs(f(e), keyword, type));
 
-			case TESwitch(s): e1;
+			case TESwitch(s):
+				e1.with(kind = TESwitch(s.with(
+					subj = f(s.subj),
+					cases = [
+						for (c in s.cases)
+							c.with(value = f(c.value), body = mapBlockExprs(f, c.body))
+					],
+					def = if (s.def == null) null else s.def.with(body = mapBlockExprs(f, s.def.body))
+				)));
 
-			case TENew(keyword, eclass, args): e1;
+			case TENew(keyword, eclass, args):
+				e1.with(kind = TENew(keyword, f(eclass), if (args == null) null else mapCallArgs(f, args)));
 
-			case TECondCompBlock(v, expr): e1;
+			case TECondCompBlock(v, expr):
+				e1.with(kind = TECondCompBlock(v, f(expr)));
 
-			case TEXmlAttr(x): e1;
+			case TEXmlAttr(x):
+				e1.with(kind = TEXmlAttr(x.with(eobj = f(x.eobj))));
 
-			case TEXmlAttrExpr(x): e1;
+			case TEXmlAttrExpr(x):
+				e1.with(kind = TEXmlAttrExpr(x.with(
+					eobj = f(x.eobj),
+					eattr = f(x.eattr)
+				)));
 
-			case TEXmlDescend(x): e1;
+			case TEXmlDescend(x):
+				e1.with(kind = TEXmlDescend(x.with(eobj = f(x.eobj))));
 		}
 	}
 }
