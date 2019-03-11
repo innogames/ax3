@@ -8,6 +8,16 @@ using haxe.macro.Tools;
 
 @:dce
 class WithMacro {
+	/**
+		Return a copy of a structure, replacing given fields.
+
+		This provides an OCaml-like `with` syntax:
+		```haxe
+		object.with(field = 13)
+		// is the same as
+		{field: 13, otherField: object.otherField}
+		```
+	**/
 	public static macro function with<T:{}>(object:ExprOf<T>, overrides:Array<Expr>):ExprOf<T> {
 		// process given object expression and get its type
 		var type = Context.typeof(object);

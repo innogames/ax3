@@ -4,6 +4,9 @@ import ax3.TypedTree;
 using ax3.WithMacro;
 
 class TypedTreeTools {
+	static function mapArrayDecl(f:TExpr->TExpr, a:TArrayDecl):TArrayDecl {
+		return a.with(elements = [for (e in a.elements) e.with(expr = f(e.expr))]);
+	}
 
 	static function mapBlock(f:TExpr->TExpr, b:TBlock):TBlock {
 		return b.with(exprs = [for (e in b.exprs) e.with(expr = f(e.expr))]);
@@ -15,7 +18,7 @@ class TypedTreeTools {
 
 	public static function mapExpr(f:TExpr->TExpr, e1:TExpr):TExpr {
 		return switch (e1.kind) {
-			case TELiteral(_) | TEUseNamespace(_) | TELocal(_) | TEBuiltin(_) | TEDeclRef(_) | TEReturn(_, null) | TEBreak(_) | TEContinue(_) | TECondCompValue(_):
+			case TEVector(_) | TELiteral(_) | TEUseNamespace(_) | TELocal(_) | TEBuiltin(_) | TEDeclRef(_) | TEReturn(_, null) | TEBreak(_) | TEContinue(_) | TECondCompValue(_):
 				e1;
 
 			case TECast(c):
@@ -39,14 +42,7 @@ class TypedTreeTools {
 				e1.with(kind = TECall(eobj, args));
 
 			case TEArrayDecl(a):
-				e1.with(
-					kind = TEArrayDecl(a.with(
-						elements = [
-							for (e in a.elements)
-								e.with(expr = f(e.expr))
-						]
-					))
-				);
+				e1.with(kind = TEArrayDecl(mapArrayDecl(f, a)));
 
 			case TEReturn(keyword, e):
 				e1.with(kind = TEReturn(keyword, f(e)));
@@ -84,28 +80,88 @@ class TypedTreeTools {
 					))
 				);
 
-			case TEVectorDecl(v): e1;
-			case TEVars(kind, v): e1;
-			case TEObjectDecl(o): e1;
-			case TEArrayAccess(a): e1;
-			case TEVector(syntax, type): e1;
-			case TETernary(e): e1;
-			case TEWhile(w): e1;
-			case TEDoWhile(w): e1;
-			case TEFor(f): e1;
+			case TEVectorDecl(v):
+				e1.with(kind = TEVectorDecl(v.with(elements = mapArrayDecl(f, v.elements))));
+
+			case TEArrayAccess(a):
+				e1.with(kind =
+					TEArrayAccess(a.with(
+						eobj = f(a.eobj),
+						eindex = f(a.eindex)
+					))
+				);
+
+			case TEVars(kind, vars):
+				e1.with(kind = TEVars(kind, [
+					for (v in vars) {
+						if (v.init == null) v else v.with(init = v.init.with(expr = f(v.init.expr)));
+					}
+				]));
+
+
+			case TEObjectDecl(o):
+				e1.with(kind = TEObjectDecl(o.with(
+					fields = [for (field in o.fields) field.with(expr = f(field.expr))]
+				)));
+
+			case TETernary(t):
+				e1.with(kind = TETernary(t.with(
+					econd = f(t.econd),
+					ethen = f(t.ethen),
+					eelse = f(t.eelse)
+				)));
+
+
+			case TEWhile(w):
+				e1.with(kind = TEWhile(w.with(
+					cond = f(w.cond),
+					body = f(w.body)
+				)));
+
+			case TEDoWhile(w):
+				e1.with(kind = TEDoWhile(w.with(
+					body = f(w.body),
+					cond = f(w.cond)
+				)));
+
+			case TEFor(l):
+				e1.with(kind = TEFor(l.with(
+					einit = if (l.einit == null) null else f(l.einit),
+					econd = if (l.econd == null) null else f(l.econd),
+					eincr = if (l.eincr == null) null else f(l.eincr),
+					body = f(l.body)
+				)));
+
 			case TEForIn(f): e1;
+
 			case TEForEach(f): e1;
-			case TEBinop(a, op, b): e1;
-			case TEPreUnop(op, e): e1.with(kind = TEPreUnop(op, f(e)));
-			case TEPostUnop(e, op): e1.with(kind = TEPostUnop(f(e), op));
-			case TEComma(a, comma, b): e1.with(kind = TEComma(f(a), comma, f(b)));
+
+			case TEBinop(a, op, b):
+				e1.with(kind = TEBinop(f(a), op, f(b)));
+
+			case TEPreUnop(op, e):
+				e1.with(kind = TEPreUnop(op, f(e)));
+
+			case TEPostUnop(e, op):
+				e1.with(kind = TEPostUnop(f(e), op));
+
+			case TEComma(a, comma, b):
+				e1.with(kind = TEComma(f(a), comma, f(b)));
+
 			case TEIs(e, keyword, etype): e1;
+
 			case TEAs(e, keyword, type): e1;
+
 			case TESwitch(s): e1;
+
 			case TENew(keyword, eclass, args): e1;
+
 			case TECondCompBlock(v, expr): e1;
+
 			case TEXmlAttr(x): e1;
+
 			case TEXmlAttrExpr(x): e1;
+
 			case TEXmlDescend(x): e1;
 		}
 	}
