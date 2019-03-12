@@ -1,10 +1,24 @@
--lib hxnodejs
 -cp src
--main ax3.Main
 -lib format
--js main.js
-# --macro nullSafety("ax3")
 -D no-copt
--debug
--cmd node main.js config-foe.json
+
+# -debug
+-D analyzer-optimize
+
+# --macro nullSafety("ax3")
+
+-main ax3.Main
+# --run ax3.Main
+
+# -cpp cpp_out
+# -D hxcpp_smart_strings
+# -D HXCPP_GC_GENERATIONAL
+
+-lib hxnodejs
+-cp src-nodejs-zip
+-js main.js
+
+# -cmd node main.js config-foe.json
 # -cmd node main.js config-local.json
+# -cmd cpp_out\Main.exe config-foe.json
+# -cmd cpp_out\Main.exe config-local.json
