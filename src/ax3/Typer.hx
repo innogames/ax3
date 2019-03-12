@@ -834,7 +834,7 @@ class Typer {
 				type = TTVoid;
 
 			case {type: TTAny}: // bad untyped call :-)
-				err("Untyped call", args.openParen.pos);
+				// err("Untyped call", args.openParen.pos);
 				type = TTAny;
 
 			case {type: TTFunction}: // also untyped call, but inevitable
@@ -902,17 +902,19 @@ class Typer {
 		var e = typeExpr(e);
 		var eindex = typeExpr(eindex);
 		var type = switch (e.type) {
-			case TTVector(t): t;
+			case TTVector(t):
+				t;
 			case TTArray:
 				switch (eindex.type) {
 					case TTNumber | TTInt | TTUint:
 					case _:
-						err("Array access with non-numeric index", openBracket.pos);
+						// err("Array access with non-numeric index", openBracket.pos);
 				}
 				TTAny;
-			case TTInst({name: "Dictionary"}): TTAny;
+			case TTObject | TTInst({name: "Dictionary"}):
+				TTAny;
 			case _:
-				err("Untyped array access", openBracket.pos);
+				// err("Untyped array access", openBracket.pos);
 				TTAny;
 		};
 		return mk(TEArrayAccess({
@@ -1180,7 +1182,7 @@ class Typer {
 		if (fieldType != null) {
 			return mkExplicitFieldAccess(xml, dot, field, TTFun([TTObject], TTXML));
 		} else {
-			err('TODO XML instance field: ${field.text} assumed to be a child', field.pos);
+			// err('TODO XML instance field: ${field.text} assumed to be a child', field.pos);
 			return mk(TEXmlChild({syntax: {dot: dot, name: field}, eobj: xml, name: field.text}), TTXMLList);
 		}
 	}
@@ -1194,7 +1196,7 @@ class Typer {
 		if (fieldType != null) {
 			return mkExplicitFieldAccess(xml, dot, field, TTFun([TTObject], TTXML));
 		} else {
-			err('TODO XMLList instance field: ${field.text} assumed to be a child', field.pos);
+			// err('TODO XMLList instance field: ${field.text} assumed to be a child', field.pos);
 			return mk(TEXmlChild({syntax: {dot: dot, name: field}, eobj: xml, name: field.text}), TTXMLList);
 		}
 	}
