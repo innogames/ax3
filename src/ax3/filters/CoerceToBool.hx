@@ -33,14 +33,13 @@ class CoerceToBool {
 
 			case TECall(obj, args):
 				switch (obj.type) {
-					case TTFun(argTypes, _):
+					case TTFun(argTypes, _, rest):
 						var newArgs = [];
 						for (i in 0...args.args.length) {
 							var arg = args.args[i];
 							var argType =
 								if (i >= argTypes.length) {
-									trace("invalid call arg count, meh");
-									TTAny;
+									if (!rest) throw "invalid call arg count: " + debugExpr(e) else TTAny;
 								} else {
 									argTypes[i];
 								};

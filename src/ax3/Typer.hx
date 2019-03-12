@@ -948,7 +948,14 @@ class Typer {
 	}
 
 	function getTypeOfFunctionDecl(f:SFunDecl):TType {
-		return TTFun([for (a in f.args) typeType(a.type)], typeType(f.ret));
+		var args = [], rest = false;
+		for (a in f.args) {
+			switch (a.kind) {
+				case SArgNormal(_): args.push(typeType(a.type));
+				case SArgRest(_): rest = true;
+			}
+		}
+		return TTFun(args, typeType(f.ret), rest);
 	}
 
 	function mkDeclRef(path:DotPath, decl:SDecl):TExpr {
@@ -980,7 +987,7 @@ class Typer {
 			case "null": mk(TELiteral(TLNull(i)), TTAny);
 			case "undefined": mk(TELiteral(TLUndefined(i)), TTAny);
 			case "arguments": mk(TEBuiltin(i, "arguments"), TTBuiltin);
-			case "trace": mk(TEBuiltin(i, "trace"), TTFunction);
+			case "trace": mk(TEBuiltin(i, "trace"), TTFun([], TTVoid, true));
 			case "int": mk(TEBuiltin(i, "int"), TTBuiltin);
 			case "uint": mk(TEBuiltin(i, "int"), TTBuiltin);
 			case "Boolean": mk(TEBuiltin(i, "Boolean"), TTBuiltin);

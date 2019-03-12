@@ -93,6 +93,9 @@ class SWCLoader {
 								var type = if (arg != null) buildPublicType(arg) else STAny;
 								args.push({kind: SArgNormal("arg", false), type: type});
 							}
+							if (methType.extra.variableArgs) {
+								args.push({kind: SArgRest("arg"), type: STArray});
+							}
 							var ret = if (methType.ret != null) buildPublicType(methType.ret) else STAny;
 							collection.add({name: n.name, kind: SFFun({args: args, ret: ret})});
 
@@ -143,6 +146,9 @@ class SWCLoader {
 								var arg = methType.args[i];
 								var type = if (arg != null) buildTypeStructure(abc, arg) else STAny;
 								args.push({kind: SArgNormal("arg", false), type: type});
+							}
+							if (methType.extra.variableArgs) {
+								args.push({kind: SArgRest("arg"), type: STArray});
 							}
 							var ret = if (methType.ret != null) buildTypeStructure(abc, methType.ret) else STAny;
 							SFun({args: args, ret: ret});
