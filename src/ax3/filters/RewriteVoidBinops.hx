@@ -18,19 +18,21 @@ class RewriteVoidBinops {
 	}
 
 	static function modifyBlockExpr(be:TExpr):TExpr {
-		function extract(e:TExpr):{check:TExpr, action:TExpr} {
+		function extract(e:TExpr):{check:TExpr, action:TExpr, andToken:Token} {
 			return switch (e.kind) {
 				case TEBinop(a, op = OpAnd(t), b):
 					var more = extract(b);
 					if (more == null) {
 						{
 							check: a,
-							action: b
+							action: b,
+							andToken: t,
 						};
 					} else {
 						{
 							check: e.with(kind = TEBinop(a, op, more.check)),
 							action: more.action,
+							andToken: more.andToken,
 						};
 					}
 				case _:
@@ -50,6 +52,7 @@ class RewriteVoidBinops {
 					lead = removeLeadingTrivia(check.check);
 					trail = removeTrailingTrivia(check.check);
 			};
+			trail = trail.concat(check.andToken.leadTrivia).concat(check.andToken.trailTrivia);
 			return mk(TEIf({
 				syntax: {
 					keyword: new Token(0, TkIdent, "if", lead, [new Trivia(TrWhitespace, " ")]),
