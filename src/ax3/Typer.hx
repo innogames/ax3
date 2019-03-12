@@ -1136,35 +1136,29 @@ class Typer {
 	function getTypedField(obj:TExpr, dot:Token, fieldToken:Token) {
 		var fieldName = fieldToken.text;
 		var type =
-			switch fieldName { // TODO: be smarter about this
-				case "toString":
-					TTFun([], TTString);
-				case "hasOwnProperty":
-					TTFun([TTString], TTBoolean);
-				case "prototype":
-					TTObject;
-				case _:
-					switch skipParens(obj) {
-						case {kind: TEBuiltin(_, "Array")}: getArrayStaticFieldType(fieldToken);
-						case {kind: TEBuiltin(_, "Number")}: getNumericStaticFieldType(fieldToken, TTNumber);
-						case {kind: TEBuiltin(_, "int")}: getNumericStaticFieldType(fieldToken, TTInt);
-						case {kind: TEBuiltin(_, "uint")}: getNumericStaticFieldType(fieldToken, TTUint);
-						case {kind: TEBuiltin(_, "String")}: getStringStaticFieldType(fieldToken);
-						case {type: TTAny | TTObject}: TTAny; // untyped field access
-						case {type: TTBuiltin | TTVoid | TTBoolean | TTClass}: err('Attempting to get field on type ${obj.type.getName()}', fieldToken.pos); TTAny;
-						case {type: TTInt | TTUint | TTNumber}: getNumericInstanceFieldType(fieldToken, obj.type);
-						case {type: TTString}: getStringInstanceFieldType(fieldToken);
-						case {type: TTArray}: getArrayInstanceFieldType(fieldToken);
-						case {type: TTVector(t)}: getVectorInstanceFieldType(fieldToken, t);
-						case {type: TTFunction | TTFun(_)}: getFunctionInstanceFieldType(fieldToken);
-						case {type: TTRegExp}: getRegExpInstanceFieldType(fieldToken);
-						case {type: TTXML}:
-							return typeXMLFieldAccess(obj, dot, fieldToken);
-						case {type: TTXMLList}:
-							return typeXMLListFieldAccess(obj, dot, fieldToken);
-						case {type: TTInst(cls)}: typeInstanceField(cls, fieldName);
-						case {type: TTStatic(cls)}: typeStaticField(cls, fieldName);
-					};
+			switch [fieldName, skipParens(obj)] {
+				case [_, {type: TTInt | TTUint | TTNumber}]: getNumericInstanceFieldType(fieldToken, obj.type);
+				case ["toString", _]: TTFun([], TTString);
+				case ["hasOwnProperty", _]: TTFun([TTString], TTBoolean);
+				case ["prototype", _]: TTObject;
+				case [_, {kind: TEBuiltin(_, "Array")}]: getArrayStaticFieldType(fieldToken);
+				case [_, {kind: TEBuiltin(_, "Number")}]: getNumericStaticFieldType(fieldToken, TTNumber);
+				case [_, {kind: TEBuiltin(_, "int")}]: getNumericStaticFieldType(fieldToken, TTInt);
+				case [_, {kind: TEBuiltin(_, "uint")}]: getNumericStaticFieldType(fieldToken, TTUint);
+				case [_, {kind: TEBuiltin(_, "String")}]: getStringStaticFieldType(fieldToken);
+				case [_, {type: TTAny | TTObject}]: TTAny; // untyped field access
+				case [_, {type: TTBuiltin | TTVoid | TTBoolean | TTClass}]: err('Attempting to get field on type ${obj.type.getName()}', fieldToken.pos); TTAny;
+				case [_, {type: TTString}]: getStringInstanceFieldType(fieldToken);
+				case [_, {type: TTArray}]: getArrayInstanceFieldType(fieldToken);
+				case [_, {type: TTVector(t)}]: getVectorInstanceFieldType(fieldToken, t);
+				case [_, {type: TTFunction | TTFun(_)}]: getFunctionInstanceFieldType(fieldToken);
+				case [_, {type: TTRegExp}]: getRegExpInstanceFieldType(fieldToken);
+				case [_, {type: TTXML}]:
+					return typeXMLFieldAccess(obj, dot, fieldToken);
+				case [_, {type: TTXMLList}]:
+					return typeXMLListFieldAccess(obj, dot, fieldToken);
+				case [_, {type: TTInst(cls)}]: typeInstanceField(cls, fieldName);
+				case [_, {type: TTStatic(cls)}]: typeStaticField(cls, fieldName);
 		}
 		return mkExplicitFieldAccess(obj, dot, fieldToken, type);
 	}
@@ -1246,7 +1240,7 @@ class Typer {
 		return switch field.text {
 			case "length": TTUint;
 			case "join": TTFun([TTAny], TTString);
-			case "push" | "unshift": TTFun([TTAny], TTUint);
+			case "push" | "unshift": TTFun([TTAny], TTUint, true);
 			case "pop" | "shift": TTFun([], TTAny);
 			case "concat": TTFun([TTArray], TTArray);
 			case "indexOf" | "lastIndexOf": TTFun([TTAny, TTInt], TTInt);
@@ -1261,7 +1255,7 @@ class Typer {
 	function getVectorInstanceFieldType(field:Token, t:TType):TType {
 		return switch field.text {
 			case "length": TTUint;
-			case "push" | "unshift": TTFun([t], TTUint);
+			case "push" | "unshift": TTFun([t], TTUint, true);
 			case "pop" | "shift": TTFun([], t);
 			case "indexOf" | "lastIndexOf": TTFun([t, TTInt], TTInt);
 			case "splice": TTFun([TTInt, TTUint, t], TTVector(t));
@@ -1294,6 +1288,7 @@ class Typer {
 
 	function getNumericInstanceFieldType(field:Token, type:TType):TType {
 		return switch field.text {
+			case "toString": TTFun([TTUint], TTString);
 			case "toFixed": TTFun([TTUint], TTString);
 			case other: err('Unknown field $other on type ${type.getName()}', field.pos); TTAny;
 		}
