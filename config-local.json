@@ -1,6 +1,7 @@
 {
 	"src": "SOURCE",
 	"out": "OUT",
+	"dump": "DUMP",
 	"swc": [
 		"playerglobal32_0.swc"
 	]

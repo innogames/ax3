@@ -6,6 +6,7 @@ private typedef Config = {
 	var src:String;
 	var out:String;
 	var swc:Array<String>;
+	var ?dump:String;
 }
 
 class Main {
@@ -35,6 +36,7 @@ class Main {
 		Filters.run(structure, modules);
 
 		var outDir = FileSystem.absolutePath(config.out);
+		var dumpDir = if (config.dump == null) null else FileSystem.absolutePath(config.dump);
 		for (mod in modules) {
 			var gen = new ax3.GenAS3();
 			gen.writeModule(mod);
@@ -50,7 +52,15 @@ class Main {
 			var path = dir + "/" + mod.name + ".as";
 			sys.io.File.saveContent(path, out);
 
-			TypedTreeDump.dump(mod, dir + "/" + mod.name + ".dump");
+			if (dumpDir != null) {
+				var dir = haxe.io.Path.join({
+					var parts = mod.pack.name.split(".");
+					parts.unshift(dumpDir);
+					parts;
+				});
+				Utils.createDirectory(dir);
+				TypedTreeDump.dump(mod, dir + "/" + mod.name + ".dump");
+			}
 		}
 	}
 
