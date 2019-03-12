@@ -56,6 +56,6 @@ class Filters {
 
 	public static function run(structure:Structure, modules:Array<TModule>) {
 		runFilter(RewriteBlockBinops.process, modules);
-		// runFilter(CoerceToBool.process, modules);
+		runFilter(CoerceToBool.process, modules);
 	}
 }

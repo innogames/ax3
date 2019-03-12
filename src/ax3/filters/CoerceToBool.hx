@@ -18,7 +18,7 @@ class CoerceToBool {
 				e.with(kind = TETernary(t.with(econd = coerce(t.econd))));
 
 			case TEBinop(a, op = OpAnd(_) | OpOr(_), b):
-				e.with(kind = TEBinop(coerce(a), op, coerce(b)));
+				mk(TEBinop(coerce(a), op, coerce(b)), TTBoolean);
 
 			case TEVars(kind, vars):
 				e.with(kind = TEVars(kind, [
@@ -68,11 +68,11 @@ class CoerceToBool {
 				e;
 			case TTFunction | TTFun(_) | TTClass | TTObject | TTInst(_) | TTStatic(_) | TTArray | TTVector(_) | TTRegExp | TTXML | TTXMLList:
 				var trail = removeTrailingTrivia(e);
-				e.with(kind = TEBinop(e, OpNotEquals(mkNotEqualsToken()), mkNullExpr(e.type, [], trail)));
+				mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), mkNullExpr(e.type, [], trail)), TTBoolean);
 			case TTInt | TTUint:
 				var trail = removeTrailingTrivia(e);
 				var zeroExpr = mk(TELiteral(TLInt(new Token(0, TkDecimalInteger, "0", [], trail))), e.type);
-				e.with(kind = TEBinop(e, OpNotEquals(mkNotEqualsToken()), zeroExpr));
+				mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), zeroExpr), TTBoolean);
 			case TTString | TTNumber | TTAny | TTVoid | TTBuiltin:
 				// TODO
 				// string: null or empty
