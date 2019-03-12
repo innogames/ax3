@@ -1,4 +1,8 @@
 package ax3.filters;
+/**
+	Replace non-boolean values that are used where boolean is expected with a coercion call.
+	E.g. `if (object)` to `if (object != null)`
+**/
 class CoerceToBool {
 	public static function process(e:TExpr):TExpr {
 		// first, recurse into sub-expressions
@@ -7,6 +11,7 @@ class CoerceToBool {
 		// then handle coercions in this expression if applicable
 		return switch (e.kind) {
 			case TEIf(i):
+				// TODO: here and in the TETernary case we can generate `object == null` for `!object` (and similar for numeric and others)
 				e.with(kind = TEIf(i.with(econd = coerce(i.econd))));
 
 			case TETernary(t):
@@ -57,6 +62,7 @@ class CoerceToBool {
 	}
 
 	static function coerce(e:TExpr):TExpr {
+		// TODO: add parens where needed
 		return switch (e.type) {
 			case TTBoolean:
 				e;
