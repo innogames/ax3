@@ -90,7 +90,7 @@ class CoerceToBool {
 				// any: runtime helper + warning?
 				// builtin: gotta remove this really
 				// void: should NOT happen (cases like `v && v.f()` should be filtered before)
-				trace("(not) coercing " + e.type.getName());
+				// trace("(not) coercing " + e.type.getName());
 				e;
 		}
 	}
