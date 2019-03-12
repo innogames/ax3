@@ -6,6 +6,24 @@ import ax3.Token;
 using ax3.WithMacro;
 
 class TypedTreeTools {
+
+	/** Is it safe to repeat this expression a couple times :) **/
+	public static function canBeRepeated(e:TExpr):Bool {
+		return switch (e.kind) {
+			case TEParens(_, e, _): canBeRepeated(e);
+
+			case TELocal(_) | TELiteral(_) | TEBuiltin(_) | TEDeclRef(_): true;
+
+			// TODO: check whether it's a getter
+			case TEField({kind: TOExplicit(_, e)}, _, _): canBeRepeated(e);
+			case TEField({kind: TOImplicitThis(_) | TOImplicitClass(_)}, _, _): true;
+
+			case TEArrayAccess(a): canBeRepeated(a.eobj) && canBeRepeated(a.eindex);
+
+			case _: false;
+		}
+	}
+
 	public static inline function mk(e:TExprKind, t:TType):TExpr {
 		return {kind: e, type: t};
 	}

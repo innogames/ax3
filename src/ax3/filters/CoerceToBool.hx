@@ -65,13 +65,24 @@ class CoerceToBool {
 		return switch (e.type) {
 			case TTBoolean:
 				e;
+
 			case TTFunction | TTFun(_) | TTClass | TTObject | TTInst(_) | TTStatic(_) | TTArray | TTVector(_) | TTRegExp | TTXML | TTXMLList:
 				var trail = removeTrailingTrivia(e);
 				mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), mkNullExpr(e.type, [], trail)), TTBoolean);
+
 			case TTInt | TTUint:
 				var trail = removeTrailingTrivia(e);
 				var zeroExpr = mk(TELiteral(TLInt(new Token(0, TkDecimalInteger, "0", [], trail))), e.type);
 				mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), zeroExpr), TTBoolean);
+
+			case TTString if (canBeRepeated(e)):
+				var trail = removeTrailingTrivia(e);
+				var nullExpr = mkNullExpr(TTString);
+				var emptyExpr = mk(TELiteral(TLString(new Token(0, TkStringDouble, '""', [], trail))), TTString);
+				var nullCheck = mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), nullExpr), TTBoolean);
+				var emptyCheck = mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), emptyExpr), TTBoolean);
+				mk(TEBinop(nullCheck, OpAnd(mkAndAndToken()), emptyCheck), TTBoolean);
+
 			case TTString | TTNumber | TTAny | TTVoid | TTBuiltin:
 				// TODO
 				// string: null or empty

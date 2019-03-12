@@ -23,4 +23,8 @@ class TokenTools {
 	public static inline function mkNotEqualsToken():Token {
 		return mkTokenWithSpaces(TkExclamationEquals, "!=");
 	}
+
+	public static inline function mkAndAndToken():Token {
+		return mkTokenWithSpaces(TkAmpersandAmpersand, "&&");
+	}
 }
