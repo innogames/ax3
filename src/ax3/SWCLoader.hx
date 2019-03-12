@@ -275,7 +275,7 @@ class SWCLoader {
 							var ns = abc.get(abc.strings, ns);
 							var name = abc.get(abc.strings, name);
 							return {ns: ns, name: name}
-						case _: throw "assert " + ns.getName();
+						case _: throw "assert " + nsk.getName();
 					}
 				}
 				// TODO: ffs
