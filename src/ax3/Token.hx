@@ -4,8 +4,8 @@ class Token {
 	public final pos:Int;
 	public final kind:TokenKind;
 	public final text:String;
-	public final leadTrivia:Array<Trivia>;
-	public final trailTrivia:Array<Trivia>;
+	public var leadTrivia:Array<Trivia>;
+	public var trailTrivia:Array<Trivia>;
 
 	public function new(pos, kind, text, leadTrivia, trailTrivia) {
 		this.pos = pos;

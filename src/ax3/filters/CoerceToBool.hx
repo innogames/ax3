@@ -3,6 +3,7 @@ package ax3.filters;
 import ax3.TypedTree;
 import ax3.TypedTreeTools.mapExpr;
 import ax3.TypedTreeTools.mkNullExpr;
+import ax3.TypedTreeTools.removeTrailingTrivia;
 import ax3.TokenBuilder.mkNotEqualsToken;
 using ax3.WithMacro;
 
@@ -32,8 +33,8 @@ class CoerceToBool {
 			case TTBoolean:
 				e;
 			case TTFunction | TTFun(_) | TTClass | TTObject | TTInst(_) | TTStatic(_):
-				// TODO: also move e's trailing trivia to null
-				e.with(kind = TEBinop(e, OpNotEquals(mkNotEqualsToken()), mkNullExpr()));
+				var trail = removeTrailingTrivia(e);
+				e.with(kind = TEBinop(e, OpNotEquals(mkNotEqualsToken()), mkNullExpr(e.type, [], trail)));
 			case _:
 				// TODO
 				trace("(not) coercing " + e.type.getName());

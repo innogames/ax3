@@ -1,6 +1,8 @@
 package ax3;
 
+import ax3.ParseTree;
 import ax3.TypedTree;
+import ax3.Token;
 using ax3.WithMacro;
 
 class TypedTreeTools {
@@ -8,8 +10,8 @@ class TypedTreeTools {
 		return {kind: e, type: t};
 	}
 
-	public static inline function mkNullExpr(t = TTAny):TExpr {
-		return mk(TELiteral(TLNull(new Token(0, TkIdent, "null", [], []))), t);
+	public static inline function mkNullExpr(t = TTAny, ?lead, ?trail):TExpr {
+		return mk(TELiteral(TLNull(new Token(0, TkIdent, "null", if (lead != null) lead else [], if (trail != null) trail else []))), t);
 	}
 
 	public static function skipParens(e:TExpr):TExpr {
@@ -17,6 +19,79 @@ class TypedTreeTools {
 			case TEParens(_, einner, _): einner;
 			case _: e;
 		};
+	}
+
+	// remove and return the trailing trivia of an expression
+	public static function removeTrailingTrivia(e:TExpr):Array<Trivia> {
+		function r(token:Token) {
+			var trivia = token.trailTrivia;
+			token.trailTrivia = [];
+			return trivia;
+		}
+
+		function fromDotPath(p:DotPath) {
+			return
+				if (p.rest.length == 0) r(p.first)
+				else r(p.rest[p.rest.length - 1].element);
+		}
+
+		function fromSyntaxType(t:SyntaxType) {
+			return switch (t) {
+				case TAny(star): r(star);
+				case TPath(path): fromDotPath(path);
+				case TVector(v): r(v.t.gt);
+			}
+		}
+
+		return switch (e.kind) {
+			case TEParens(_, _, closeParen): r(closeParen);
+			case TELocalFunction(f): r(f.fun.block.syntax.closeBrace);
+			case TELiteral(TLThis(t) | TLSuper(t)| TLBool(t)| TLNull(t)| TLUndefined(t)| TLInt(t)| TLNumber(t)| TLString(t)| TLRegExp(t)): r(t);
+			case TELocal(t, _): r(t);
+			case TEField(_, _, t): r(t);
+			case TEBuiltin(t, _): r(t);
+			case TEDeclRef(path, _): fromDotPath(path);
+			case TECall(_, args): r(args.closeParen);
+			case TECast(c): r(c.syntax.closeParen);
+			case TEArrayDecl(a): r(a.syntax.closeBracket);
+			case TEVectorDecl(v): r(v.elements.syntax.closeBracket);
+			case TEBreak(keyword) | TEContinue(keyword) | TEReturn(keyword, null): r(keyword);
+			case TEReturn(_, e) | TEThrow(_, e) | TEDelete(_, e): removeTrailingTrivia(e);
+			case TEObjectDecl(o): r(o.syntax.closeBrace);
+			case TEArrayAccess(a): r(a.syntax.closeBracket);
+			case TEBlock(block): r(block.syntax.closeBrace);
+			case TETry(t): removeTrailingTrivia(t.catches[t.catches.length - 1].expr);
+			case TEIf(i): removeTrailingTrivia(if (i.eelse == null) i.ethen else i.eelse.expr);
+			case TEVars(_, vars):
+				var v = vars[vars.length - 1];
+				if (v.init != null) removeTrailingTrivia(v.init.expr)
+				else if (v.syntax.type != null) fromSyntaxType(v.syntax.type.type)
+				else r(v.syntax.name);
+			case TEVector(syntax, type): r(syntax.t.gt);
+			case TETernary(t): removeTrailingTrivia(t.ethen);
+			case TEWhile(w): removeTrailingTrivia(w.body);
+			case TEDoWhile(w): r(w.syntax.closeParen);
+			case TEFor(f): removeTrailingTrivia(f.body);
+			case TEForIn(f): removeTrailingTrivia(f.body);
+			case TEForEach(f): removeTrailingTrivia(f.body);
+			case TEBinop(_, _, b): removeTrailingTrivia(b);
+			case TEPreUnop(_, e): removeTrailingTrivia(e);
+			case TEPostUnop(_, PostIncr(t) | PostDecr(t)): r(t);
+			case TEComma(_, _, b): removeTrailingTrivia(b);
+			case TEIs(_, _, etype): removeTrailingTrivia(etype);
+			case TEAs(_, _, type): fromSyntaxType(type.syntax);
+			case TESwitch(s): r(s.syntax.closeBrace);
+			case TENew(_, eclass, args):
+				if (args == null) removeTrailingTrivia(eclass)
+				else r(args.closeParen);
+			case TECondCompValue(v): r(v.syntax.name);
+			case TECondCompBlock(_, expr): removeTrailingTrivia(expr);
+			case TEXmlChild(x): r(x.syntax.name);
+			case TEXmlAttr(x): r(x.syntax.name);
+			case TEXmlAttrExpr(x): r(x.syntax.closeBracket);
+			case TEXmlDescend(x): r(x.syntax.name);
+			case TEUseNamespace(ns): r(ns.name);
+		}
 	}
 
 	public static function mapExpr(f:TExpr->TExpr, e1:TExpr):TExpr {
