@@ -3,8 +3,13 @@ package ax3;
 import ax3.Token;
 
 class TokenTools {
-	public static function filterWhitespace(tr:Array<Trivia>):Array<Trivia> {
-		return [for (t in tr) if (t.kind != TrWhitespace) t];
+	public static function containsOnlyWhitespace(tr:Array<Trivia>):Bool {
+		for (t in tr) {
+			if (t.kind != TrWhitespace) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public static function mkTokenWithSpaces(kind:TokenKind, text:String):Token {
