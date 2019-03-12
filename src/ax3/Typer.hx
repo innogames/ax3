@@ -903,7 +903,17 @@ class Typer {
 		var eindex = typeExpr(eindex);
 		var type = switch (e.type) {
 			case TTVector(t): t;
-			case _: TTAny;
+			case TTArray:
+				switch (eindex.type) {
+					case TTNumber | TTInt | TTUint:
+					case _:
+						err("Array access with non-numeric index", openBracket.pos);
+				}
+				TTAny;
+			case TTInst({name: "Dictionary"}): TTAny;
+			case _:
+				err("Untyped array access", openBracket.pos);
+				TTAny;
 		};
 		return mk(TEArrayAccess({
 			syntax: {openBracket: openBracket, closeBracket: closeBracket},
