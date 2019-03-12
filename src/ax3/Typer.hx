@@ -1333,6 +1333,7 @@ class Typer {
 						throw "unknown declaration";
 					}
 
+					rest.reverse();
 					acc.push(declName);
 					var dotPath = {
 						first: acc[0].token,
