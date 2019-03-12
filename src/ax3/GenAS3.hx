@@ -63,7 +63,7 @@ class GenAS3 extends PrinterBase {
 		printTextWithTrivia("function", f.syntax.keyword);
 		printTextWithTrivia(f.name, f.syntax.name);
 		printSignature(f.fun.sig);
-		printBlock(f.fun.block);
+		printExpr(f.fun.expr);
 	}
 
 	function printModuleVarDecl(v:TModuleVarDecl) {
@@ -141,7 +141,7 @@ class GenAS3 extends PrinterBase {
 				case TMCondCompEnd(b): printCompCondEnd(b);
 				case TMField(f): printClassField(f);
 				case TMUseNamespace(n, semicolon): printUseNamespace(n); printSemicolon(semicolon);
-				case TMStaticInit(b): printBlock(b);
+				case TMStaticInit(i): printExpr(i.expr);
 			}
 		}
 		printCloseBrace(c.syntax.closeBrace);
@@ -191,19 +191,19 @@ class GenAS3 extends PrinterBase {
 				printTextWithTrivia("function", f.syntax.keyword);
 				printTextWithTrivia(f.name, f.syntax.name);
 				printSignature(f.fun.sig);
-				printBlock(f.fun.block);
+				printExpr(f.fun.expr);
 			case TFGetter(f):
 				printTextWithTrivia("function", f.syntax.functionKeyword);
 				printTextWithTrivia("get", f.syntax.accessorKeyword);
 				printTextWithTrivia(f.name, f.syntax.name);
 				printSignature(f.fun.sig);
-				printBlock(f.fun.block);
+				printExpr(f.fun.expr);
 			case TFSetter(f):
 				printTextWithTrivia("function", f.syntax.functionKeyword);
 				printTextWithTrivia("set", f.syntax.accessorKeyword);
 				printTextWithTrivia(f.name, f.syntax.name);
 				printSignature(f.fun.sig);
-				printBlock(f.fun.block);
+				printExpr(f.fun.expr);
 		}
 	}
 
@@ -316,7 +316,7 @@ class GenAS3 extends PrinterBase {
 		printTextWithTrivia("function", f.syntax.keyword);
 		if (f.name != null) printTextWithTrivia(f.name.name, f.name.syntax);
 		printSignature(f.fun.sig);
-		printBlock(f.fun.block);
+		printExpr(f.fun.expr);
 	}
 
 	function printXmlDescend(x:TXmlDescend) {

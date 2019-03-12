@@ -21,7 +21,71 @@ class TypedTreeTools {
 		};
 	}
 
-	// remove and return the trailing trivia of an expression
+	/** remove and return the leading trivia of an expression **/
+	public static function removeLeadingTrivia(e:TExpr):Array<Trivia> {
+		function r(token:Token) {
+			var trivia = token.leadTrivia;
+			token.leadTrivia = [];
+			return trivia;
+		}
+
+		inline function fromDotPath(p:DotPath) {
+			return r(p.first);
+		}
+
+		function fromSyntaxType(t:SyntaxType) {
+			return switch (t) {
+				case TAny(star): r(star);
+				case TPath(path): fromDotPath(path);
+				case TVector(v): r(v.t.gt);
+			}
+		}
+
+		return switch e.kind {
+			case TEParens(openParen, _, _): r(openParen);
+			case TELocalFunction(f): r(f.syntax.keyword);
+			case TELiteral(TLThis(t) | TLSuper(t)| TLBool(t)| TLNull(t)| TLUndefined(t)| TLInt(t)| TLNumber(t)| TLString(t)| TLRegExp(t)): r(t);
+			case TELocal(t, _): r(t);
+			case TEField({kind: TOImplicitThis(_) | TOImplicitClass(_)}, _, fieldToken): r(fieldToken);
+			case TEField({kind: TOExplicit(_, obj)}, _, _): removeLeadingTrivia(obj);
+			case TEBuiltin(t, _): r(t);
+			case TEDeclRef(path, _): fromDotPath(path);
+			case TECall(eobj, _): removeLeadingTrivia(eobj);
+			case TECast(c): fromDotPath(c.syntax.path);
+			case TEArrayDecl(a): r(a.syntax.openBracket);
+			case TEVectorDecl(v): r(v.syntax.newKeyword);
+			case TEReturn(keyword, _) | TEThrow(keyword, _) | TEDelete(keyword, _) | TEBreak(keyword) | TEContinue(keyword): r(keyword);
+			case TEVars(VVar(t) | VConst(t), _): r(t);
+			case TEObjectDecl(o): r(o.syntax.openBrace);
+			case TEArrayAccess(a): removeLeadingTrivia(a.eobj);
+			case TEBlock(block): r(block.syntax.openBrace);
+			case TETry(t): r(t.keyword);
+			case TEVector(syntax, _): r(syntax.name);
+			case TETernary(t): removeLeadingTrivia(t.econd);
+			case TEIf(i): r(i.syntax.keyword);
+			case TEWhile(w): r(w.syntax.keyword);
+			case TEDoWhile(w): r(w.syntax.doKeyword);
+			case TEFor(f): r(f.syntax.keyword);
+			case TEForIn(f): r(f.syntax.forKeyword);
+			case TEForEach(f): r(f.syntax.forKeyword);
+			case TEBinop(a, _, _): removeLeadingTrivia(a);
+			case TEPreUnop(PreNot(t) | PreNeg(t) | PreIncr(t) | PreDecr(t) | PreBitNeg(t), _): r(t);
+			case TEPostUnop(e, _): removeLeadingTrivia(e);
+			case TEComma(a, _, _): removeLeadingTrivia(a);
+			case TEIs(e, _, _): removeLeadingTrivia(e);
+			case TEAs(e, _, _): removeLeadingTrivia(e);
+			case TESwitch(s): r(s.syntax.keyword);
+			case TENew(keyword, _, _): r(keyword);
+			case TECondCompValue(v) | TECondCompBlock(v, _): r(v.syntax.ns);
+			case TEXmlChild(x): removeLeadingTrivia(x.eobj);
+			case TEXmlAttr(x): removeLeadingTrivia(x.eobj);
+			case TEXmlAttrExpr(x): removeLeadingTrivia(x.eobj);
+			case TEXmlDescend(x): removeLeadingTrivia(x.eobj);
+			case TEUseNamespace(ns): r(ns.useKeyword);
+		}
+	}
+
+	/** remove and return the trailing trivia of an expression **/
 	public static function removeTrailingTrivia(e:TExpr):Array<Trivia> {
 		function r(token:Token) {
 			var trivia = token.trailTrivia;
@@ -43,9 +107,9 @@ class TypedTreeTools {
 			}
 		}
 
-		return switch (e.kind) {
+		return switch e.kind {
 			case TEParens(_, _, closeParen): r(closeParen);
-			case TELocalFunction(f): r(f.fun.block.syntax.closeBrace);
+			case TELocalFunction(f): removeTrailingTrivia(f.fun.expr);
 			case TELiteral(TLThis(t) | TLSuper(t)| TLBool(t)| TLNull(t)| TLUndefined(t)| TLInt(t)| TLNumber(t)| TLString(t)| TLRegExp(t)): r(t);
 			case TELocal(t, _): r(t);
 			case TEField(_, _, t): r(t);
@@ -147,7 +211,7 @@ class TypedTreeTools {
 
 			case TELocalFunction(fun):
 				e1.with(kind = TELocalFunction(fun.with(
-					fun = fun.fun.with(block = mapBlock(f, fun.fun.block))
+					fun = fun.fun.with(expr = f(fun.fun.expr))
 				)));
 
 			case TEVectorDecl(v):

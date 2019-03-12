@@ -143,7 +143,7 @@ enum TClassMember {
 	TMCondCompBegin(b:TCondCompBegin);
 	TMCondCompEnd(b:TCondCompEnd);
 	TMField(f:TClassField);
-	TMStaticInit(b:TBlock);
+	TMStaticInit(i:{expr:TExpr});
 }
 
 typedef TClassField = {
@@ -448,7 +448,7 @@ typedef TBlockExpr = {
 
 typedef TFunction = {
 	var sig:TFunctionSignature;
-	var block:TBlock;
+	var expr:TExpr;
 }
 
 typedef TFunctionSignature = {

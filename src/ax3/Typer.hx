@@ -315,7 +315,8 @@ class Typer {
 					case MField(f):
 						tMembers.push(TMField(typeClassField(f)));
 					case MStaticInit(block):
-						tMembers.push(TMStaticInit(typeBlock(block)));
+						var expr = mk(TEBlock(typeBlock(block)), TTVoid);
+						tMembers.push(TMStaticInit({expr: expr}));
 				}
 			}
 		}
@@ -452,7 +453,7 @@ class Typer {
 		popLocals();
 		return {
 			sig: sig,
-			block: block
+			expr: mk(TEBlock(block), TTVoid)
 		};
 	}
 

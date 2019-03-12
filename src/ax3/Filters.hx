@@ -15,7 +15,7 @@ class Filters {
 						case TFFun(field): processFunction(f, field.fun);
 						case TFGetter(field) | TFSetter(field): processFunction(f, field.fun);
 					}
-				case TMStaticInit(b): processBlock(f, b);
+				case TMStaticInit(i): i.expr = f(i.expr);
 				case TMUseNamespace(_):
 				case TMCondCompBegin(_):
 				case TMCondCompEnd(_):
@@ -32,13 +32,7 @@ class Filters {
 	}
 
 	static function processFunction(f:TExpr->TExpr, fun:TFunction) {
-		processBlock(f, fun.block);
-	}
-
-	static function processBlock(f:TExpr->TExpr, b:TBlock) {
-		for (i in 0...b.exprs.length) {
-			b.exprs[i].expr = f(b.exprs[i].expr);
-		}
+		fun.expr = f(fun.expr);
 	}
 
 	static function processDecl(f:TExpr->TExpr, decl:TDecl) {
@@ -61,6 +55,7 @@ class Filters {
 	}
 
 	public static function run(structure:Structure, modules:Array<TModule>) {
+		runFilter(RewriteVoidBinops.process, modules);
 		runFilter(CoerceToBool.process, modules);
 	}
 }
