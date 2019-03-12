@@ -195,7 +195,7 @@ class Typer {
 	}
 
 	function resolveType(t:SyntaxType):TType {
-		return typeType(structure.buildTypeStructure(t, currentModule));
+		return typeType(StructureBuilder.buildTypeStructure(t, currentModule));
 	}
 
 	function typeInterface(i:InterfaceDecl):TInterfaceDecl {
