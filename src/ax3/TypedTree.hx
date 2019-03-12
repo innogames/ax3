@@ -218,7 +218,7 @@ enum TExprKind {
 	TEDelete(keyword:Token, e:TExpr);
 	TEBreak(keyword:Token);
 	TEContinue(keyword:Token);
-	TEVars(kind:VarDeclKind, v:Array<TVarDecl>);
+	TEVars(kind:VarDeclKind, vars:Array<TVarDecl>);
 	TEObjectDecl(o:TObjectDecl);
 	TEArrayAccess(a:TArrayAccess);
 	TEBlock(block:TBlock);
