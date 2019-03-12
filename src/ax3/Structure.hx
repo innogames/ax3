@@ -71,13 +71,19 @@ class Structure {
 
 	public static function build(files:Array<File>, libs:Array<String>):Structure {
 		var structure = new Structure();
+		var t = stamp();
 		for (lib in libs) {
 			SWCLoader.load(structure, lib);
 		}
+		Timers.swcs += (stamp() - t);
+		t = stamp();
 		for (file in files) {
 			StructureBuilder.buildModule(structure, file);
 		}
+		Timers.structure += (stamp() - t);
+		t = stamp();
 		structure.resolve();
+		Timers.resolve += (stamp() - t);
 		return structure;
 	}
 

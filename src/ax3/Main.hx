@@ -24,19 +24,25 @@ class Main {
 		}
 		var config:Config = haxe.Json.parse(sys.io.File.getContent(args[0]));
 		var files = [];
+		var total = stamp();
 		walk(config.src, files);
 
 		var structure = Structure.build(files, config.swc);
 		sys.io.File.saveContent("structure.txt", structure.dump());
 
+		var t = stamp();
 		var typer = new Typer(structure, reportError);
 
 		var modules = typer.process(files);
+		Timers.typing += (stamp() - t);
 
+		t = stamp();
 		Filters.run(structure, modules);
+		Timers.filters += (stamp() - t);
 
 		var outDir = FileSystem.absolutePath(config.out);
 		var dumpDir = if (config.dump == null) null else FileSystem.absolutePath(config.dump);
+		t = stamp();
 		for (mod in modules) {
 			var gen = new ax3.GenAS3();
 			gen.writeModule(mod);
@@ -62,6 +68,19 @@ class Main {
 				TypedTreeDump.dump(mod, dir + "/" + mod.name + ".dump");
 			}
 		}
+		Timers.output += (stamp() - t);
+
+		total = (stamp() - total);
+
+
+		print("parsing   " + Timers.parsing);
+		print("swcs      " + Timers.swcs);
+		print("structure " + Timers.structure);
+		print("resolve   " + Timers.resolve);
+		print("typing    " + Timers.typing);
+		print("filters   " + Timers.filters);
+		print("output    " + Timers.output);
+		print("-- TOTAL  " + total);
 	}
 
 	static function walk(dir:String, files:Array<ParseTree.File>) {
@@ -83,6 +102,7 @@ class Main {
 
 	static function parseFile(path:String):ParseTree.File {
 		// print('Parsing $path');
+		var t = stamp();
 		var content = stripBOM(loader.getContent(path));
 		var scanner = new Scanner(content);
 		var parser = new Parser(scanner, path);
@@ -94,6 +114,7 @@ class Main {
 		} catch (e:Any) {
 			reportError(path, @:privateAccess scanner.pos, Std.string(e));
 		}
+		Timers.parsing += (stamp() - t);
 		if (parseTree != null) {
 			// checkParseTree(path, content, parseTree);
 		}

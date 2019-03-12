@@ -19,6 +19,6 @@
 -js main.js
 
 # -cmd node main.js config-foe.json
-# -cmd node main.js config-local.json
+-cmd node main.js config-local.json
 # -cmd cpp_out\Main.exe config-foe.json
 # -cmd cpp_out\Main.exe config-local.json
