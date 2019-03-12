@@ -2,6 +2,7 @@ package ax3.filters;
 
 import ax3.TypedTree;
 import ax3.TypedTreeTools.mapExpr;
+import ax3.TypedTreeTools.mk;
 import ax3.TypedTreeTools.mkNullExpr;
 import ax3.TypedTreeTools.removeTrailingTrivia;
 import ax3.TokenBuilder.mkNotEqualsToken;
@@ -32,13 +33,22 @@ class CoerceToBool {
 		return switch (e.type) {
 			case TTBoolean:
 				e;
-			case TTFunction | TTFun(_) | TTClass | TTObject | TTInst(_) | TTStatic(_):
+			case TTFunction | TTFun(_) | TTClass | TTObject | TTInst(_) | TTStatic(_) | TTArray | TTVector(_):
 				var trail = removeTrailingTrivia(e);
 				e.with(kind = TEBinop(e, OpNotEquals(mkNotEqualsToken()), mkNullExpr(e.type, [], trail)));
+			case TTInt | TTUint:
+				var trail = removeTrailingTrivia(e);
+				var zeroExpr = mk(TELiteral(TLInt(new Token(0, TkDecimalInteger, "0", [], trail))), e.type);
+				e.with(kind = TEBinop(e, OpNotEquals(mkNotEqualsToken()), zeroExpr));
 			case _:
 				// TODO
+				// string: null or empty
+				// number: Nan or 0
+				// any: runtime helper + warning?
+				// void: should NOT happen (cases like `v && v.f()` should be filtered before)
 				trace("(not) coercing " + e.type.getName());
 				e;
 		}
 	}
 }
+
