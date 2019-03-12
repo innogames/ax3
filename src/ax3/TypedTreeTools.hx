@@ -4,7 +4,13 @@ import ax3.TypedTree;
 using ax3.WithMacro;
 
 class TypedTreeTools {
-	public static inline function mk(e:TExprKind, t:TType):TExpr return {kind: e, type: t};
+	public static inline function mk(e:TExprKind, t:TType):TExpr {
+		return {kind: e, type: t};
+	}
+
+	public static inline function mkNullExpr(t = TTAny):TExpr {
+		return mk(TELiteral(TLNull(new Token(0, TkIdent, "null", [], []))), t);
+	}
 
 	public static function skipParens(e:TExpr):TExpr {
 		return switch e.kind {

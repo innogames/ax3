@@ -224,8 +224,8 @@ enum TExprKind {
 	TEBlock(block:TBlock);
 	TETry(t:TTry);
 	TEVector(syntax:VectorSyntax, type:TType);
-	TETernary(e:TTernary);
-	TEIf(e:TIf);
+	TETernary(t:TTernary);
+	TEIf(i:TIf);
 	TEWhile(w:TWhile);
 	TEDoWhile(w:TDoWhile);
 	TEFor(f:TFor);
