@@ -179,7 +179,7 @@ class SPackage {
 		switch moduleMap[name] {
 			case null:
 			case existing:
-				trace('Duplicate module `$name` in package `${this.name}`');
+				// trace('Duplicate module `$name` in package `${this.name}`');
 				modules.remove(existing);
 		}
 		var module = new SModule(name, this, stucture);

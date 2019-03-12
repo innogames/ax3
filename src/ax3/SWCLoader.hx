@@ -9,7 +9,7 @@ import ax3.Structure;
 
 class SWCLoader {
 	public static function load(structure:Structure, file:String) {
-		trace('Loading $file');
+		// trace('Loading $file');
 		processLibrary(getLibrary(file), structure);
 	}
 
@@ -46,7 +46,7 @@ class SWCLoader {
 				var pack = structure.getPackage(n.ns);
 
 				if (pack.getModule(n.name) != null) {
-					trace('Duplicate module: ' + n.ns + "::" + n.name);
+					// trace('Duplicate module: ' + n.ns + "::" + n.name);
 					continue;
 				}
 
@@ -159,7 +159,7 @@ class SWCLoader {
 
 					// TODO: code duplication with classes
 					if (pack.getModule(n.name) != null) {
-						trace('Duplicate module: ' + n.ns + "::" + n.name);
+						// trace('Duplicate module: ' + n.ns + "::" + n.name);
 						continue;
 					}
 
@@ -206,12 +206,12 @@ class SWCLoader {
 					case NPrivate(ns):
 						var ns = abc.get(abc.strings, ns);
 						var name = abc.get(abc.strings, name);
-						trace("Loading private type as *", ns, name);
+						// trace("Loading private type as *", ns, name);
 						return STAny;
 					case NInternal(ns):
 						var ns = abc.get(abc.strings, ns);
 						var name = abc.get(abc.strings, name);
-						trace("Loading internal type as *", ns, name);
+						// trace("Loading internal type as *", ns, name);
 						return STAny;
 					case other:
 						throw "assert" + other.getName();
@@ -249,18 +249,18 @@ class SWCLoader {
 						} else if (ns == ifaceNS) {
 							return {ns: "", name: name};
 						} else {
-							trace("Ignoring namespace: " +  ns + " for " + name);
+							// trace("Ignoring namespace: " +  ns + " for " + name);
 							return {ns: "", name: name};
 						}
 					case NPrivate(_):
 						// privates are not accessible in any way, so silently skip them
 						return null;
 					case _:
-						trace("Skipping non-public: " +  ns.getName() + " " + abc.get(abc.strings, name));
+						// trace("Skipping non-public: " +  ns.getName() + " " + abc.get(abc.strings, name));
 						return null;
 				}
 			case NMulti(name, nss):
-				trace("OMG", abc.get(abc.strings, name));
+				// trace("OMG", abc.get(abc.strings, name));
 				var nss = abc.get(abc.nssets, nss);
 				for (ns in nss) {
 					var nsk = abc.get(abc.namespaces, ns);
