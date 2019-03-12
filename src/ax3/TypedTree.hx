@@ -260,7 +260,7 @@ typedef TCast = {
 
 typedef TLocalFunction = {
 	var syntax:{keyword:Token};
-	var name:{syntax:Token, name:String};
+	var name:Null<{syntax:Token, name:String}>;
 	var fun:TFunction;
 }
 

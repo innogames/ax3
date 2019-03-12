@@ -23,13 +23,13 @@ class TypedTreeDumpMacro {
 				return macro printToken;
 
 			case TInst(_.get() => {pack: ["ax3"], name: "SClassDecl"}, _):
-				return macro function(c:ax3.Structure.SClassDecl, indent) return c.name;
+				return macro function(c:ax3.Structure.SClassDecl, indent) str(c.name);
 
 			case TInst(_.get() => {pack: [], name: "String"}, _):
-				return macro function(s, indent) return s;
+				return macro function(s, indent) str(s);
 
 			case TAbstract(_.get() => {pack: [], name: "Bool"}, _):
-				return macro function(s, indent) return if (s) "true" else "false";
+				return macro function(s, indent) str(if (s) "true" else "false");
 
 			case TInst(_.get() => {pack: [], name: "Array"}, [elemT]) if (name != null):
 				return walkSeq(elemT, origType, name, macro printArray, fields);
@@ -69,28 +69,36 @@ class TypedTreeDumpMacro {
 			for (field in anon.fields) {
 				var fname = field.name;
 				var method = walk(field.type, field.type, fields, name + "_" + fname);
-				fieldExprs.push(macro nextIdent + $v{fname + ": "} + $method(node.$fname, nextIdent));
+				fieldExprs.push(macro {
+					str(nextIndent);
+					str($v{fname + ": "});
+					$method(node.$fname, nextIndent);
+					str("\n");
+				});
 			}
 
 			fields.set(name, {
 				pos: Context.currentPos(),
 				name: methodName,
-				access: [APublic,AStatic],
+				access: [APublic],
 				kind: FFun({
 					args: [
 						{name: "node", type: origType.toComplexType()},
 						{name: "indent", type: macro : String},
 					],
-					ret: macro : String,
+					ret: macro : Void,
 					expr: macro {
-						var nextIdent = indent + "  ";
-						var fields = $a{fieldExprs};
-						return $v{name + " {"} + (
-							if (fields.length > 0)
-								"\n" + fields.join("\n") + "\n" + indent + "}"
-							else
-								"}"
-						);
+						var nextIndent = indent + "  ";
+						${
+							if (fieldExprs.length > 0) macro {
+								str($v{name + " {\n"});
+								$b{fieldExprs};
+								str(indent);
+								str("}");
+							} else macro {
+								str($v{name + " {}"});
+							}
+						};
 					}
 				})
 			});
@@ -108,14 +116,14 @@ class TypedTreeDumpMacro {
 			fields.set(name, {
 				pos: Context.currentPos(),
 				name: methodName,
-				access: [APublic, AStatic],
+				access: [APublic],
 				kind: FFun({
 					args: [
 						{name: "elems", type: origType.toComplexType()},
 						{name: "indent", type: macro : String}
 					],
-					ret: null,
-					expr: macro return $walkFn(elems, $expr, indent)
+					ret: macro : Void,
+					expr: macro $walkFn(elems, $expr, indent)
 				})
 			});
 
@@ -133,31 +141,36 @@ class TypedTreeDumpMacro {
 				switch (ctor.type) {
 					case TFun(args, _):
 						var patternArgs = [];
-						var locals = [];
 						var fieldExprs = [];
 						for (arg in args) {
 							var name = arg.name;
 							patternArgs.push(macro var $name);
 							final local = macro $i{name};
-							locals.push(local);
 
 							var method = walk(arg.t, arg.t, fields, name + "_" + ctor.name + "_" + arg.name);
-							fieldExprs.push(macro nextIdent + $v{arg.name + ": "} + $method($local, nextIdent));
+							fieldExprs.push(macro {
+								str(nextIndent);
+								str($v{arg.name + ": "});
+								$method($local, nextIndent);
+								str("\n");
+							});
 						}
 
 						cases.push({
 							values: [macro $i{ctor.name}($a{patternArgs})],
 							expr: macro {
-								var nextIdent = indent + "  ";
-								var fields = $a{fieldExprs};
-								$v{ctor.name + "(\n"} + fields.join("\n") + "\n" + indent + ")";
+								var nextIndent = indent + "  ";
+								str($v{ctor.name + "(\n"});
+								$b{fieldExprs};
+								str(indent);
+								str(")");
 							}
 						});
 
 					case TEnum(_):
 						cases.push({
 							values: [macro $i{ctor.name}],
-							expr: macro $v{ctor.name},
+							expr: macro str($v{ctor.name}),
 						});
 
 					default: throw false;
@@ -167,14 +180,14 @@ class TypedTreeDumpMacro {
 			fields.set(en.name, {
 				pos: en.pos,
 				name: methodName,
-				access: [APublic, AStatic],
+				access: [APublic],
 				kind: FFun({
 					args: [
 						{name: "node", type: origType.toComplexType()},
 						{name: "indent", type: macro : String}
 					],
-					ret: macro : String,
-					expr: macro return ${{expr: ESwitch(macro node, cases, null), pos: en.pos}}
+					ret: macro : Void,
+					expr: macro ${{expr: ESwitch(macro node, cases, null), pos: en.pos}}
 				})
 			});
 		}
