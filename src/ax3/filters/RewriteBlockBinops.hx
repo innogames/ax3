@@ -3,15 +3,17 @@ package ax3.filters;
 /**
 	Replace block-level `something && doSomething()` expressions with `if (something) doSomething()`.
 **/
-class RewriteVoidBinops {
+class RewriteBlockBinops {
 	public static function process(e:TExpr):TExpr {
 		e = mapExpr(process, e);
 
-		return switch (e.kind) {
+		return switch e.kind {
 			case TEBlock(b):
-				e.with(kind = TEBlock(b.with(
-					exprs = [for (e in b.exprs) e.with(expr = modifyBlockExpr(e.expr))]
-				)));
+				e.with(
+					kind = TEBlock(b.with(
+						exprs = [for (e in b.exprs) e.with(expr = modifyBlockExpr(e.expr))]
+					)
+				));
 			case _:
 				e;
 		}

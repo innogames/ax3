@@ -2,7 +2,11 @@ package ax3;
 
 import ax3.Token;
 
-class TokenBuilder {
+class TokenTools {
+	public static function filterWhitespace(tr:Array<Trivia>):Array<Trivia> {
+		return [for (t in tr) if (t.kind != TrWhitespace) t];
+	}
+
 	public static function mkTokenWithSpaces(kind:TokenKind, text:String):Token {
 		return new Token(0, kind, text, [new Trivia(TrWhitespace, " ")], [new Trivia(TrWhitespace, " ")]);
 	}
