@@ -5,6 +5,12 @@ import ax3.TypedTree;
 
 @:nullSafety
 class GenAS3 extends PrinterBase {
+	public static function debugExpr(e:TExpr):String {
+		var g = new GenAS3();
+		g.printExpr(e);
+		return g.toString();
+	}
+
 	public function writeModule(m:TModule) {
 		printPackage(m.pack);
 		for (d in m.privateDecls) {
