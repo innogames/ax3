@@ -7,6 +7,22 @@ using ax3.WithMacro;
 
 class TypedTreeTools {
 
+	public static function addParens(e:TExpr):TExpr {
+		return switch (e.kind) {
+			case TEParens(_):
+				e;
+			case _:
+				var lead = removeLeadingTrivia(e);
+				var trail = removeTrailingTrivia(e);
+				var openParen = new Token(0, TkParenOpen, "(", lead, []);
+				var closeParen = new Token(0, TkParenClose, ")", [], trail);
+				e.with(
+					kind = TEParens(openParen, e, closeParen),
+					type = e.expectedType
+				);
+		}
+	}
+
 	/** Is it safe to repeat this expression a couple times :) **/
 	public static function canBeRepeated(e:TExpr):Bool {
 		return switch (e.kind) {
@@ -149,7 +165,7 @@ class TypedTreeTools {
 				else if (v.syntax.type != null) fromSyntaxType(v.syntax.type.type)
 				else r(v.syntax.name);
 			case TEVector(syntax, type): r(syntax.t.gt);
-			case TETernary(t): removeTrailingTrivia(t.ethen);
+			case TETernary(t): removeTrailingTrivia(t.eelse);
 			case TEWhile(w): removeTrailingTrivia(w.body);
 			case TEDoWhile(w): r(w.syntax.closeParen);
 			case TEFor(f): removeTrailingTrivia(f.body);
