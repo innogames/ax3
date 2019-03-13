@@ -1004,10 +1004,71 @@ class Parser {
 	}
 
 	function parseBinop(a:Expr, ctor:Token->Binop, allowComma:Bool):Expr {
-		// TODO: handle precedence here (swap expressions when needed)
-		var token = scanner.consume();
-		var second = parseExpr(allowComma);
-		return parseExprNext(EBinop(a, ctor(token), second), allowComma);
+		return makeBinop(a, ctor(scanner.consume()), parseExpr(allowComma));
+	}
+
+	function makeBinop(a:Expr, op:Binop, b:Expr):Expr {
+		return switch (b) {
+			case EBinop(a2, op2, b2) if (binopNeedsSwap(op, op2)):
+				var a2 = makeBinop(a, op, a2);
+				EBinop(a2, op2, b2);
+			case _:
+				EBinop(a, op, b);
+		}
+	}
+
+	function binopNeedsSwap(op1:Binop, op2:Binop):Bool {
+		var i1 = binopPrecedence(op1);
+		var i2 = binopPrecedence(op2);
+		return i1.assoc == Left && i1.p <= i2.p;
+	}
+
+	static function binopPrecedence(op:Binop):{p:Int, assoc:BinopAssoc} {
+		return switch op {
+			// Multiplicative
+			case OpMul(_) | OpDiv(_) | OpMod(_):
+				{p: 0, assoc: Left};
+
+			// Additive
+			case OpAdd(_) | OpSub(_):
+				{p: 1, assoc: Left};
+
+			// Bitwise shift
+			case OpShl(_) | OpShr(_) | OpUshr(_):
+				{p: 2, assoc: Left};
+
+			// Relational
+			case OpGt(_) | OpGte(_) | OpLt(_) | OpLte(_) | OpIn(_):
+				{p: 3, assoc: Left};
+
+			// Equality
+			case OpEquals(_) | OpNotEquals(_) | OpStrictEquals(_) | OpNotStrictEquals(_):
+				{p: 4, assoc: Left};
+
+			// Bitwise AND
+			case OpBitAnd(_):
+				{p: 5, assoc: Left};
+
+			// Bitwise XOR
+			case OpBitXor(_):
+				{p: 6, assoc: Left};
+
+			// Bitwise OR
+			case OpBitOr(_):
+				{p: 7, assoc: Left};
+
+			// Logical AND
+			case OpAnd(_):
+				{p: 8, assoc: Left};
+
+			// Logical OR
+			case OpOr(_):
+				{p: 9, assoc: Left};
+
+			// Assignment
+			case OpAssign(_) | OpAssignAdd(_) | OpAssignSub(_) | OpAssignMul(_) | OpAssignDiv(_) | OpAssignMod(_) | OpAssignAnd(_) | OpAssignOr(_) | OpAssignBitAnd(_) | OpAssignBitOr(_) | OpAssignBitXor(_) | OpAssignShl(_) | OpAssignShr(_) | OpAssignUshr(_):
+				{p: 0, assoc: Right};
+		}
 	}
 
 	function parseCallArgsNext(openParen:Token):CallArgs {
@@ -1175,4 +1236,9 @@ class Parser {
 	function expectKeyword(name) {
 		return expect(t -> t.kind == TkIdent && t.text == name, 'Expected keyword: $name');
 	}
+}
+
+private enum abstract BinopAssoc(Int) {
+	var Left;
+	var Right;
 }
