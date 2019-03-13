@@ -1008,12 +1008,40 @@ class Parser {
 	}
 
 	function makeBinop(a:Expr, op:Binop, b:Expr):Expr {
+		// TODO: handle comma (x?x:x,y)
+		// TODO: move trivia to the correct place
 		return switch (b) {
 			case EBinop(a2, op2, b2) if (binopNeedsSwap(op, op2)):
 				var a2 = makeBinop(a, op, a2);
 				EBinop(a2, op2, b2);
+			case ETernary(econd, question, ethen, colon, eelse) if (binopHigherThanTernary(op)):
+				econd = makeBinop(a, op, econd);
+				ETernary(econd, question, ethen, colon, eelse);
 			case _:
 				EBinop(a, op, b);
+		}
+	}
+
+	function binopHigherThanTernary(op:Binop) {
+		return switch (op) {
+			case OpAssign(_)
+				| OpAssignAdd(_)
+				| OpAssignSub(_)
+				| OpAssignMul(_)
+				| OpAssignDiv(_)
+				| OpAssignMod(_)
+				| OpAssignAnd(_)
+				| OpAssignOr(_)
+				| OpAssignBitAnd(_)
+				| OpAssignBitOr(_)
+				| OpAssignBitXor(_)
+				| OpAssignShl(_)
+				| OpAssignShr(_)
+				| OpAssignUshr(_)
+				| OpComma(_):
+				false;
+			case _:
+				true;
 		}
 	}
 
