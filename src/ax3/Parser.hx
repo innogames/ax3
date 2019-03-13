@@ -1051,6 +1051,7 @@ class Parser {
 		return (i1.p < i2.p) || (i1.assoc == Left && i1.p == i2.p);
 	}
 
+	// https://help.adobe.com/en_US/as3/learn/WS5b3ccc516d4fbf351e63e3d118a9b90204-7fd1.html
 	static function binopPrecedence(op:Binop):{p:Int, assoc:BinopAssoc} {
 		return switch op {
 			// Multiplicative
