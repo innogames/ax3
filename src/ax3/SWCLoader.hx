@@ -68,6 +68,9 @@ class SWCLoader {
 							decl.extensions.push(if (n.ns == "") n.name else n.ns + "." + n.name);
 						}
 					}
+
+					var ctor = buildFunDecl(abc, cls.constructor);
+					decl.fields.add({name: n.name, kind: SFFun(ctor)});
 				}
 
 				function processField(f:format.abc.Data.Field, collection:FieldCollection) {
@@ -86,18 +89,8 @@ class SWCLoader {
 							collection.add({name: n.name, kind: SFVar({type: if (type != null) buildPublicType(type) else STAny})});
 
 						case FMethod(type, KNormal, _, _):
-							var methType = getMethodType(abc, type);
-							var args = [];
-							for (i in 0...methType.args.length) {
-								var arg = methType.args[i];
-								var type = if (arg != null) buildPublicType(arg) else STAny;
-								args.push({kind: SArgNormal("arg", false), type: type});
-							}
-							if (methType.extra.variableArgs) {
-								args.push({kind: SArgRest("arg"), type: STArray});
-							}
-							var ret = if (methType.ret != null) buildPublicType(methType.ret) else STAny;
-							collection.add({name: n.name, kind: SFFun({args: args, ret: ret})});
+							var f = buildFunDecl(abc, type);
+							collection.add({name: n.name, kind: SFFun(f)});
 
 						case FMethod(type, KGetter, _, _):
 							var methType = getMethodType(abc, type);
@@ -140,19 +133,7 @@ class SWCLoader {
 						case FVar(type, value, const):
 							SVar({type: if (type != null) buildTypeStructure(abc, type) else STAny});
 						case FMethod(type, KNormal, _, _):
-							var methType = getMethodType(abc, type);
-							var args = [];
-							for (i in 0...methType.args.length) {
-								var arg = methType.args[i];
-								var type = if (arg != null) buildTypeStructure(abc, arg) else STAny;
-								args.push({kind: SArgNormal("arg", false), type: type});
-							}
-							if (methType.extra.variableArgs) {
-								args.push({kind: SArgRest("arg"), type: STArray});
-							}
-							var ret = if (methType.ret != null) buildTypeStructure(abc, methType.ret) else STAny;
-							SFun({args: args, ret: ret});
-
+							SFun(buildFunDecl(abc, type));
 						case FMethod(_, _, _, _):
 							throw "assert";
 						case FClass(_):
@@ -175,6 +156,21 @@ class SWCLoader {
 			}
 
 		}
+	}
+
+	static function buildFunDecl(abc:ABCData, methType:Index<MethodType>):SFunDecl {
+		var methType = getMethodType(abc, methType);
+		var args = [];
+		for (i in 0...methType.args.length) {
+			var arg = methType.args[i];
+			var type = if (arg != null) buildTypeStructure(abc, arg) else STAny;
+			args.push({kind: SArgNormal("arg", false), type: type});
+		}
+		if (methType.extra != null && methType.extra.variableArgs) {
+			args.push({kind: SArgRest("arg"), type: STArray});
+		}
+		var ret = if (methType.ret != null) buildTypeStructure(abc, methType.ret) else STAny;
+		return {args: args, ret: ret};
 	}
 
 	static function getMethodType(abc:ABCData, i:Index<MethodType> ) : MethodType {
