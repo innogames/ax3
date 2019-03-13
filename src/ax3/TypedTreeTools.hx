@@ -24,12 +24,12 @@ class TypedTreeTools {
 		}
 	}
 
-	public static inline function mk(e:TExprKind, t:TType):TExpr {
-		return {kind: e, type: t};
+	public static inline function mk(kind:TExprKind, type:TType, expectedType:TType):TExpr {
+		return {kind: kind, type: type, expectedType: expectedType};
 	}
 
 	public static inline function mkNullExpr(t = TTAny, ?lead, ?trail):TExpr {
-		return mk(TELiteral(TLNull(new Token(0, TkIdent, "null", if (lead != null) lead else [], if (trail != null) trail else []))), t);
+		return mk(TELiteral(TLNull(new Token(0, TkIdent, "null", if (lead != null) lead else [], if (trail != null) trail else []))), t, t);
 	}
 
 	public static function skipParens(e:TExpr):TExpr {

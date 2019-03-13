@@ -10,6 +10,29 @@ class Structure {
 		packages = [];
 	}
 
+	public function getConstructor(cls:SClassDecl):Null<SFunDecl> {
+		function loop(c:SClassDecl) {
+			var ctor = c.fields.get(c.name);
+			if (ctor != null) {
+				return ctor;
+			} else {
+				for (ext in c.extensions) {
+					ctor = loop(getClass(ext));
+					if (ctor != null) {
+						return ctor;
+					}
+				}
+			}
+			return null;
+		}
+		var ctor = loop(cls);
+		return switch ctor {
+			case null: null;
+			case {kind: SFFun(f)}: f;
+			case {kind: SFVar(_)}: throw "assert";
+		};
+	}
+
 	public function getClass(fqn:String):SClassDecl {
 		var pack, name;
 		switch fqn.lastIndexOf(".") {

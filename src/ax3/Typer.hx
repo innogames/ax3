@@ -20,6 +20,7 @@ class Typer {
 	@:nullSafety(Off) var localsStack:Array<Locals>;
 
 	@:nullSafety(Off) var currentModule:SModule;
+	@:nullSafety(Off) var currentReturnType:TType;
 
 	var currentClass:Null<SClassDecl>;
 	var currentPath:String = "<unknown>";
@@ -315,7 +316,7 @@ class Typer {
 					case MField(f):
 						tMembers.push(TMField(typeClassField(f)));
 					case MStaticInit(block):
-						var expr = mk(TEBlock(typeBlock(block)), TTVoid);
+						var expr = mk(TEBlock(typeBlock(block)), TTVoid, TTVoid);
 						tMembers.push(TMStaticInit({expr: expr}));
 				}
 			}
@@ -338,7 +339,7 @@ class Typer {
 	function typeVarFieldDecls(vars:Separated<VarDecl>):Array<TVarFieldDecl> {
 		return separatedToArray(vars, function(v, comma) {
 			var type = if (v.type == null) TTAny else resolveType(v.type.type);
-			var init = if (v.init != null) typeVarInit(v.init) else null;
+			var init = if (v.init != null) typeVarInit(v.init, type) else null;
 			return {
 				syntax:{
 					name: v.name,
@@ -414,7 +415,7 @@ class Typer {
 					return switch (arg) {
 						case ArgNormal(a):
 							var type = if (a.type == null) TTAny else resolveType(a.type.type);
-							var init = if (a.init == null) null else typeVarInit(a.init);
+							var init = if (a.init == null) null else typeVarInit(a.init, type);
 							if (addArgLocals) addLocal(a.name.text, type);
 							{syntax: {name: a.name}, name: a.name.text, type: type, kind: TArgNormal(a.type, init), comma: comma};
 						case ArgRest(dots, name):
@@ -448,93 +449,130 @@ class Typer {
 
 	function typeFunction(fun:Function):TFunction {
 		pushLocals();
+
 		var sig = typeFunctionSignature(fun.signature, true);
+
+		var oldReturnType = currentReturnType;
+		currentReturnType = sig.ret.type;
+
 		var block = typeBlock(fun.block);
+
+		currentReturnType = oldReturnType;
+
 		popLocals();
+
 		return {
 			sig: sig,
-			expr: mk(TEBlock(block), TTVoid)
+			expr: mk(TEBlock(block), TTVoid, TTVoid)
 		};
 	}
 
-	function typeExpr(e:Expr):TExpr {
+	function typeExpr(e:Expr, expectedType:TType):TExpr {
 		return switch (e) {
-			case EIdent(i): typeIdent(i, e);
-			case ELiteral(l): typeLiteral(l);
-			case ECall(e, args): typeCall(e, args);
-			case EParens(openParen, e, closeParen):
-				var e = typeExpr(e);
-				mk(TEParens(openParen, e, closeParen), e.type);
-			case EArrayAccess(e, openBracket, eindex, closeBracket): typeArrayAccess(e, openBracket, eindex, closeBracket);
-			case EArrayDecl(d): typeArrayDecl(d);
-			case EVectorDecl(newKeyword, t, d): typeVectorDecl(newKeyword, t, d);
-			case EReturn(keyword, e): mk(TEReturn(keyword, if (e != null) typeExpr(e) else null), TTVoid);
-			case EThrow(keyword, e): mk(TEThrow(keyword, typeExpr(e)), TTVoid);
-			case EDelete(keyword, e): mk(TEDelete(keyword, typeExpr(e)), TTVoid);
-			case ENew(keyword, e, args): typeNew(keyword, e, args);
-			case EField(eobj, dot, fieldName): typeField(eobj, dot, fieldName);
-			case EBlock(b): mk(TEBlock(typeBlock(b)), TTVoid);
-			case EObjectDecl(openBrace, fields, closeBrace): typeObjectDecl(openBrace, fields, closeBrace);
-			case EIf(keyword, openParen, econd, closeParen, ethen, eelse): typeIf(keyword, openParen, econd, closeParen, ethen, eelse);
-			case ETernary(econd, question, ethen, colon, eelse): typeTernary(econd, question, ethen, colon, eelse);
-			case EWhile(w): typeWhile(w);
-			case EDoWhile(w): typeDoWhile(w);
-			case EFor(f): typeFor(f);
-			case EForIn(f): typeForIn(f);
-			case EForEach(f): typeForEach(f);
-			case EBinop(a, op, b): typeBinop(a, op, b);
-			case EPreUnop(op, e): typePreUnop(op, e);
-			case EPostUnop(e, op): typePostUnop(e, op);
-			case EVars(kind, vars): typeVars(kind, vars);
-			case EAs(e, keyword, t): typeAs(e, keyword, t);
-			case EIs(e, keyword, et): typeIs(e, keyword, et);
-			case EVector(v): typeVector(v);
-			case ESwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace): typeSwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace);
-			case ETry(keyword, block, catches, finally_): typeTry(keyword, block, catches, finally_);
-			case EFunction(keyword, name, fun): typeLocalFunction(keyword, name, fun);
-			case EBreak(keyword): mk(TEBreak(keyword), TTVoid);
-			case EContinue(keyword): mk(TEContinue(keyword), TTVoid);
+			case EIdent(i):
+				typeIdent(i, e, expectedType);
 
-			case EXmlAttr(e, dot, at, attrName): typeXmlAttr(e, dot, at, attrName);
-			case EXmlAttrExpr(e, dot, at, openBracket, eattr, closeBracket): typeXmlAttrExpr(e, dot, at, openBracket, eattr, closeBracket);
-			case EXmlDescend(e, dotDot, childName): typeXmlDescend(e, dotDot, childName);
-			case ECondCompValue(v): mk(TECondCompValue(typeCondCompVar(v)), TTAny);
-			case ECondCompBlock(v, b): typeCondCompBlock(v, b);
-			case EUseNamespace(ns): mk(TEUseNamespace(ns), TTVoid);
+			case ELiteral(l):
+				typeLiteral(l, expectedType);
+
+			case ECall(e, args):
+				typeCall(e, args, expectedType);
+
+			case EParens(openParen, e, closeParen):
+				var e = typeExpr(e, expectedType);
+				mk(TEParens(openParen, e, closeParen), e.type, expectedType);
+
+			case EArrayAccess(e, openBracket, eindex, closeBracket):
+				typeArrayAccess(e, openBracket, eindex, closeBracket, expectedType);
+
+			case EArrayDecl(d):
+				typeArrayDecl(d, expectedType);
+
+			case EVectorDecl(newKeyword, t, d):
+				typeVectorDecl(newKeyword, t, d, expectedType);
+
+			case EReturn(keyword, eReturned):
+				if (expectedType != TTVoid) throw "assert";
+				mk(TEReturn(keyword, if (eReturned != null) typeExpr(eReturned, currentReturnType) else null), TTVoid, TTVoid);
+
+			case EThrow(keyword, e):
+				if (expectedType != TTVoid) throw "assert";
+				mk(TEThrow(keyword, typeExpr(e, TTAny)), TTVoid, TTVoid);
+
+			case EBreak(keyword):
+				if (expectedType != TTVoid) throw "assert";
+				mk(TEBreak(keyword), TTVoid, TTVoid);
+
+			case EContinue(keyword):
+				if (expectedType != TTVoid) throw "assert";
+				mk(TEContinue(keyword), TTVoid, TTVoid);
+
+			case EDelete(keyword, e):
+				mk(TEDelete(keyword, typeExpr(e, TTAny)), TTBoolean, expectedType);
+
+			case ENew(keyword, e, args): typeNew(keyword, e, args, expectedType);
+			case EField(eobj, dot, fieldName): typeField(eobj, dot, fieldName, expectedType);
+			case EBlock(b): mk(TEBlock(typeBlock(b)), TTVoid, TTVoid);
+			case EObjectDecl(openBrace, fields, closeBrace): typeObjectDecl(openBrace, fields, closeBrace, expectedType);
+			case EIf(keyword, openParen, econd, closeParen, ethen, eelse): typeIf(keyword, openParen, econd, closeParen, ethen, eelse, expectedType);
+			case ETernary(econd, question, ethen, colon, eelse): typeTernary(econd, question, ethen, colon, eelse, expectedType);
+			case EWhile(w): typeWhile(w, expectedType);
+			case EDoWhile(w): typeDoWhile(w, expectedType);
+			case EFor(f): typeFor(f, expectedType);
+			case EForIn(f): typeForIn(f, expectedType);
+			case EForEach(f): typeForEach(f, expectedType);
+			case EBinop(a, op, b): typeBinop(a, op, b, expectedType);
+			case EPreUnop(op, e): typePreUnop(op, e, expectedType);
+			case EPostUnop(e, op): typePostUnop(e, op, expectedType);
+			case EVars(kind, vars): typeVars(kind, vars, expectedType);
+			case EAs(e, keyword, t): typeAs(e, keyword, t, expectedType);
+			case EIs(e, keyword, et): typeIs(e, keyword, et, expectedType);
+			case EVector(v): typeVector(v, expectedType);
+			case ESwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace): typeSwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace, expectedType);
+			case ETry(keyword, block, catches, finally_): typeTry(keyword, block, catches, finally_, expectedType);
+			case EFunction(keyword, name, fun): typeLocalFunction(keyword, name, fun, expectedType);
+
+			case EXmlAttr(e, dot, at, attrName): typeXmlAttr(e, dot, at, attrName, expectedType);
+			case EXmlAttrExpr(e, dot, at, openBracket, eattr, closeBracket): typeXmlAttrExpr(e, dot, at, openBracket, eattr, closeBracket, expectedType);
+			case EXmlDescend(e, dotDot, childName): typeXmlDescend(e, dotDot, childName, expectedType);
+			case ECondCompValue(v): mk(TECondCompValue(typeCondCompVar(v)), TTAny, expectedType);
+			case ECondCompBlock(v, b): typeCondCompBlock(v, b, expectedType);
+			case EUseNamespace(ns): mk(TEUseNamespace(ns), TTVoid, expectedType);
 		}
 	}
 
-	function typeLocalFunction(keyword:Token, name:Null<Token>, fun:Function):TExpr {
+	function typeLocalFunction(keyword:Token, name:Null<Token>, fun:Function, expectedType:TType):TExpr {
 		return mk(TELocalFunction({
 			syntax: {keyword: keyword},
 			name: if (name == null) null else {name: name.text, syntax: name},
 			fun: typeFunction(fun),
-		}), TTFunction); // TODO: TTFun, why not?
+		}), TTFunction, expectedType); // TODO: TTFun, why not?
 	}
 
-	function typePreUnop(op:PreUnop, e:Expr):TExpr {
-		var e = typeExpr(e);
-		var type = switch (op) {
-			case PreNot(_): TTBoolean;
-			case PreNeg(_): e.type;
-			case PreIncr(_): e.type;
-			case PreDecr(_): e.type;
-			case PreBitNeg(_): e.type;
+	function typePreUnop(op:PreUnop, e:Expr, expectedType:TType):TExpr {
+		var inType, outType;
+		switch (op) {
+			case PreNot(_): inType = outType = TTBoolean;
+			case PreNeg(_): inType = outType = TTNumber;
+			case PreIncr(_): inType = outType = TTNumber;
+			case PreDecr(_): inType = outType = TTNumber;
+			case PreBitNeg(_): inType = TTNumber; outType = TTInt;
 		}
-		return mk(TEPreUnop(op, e), type);
+		var e = typeExpr(e, inType);
+		return mk(TEPreUnop(op, e), outType, expectedType);
 	}
 
-	function typePostUnop(e:Expr, op:PostUnop):TExpr {
-		var e = typeExpr(e);
+	function typePostUnop(e:Expr, op:PostUnop, expectedType:TType):TExpr {
+		var e = typeExpr(e, TTNumber);
 		var type = switch (op) {
 			case PostIncr(_): e.type;
 			case PostDecr(_): e.type;
 		}
-		return mk(TEPostUnop(e, op), type);
+		return mk(TEPostUnop(e, op), type, expectedType);
 	}
 
-	function typeXmlAttr(e:Expr, dot:Token, at:Token, attrName:Token):TExpr {
-		var e = typeExpr(e);
+	function typeXmlAttr(e:Expr, dot:Token, at:Token, attrName:Token, expectedType:TType):TExpr {
+		var e = typeExpr(e, TTAny);
 		return mk(TEXmlAttr({
 			syntax: {
 				dot: dot,
@@ -543,12 +581,12 @@ class Typer {
 			},
 			eobj: e,
 			name: attrName.text
-		}), TTXMLList);
+		}), TTXMLList, expectedType);
 	}
 
-	function typeXmlAttrExpr(e:Expr, dot:Token, at:Token, openBracket:Token, eattr:Expr, closeBracket:Token):TExpr {
-		var e = typeExpr(e);
-		var eattr = typeExpr(eattr);
+	function typeXmlAttrExpr(e:Expr, dot:Token, at:Token, openBracket:Token, eattr:Expr, closeBracket:Token, expectedType:TType):TExpr {
+		var e = typeExpr(e, TTAny);
+		var eattr = typeExpr(eattr, TTString);
 		return mk(TEXmlAttrExpr({
 			syntax: {
 				dot: dot,
@@ -558,40 +596,44 @@ class Typer {
 			},
 			eobj: e,
 			eattr: eattr,
-		}), TTXMLList);
+		}), TTXMLList, expectedType);
 	}
 
-	function typeXmlDescend(e:Expr, dotDot:Token, childName:Token):TExpr {
-		var e = typeExpr(e);
+	function typeXmlDescend(e:Expr, dotDot:Token, childName:Token, expectedType:TType):TExpr {
+		var e = typeExpr(e, TTAny);
 		return mk(TEXmlDescend({
 			syntax: {dotDot: dotDot, name: childName},
 			eobj: e,
 			name: childName.text
-		}), TTXMLList);
+		}), TTXMLList, expectedType);
 	}
 
 	function typeCondCompVar(v:CondCompVar):TCondCompVar {
 		return {syntax: v, ns: v.ns.text, name: v.name.text};
 	}
 
-	function typeCondCompBlock(v:CondCompVar, block:BracedExprBlock):TExpr {
-		var expr = typeExpr(EBlock(block));
-		return mk(TECondCompBlock(typeCondCompVar(v), expr), TTVoid);
+	function typeCondCompBlock(v:CondCompVar, block:BracedExprBlock, expectedType:TType):TExpr {
+		if (expectedType != TTVoid) throw "assert";
+
+		var expr = typeExpr(EBlock(block), TTVoid);
+		return mk(TECondCompBlock(typeCondCompVar(v), expr), TTVoid, TTVoid);
 	}
 
-	function typeVector(v:VectorSyntax):TExpr {
+	function typeVector(v:VectorSyntax, expectedType:TType):TExpr {
 		var type = resolveType(v.t.type);
-		return mk(TEVector(v, type), TTFunction);
+		return mk(TEVector(v, type), TTFun([TTObject], TTVector(type)), expectedType);
 	}
 
-	function typeTry(keyword:Token, block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>):TExpr {
+	function typeTry(keyword:Token, block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>, expectedType:TType):TExpr {
+		if (expectedType != TTVoid) throw "assert";
+
 		if (finally_ != null) throw "finally is unsupported";
-		var body = typeExpr(EBlock(block));
+		var body = typeExpr(EBlock(block), TTVoid);
 		var tCatches = new Array<TCatch>();
 		for (c in catches) {
 			pushLocals();
 			var v = addLocal(c.name.text, resolveType(c.type.type));
-			var e = typeExpr(EBlock(c.block));
+			var e = typeExpr(EBlock(c.block), TTVoid);
 			popLocals();
 			tCatches.push({
 				syntax: {
@@ -609,11 +651,13 @@ class Typer {
 			keyword: keyword,
 			expr: body,
 			catches: tCatches
-		}), TTVoid);
+		}), TTVoid, TTVoid);
 	}
 
-	function typeSwitch(keyword:Token, openParen:Token, subj:Expr, closeParen:Token, openBrace:Token, cases:Array<SwitchCase>, closeBrace:Token):TExpr {
-		var subj = typeExpr(subj);
+	function typeSwitch(keyword:Token, openParen:Token, subj:Expr, closeParen:Token, openBrace:Token, cases:Array<SwitchCase>, closeBrace:Token, expectedType:TType):TExpr {
+		if (expectedType != TTVoid) throw "assert";
+
+		var subj = typeExpr(subj, TTAny);
 		var tcases = new Array<TSwitchCase>();
 		var def:Null<TSwitchDefault> = null;
 		for (c in cases) {
@@ -625,8 +669,8 @@ class Typer {
 							keyword: keyword,
 							colon: colon,
 						},
-						value: typeExpr(v),
-						body: [for (e in body) {expr: typeExpr(e.expr), semicolon: e.semicolon}]
+						value: typeExpr(v, TTAny),
+						body: [for (e in body) {expr: typeExpr(e.expr, TTVoid), semicolon: e.semicolon}]
 					});
 				case CDefault(keyword, colon, body):
 					if (def != null) throw "double `default` in switch";
@@ -635,7 +679,7 @@ class Typer {
 							keyword: keyword,
 							colon: colon,
 						},
-						body: [for (e in body) {expr: typeExpr(e.expr), semicolon: e.semicolon}]
+						body: [for (e in body) {expr: typeExpr(e.expr, TTVoid), semicolon: e.semicolon}]
 					};
 			}
 		}
@@ -650,25 +694,25 @@ class Typer {
 			subj: subj,
 			cases: tcases,
 			def: def
-		}), TTVoid);
+		}), TTVoid, TTVoid);
 	}
 
-	function typeAs(e:Expr, keyword:Token, t:SyntaxType) {
-		var e = typeExpr(e);
+	function typeAs(e:Expr, keyword:Token, t:SyntaxType, expectedType:TType) {
+		var e = typeExpr(e, TTAny);
 		var type = resolveType(t);
-		return mk(TEAs(e, keyword, {syntax: t, type: type}), type);
+		return mk(TEAs(e, keyword, {syntax: t, type: type}), type, expectedType);
 	}
 
-	function typeIs(e:Expr, keyword:Token, etype:Expr):TExpr {
-		var e = typeExpr(e);
-		var etype = typeExpr(etype);
-		return mk(TEIs(e, keyword, etype), TTBoolean);
+	function typeIs(e:Expr, keyword:Token, etype:Expr, expectedType:TType):TExpr {
+		var e = typeExpr(e, TTAny);
+		var etype = typeExpr(etype, TTAny);
+		return mk(TEIs(e, keyword, etype), TTBoolean, expectedType);
 	}
 
-	function typeBinop(a:Expr, op:Binop, b:Expr):TExpr {
-		var a = typeExpr(a);
-		var b = typeExpr(b);
-		var type = switch (op) {
+	function typeBinop(a:Expr, op:Binop, b:Expr, expectedType:TType):TExpr {
+		var a = typeExpr(a, TTAny);
+		var b = typeExpr(b, TTAny);
+		var type = switch (op) { // TODO: this can be more accurate
 			case OpEquals(_) | OpNotEquals(_) | OpStrictEquals(_) | OpNotStrictEquals(_): TTBoolean;
 			case OpGt(_) | OpGte(_) | OpLt(_) | OpLte(_) | OpIn(_): TTBoolean;
 			case OpAdd(_) | OpSub(_) | OpDiv(_) | OpMul(_) | OpMod(_): a.type;
@@ -680,14 +724,16 @@ class Typer {
 			case OpBitAnd(_) | OpBitOr(_) | OpBitXor(_): a.type;
 			case OpComma(_): b.type;
 		}
-		return mk(TEBinop(a, op, b), type);
+		return mk(TEBinop(a, op, b), type, expectedType);
 	}
 
-	function typeForIn(f:ForIn):TExpr {
+	function typeForIn(f:ForIn, expectedType:TType):TExpr {
+		if (expectedType != TTVoid) throw "assert";
+
 		pushLocals();
-		var eobj = typeExpr(f.iter.eobj);
-		var eit = typeExpr(f.iter.eit);
-		var ebody = typeExpr(f.body);
+		var eobj = typeExpr(f.iter.eobj, TTAny);
+		var eit = typeExpr(f.iter.eit, TTAny);
+		var ebody = typeExpr(f.body, TTVoid);
 		popLocals();
 		return mk(TEForIn({
 			syntax: {
@@ -701,15 +747,16 @@ class Typer {
 				eobj: eobj
 			},
 			body: ebody
-		}), TTVoid);
+		}), TTVoid, TTVoid);
 	}
 
+	function typeForEach(f:ForEach, expectedType:TType):TExpr {
+		if (expectedType != TTVoid) throw "assert";
 
-	function typeForEach(f:ForEach):TExpr {
 		pushLocals();
-		var eobj = typeExpr(f.iter.eobj);
-		var eit = typeExpr(f.iter.eit);
-		var ebody = typeExpr(f.body);
+		var eobj = typeExpr(f.iter.eobj, TTAny);
+		var eit = typeExpr(f.iter.eit, TTAny);
+		var ebody = typeExpr(f.body, TTVoid);
 		popLocals();
 		return mk(TEForEach({
 			syntax: {
@@ -724,15 +771,17 @@ class Typer {
 				eobj: eobj
 			},
 			body: ebody
-		}), TTVoid);
+		}), TTVoid, TTVoid);
 	}
 
-	function typeFor(f:For):TExpr {
+	function typeFor(f:For, expectedType:TType):TExpr {
+		if (expectedType != TTVoid) throw "assert";
+
 		pushLocals();
-		var einit = if (f.einit != null) typeExpr(f.einit) else null;
-		var econd = if (f.econd != null) typeExpr(f.econd) else null;
-		var eincr = if (f.eincr != null) typeExpr(f.eincr) else null;
-		var ebody = typeExpr(f.body);
+		var einit = if (f.einit != null) typeExpr(f.einit, TTVoid) else null;
+		var econd = if (f.econd != null) typeExpr(f.econd, TTBoolean) else null;
+		var eincr = if (f.eincr != null) typeExpr(f.eincr, TTVoid) else null;
+		var ebody = typeExpr(f.body, TTVoid);
 		popLocals();
 		return mk(TEFor({
 			syntax: {
@@ -746,68 +795,106 @@ class Typer {
 			econd: econd,
 			eincr: eincr,
 			body: ebody
-		}), TTVoid);
+		}), TTVoid, TTVoid);
 	}
 
-	function typeWhile(w:While):TExpr {
-		var econd = typeExpr(w.cond);
-		var ebody = typeExpr(w.body);
+	function typeWhile(w:While, expectedType:TType):TExpr {
+		if (expectedType != TTVoid) throw "assert";
+
+		var econd = typeExpr(w.cond, TTBoolean);
+		var ebody = typeExpr(w.body, TTVoid);
 		return mk(TEWhile({
 			syntax: {keyword: w.keyword, openParen: w.openParen, closeParen: w.closeParen},
 			cond: econd,
 			body: ebody
-		}), TTVoid);
+		}), TTVoid, TTVoid);
 	}
 
-	function typeDoWhile(w:DoWhile):TExpr {
-		var ebody = typeExpr(w.body);
-		var econd = typeExpr(w.cond);
+	function typeDoWhile(w:DoWhile, expectedType:TType):TExpr {
+		if (expectedType != TTVoid) throw "assert";
+
+		var ebody = typeExpr(w.body, TTVoid);
+		var econd = typeExpr(w.cond, TTBoolean);
 		return mk(TEDoWhile({
 			syntax: {doKeyword: w.doKeyword, whileKeyword: w.whileKeyword, openParen: w.openParen, closeParen: w.closeParen},
 			body: ebody,
 			cond: econd
-		}), TTVoid);
+		}), TTVoid, TTVoid);
 	}
 
-	function typeIf(keyword:Token, openParen:Token, econd:Expr, closeParen:Token, ethen:Expr, eelse:Null<{keyword:Token, expr:Expr}>):TExpr {
-		var econd = typeExpr(econd);
-		var ethen = typeExpr(ethen);
-		var eelse = if (eelse != null) {keyword: eelse.keyword, expr: typeExpr(eelse.expr)} else null;
+	function typeIf(keyword:Token, openParen:Token, econd:Expr, closeParen:Token, ethen:Expr, eelse:Null<{keyword:Token, expr:Expr}>, expectedType:TType):TExpr {
+		if (expectedType != TTVoid) throw "assert";
+
+		var econd = typeExpr(econd, TTBoolean);
+		var ethen = typeExpr(ethen, TTVoid);
+		var eelse = if (eelse != null) {keyword: eelse.keyword, expr: typeExpr(eelse.expr, TTVoid)} else null;
 		return mk(TEIf({
 			syntax: {keyword: keyword, openParen: openParen, closeParen: closeParen},
 			econd: econd,
 			ethen: ethen,
 			eelse: eelse
-		}), TTVoid);
+		}), TTVoid, TTVoid);
 	}
 
-	function typeTernary(econd:Expr, question:Token, ethen:Expr, colon:Token, eelse:Expr):TExpr {
-		var econd = typeExpr(econd);
-		var ethen = typeExpr(ethen);
-		var eelse = typeExpr(eelse);
+	function typeTernary(econd:Expr, question:Token, ethen:Expr, colon:Token, eelse:Expr, expectedType:TType):TExpr {
+		var econd = typeExpr(econd, TTBoolean);
+		var ethen = typeExpr(ethen, expectedType);
+		var eelse = typeExpr(eelse, expectedType);
 		return mk(TETernary({
 			syntax: {question: question, colon: colon},
 			econd: econd,
 			ethen: ethen,
 			eelse: eelse
-		}), ethen.type);
+		}), ethen.type, expectedType);
 	}
 
-	function typeCallArgs(args:CallArgs):TCallArgs {
+	function typeCallArgs(args:CallArgs, callableType:TType):TCallArgs {
+		var getExpectedType = switch (callableType) {
+			case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTString | TTArray | TTObject | TTXML | TTXMLList | TTRegExp | TTVector(_) | TTInst(_):
+				throw "assert";
+			case TTClass:
+				throw "assert??";
+			case TTAny | TTFunction:
+				(i,earg) -> TTAny;
+			case TTBuiltin | TTStatic(_):
+				(i,earg) -> TTAny; // TODO: casts should be handled elsewhere
+			case TTFun(args, _, rest):
+				function(i:Int, earg:Expr):TType {
+					if (i >= args.length) {
+						if (rest == null || !rest) {
+							err("Invalid number of arguments", exprPos(earg));
+						}
+						return TTAny;
+					} else {
+						return args[i];
+					}
+				}
+		}
+
 		return {
 			openParen: args.openParen,
 			closeParen: args.closeParen,
 			args:
-				if (args.args != null)
-					separatedToArray(args.args, (expr, comma) -> {expr: typeExpr(expr), comma: comma})
-				else
+				if (args.args != null) {
+					var i = 0;
+					separatedToArray(args.args, function(expr, comma) {
+						var expectedType = getExpectedType(i, expr);
+						i++;
+						return {expr: typeExpr(expr, expectedType), comma: comma};
+					});
+				} else
 					[]
 		};
 	}
 
-	function typeCall(e:Expr, args:CallArgs) {
-		var eobj = typeExpr(e);
-		var targs = typeCallArgs(args);
+	function typeCall(e:Expr, args:CallArgs, expectedType:TType) {
+		var eobj = typeExpr(e, TTAny);
+
+		var callableType = switch eobj {
+			case {kind: TELiteral(TLSuper(_)), type: TTInst(cls)}: getConstructorType(cls);
+			case _: eobj.type;
+		}
+		var targs = typeCallArgs(args, callableType);
 
 		inline function mkCast(path, t) return {
 			var e = switch targs.args {
@@ -818,7 +905,7 @@ class Typer {
 				syntax: {openParen: args.openParen, closeParen: args.closeParen, path: path},
 				type: t,
 				expr: e
-			}), t);
+			}), t, expectedType);
 		}
 
 		inline function mkDotPath(ident:Token):DotPath return {first: ident, rest: []};
@@ -864,17 +951,29 @@ class Typer {
 				type = TTAny;
 		}
 
-		return mk(TECall(eobj, targs), type);
+		return mk(TECall(eobj, targs), type, expectedType);
 	}
 
-	function typeNew(keyword:Token, e:Expr, args:Null<CallArgs>):TExpr {
-		var e = typeExpr(e);
-		var args = if (args != null) typeCallArgs(args) else null;
-		var type = switch (e.type) {
-			case TTStatic(cls): TTInst(cls);
-			case _: TTObject; // TODO: is this correct?
-		}
-		return mk(TENew(keyword, e, args), type);
+	function getConstructorType(cls:SClassDecl):TType {
+		var ctor = structure.getConstructor(cls);
+		return if (ctor != null) getTypeOfFunctionDecl(ctor) else TTFun([], TTVoid, false);
+	}
+
+	function typeNew(keyword:Token, e:Expr, args:Null<CallArgs>, expectedType:TType):TExpr {
+		var e = typeExpr(e, TTAny);
+
+		var type, ctorType;
+		switch (e.type) {
+			case TTStatic(cls):
+				ctorType = getConstructorType(cls);
+				type = TTInst(cls);
+			case _:
+				ctorType = TTFunction;
+				type = TTObject; // TODO: is this correct?
+		};
+
+		var args = if (args != null) typeCallArgs(args, ctorType) else null;
+		return mk(TENew(keyword, e, args), type, expectedType);
 	}
 
 	function typeBlock(b:BracedExprBlock):TBlock {
@@ -882,7 +981,7 @@ class Typer {
 		var exprs = [];
 		for (e in b.exprs) {
 			exprs.push({
-				expr: typeExpr(e.expr),
+				expr: typeExpr(e.expr, TTVoid),
 				semicolon: e.semicolon
 			});
 		}
@@ -893,9 +992,9 @@ class Typer {
 		};
 	}
 
-	function typeArrayAccess(e:Expr, openBracket:Token, eindex:Expr, closeBracket:Token):TExpr {
-		var e = typeExpr(e);
-		var eindex = typeExpr(eindex);
+	function typeArrayAccess(e:Expr, openBracket:Token, eindex:Expr, closeBracket:Token, expectedType:TType):TExpr {
+		var e = typeExpr(e, TTAny);
+		var eindex = typeExpr(eindex, TTAny);
 		var type = switch (e.type) {
 			case TTVector(t):
 				t;
@@ -916,29 +1015,29 @@ class Typer {
 			syntax: {openBracket: openBracket, closeBracket: closeBracket},
 			eobj: e,
 			eindex: eindex
-		}), type);
+		}), type, expectedType);
 	}
 
-	function typeArrayDeclElements(d:ArrayDecl) {
-		var elems = if (d.elems == null) [] else separatedToArray(d.elems, (e, comma) -> {expr: typeExpr(e), comma: comma});
+	function typeArrayDeclElements(d:ArrayDecl, elemExpectedType:TType) {
+		var elems = if (d.elems == null) [] else separatedToArray(d.elems, (e, comma) -> {expr: typeExpr(e, elemExpectedType), comma: comma});
 		return {
 			syntax: {openBracket: d.openBracket, closeBracket: d.closeBracket},
 			elements: elems
 		};
 	}
 
-	function typeArrayDecl(d:ArrayDecl):TExpr {
-		return mk(TEArrayDecl(typeArrayDeclElements(d)), TTArray);
+	function typeArrayDecl(d:ArrayDecl, expectedType:TType):TExpr {
+		return mk(TEArrayDecl(typeArrayDeclElements(d, TTAny)), TTArray, expectedType);
 	}
 
-	function typeVectorDecl(newKeyword:Token, t:TypeParam, d:ArrayDecl):TExpr {
+	function typeVectorDecl(newKeyword:Token, t:TypeParam, d:ArrayDecl, expectedType:TType):TExpr {
 		var type = resolveType(t.type);
-		var elems = typeArrayDeclElements(d);
+		var elems = typeArrayDeclElements(d, type);
 		return mk(TEVectorDecl({
 			syntax: {newKeyword: newKeyword, typeParam: t},
 			elements: elems,
 			type: type
-		}), TTVector(type));
+		}), TTVector(type), expectedType);
 	}
 
 	function getTypeOfFunctionDecl(f:SFunDecl):TType {
@@ -952,14 +1051,14 @@ class Typer {
 		return TTFun(args, typeType(f.ret), rest);
 	}
 
-	function mkDeclRef(path:DotPath, decl:SDecl):TExpr {
+	function mkDeclRef(path:DotPath, decl:SDecl, expectedType:TType):TExpr {
 		var type = switch (decl.kind) {
 			case SVar(v): typeType(v.type);
 			case SFun(f): getTypeOfFunctionDecl(f);
 			case SClass(c): TTStatic(c);
 			case SNamespace: throw "assert"; // should NOT happen :)
 		};
-		return mk(TEDeclRef(path, decl), type);
+		return mk(TEDeclRef(path, decl), type, expectedType);
 	}
 
 	function getFieldType(field:SClassField):TType {
@@ -971,40 +1070,40 @@ class Typer {
 		return t;
 	}
 
-	function tryTypeIdent(i:Token):Null<TExpr> {
+	function tryTypeIdent(i:Token, expectedType:TType):Null<TExpr> {
 		inline function getCurrentClass(subj) return if (currentClass != null) currentClass else throw '`$subj` used outside of class';
 
 		return switch i.text {
-			case "this": mk(TELiteral(TLThis(i)), TTInst(getCurrentClass("this")));
-			case "super": mk(TELiteral(TLSuper(i)), TTInst(structure.getClass(getCurrentClass("super").extensions[0])));
-			case "true" | "false": mk(TELiteral(TLBool(i)), TTBoolean);
-			case "null": mk(TELiteral(TLNull(i)), TTAny);
-			case "undefined": mk(TELiteral(TLUndefined(i)), TTAny);
-			case "arguments": mk(TEBuiltin(i, "arguments"), TTBuiltin);
-			case "trace": mk(TEBuiltin(i, "trace"), TTFun([], TTVoid, true));
-			case "int": mk(TEBuiltin(i, "int"), TTBuiltin);
-			case "uint": mk(TEBuiltin(i, "int"), TTBuiltin);
-			case "Boolean": mk(TEBuiltin(i, "Boolean"), TTBuiltin);
-			case "Number": mk(TEBuiltin(i, "Number"), TTBuiltin);
-			case "XML": mk(TEBuiltin(i, "XML"), TTBuiltin);
-			case "XMLList": mk(TEBuiltin(i, "XMLList"), TTBuiltin);
-			case "String": mk(TEBuiltin(i, "String"), TTBuiltin);
-			case "Array": mk(TEBuiltin(i, "Array"), TTBuiltin);
-			case "Function": mk(TEBuiltin(i, "Function"), TTBuiltin);
-			case "Class": mk(TEBuiltin(i, "Class"), TTBuiltin);
-			case "Object": mk(TEBuiltin(i, "Object"), TTBuiltin);
-			case "RegExp": mk(TEBuiltin(i, "RegExp"), TTBuiltin);
+			case "this": mk(TELiteral(TLThis(i)), TTInst(getCurrentClass("this")), expectedType);
+			case "super": mk(TELiteral(TLSuper(i)), TTInst(structure.getClass(getCurrentClass("super").extensions[0])), expectedType);
+			case "true" | "false": mk(TELiteral(TLBool(i)), TTBoolean, expectedType);
+			case "null": mk(TELiteral(TLNull(i)), TTAny, expectedType);
+			case "undefined": mk(TELiteral(TLUndefined(i)), TTAny, expectedType);
+			case "arguments": mk(TEBuiltin(i, "arguments"), TTBuiltin, expectedType);
+			case "trace": mk(TEBuiltin(i, "trace"), TTFun([], TTVoid, true), expectedType);
+			case "int": mk(TEBuiltin(i, "int"), TTBuiltin, expectedType);
+			case "uint": mk(TEBuiltin(i, "int"), TTBuiltin, expectedType);
+			case "Boolean": mk(TEBuiltin(i, "Boolean"), TTBuiltin, expectedType);
+			case "Number": mk(TEBuiltin(i, "Number"), TTBuiltin, expectedType);
+			case "XML": mk(TEBuiltin(i, "XML"), TTBuiltin, expectedType);
+			case "XMLList": mk(TEBuiltin(i, "XMLList"), TTBuiltin, expectedType);
+			case "String": mk(TEBuiltin(i, "String"), TTBuiltin, expectedType);
+			case "Array": mk(TEBuiltin(i, "Array"), TTBuiltin, expectedType);
+			case "Function": mk(TEBuiltin(i, "Function"), TTBuiltin, expectedType);
+			case "Class": mk(TEBuiltin(i, "Class"), TTBuiltin, expectedType);
+			case "Object": mk(TEBuiltin(i, "Object"), TTBuiltin, expectedType);
+			case "RegExp": mk(TEBuiltin(i, "RegExp"), TTBuiltin, expectedType);
 			// TODO: actually these must be resolved after everything because they are global idents!!!
-			case "parseInt":  mk(TEBuiltin(i, "parseInt"), TTFun([TTString], TTInt));
-			case "parseFloat": mk(TEBuiltin(i, "parseFloat"), TTFun([TTString], TTNumber));
-			case "NaN": mk(TEBuiltin(i, "NaN"), TTNumber);
-			case "isNaN": mk(TEBuiltin(i, "isNaN"), TTFun([TTNumber], TTBoolean));
-			case "escape": mk(TEBuiltin(i, "escape"), TTFun([TTString], TTString));
-			case "unescape": mk(TEBuiltin(i, "unescape"), TTFun([TTString], TTString));
+			case "parseInt":  mk(TEBuiltin(i, "parseInt"), TTFun([TTString], TTInt), expectedType);
+			case "parseFloat": mk(TEBuiltin(i, "parseFloat"), TTFun([TTString], TTNumber), expectedType);
+			case "NaN": mk(TEBuiltin(i, "NaN"), TTNumber, expectedType);
+			case "isNaN": mk(TEBuiltin(i, "isNaN"), TTFun([TTNumber], TTBoolean), expectedType);
+			case "escape": mk(TEBuiltin(i, "escape"), TTFun([TTString], TTString), expectedType);
+			case "unescape": mk(TEBuiltin(i, "unescape"), TTFun([TTString], TTString), expectedType);
 			case ident:
 				var v = locals[ident];
 				if (v != null) {
-					return mk(TELocal(i, v), v.type);
+					return mk(TELocal(i, v), v.type, expectedType);
 				}
 
 				if (currentClass != null) {
@@ -1012,7 +1111,7 @@ class Typer {
 					function loop(c:SClassDecl):Null<TExpr> {
 						if (ident == c.name) {
 							// class constructor is never resolved like that, so this is definitely a declaration reference
-							return mkDeclRef({first: i, rest: []}, {name: ident, kind: SClass(c)});
+							return mkDeclRef({first: i, rest: []}, {name: ident, kind: SClass(c)}, expectedType);
 						}
 
 						var field = c.fields.get(ident);
@@ -1023,7 +1122,7 @@ class Typer {
 								type: TTInst(currentClass)
 							};
 							var type = getFieldType(field);
-							return mk(TEField(eobj, ident, i), type);
+							return mk(TEField(eobj, ident, i), type, expectedType);
 						}
 						for (ext in c.extensions) {
 							var e = loop(structure.getClass(ext));
@@ -1049,7 +1148,7 @@ class Typer {
 								type: TTStatic(currentClass),
 							};
 							var type = getFieldType(field);
-							return mk(TEField(eobj, ident, i), type);
+							return mk(TEField(eobj, ident, i), type, expectedType);
 						}
 						for (ext in c.extensions) {
 							var e = loop(structure.getClass(ext));
@@ -1069,14 +1168,14 @@ class Typer {
 
 				var decl = currentModule.getDecl(ident);
 				if (decl != null) {
-					return mkDeclRef(dotPath, decl);
+					return mkDeclRef(dotPath, decl, expectedType);
 				}
 
 				for (i in currentModule.imports) {
 					switch (i) {
 						case SISingle(pack, name):
 							if (name == ident) {
-								return mkDeclRef(dotPath, structure.getDecl(pack, name));
+								return mkDeclRef(dotPath, structure.getDecl(pack, name), expectedType);
 							}
 						case SIAll(pack):
 							switch structure.packages[pack] {
@@ -1084,7 +1183,7 @@ class Typer {
 								case p:
 									var m = p.getModule(ident);
 									if (m != null) {
-										return mkDeclRef(dotPath, m.mainDecl);
+										return mkDeclRef(dotPath, m.mainDecl, expectedType);
 									}
 							}
 					}
@@ -1092,7 +1191,7 @@ class Typer {
 
 				var modInPack = currentModule.pack.getModule(ident);
 				if (modInPack != null) {
-					return mkDeclRef(dotPath, modInPack.mainDecl);
+					return mkDeclRef(dotPath, modInPack.mainDecl, expectedType);
 				}
 
 				switch structure.packages[""] {
@@ -1100,7 +1199,7 @@ class Typer {
 					case pack:
 						var toplevel = pack.getModule(ident);
 						if (toplevel != null) {
-							return mkDeclRef(dotPath, toplevel.mainDecl);
+							return mkDeclRef(dotPath, toplevel.mainDecl, expectedType);
 						}
 				}
 
@@ -1108,26 +1207,26 @@ class Typer {
 		}
 	}
 
-	function typeIdent(i:Token, e:Expr):TExpr {
-		var e = tryTypeIdent(i);
+	function typeIdent(i:Token, e:Expr, expectedType:TType):TExpr {
+		var e = tryTypeIdent(i, expectedType);
 		if (e == null) throw 'Unknown ident: ${i.text}';
 		return e;
 	}
 
-	function typeLiteral(l:Literal):TExpr {
+	function typeLiteral(l:Literal, expectedType:TType):TExpr {
 		return switch (l) {
-			case LString(t): mk(TELiteral(TLString(t)), TTString);
-			case LDecInt(t) | LHexInt(t): mk(TELiteral(TLInt(t)), TTInt);
-			case LFloat(t): mk(TELiteral(TLNumber(t)), TTNumber);
-			case LRegExp(t): mk(TELiteral(TLRegExp(t)), TTRegExp);
+			case LString(t): mk(TELiteral(TLString(t)), TTString, expectedType);
+			case LDecInt(t) | LHexInt(t): mk(TELiteral(TLInt(t)), TTInt, expectedType);
+			case LFloat(t): mk(TELiteral(TLNumber(t)), TTNumber, expectedType);
+			case LRegExp(t): mk(TELiteral(TLRegExp(t)), TTRegExp, expectedType);
 		}
 	}
 
-	inline function mkExplicitFieldAccess(obj:TExpr, dot:Token, fieldToken:Token, type:TType):TExpr {
-		return mk(TEField({kind: TOExplicit(dot, obj), type: obj.type}, fieldToken.text, fieldToken), type);
+	inline function mkExplicitFieldAccess(obj:TExpr, dot:Token, fieldToken:Token, type:TType, expectedType:TType):TExpr {
+		return mk(TEField({kind: TOExplicit(dot, obj), type: obj.type}, fieldToken.text, fieldToken), type, expectedType);
 	}
 
-	function getTypedField(obj:TExpr, dot:Token, fieldToken:Token) {
+	function getTypedField(obj:TExpr, dot:Token, fieldToken:Token, expectedType:TType) {
 		var fieldName = fieldToken.text;
 		var type =
 			switch [fieldName, skipParens(obj)] {
@@ -1148,16 +1247,16 @@ class Typer {
 				case [_, {type: TTFunction | TTFun(_)}]: getFunctionInstanceFieldType(fieldToken);
 				case [_, {type: TTRegExp}]: getRegExpInstanceFieldType(fieldToken);
 				case [_, {type: TTXML}]:
-					return typeXMLFieldAccess(obj, dot, fieldToken);
+					return typeXMLFieldAccess(obj, dot, fieldToken, expectedType);
 				case [_, {type: TTXMLList}]:
-					return typeXMLListFieldAccess(obj, dot, fieldToken);
+					return typeXMLListFieldAccess(obj, dot, fieldToken, expectedType);
 				case [_, {type: TTInst(cls)}]: typeInstanceField(cls, fieldName);
 				case [_, {type: TTStatic(cls)}]: typeStaticField(cls, fieldName);
 		}
-		return mkExplicitFieldAccess(obj, dot, fieldToken, type);
+		return mkExplicitFieldAccess(obj, dot, fieldToken, type, expectedType);
 	}
 
-	function typeXMLFieldAccess(xml:TExpr, dot:Token, field:Token):TExpr {
+	function typeXMLFieldAccess(xml:TExpr, dot:Token, field:Token, expectedType:TType):TExpr {
 		var fieldType = switch field.text {
 			case "addNamespace": TTFun([TTObject], TTXML);
 			case "appendChild": TTFun([TTObject], TTXML);
@@ -1176,24 +1275,24 @@ class Typer {
 			case _: null;
 		}
 		if (fieldType != null) {
-			return mkExplicitFieldAccess(xml, dot, field, TTFun([TTObject], TTXML));
+			return mkExplicitFieldAccess(xml, dot, field, TTFun([TTObject], TTXML), expectedType);
 		} else {
 			// err('TODO XML instance field: ${field.text} assumed to be a child', field.pos);
-			return mk(TEXmlChild({syntax: {dot: dot, name: field}, eobj: xml, name: field.text}), TTXMLList);
+			return mk(TEXmlChild({syntax: {dot: dot, name: field}, eobj: xml, name: field.text}), TTXMLList, expectedType);
 		}
 	}
 
-	function typeXMLListFieldAccess(xml:TExpr, dot:Token, field:Token):TExpr {
+	function typeXMLListFieldAccess(xml:TExpr, dot:Token, field:Token, expectedType:TType):TExpr {
 		var fieldType = switch field.text {
 			case "attribute": TTFun([], TTString);
 			case "toXMLString": TTFun([], TTString);
 			case _: null;
 		}
 		if (fieldType != null) {
-			return mkExplicitFieldAccess(xml, dot, field, TTFun([TTObject], TTXML));
+			return mkExplicitFieldAccess(xml, dot, field, TTFun([TTObject], TTXML), expectedType);
 		} else {
 			// err('TODO XMLList instance field: ${field.text} assumed to be a child', field.pos);
-			return mk(TEXmlChild({syntax: {dot: dot, name: field}, eobj: xml, name: field.text}), TTXMLList);
+			return mk(TEXmlChild({syntax: {dot: dot, name: field}, eobj: xml, name: field.text}), TTXMLList, expectedType);
 		}
 	}
 
@@ -1296,11 +1395,11 @@ class Typer {
 		}
 	}
 
-	function typeField(eobj:Expr, dot:Token, name:Token):TExpr {
+	function typeField(eobj:Expr, dot:Token, name:Token, expectedType:TType):TExpr {
 		switch exprToDotPath(eobj) {
 			case null:
 			case prefixDotPath:
-				var e = tryTypeIdent(prefixDotPath.first);
+				var e = tryTypeIdent(prefixDotPath.first, TTAny);
 				if (e == null) @:nullSafety(Off) {
 					// probably a fully-qualified type path then
 
@@ -1327,25 +1426,28 @@ class Typer {
 						throw "unknown declaration";
 					}
 
-					rest.reverse();
 					acc.push(declName);
 					var dotPath = {
 						first: acc[0].token,
 						rest: [for (i in 1...acc.length) {sep: acc[i].dot, element: acc[i].token}]
 					};
-					var eDeclRef = mkDeclRef(dotPath, decl);
 
-					return Lambda.fold(rest, function(f, expr) {
-						return getTypedField(expr, f.dot, f.token);
-					}, eDeclRef);
+					var expr = mkDeclRef(dotPath, decl, if (rest.length == 0) expectedType else TTAny);
+
+					while (rest.length > 0) {
+						var f = rest.pop();
+						expr = getTypedField(expr, f.dot, f.token, if (rest.length == 0) expectedType else TTAny);
+					}
+
+					return expr;
 				}
 		}
 
 		// TODO: we don't need to re-type stuff,
 		// can iterate over fields, but let's do it later :-)
 
-		var eobj = typeExpr(eobj);
-		return getTypedField(eobj, dot, name);
+		var eobj = typeExpr(eobj, TTAny);
+		return getTypedField(eobj, dot, name, expectedType);
 	}
 
 	function typeInstanceField(cls:SClassDecl, fieldName:String):TType {
@@ -1379,28 +1481,34 @@ class Typer {
 		throw 'Unknown static field $fieldName on class ${cls.name}';
 	}
 
-	function typeObjectDecl(openBrace:Token, fields:Separated<ObjectField>, closeBrace:Token):TExpr {
+	function typeObjectDecl(openBrace:Token, fields:Separated<ObjectField>, closeBrace:Token, expectedType:TType):TExpr {
 		var fields = separatedToArray(fields, function(f, comma) {
 			return {
 				syntax: {name: f.name, colon: f.colon, comma: comma},
 				name: f.name.text,
-				expr: typeExpr(f.value)
+				expr: typeExpr(f.value, TTAny)
 			};
 		});
 		return mk(TEObjectDecl({
 			syntax: {openBrace: openBrace, closeBrace: closeBrace},
 			fields: fields
-		}), TTObject);
+		}), TTObject, expectedType);
 	}
 
-	function typeVarInit(init:VarInit):TVarInit {
-		return {equals: init.equals, expr: typeExpr(init.expr)};
+	function typeVarInit(init:VarInit, expectedType:TType):TVarInit {
+		return {equals: init.equals, expr: typeExpr(init.expr, expectedType)};
 	}
 
-	function typeVars(kind:VarDeclKind, vars:Separated<VarDecl>):TExpr {
+	function typeVars(kind:VarDeclKind, vars:Separated<VarDecl>, expectedType:TType):TExpr {
+		switch expectedType {
+			case TTAny: // for (var i)
+			case TTVoid: // block-level vars
+			case _: throw "assert"; // should NOT happen
+		}
+
 		var vars = separatedToArray(vars, function(v, comma) {
 			var type = if (v.type == null) TTAny else resolveType(v.type.type);
-			var init = if (v.init != null) typeVarInit(v.init) else null;
+			var init = if (v.init != null) typeVarInit(v.init, type) else null;
 			var tvar = addLocal(v.name.text, type);
 			return {
 				syntax: v,
@@ -1409,6 +1517,6 @@ class Typer {
 				comma: comma,
 			};
 		});
-		return mk(TEVars(kind, vars), TTVoid);
+		return mk(TEVars(kind, vars), TTVoid, expectedType);
 	}
 }

@@ -199,6 +199,7 @@ typedef TVarFieldDecl = {
 typedef TExpr = {
 	var kind:TExprKind;
 	var type:TType;
+	var expectedType:TType;
 }
 
 enum TExprKind {
