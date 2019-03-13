@@ -445,10 +445,6 @@ class Printer extends PrinterBase {
 				printExpr(e);
 				printTextWithTrivia("is", keyword);
 				printExpr(etype);
-			case EComma(a, comma, b):
-				printExpr(a);
-				printTextWithTrivia(",", comma);
-				printExpr(b);
 			case EVector(v):
 				printVectorSyntax(v);
 			case ESwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace):
@@ -578,6 +574,7 @@ class Printer extends PrinterBase {
 			case OpBitAnd(t): printTextWithTrivia("&", t);
 			case OpBitOr(t): printTextWithTrivia("|", t);
 			case OpBitXor(t): printTextWithTrivia("^", t);
+			case OpComma(t): printTextWithTrivia(",", t);
 		}
 	}
 

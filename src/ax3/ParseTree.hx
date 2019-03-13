@@ -24,7 +24,7 @@ class ParseTree {
 			case EFor(f): f.keyword.pos;
 			case EForIn(f): f.forKeyword.pos;
 			case EForEach(f): f.forKeyword.pos;
-			case EBinop(a, _, _) | EComma(a, _, _): exprPos(a);
+			case EBinop(a, _, _): exprPos(a);
 			case EPreUnop(PreNot(t) | PreNeg(t) | PreIncr(t) | PreDecr(t) | PreBitNeg(t), e): t.pos;
 			case EPostUnop(e, _): exprPos(e);
 			case EVars(VVar(t) | VConst(t), _): t.pos;
@@ -386,7 +386,6 @@ enum Expr {
 	EVars(kind:VarDeclKind, vars:Separated<VarDecl>);
 	EAs(e:Expr, keyword:Token, t:SyntaxType);
 	EIs(e:Expr, keyword:Token, etype:Expr);
-	EComma(a:Expr, comma:Token, b:Expr);
 	EVector(v:VectorSyntax);
 	ESwitch(keyword:Token, openParen:Token, subj:Expr, closeParen:Token, openBrace:Token, cases:Array<SwitchCase>, closeBrace:Token);
 	ECondCompValue(v:CondCompVar);
@@ -533,6 +532,7 @@ enum Binop {
 	OpBitAnd(t:Token);
 	OpBitOr(t:Token);
 	OpBitXor(t:Token);
+	OpComma(t:Token);
 }
 
 typedef BlockElement = {

@@ -89,7 +89,6 @@ class TypedTreeTools {
 			case TEBinop(a, _, _): removeLeadingTrivia(a);
 			case TEPreUnop(PreNot(t) | PreNeg(t) | PreIncr(t) | PreDecr(t) | PreBitNeg(t), _): r(t);
 			case TEPostUnop(e, _): removeLeadingTrivia(e);
-			case TEComma(a, _, _): removeLeadingTrivia(a);
 			case TEIs(e, _, _): removeLeadingTrivia(e);
 			case TEAs(e, _, _): removeLeadingTrivia(e);
 			case TESwitch(s): r(s.syntax.keyword);
@@ -159,7 +158,6 @@ class TypedTreeTools {
 			case TEBinop(_, _, b): removeTrailingTrivia(b);
 			case TEPreUnop(_, e): removeTrailingTrivia(e);
 			case TEPostUnop(_, PostIncr(t) | PostDecr(t)): r(t);
-			case TEComma(_, _, b): removeTrailingTrivia(b);
 			case TEIs(_, _, etype): removeTrailingTrivia(etype);
 			case TEAs(_, _, type): fromSyntaxType(type.syntax);
 			case TESwitch(s): r(s.syntax.closeBrace);
@@ -300,9 +298,6 @@ class TypedTreeTools {
 
 			case TEPostUnop(e, op):
 				e1.with(kind = TEPostUnop(f(e), op));
-
-			case TEComma(a, comma, b):
-				e1.with(kind = TEComma(f(a), comma, f(b)));
 
 			case TEIs(e, keyword, etype):
 				e1.with(kind = TEIs(f(e), keyword, f(etype)));

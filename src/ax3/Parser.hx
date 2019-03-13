@@ -990,7 +990,7 @@ class Parser {
 					case _:
 				}
 			case TkComma if (allowComma):
-				return parseExprNext(EComma(first, scanner.consume(), parseExpr(false)), true);
+				return parseBinop(first, OpComma, true);
 			case _:
 		}
 		return first;
@@ -1020,7 +1020,7 @@ class Parser {
 	function binopNeedsSwap(op1:Binop, op2:Binop):Bool {
 		var i1 = binopPrecedence(op1);
 		var i2 = binopPrecedence(op2);
-		return i1.assoc == Left && i1.p <= i2.p;
+		return (i1.p < i2.p) || (i1.assoc == Left && i1.p == i2.p);
 	}
 
 	static function binopPrecedence(op:Binop):{p:Int, assoc:BinopAssoc} {
@@ -1067,7 +1067,10 @@ class Parser {
 
 			// Assignment
 			case OpAssign(_) | OpAssignAdd(_) | OpAssignSub(_) | OpAssignMul(_) | OpAssignDiv(_) | OpAssignMod(_) | OpAssignAnd(_) | OpAssignOr(_) | OpAssignBitAnd(_) | OpAssignBitOr(_) | OpAssignBitXor(_) | OpAssignShl(_) | OpAssignShr(_) | OpAssignUshr(_):
-				{p: 0, assoc: Right};
+				{p: 10, assoc: Right};
+
+			case OpComma(_):
+				{p: 11, assoc: Left};
 		}
 	}
 

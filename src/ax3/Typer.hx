@@ -488,7 +488,6 @@ class Typer {
 			case EVars(kind, vars): typeVars(kind, vars);
 			case EAs(e, keyword, t): typeAs(e, keyword, t);
 			case EIs(e, keyword, et): typeIs(e, keyword, et);
-			case EComma(a, comma, b): typeComma(a, comma, b);
 			case EVector(v): typeVector(v);
 			case ESwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace): typeSwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace);
 			case ETry(keyword, block, catches, finally_): typeTry(keyword, block, catches, finally_);
@@ -666,12 +665,6 @@ class Typer {
 		return mk(TEIs(e, keyword, etype), TTBoolean);
 	}
 
-	function typeComma(a:Expr, comma:Token, b:Expr):TExpr {
-		var a = typeExpr(a);
-		var b = typeExpr(b);
-		return mk(TEComma(a, comma, b), b.type);
-	}
-
 	function typeBinop(a:Expr, op:Binop, b:Expr):TExpr {
 		var a = typeExpr(a);
 		var b = typeExpr(b);
@@ -685,6 +678,7 @@ class Typer {
 			case OpAssignAnd(_) | OpAssignOr(_): a.type;
 			case OpAnd(_) | OpOr(_) | OpShl(_) | OpShr(_) | OpUshr(_): a.type;
 			case OpBitAnd(_) | OpBitOr(_) | OpBitXor(_): a.type;
+			case OpComma(_): b.type;
 		}
 		return mk(TEBinop(a, op, b), type);
 	}

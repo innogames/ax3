@@ -296,7 +296,6 @@ class GenAS3 extends PrinterBase {
 			case TEBinop(a, op, b): printBinop(a, op, b);
 			case TEPreUnop(op, e): printPreUnop(op, e);
 			case TEPostUnop(e, op): printPostUnop(e, op);
-			case TEComma(a, comma, b): printExpr(a); printComma(comma); printExpr(b);
 			case TEIs(e, keyword, etype): printExpr(e); printTextWithTrivia("is", keyword); printExpr(etype);
 			case TEAs(e, keyword, type): printExpr(e); printTextWithTrivia("as", keyword); printSyntaxType(type.syntax);
 			case TESwitch(s): printSwitch(s);
@@ -583,6 +582,7 @@ class GenAS3 extends PrinterBase {
 			case OpBitAnd(t): printTextWithTrivia("&", t);
 			case OpBitOr(t): printTextWithTrivia("|", t);
 			case OpBitXor(t): printTextWithTrivia("^", t);
+			case OpComma(t): printTextWithTrivia(",", t);
 		}
 		printExpr(b);
 	}
