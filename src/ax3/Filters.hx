@@ -1,7 +1,6 @@
 package ax3;
 
 import ax3.TypedTree;
-import ax3.TypedTreeTools.mapExpr;
 import ax3.Structure;
 import ax3.filters.*;
 
@@ -26,7 +25,7 @@ class Filters {
 	static function processVars(f:TExpr->TExpr, vars:Array<TVarFieldDecl>) {
 		for (v in vars) {
 			if (v.init != null) {
-				v.init.expr = mapExpr(f, v.init.expr);
+				v.init.expr = f(v.init.expr);
 			}
 		}
 	}
