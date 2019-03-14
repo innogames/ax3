@@ -6,6 +6,7 @@ private typedef Config = {
 	var src:String;
 	var out:String;
 	var swc:Array<String>;
+	var ?hxout:String;
 	var ?dump:String;
 }
 
@@ -42,6 +43,7 @@ class Main {
 
 		var outDir = FileSystem.absolutePath(config.out);
 		var dumpDir = if (config.dump == null) null else FileSystem.absolutePath(config.dump);
+		var haxeDir = if (config.hxout == null) null else FileSystem.absolutePath(config.hxout);
 		t = stamp();
 		for (mod in modules) {
 			var gen = new ax3.GenAS3();
@@ -57,6 +59,22 @@ class Main {
 
 			var path = dir + "/" + mod.name + ".as";
 			sys.io.File.saveContent(path, out);
+
+			if (haxeDir != null) {
+				var gen = new ax3.GenHaxe();
+				gen.writeModule(mod);
+				var out = gen.toString();
+
+				var dir = haxe.io.Path.join({
+					var parts = mod.pack.name.split(".");
+					parts.unshift(haxeDir);
+					parts;
+				});
+				Utils.createDirectory(dir);
+
+				var path = dir + "/" + mod.name + ".hx";
+				sys.io.File.saveContent(path, out);
+			}
 
 			if (dumpDir != null) {
 				var dir = haxe.io.Path.join({

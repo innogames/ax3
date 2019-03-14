@@ -1,16 +1,11 @@
 package ax3;
 
+import haxe.macro.TypedExprTools;
 import ax3.ParseTree;
 import ax3.TypedTree;
 
 @:nullSafety
-class GenAS3 extends PrinterBase {
-	public static function debugExpr(e:TExpr):String {
-		var g = new GenAS3();
-		g.printExpr(e);
-		return g.toString();
-	}
-
+class GenHaxe extends PrinterBase {
 	public function writeModule(m:TModule) {
 		printPackage(m.pack);
 		for (d in m.privateDecls) {
@@ -20,18 +15,27 @@ class GenAS3 extends PrinterBase {
 	}
 
 	function printPackage(p:TPackageDecl) {
-		printTextWithTrivia("package", p.syntax.keyword);
-		if (p.syntax.name != null) printDotPath(p.syntax.name);
-		printOpenBrace(p.syntax.openBrace);
+		if (p.syntax.name != null) {
+			printTextWithTrivia("package", p.syntax.keyword);
+			printDotPath(p.syntax.name);
+			buf.add(";");
+		} else {
+			printTokenTrivia(p.syntax.keyword);
+		}
+
+		printTokenTrivia(p.syntax.openBrace);
+
 		for (i in p.imports) {
 			printImport(i);
 		}
+
 		for (n in p.namespaceUses) {
 			printUseNamespace(n.n);
-			printSemicolon(n.semicolon);
+			printTokenTrivia(n.semicolon);
 		}
+
 		printDecl(p.decl);
-		printCloseBrace(p.syntax.closeBrace);
+		printTokenTrivia(p.syntax.closeBrace);
 	}
 
 	function printImport(i:TImport) {
@@ -111,13 +115,13 @@ class GenAS3 extends PrinterBase {
 				printSignature(f.sig);
 			case TIFGetter(f):
 				printTextWithTrivia("function", f.syntax.functionKeyword);
-				printTextWithTrivia("get", f.syntax.accessorKeyword);
-				printTextWithTrivia(f.name, f.syntax.name);
+				printTokenTrivia(f.syntax.accessorKeyword);
+				printTextWithTrivia("get_" + f.name, f.syntax.name);
 				printSignature(f.sig);
 			case TIFSetter(f):
 				printTextWithTrivia("function", f.syntax.functionKeyword);
-				printTextWithTrivia("set", f.syntax.accessorKeyword);
-				printTextWithTrivia(f.name, f.syntax.name);
+				printTokenTrivia(f.syntax.accessorKeyword);
+				printTextWithTrivia("set_" + f.name, f.syntax.name);
 				printSignature(f.sig);
 		}
 
@@ -147,28 +151,30 @@ class GenAS3 extends PrinterBase {
 				case TMCondCompEnd(b): printCompCondEnd(b);
 				case TMField(f): printClassField(f);
 				case TMUseNamespace(n, semicolon): printUseNamespace(n); printSemicolon(semicolon);
-				case TMStaticInit(i): printExpr(i.expr);
+				case TMStaticInit(i): //printExpr(i.expr);
 			}
 		}
 		printCloseBrace(c.syntax.closeBrace);
 	}
 
 	function printCondCompBegin(e:TCondCompBegin) {
-		printCondCompVar(e.v);
-		printOpenBrace(e.openBrace);
+		printTokenTrivia(e.v.syntax.ns);
+		printTokenTrivia(e.v.syntax.sep);
+		printTextWithTrivia("#if " + e.v.ns + "_" + e.v.name, e.v.syntax.name);
+		printTokenTrivia(e.openBrace);
 	}
 
 	function printCompCondEnd(e:TCondCompEnd) {
-		printCloseBrace(e.closeBrace);
+		printTextWithTrivia("#end", e.closeBrace);
 	}
 
 	function printDeclModifiers(modifiers:Array<DeclModifier>) {
 		for (m in modifiers) {
 			switch (m) {
-				case DMPublic(t): printTextWithTrivia("public", t);
-				case DMInternal(t): printTextWithTrivia("internal", t);
-				case DMFinal(t): printTextWithTrivia("final", t);
-				case DMDynamic(t): printTextWithTrivia("dynamic", t);
+				case DMPublic(t): printTokenTrivia(t);
+				case DMInternal(t): printTextWithTrivia("/*internal*/", t);
+				case DMFinal(t): printTextWithTrivia("@:final", t);
+				case DMDynamic(t): printTextWithTrivia("/*dynamic*/", t);
 			}
 		}
 	}
@@ -182,11 +188,11 @@ class GenAS3 extends PrinterBase {
 			switch (m) {
 				case FMPublic(t): printTextWithTrivia("public", t);
 				case FMPrivate(t): printTextWithTrivia("private", t);
-				case FMProtected(t): printTextWithTrivia("protected", t);
-				case FMInternal(t): printTextWithTrivia("internal", t);
+				case FMProtected(t): printTextWithTrivia("/*protected*/private", t);
+				case FMInternal(t): printTextWithTrivia("/*internal*/", t);
 				case FMOverride(t): printTextWithTrivia("override", t);
 				case FMStatic(t): printTextWithTrivia("static", t);
-				case FMFinal(t): printTextWithTrivia("final", t);
+				case FMFinal(t): printTextWithTrivia("@:final", t);
 			}
 		}
 
@@ -200,14 +206,14 @@ class GenAS3 extends PrinterBase {
 				printExpr(f.fun.expr);
 			case TFGetter(f):
 				printTextWithTrivia("function", f.syntax.functionKeyword);
-				printTextWithTrivia("get", f.syntax.accessorKeyword);
-				printTextWithTrivia(f.name, f.syntax.name);
+				printTokenTrivia(f.syntax.accessorKeyword);
+				printTextWithTrivia("get_" + f.name, f.syntax.name);
 				printSignature(f.fun.sig);
 				printExpr(f.fun.expr);
 			case TFSetter(f):
 				printTextWithTrivia("function", f.syntax.functionKeyword);
-				printTextWithTrivia("set", f.syntax.accessorKeyword);
-				printTextWithTrivia(f.name, f.syntax.name);
+				printTokenTrivia(f.syntax.accessorKeyword);
+				printTextWithTrivia("set_" + f.name, f.syntax.name);
 				printSignature(f.fun.sig);
 				printExpr(f.fun.expr);
 		}
@@ -218,19 +224,33 @@ class GenAS3 extends PrinterBase {
 		for (v in v.vars) {
 			printTextWithTrivia(v.name, v.syntax.name);
 			if (v.syntax.type != null) {
-				printSyntaxTypeHint(v.syntax.type);
+				// printSyntaxTypeHint(v.syntax.type);
+				printColon(v.syntax.type.colon);
+			} else {
+				buf.add(":");
 			}
+			printTType(v.type);
 			if (v.init != null) printVarInit(v.init);
 			if (v.comma != null) printComma(v.comma);
 		}
 		printSemicolon(v.semicolon);
 	}
 
-	function printMetadata(m:Array<Metadata>) {
-		if (m.length == 0) return;
-		var p = new Printer();
-		p.printMetadata(m);
-		buf.add(p.toString());
+	function printMetadata(metas:Array<Metadata>) {
+		for (m in metas) {
+			printTokenTrivia(m.openBracket);
+			buf.add("@:meta(");
+			printTextWithTrivia(m.name.text, m.name);
+			if (m.args == null) {
+				buf.add("()");
+			} else {
+				var p = new Printer();
+				p.printCallArgs(m.args);
+				buf.add(p.toString());
+			}
+			buf.add(")");
+			printTokenTrivia(m.closeBracket);
+		}
 	}
 
 	function printSignature(sig:TFunctionSignature) {
@@ -239,7 +259,13 @@ class GenAS3 extends PrinterBase {
 			switch (arg.kind) {
 				case TArgNormal(hint, init):
 					printTextWithTrivia(arg.name, arg.syntax.name);
-					if (hint != null) printSyntaxTypeHint(hint);
+					if (hint != null) {
+						printColon(hint.colon);
+					} else {
+						buf.add(":");
+					}
+					printTType(arg.type);
+					// if (hint != null) printSyntaxTypeHint(hint);
 					if (init != null) printVarInit(init);
 
 				case TArgRest(dots):
@@ -254,7 +280,46 @@ class GenAS3 extends PrinterBase {
 
 	function printTypeHint(hint:TTypeHint) {
 		if (hint.syntax != null) {
-			printSyntaxTypeHint(hint.syntax);
+			// printSyntaxTypeHint(hint.syntax);
+			printColon(hint.syntax.colon);
+		} else {
+			buf.add(":");
+		}
+		// TODO don't forget trivia
+		printTType(hint.type);
+	}
+
+	function printTType(t:TType) {
+		switch t {
+			case TTVoid: buf.add("Void");
+			case TTAny: buf.add("Dynamic");
+			case TTBoolean: buf.add("Bool");
+			case TTNumber: buf.add("Float");
+			case TTInt: buf.add("Int");
+			case TTUint: buf.add("UInt");
+			case TTString: buf.add("String");
+			case TTArray: buf.add("Array<Dynamic>");
+			case TTFunction: buf.add("haxe.Constraints.Function");
+			case TTClass: buf.add("Class<Dynamic>");
+			case TTObject: buf.add("Dynamic<Dynamic>");
+			case TTXML: buf.add("flash.xml.XML");
+			case TTXMLList: buf.add("flash.xml.XMLList");
+			case TTRegExp: buf.add("flash.utils.RegExp");
+			case TTVector(t): buf.add("flash.Vector<"); printTType(t); buf.add(">");
+			case TTBuiltin: buf.add("TODO");
+			case TTFun(args, ret, rest):
+				if (args.length == 0) {
+					buf.add("Void->");
+				} else {
+					for (arg in args) {
+						printTType(arg);
+						buf.add("->");
+					}
+				}
+				printTType(ret);
+
+			case TTInst(cls): buf.add(cls.name);
+			case TTStatic(cls): buf.add("Class<" + cls.name + ">");
 		}
 	}
 
@@ -286,7 +351,12 @@ class GenAS3 extends PrinterBase {
 			case TEArrayAccess(a): printArrayAccess(a);
 			case TEBlock(block): printBlock(block);
 			case TETry(t): printTry(t);
-			case TEVector(syntax, type): printVectorSyntax(syntax);
+			case TEVector(syntax, type):
+				buf.add("flash.Vector<");
+				printTType(type);
+				buf.add(">");
+				// printVectorSyntax(syntax);
+
 			case TETernary(t): printTernary(t);
 			case TEIf(i): printIf(i);
 			case TEWhile(w): printWhile(w);
@@ -297,18 +367,28 @@ class GenAS3 extends PrinterBase {
 			case TEBinop(a, op, b): printBinop(a, op, b);
 			case TEPreUnop(op, e): printPreUnop(op, e);
 			case TEPostUnop(e, op): printPostUnop(e, op);
-			case TEIs(e, keyword, etype): printExpr(e); printTextWithTrivia("is", keyword); printExpr(etype);
-			case TEAs(e, keyword, type): printExpr(e); printTextWithTrivia("as", keyword); printSyntaxType(type.syntax);
+			case TEIs(e, keyword, etype): buf.add("/*is*/false");//printExpr(e); printTextWithTrivia("is", keyword); printExpr(etype);
+			case TEAs(e, keyword, type): printAs(e, keyword, type);
 			case TESwitch(s): printSwitch(s);
 			case TENew(keyword, eclass, args): printNew(keyword, eclass, args);
 			case TECondCompValue(v): printCondCompVar(v);
-			case TECondCompBlock(v, expr): printCondCompVar(v); printExpr(expr);
+			case TECondCompBlock(v, expr): printCondCompBlock(v, expr);
 			case TEXmlChild(x): printXmlChild(x);
 			case TEXmlAttr(x): printXmlAttr(x);
 			case TEXmlAttrExpr(x): printXmlAttrExpr(x);
 			case TEXmlDescend(x): printXmlDescend(x);
 			case TEUseNamespace(ns): printUseNamespace(ns);
 		}
+	}
+
+	function printAs(e:TExpr, keyword:Token, type:TTypeRef) {
+		printTrivia(TypedTreeTools.removeLeadingTrivia(e));
+		buf.add("Std.instance(");
+		printExpr(e);
+		printTextWithTrivia(",", keyword);
+		printTType(type.type);
+		// printSyntaxType(type.syntax);
+		buf.add(")");
 	}
 
 	function printCast(c:TCast) {
@@ -397,16 +477,25 @@ class GenAS3 extends PrinterBase {
 		}
 	}
 
+	function printCondCompBlock(v:TCondCompVar, expr:TExpr) {
+		printTokenTrivia(v.syntax.ns);
+		printTokenTrivia(v.syntax.sep);
+		printTextWithTrivia("#if " + v.ns + "_" + v.name, v.syntax.name);
+		printExpr(expr);
+		buf.add("#end");
+	}
+
 	function printCondCompVar(v:TCondCompVar) {
-		printTextWithTrivia(v.ns, v.syntax.ns);
-		printTextWithTrivia("::", v.syntax.sep);
-		printTextWithTrivia(v.name, v.syntax.name);
+		printTokenTrivia(v.syntax.ns);
+		printTokenTrivia(v.syntax.sep);
+		buf.add(v.ns + "_" + v.name);
+		printTokenTrivia(v.syntax.name);
 	}
 
 	function printUseNamespace(ns:UseNamespace) {
-		printTextWithTrivia("use", ns.useKeyword);
-		printTextWithTrivia("namespace", ns.namespaceKeyword);
-		printTextWithTrivia(ns.name.text, ns.name);
+		printTextWithTrivia("/*use*/", ns.useKeyword);
+		printTextWithTrivia("/*namespace*/", ns.namespaceKeyword);
+		printTextWithTrivia("/*" + ns.name.text + "*/", ns.name);
 	}
 
 	function printTry(t:TTry) {
@@ -417,7 +506,8 @@ class GenAS3 extends PrinterBase {
 			printOpenParen(c.syntax.openParen);
 			printTextWithTrivia(c.v.name, c.syntax.name);
 			printColon(c.syntax.type.colon);
-			printSyntaxType(c.syntax.type.type);
+			// printSyntaxType(c.syntax.type.type);
+			printTType(c.v.type);
 			printCloseParen(c.syntax.closeParen);
 			printExpr(c.expr);
 		}
@@ -441,6 +531,7 @@ class GenAS3 extends PrinterBase {
 	}
 
 	function printFor(f:TFor) {
+		return buf.add("{}");
 		printTextWithTrivia("for", f.syntax.keyword);
 		printOpenParen(f.syntax.openParen);
 		if (f.einit != null) printExpr(f.einit);
@@ -453,6 +544,7 @@ class GenAS3 extends PrinterBase {
 	}
 
 	function printForIn(f:TForIn) {
+		return buf.add("{}");
 		printTextWithTrivia("for", f.syntax.forKeyword);
 		printOpenParen(f.syntax.openParen);
 		printForInIter(f.iter);
@@ -461,6 +553,7 @@ class GenAS3 extends PrinterBase {
 	}
 
 	function printForEach(f:TForEach) {
+		return buf.add("{}");
 		printTextWithTrivia("for", f.syntax.forKeyword);
 		printTextWithTrivia("each", f.syntax.eachKeyword);
 		printOpenParen(f.syntax.openParen);
@@ -477,8 +570,12 @@ class GenAS3 extends PrinterBase {
 
 	function printNew(keyword:Token, eclass:TExpr, args:Null<TCallArgs>) {
 		printTextWithTrivia("new", keyword);
-		printExpr(eclass);
-		if (args != null) printCallArgs(args);
+		switch (eclass.kind) {
+			case TEDeclRef(_): printExpr(eclass);
+			case _: buf.add("/*local*/String");
+		}
+		// printExpr(eclass);
+		if (args != null) printCallArgs(args) else buf.add("()");
 	}
 
 	function printVectorDecl(d:TVectorDecl) {
@@ -598,7 +695,7 @@ class GenAS3 extends PrinterBase {
 	function printVarKind(kind:VarDeclKind) {
 		switch (kind) {
 			case VVar(t): printTextWithTrivia("var", t);
-			case VConst(t): printTextWithTrivia("const", t);
+			case VConst(t): printTextWithTrivia("/*final*/var", t);
 		}
 	}
 
@@ -607,8 +704,12 @@ class GenAS3 extends PrinterBase {
 		for (v in vars) {
 			printTextWithTrivia(v.v.name, v.syntax.name);
 			if (v.syntax.type != null) {
-				printSyntaxTypeHint(v.syntax.type);
+				printColon(v.syntax.type.colon);
+				// printSyntaxTypeHint(v.syntax.type);
+			} else {
+				buf.add(":");
 			}
+			printTType(v.v.type);
 			if (v.init != null) printVarInit(v.init);
 			if (v.comma != null) printComma(v.comma);
 		}
@@ -651,7 +752,7 @@ class GenAS3 extends PrinterBase {
 			case TLInt(syntax): printTextWithTrivia(syntax.text, syntax);
 			case TLNumber(syntax): printTextWithTrivia(syntax.text, syntax);
 			case TLString(syntax): printTextWithTrivia(syntax.text, syntax);
-			case TLRegExp(syntax): printTextWithTrivia(syntax.text, syntax);
+			case TLRegExp(syntax): printTextWithTrivia("~"+syntax.text, syntax);
 		}
 	}
 
@@ -665,6 +766,15 @@ class GenAS3 extends PrinterBase {
 
 	function printBlockExpr(e:TBlockExpr) {
 		printExpr(e.expr);
-		if (e.semicolon != null) printSemicolon(e.semicolon);
+		if (e.semicolon != null) {
+			printSemicolon(e.semicolon);
+		} else if (!e.expr.kind.match(TEBlock(_) | TECondCompBlock(_))) {
+			buf.add(";");
+		}
+	}
+
+	inline function printTokenTrivia(t:Token) {
+		printTrivia(t.leadTrivia);
+		printTrivia(t.trailTrivia);
 	}
 }

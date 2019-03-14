@@ -282,7 +282,7 @@ class Printer extends PrinterBase {
 		printTextWithTrivia(">", t.gt);
 	}
 
-	function printCallArgs(args:CallArgs) {
+	public function printCallArgs(args:CallArgs) {
 		printTextWithTrivia("(", args.openParen);
 		if (args.args != null) printSeparated(args.args, printExpr, printComma);
 		printTextWithTrivia(")", args.closeParen);
