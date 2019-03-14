@@ -9,12 +9,10 @@ import ax3.TypedTreeTools.skipParens;
 
 typedef Locals = Map<String, TVar>;
 
-typedef ErrorReporter = (path:String,pos:Int,error:String)->Void;
-
 @:nullSafety
 class Typer {
 	final structure:Structure;
-	final reportError:ErrorReporter;
+	final context:Context;
 
 	@:nullSafety(Off) var locals:Locals;
 	@:nullSafety(Off) var localsStack:Array<Locals>;
@@ -25,12 +23,12 @@ class Typer {
 	var currentClass:Null<SClassDecl>;
 	var currentPath:String = "<unknown>";
 
-	public function new(structure, reportError) {
+	public function new(structure, context) {
 		this.structure = structure;
-		this.reportError = reportError;
+		this.context = context;
 	}
 
-	public inline function err(msg, pos) reportError(currentPath, pos, msg);
+	public inline function err(msg, pos) context.reportError(currentPath, pos, msg);
 
 	function initLocals() {
 		locals = new Map();

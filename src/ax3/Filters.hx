@@ -53,11 +53,11 @@ class Filters {
 		}
 	}
 
-	public static function run(structure:Structure, modules:Array<TModule>) {
+	public static function run(context:Context, structure:Structure, modules:Array<TModule>) {
 		for (f in [
 			// new AddParens(),
-			// new CoerceToBool(),
-			new RestArgs(),
+			new CoerceToBool(context),
+			// new RestArgs(),
 		]) {
 			f.run(modules);
 		}

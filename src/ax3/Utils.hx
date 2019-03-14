@@ -3,6 +3,18 @@ package ax3;
 import sys.FileSystem;
 
 class Utils {
+	public static inline function print(s:String) {
+		#if hxnodejs js.Node.console.log(s) #else Sys.println(s) #end;
+	}
+
+	public static inline function printerr(s:String) {
+		#if hxnodejs js.Node.console.error(s) #else Sys.println(s) #end;
+	}
+
+	public static function stripBOM(text:String):String {
+		return if (StringTools.fastCodeAt(text, 0) == 0xFEFF) text.substring(1) else text;
+	}
+
 	public static function createDirectory(dir:String) {
 		var tocreate = [];
 		while (!FileSystem.exists(dir) && dir != '') {

@@ -6,6 +6,49 @@ import ax3.Token;
 using ax3.WithMacro;
 
 class TypedTreeTools {
+	public static function exprPos(e:TExpr):Int {
+		return switch e.kind {
+			case TEParens(openParen, _): openParen.pos;
+			case TELocalFunction(f): f.syntax.keyword.pos;
+			case TELiteral(TLThis(t) | TLSuper(t) | TLBool(t) | TLNull(t) | TLUndefined(t) | TLInt(t) | TLNumber(t) | TLString(t) | TLRegExp(t)): t.pos;
+			case TELocal(t, _): t.pos;
+			case TEField(_, _, fieldToken): fieldToken.pos;
+			case TEBuiltin(t, _): t.pos;
+			case TEDeclRef(path, _): path.first.pos;
+			case TECall(_, args): args.openParen.pos;
+			case TECast(c): c.syntax.path.first.pos;
+			case TEArrayDecl(a): a.syntax.openBracket.pos;
+			case TEVectorDecl(v): v.syntax.newKeyword.pos;
+			case TEReturn(keyword, _) | TEThrow(keyword, _) | TEDelete(keyword, _) | TEBreak(keyword) | TEContinue(keyword): keyword.pos;
+			case TEVars(VVar(t) | VConst(t), _): t.pos;
+			case TEObjectDecl(o): o.syntax.openBrace.pos;
+			case TEArrayAccess(a): a.syntax.openBracket.pos;
+			case TEBlock(block): block.syntax.openBrace.pos;
+			case TETry(t): t.keyword.pos;
+			case TEVector(syntax, _): syntax.name.pos;
+			case TETernary(t): t.syntax.question.pos;
+			case TEIf(i): i.syntax.keyword.pos;
+			case TEWhile(w): w.syntax.keyword.pos;
+			case TEDoWhile(w): w.syntax.doKeyword.pos;
+			case TEFor(f): f.syntax.keyword.pos;
+			case TEForIn(f): f.syntax.forKeyword.pos;
+			case TEForEach(f): f.syntax.forKeyword.pos;
+			case TEBinop(a, OpAdd(t) | OpSub(t) | OpDiv(t) | OpMul(t) | OpMod(t) | OpAssign(t) | OpAssignAdd(t) | OpAssignSub(t) | OpAssignMul(t) | OpAssignDiv(t) | OpAssignMod(t) | OpAssignAnd(t) | OpAssignOr(t) | OpAssignBitAnd(t) | OpAssignBitOr(t) | OpAssignBitXor(t) | OpAssignShl(t) | OpAssignShr(t) | OpAssignUshr(t) | OpEquals(t) | OpNotEquals(t) | OpStrictEquals(t) | OpNotStrictEquals(t) | OpGt(t) | OpGte(t) | OpLt(t) | OpLte(t) | OpIn(t) | OpAnd(t) | OpOr(t) | OpShl(t) | OpShr(t) | OpUshr(t) | OpBitAnd(t) | OpBitOr(t) | OpBitXor(t) | OpComma(t), b): t.pos;
+			case TEPreUnop(PreNot(t) | PreNeg(t) | PreIncr(t) | PreDecr(t) | PreBitNeg(t), e): t.pos;
+			case TEPostUnop(e, PostIncr(t) | PostDecr(t)): t.pos;
+			case TEIs(e, keyword, etype): keyword.pos;
+			case TEAs(e, keyword, type): keyword.pos;
+			case TESwitch(s): s.syntax.keyword.pos;
+			case TENew(keyword, eclass, args): keyword.pos;
+			case TECondCompValue(v): v.syntax.ns.pos;
+			case TECondCompBlock(v, expr): v.syntax.ns.pos;
+			case TEXmlChild(x): x.syntax.dot.pos;
+			case TEXmlAttr(x): x.syntax.dot.pos;
+			case TEXmlAttrExpr(x): x.syntax.openBracket.pos;
+			case TEXmlDescend(x): x.syntax.dotDot.pos;
+			case TEUseNamespace(ns): ns.useKeyword.pos;
+		}
+	}
 
 	public static function addParens(e:TExpr):TExpr {
 		return switch (e.kind) {

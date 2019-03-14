@@ -1,6 +1,7 @@
 package ax3;
 
 import sys.FileSystem;
+import ax3.Utils.*;
 
 private typedef Config = {
 	var src:String;
@@ -11,12 +12,7 @@ private typedef Config = {
 }
 
 class Main {
-	static final loader = new FileLoader();
-
-	static function reportError(path:String, pos:Int, message:String) {
-		var posStr = loader.formatPosition(path, pos);
-		printerr('$posStr: $message');
-	}
+	static final ctx = new Context();
 
 	static function main() {
 		var args = Sys.args();
@@ -32,13 +28,13 @@ class Main {
 		sys.io.File.saveContent("structure.txt", structure.dump());
 
 		var t = stamp();
-		var typer = new Typer(structure, reportError);
+		var typer = new Typer(structure, ctx);
 
 		var modules = typer.process(files);
 		Timers.typing += (stamp() - t);
 
 		t = stamp();
-		Filters.run(structure, modules);
+		Filters.run(ctx, structure, modules);
 		Timers.filters += (stamp() - t);
 
 		var outDir = FileSystem.absolutePath(config.out);
@@ -121,7 +117,7 @@ class Main {
 	static function parseFile(path:String):ParseTree.File {
 		// print('Parsing $path');
 		var t = stamp();
-		var content = stripBOM(loader.getContent(path));
+		var content = stripBOM(ctx.fileLoader.getContent(path));
 		var scanner = new Scanner(content);
 		var parser = new Parser(scanner, path);
 		var parseTree = null;
@@ -130,7 +126,7 @@ class Main {
 			// var dump = ParseTreeDump.printFile(parseTree, "");
 			// Sys.println(dump);
 		} catch (e:Any) {
-			reportError(path, @:privateAccess scanner.pos, Std.string(e));
+			ctx.reportError(path, @:privateAccess scanner.pos, Std.string(e));
 		}
 		Timers.parsing += (stamp() - t);
 		if (parseTree != null) {
@@ -149,11 +145,4 @@ class Main {
 			throw '$path not the same';
 		}
 	}
-
-	static function stripBOM(text:String):String {
-		return if (StringTools.fastCodeAt(text, 0) == 0xFEFF) text.substring(1) else text;
-	}
-
-	static function print(s:String) #if hxnodejs js.Node.console.log(s) #else Sys.println(s) #end;
-	static function printerr(s:String) #if hxnodejs js.Node.console.error(s) #else Sys.println(s) #end;
 }

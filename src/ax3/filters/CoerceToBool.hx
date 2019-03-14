@@ -13,7 +13,7 @@ class CoerceToBool extends AbstractFilter {
 		}
 	}
 
-	static function coerce(e:TExpr):TExpr {
+	function coerce(e:TExpr):TExpr {
 		// TODO: add parens where needed
 		return switch (e.type) {
 			case TTBoolean:
@@ -37,6 +37,7 @@ class CoerceToBool extends AbstractFilter {
 				mk(TEBinop(nullCheck, OpAnd(mkAndAndToken()), emptyCheck), TTBoolean, TTBoolean);
 
 			case TTString | TTNumber | TTAny | TTVoid | TTBuiltin:
+				reportError(exprPos(e), "TODO: bool coecion");
 				// TODO
 				// string: null or empty
 				// number: Nan or 0

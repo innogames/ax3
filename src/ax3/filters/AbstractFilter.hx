@@ -1,14 +1,26 @@
 package ax3.filters;
 
 class AbstractFilter {
-	public function new() {}
+	final context:Context;
+
+	var currentPath:Null<String>;
+
+	public function new(context) {
+		this.context = context;
+	}
+
+	private function reportError(pos:Int, msg:String) {
+		context.reportError(currentPath, pos, msg);
+	}
 
 	public function run(modules:Array<TModule>) {
 		for (mod in modules) {
+			currentPath = mod.path;
 			processDecl(mod.pack.decl);
 			for (decl in mod.privateDecls) {
 				processDecl(decl);
 			}
+			currentPath = null;
 		}
 	}
 
