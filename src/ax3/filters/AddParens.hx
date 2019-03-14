@@ -1,8 +1,8 @@
 package ax3.filters;
 
-class AddParens {
-	public static function process(e:TExpr):TExpr {
-		e = mapExpr(process, e);
+class AddParens extends AbstractFilter {
+	override function processExpr(e:TExpr):TExpr {
+		e = mapExpr(processExpr, e);
 		return switch e.kind {
 			case TELocal(_) | TELiteral(_) | TEBlock(_):
 				e;

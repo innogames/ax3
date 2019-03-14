@@ -54,8 +54,12 @@ class Filters {
 	}
 
 	public static function run(structure:Structure, modules:Array<TModule>) {
-		// runFilter(AddParens.process, modules);
-		// runFilter(RewriteBlockBinops.process, modules);
-		runFilter(CoerceToBool.process, modules);
+		for (f in [
+			// new AddParens(),
+			// new CoerceToBool(),
+			new RestArgs(),
+		]) {
+			f.run(modules);
+		}
 	}
 }

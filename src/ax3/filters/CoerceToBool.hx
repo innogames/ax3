@@ -3,9 +3,9 @@ package ax3.filters;
 	Replace non-boolean values that are used where boolean is expected with a coercion call.
 	E.g. `if (object)` to `if (object != null)`
 **/
-class CoerceToBool {
-	public static function process(e:TExpr):TExpr {
-		e = mapExpr(process, e);
+class CoerceToBool extends AbstractFilter {
+	override function processExpr(e:TExpr):TExpr {
+		e = mapExpr(processExpr, e);
 		if (e.expectedType == TTBoolean && e.type != TTBoolean) {
 			return coerce(e);
 		} else {

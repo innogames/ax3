@@ -861,7 +861,7 @@ class Typer {
 			case TTFun(args, _, rest):
 				function(i:Int, earg:Expr):TType {
 					if (i >= args.length) {
-						if (rest == null || !rest) {
+						if (rest == null) {
 							err("Invalid number of arguments", exprPos(earg));
 						}
 						return TTAny;
@@ -956,7 +956,7 @@ class Typer {
 
 	function getConstructorType(cls:SClassDecl):TType {
 		var ctor = structure.getConstructor(cls);
-		return if (ctor != null) getTypeOfFunctionDecl(ctor) else TTFun([], TTVoid, false);
+		return if (ctor != null) getTypeOfFunctionDecl(ctor) else TTFun([], TTVoid, null);
 	}
 
 	function typeNew(keyword:Token, e:Expr, args:Null<CallArgs>, expectedType:TType):TExpr {
@@ -1041,11 +1041,11 @@ class Typer {
 	}
 
 	function getTypeOfFunctionDecl(f:SFunDecl):TType {
-		var args = [], rest = false;
+		var args = [], rest:Null<TRestKind> = null;
 		for (a in f.args) {
 			switch (a.kind) {
 				case SArgNormal(_): args.push(typeType(a.type));
-				case SArgRest(_): rest = true;
+				case SArgRest(_): rest = if (f.swc) TRestSwc else TRestAs3;
 			}
 		}
 		return TTFun(args, typeType(f.ret), rest);
@@ -1080,7 +1080,7 @@ class Typer {
 			case "null": mk(TELiteral(TLNull(i)), TTAny, expectedType);
 			case "undefined": mk(TELiteral(TLUndefined(i)), TTAny, expectedType);
 			case "arguments": mk(TEBuiltin(i, "arguments"), TTBuiltin, expectedType);
-			case "trace": mk(TEBuiltin(i, "trace"), TTFun([], TTVoid, true), expectedType);
+			case "trace": mk(TEBuiltin(i, "trace"), TTFun([], TTVoid, TRestSwc), expectedType);
 			case "int": mk(TEBuiltin(i, "int"), TTBuiltin, expectedType);
 			case "uint": mk(TEBuiltin(i, "int"), TTBuiltin, expectedType);
 			case "Boolean": mk(TEBuiltin(i, "Boolean"), TTBuiltin, expectedType);
@@ -1333,7 +1333,7 @@ class Typer {
 		return switch field.text {
 			case "length": TTUint;
 			case "join": TTFun([TTAny], TTString);
-			case "push" | "unshift": TTFun([TTAny], TTUint, true);
+			case "push" | "unshift": TTFun([TTAny], TTUint, TRestSwc);
 			case "pop" | "shift": TTFun([], TTAny);
 			case "concat": TTFun([TTArray], TTArray);
 			case "indexOf" | "lastIndexOf": TTFun([TTAny, TTInt], TTInt);
@@ -1348,7 +1348,7 @@ class Typer {
 	function getVectorInstanceFieldType(field:Token, t:TType):TType {
 		return switch field.text {
 			case "length": TTUint;
-			case "push" | "unshift": TTFun([t], TTUint, true);
+			case "push" | "unshift": TTFun([t], TTUint, TRestSwc);
 			case "pop" | "shift": TTFun([], t);
 			case "indexOf" | "lastIndexOf": TTFun([t, TTInt], TTInt);
 			case "splice": TTFun([TTInt, TTUint, t], TTVector(t));

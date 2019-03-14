@@ -590,7 +590,12 @@ enum TType {
 
 	TTBuiltin; // TODO: temporary
 
-	TTFun(args:Array<TType>, ret:TType, ?rest:Bool); // method and local function refs
+	TTFun(args:Array<TType>, ret:TType, ?rest:Null<TRestKind>); // method and local function refs
 	TTInst(cls:SClassDecl); // class instance access (`obj` in `obj.some`)
 	TTStatic(cls:SClassDecl); // class statics access (`Cls` in `Cls.some`)
+}
+
+enum TRestKind {
+	TRestSwc;
+	TRestAs3;
 }

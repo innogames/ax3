@@ -197,7 +197,8 @@ class StructureBuilder {
 
 		return {
 			args: if (sig.args == null) [] else foldSeparated(sig.args, [], (arg,acc) -> acc.push(buildArg(arg))),
-			ret: if (sig.ret == null) STAny else buildTypeStructure(sig.ret.type)
+			ret: if (sig.ret == null) STAny else buildTypeStructure(sig.ret.type),
+			swc: false,
 		};
 	}
 

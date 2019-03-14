@@ -436,6 +436,7 @@ typedef SVarDecl = {
 }
 
 typedef SFunDecl = {
+	var swc:Bool;
 	var args:Array<{kind:SFunArgKind, type:SType}>;
 	var ret:SType;
 }

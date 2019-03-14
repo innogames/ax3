@@ -170,7 +170,7 @@ class SWCLoader {
 			args.push({kind: SArgRest("arg"), type: STArray});
 		}
 		var ret = if (methType.ret != null) buildTypeStructure(abc, methType.ret) else STAny;
-		return {args: args, ret: ret};
+		return {args: args, ret: ret, swc: true};
 	}
 
 	static function getMethodType(abc:ABCData, i:Index<MethodType> ) : MethodType {
