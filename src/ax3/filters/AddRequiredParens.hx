@@ -2,92 +2,95 @@ package ax3.filters;
 
 class AddRequiredParens extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
-		e = mapExpr(processExpr, e);
-		return switch (e.kind) {
-			case TEBinop(a, op, b):
-				var ep = getPrecedence(e);
-				var ap = getPrecedence(a);
-				if (ep < ap)
-					e.with(kind = TEBinop(addParens(a), op, b))
-				else
-					e;
-			case _:
-				e;
-		}
+		return loop(e, 100);
 	}
 
-	static function getPrecedence(e:TExpr):Int
+	static function loop(e:TExpr, p:Int):TExpr {
+		inline function maybeWrap(e:TExpr, p2:Int) {
+			return if (p < p2) addParens(e) else e;
+		}
+
+		inline function binop(a, op, b, p) {
+			return maybeWrap(e.with(kind = TEBinop(loop(a, p), op, loop(b, p))), p);
+		}
+
 		return switch e.kind {
-			case TEParens(_)
-				| TEObjectDecl(_)
-				| TEArrayAccess(_)
-				| TEXmlAttrExpr(_)
-				| TEXmlChild(_)
-				| TEXmlAttr(_)
-				| TEXmlDescend(_)
-				| TEArrayDecl(_)
-				| TEVectorDecl(_)
-				| TEField(_)
-				| TECall(_)
-				| TECast(_)
-				| TELocalFunction(_)
-				| TELiteral(_)
-				| TELocal(_)
-				| TEBuiltin(_)
-				| TEDeclRef(_)
-				| TENew(_)
-				| TECondCompValue(_)
-				: 1;
+			case TEParens(_) | TEObjectDecl(_) | TEArrayAccess(_) | TEXmlAttrExpr(_) | TEXmlChild(_) | TEXmlAttr(_) | TEXmlDescend(_) | TEArrayDecl(_) | TEVectorDecl(_) | TEField(_) | TECall(_) | TECast(_) | TELocalFunction(_) | TELiteral(_) | TELocal(_) | TEBuiltin(_) | TEDeclRef(_) | TENew(_) | TECondCompValue(_):
+				mapExpr(loop.bind(_, 100), e);
 
-			case TEPostUnop(_): 2;
+			case TEPostUnop(e2, op):
+				maybeWrap(e.with(kind = TEPostUnop(loop(e2, 2), op)), 2);
 
-			case TEPreUnop(_)
-				| TEDelete(_)
-				: 3;
+			case TEPreUnop(op, e2):
+				maybeWrap(e.with(kind = TEPreUnop(op, loop(e2, 3))), 3);
 
-			case TEBinop(_, OpDiv(_) | OpMul(_) | OpMod(_), _): 4;
+			case TEDelete(kwd, e2):
+				maybeWrap(e.with(kind = TEDelete(kwd, loop(e2, 3))), 3);
 
-			case TEBinop(_, OpAdd(_) | OpSub(_), _): 5;
+			case TEBinop(a, op = OpDiv(_) | OpMul(_) | OpMod(_), b):
+				binop(a, op, b, 4);
 
-			case TEBinop(_, OpShl(_) | OpShr(_) | OpUshr(_), _): 6;
+			case TEBinop(a, op = OpAdd(_) | OpSub(_), b):
+				binop(a, op, b, 5);
 
-			case TEBinop(_, OpGt(_) | OpGte(_) | OpLt(_) | OpLte(_) | OpIn(_), _) | TEIs(_) | TEAs(_): 7;
+			case TEBinop(a, op = OpShl(_) | OpShr(_) | OpUshr(_), b):
+				binop(a, op, b, 6);
 
-			case TEBinop(_, OpEquals(_) | OpNotEquals(_) | OpStrictEquals(_) | OpNotStrictEquals(_), _): 8;
+			case TEBinop(a, op = OpGt(_) | OpGte(_) | OpLt(_) | OpLte(_) | OpIn(_), b):
+				binop(a, op, b, 7);
 
-			case TEBinop(_, OpBitAnd(_), _): 9;
+			case TEIs(e2, kwd, etype):
+				maybeWrap(e.with(kind = TEIs(loop(e2, 7), kwd, loop(etype, 7))), 7);
 
-			case TEBinop(_, OpBitXor(_), _): 10;
+			case TEAs(e2, kwd, type):
+				maybeWrap(e.with(kind = TEAs(loop(e2, 7), kwd, type)), 7);
 
-			case TEBinop(_, OpBitOr(_), _): 11;
+			case TEBinop(a, op = OpEquals(_) | OpNotEquals(_) | OpStrictEquals(_) | OpNotStrictEquals(_), b):
+				binop(a, op, b, 8);
 
-			case TEBinop(_, OpAnd(_), _): 12;
+			case TEBinop(a, op = OpBitAnd(_), b):
+				binop(a, op, b, 9);
 
-			case TEBinop(_, OpOr(_), _): 13;
+			case TEBinop(a, op = OpBitXor(_), b):
+				binop(a, op, b, 10);
 
-			case TETernary(_): 14;
+			case TEBinop(a, op = OpBitOr(_), b):
+				binop(a, op, b, 11);
 
-			case TEBinop(_, OpAssign(_) | OpAssignAdd(_) | OpAssignSub(_) | OpAssignMul(_) | OpAssignDiv(_) | OpAssignMod(_) | OpAssignAnd(_) | OpAssignOr(_) | OpAssignBitAnd(_) | OpAssignBitOr(_) | OpAssignBitXor(_) | OpAssignShl(_) | OpAssignShr(_) | OpAssignUshr(_), _): 15;
+			case TEBinop(a, op = OpAnd(_), b):
+				binop(a, op, b, 12);
 
-			case TEBinop(_, OpComma(_), _): 16;
+			case TEBinop(a, op = OpOr(_), b):
+				binop(a, op, b, 13);
+
+			case TETernary(_): 14; e;
+
+			case TEBinop(a,
+				op = OpAssign(_) | OpAssignAdd(_) | OpAssignSub(_) | OpAssignMul(_) | OpAssignDiv(_) | OpAssignMod(_) | OpAssignAnd(_) | OpAssignOr(_) | OpAssignBitAnd(_) | OpAssignBitOr(_) | OpAssignBitXor(_) | OpAssignShl(_) | OpAssignShr(_) | OpAssignUshr(_),
+				b):
+				binop(a, op, b, 15);
+
+			case TEBinop(a, op = OpComma(_), b):
+				binop(a, op, b, 16);
 
 			// statements
-			case TEReturn(_): 100;
-			case TEThrow(_): 100;
-			case TEBreak(_): 100;
-			case TEContinue(_): 100;
-			case TEVars(_): 100;
-			case TEBlock(_): 100;
-			case TETry(_): 100;
-			case TEVector(_): 100;
-			case TEIf(_): 100;
-			case TEWhile(_): 100;
-			case TEDoWhile(_): 100;
-			case TEFor(_): 100;
-			case TEForIn(_): 100;
-			case TEForEach(_): 100;
-			case TESwitch(_): 100;
-			case TECondCompBlock(_): 100;
-			case TEUseNamespace(_): 100;
+			case TEReturn(_): mapExpr(loop.bind(_, 100), e);
+			case TEThrow(_): mapExpr(loop.bind(_, 100), e);
+			case TEBreak(_): mapExpr(loop.bind(_, 100), e);
+			case TEContinue(_): mapExpr(loop.bind(_, 100), e);
+			case TEVars(_): mapExpr(loop.bind(_, 100), e);
+			case TEBlock(_): mapExpr(loop.bind(_, 100), e);
+			case TETry(_): mapExpr(loop.bind(_, 100), e);
+			case TEVector(_): mapExpr(loop.bind(_, 100), e);
+			case TEIf(_): mapExpr(loop.bind(_, 100), e);
+			case TEWhile(_): mapExpr(loop.bind(_, 100), e);
+			case TEDoWhile(_): mapExpr(loop.bind(_, 100), e);
+			case TEFor(_): mapExpr(loop.bind(_, 100), e);
+			case TEForIn(_): mapExpr(loop.bind(_, 100), e);
+			case TEForEach(_): mapExpr(loop.bind(_, 100), e);
+			case TESwitch(_): mapExpr(loop.bind(_, 100), e);
+			case TECondCompBlock(_): mapExpr(loop.bind(_, 100), e);
+			case TEUseNamespace(_): mapExpr(loop.bind(_, 100), e);
+		}
 	}
 }
