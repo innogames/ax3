@@ -241,7 +241,15 @@ class TypedTreeTools {
 
 			case TEParens(openParen, e, closeParen):
 				var mapped = f(e);
-				if (mapped == e) e1 else e1.with(kind = TEParens(openParen, mapped, closeParen));
+				if (mapped == e)
+					e1
+				else
+					e1.with(
+						kind = TEParens(openParen, mapped, closeParen),
+						// also update the type of parens as they are pure wrapper
+						type = mapped.type,
+						expectedType = mapped.expectedType
+					);
 
 			case TECall(eobj, args):
 				var mappedObj = f(eobj);
