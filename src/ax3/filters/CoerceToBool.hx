@@ -6,6 +6,7 @@ package ax3.filters;
 class CoerceToBool extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
 		e = mapExpr(processExpr, e);
+		// TODO: transform `if (!object)` to `if (object == null)` because it's nicer
 		if (e.expectedType == TTBoolean && e.type != TTBoolean) {
 			return coerce(e);
 		} else {
