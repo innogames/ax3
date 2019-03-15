@@ -58,6 +58,7 @@ class Filters {
 			// new AddParens(context),
 			// new CoerceToBool(context),
 			// new RestArgs(),
+			new InvertNegatedEquality(context),
 			new AddRequiredParens(context),
 		]) {
 			f.run(modules);
