@@ -56,8 +56,8 @@ class Filters {
 	public static function run(context:Context, structure:Structure, modules:Array<TModule>) {
 		for (f in [
 			// new AddParens(context),
-			// new CoerceToBool(context),
 			// new RestArgs(),
+			new CoerceToBool(context),
 			new InvertNegatedEquality(context),
 			new AddRequiredParens(context),
 		]) {

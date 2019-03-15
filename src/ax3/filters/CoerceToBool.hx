@@ -39,7 +39,7 @@ class CoerceToBool extends AbstractFilter {
 				mk(TEBinop(nullCheck, OpAnd(mkAndAndToken()), emptyCheck), TTBoolean, TTBoolean);
 
 			case TTString | TTNumber | TTAny | TTVoid | TTBuiltin:
-				reportError(exprPos(e), "TODO: bool coecion");
+				// reportError(exprPos(e), "TODO: bool coecion");
 				// TODO
 				// string: null or empty
 				// number: Nan or 0
