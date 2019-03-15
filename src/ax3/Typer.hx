@@ -701,21 +701,38 @@ class Typer {
 	}
 
 	function typeBinop(a:Expr, op:Binop, b:Expr, expectedType:TType):TExpr {
-		var a = typeExpr(a, TTAny);
-		var b = typeExpr(b, TTAny);
-		var type = switch (op) { // TODO: this can be more accurate
-			case OpEquals(_) | OpNotEquals(_) | OpStrictEquals(_) | OpNotStrictEquals(_): TTBoolean;
-			case OpGt(_) | OpGte(_) | OpLt(_) | OpLte(_) | OpIn(_) | OpIs(_): TTBoolean;
-			case OpAdd(_) | OpSub(_) | OpDiv(_) | OpMul(_) | OpMod(_): a.type;
-			case OpAssignAdd(_) | OpAssignSub(_) | OpAssignMul(_) | OpAssignDiv(_) | OpAssignMod(_): a.type;
-			case OpAssignBitAnd(_) | OpAssignBitOr(_) | OpAssignBitXor(_): a.type;
-			case OpAssignShl(_) | OpAssignShr(_) | OpAssignUshr(_) | OpAssign(_): a.type;
-			case OpAssignAnd(_) | OpAssignOr(_): a.type;
-			case OpAnd(_) | OpOr(_) | OpShl(_) | OpShr(_) | OpUshr(_): a.type;
-			case OpBitAnd(_) | OpBitOr(_) | OpBitXor(_): a.type;
-			case OpComma(_): b.type;
+		switch (op) {
+			case OpAnd(_) | OpOr(_):
+				// && and || return the type of their expr, so we apply the expected type of a binop
+				var a = typeExpr(a, expectedType);
+				var b = typeExpr(b, expectedType);
+				return mk(TEBinop(a, op, b), expectedType, expectedType);
+
+			case OpEquals(_) | OpNotEquals(_) | OpStrictEquals(_) | OpNotStrictEquals(_) |
+			     OpGt(_) | OpGte(_) | OpLt(_) | OpLte(_) |
+			     OpIn(_) | OpIs(_):
+				// relation operators are always boolean
+				var a = typeExpr(a, TTAny); // TODO: should comparisons expect Number?
+				var b = typeExpr(b, TTAny);
+				return mk(TEBinop(a, op, b), TTBoolean, expectedType);
+
+			// TODO: sort these out
+			case OpAdd(_) | OpSub(_) | OpDiv(_) | OpMul(_) | OpMod(_) |
+			     OpAssignAdd(_) | OpAssignSub(_) | OpAssignMul(_) | OpAssignDiv(_) | OpAssignMod(_) |
+			     OpAssignBitAnd(_) | OpAssignBitOr(_) | OpAssignBitXor(_) |
+			     OpAssignShl(_) | OpAssignShr(_) | OpAssignUshr(_) | OpAssign(_) |
+			     OpAssignAnd(_) | OpAssignOr(_) |
+			     OpShl(_) | OpShr(_) | OpUshr(_) |
+			     OpBitAnd(_) | OpBitOr(_) | OpBitXor(_):
+				var a = typeExpr(a, TTAny);
+				var b = typeExpr(b, TTAny);
+				return mk(TEBinop(a, op, b), a.type, expectedType);
+
+			case OpComma(_):
+				var a = typeExpr(a, TTAny);
+				var b = typeExpr(b, TTAny);
+				return mk(TEBinop(a, op, b), b.type, expectedType);
 		}
-		return mk(TEBinop(a, op, b), type, expectedType);
 	}
 
 	function typeForIn(f:ForIn, expectedType:TType):TExpr {
