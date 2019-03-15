@@ -7,6 +7,7 @@ class CoerceToBool extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
 		e = mapExpr(processExpr, e);
 		// TODO: transform `if (!object)` to `if (object == null)` because it's nicer
+		// (actually might be a good idea to have a separate filter for taht :))
 		if (e.expectedType == TTBoolean && e.type != TTBoolean) {
 			return coerce(e);
 		} else {
