@@ -60,7 +60,13 @@ class AddRequiredParens extends AbstractFilter {
 			case TEBinop(a, op = OpOr(_), b):
 				binop(a, op, b, 13);
 
-			case TETernary(_): 14; e;
+			case TETernary(t):
+				e = e.with(kind = TETernary(t.with(
+					econd = loop(t.econd, 14),
+					ethen = loop(t.ethen, 14),
+					eelse = loop(t.eelse, 14)
+				)));
+				maybeWrap(e, 14);
 
 			case TEBinop(a,
 				op = OpAssign(_) | OpAssignAdd(_) | OpAssignSub(_) | OpAssignMul(_) | OpAssignDiv(_) | OpAssignMod(_) | OpAssignAnd(_) | OpAssignOr(_) | OpAssignBitAnd(_) | OpAssignBitOr(_) | OpAssignBitXor(_) | OpAssignShl(_) | OpAssignShr(_) | OpAssignUshr(_),
