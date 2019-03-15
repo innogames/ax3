@@ -441,10 +441,6 @@ class Printer extends PrinterBase {
 				printExpr(e);
 				printTextWithTrivia("as", keyword);
 				printSyntaxType(t);
-			case EIs(e, keyword, etype):
-				printExpr(e);
-				printTextWithTrivia("is", keyword);
-				printExpr(etype);
 			case EVector(v):
 				printVectorSyntax(v);
 			case ESwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace):
@@ -566,6 +562,7 @@ class Printer extends PrinterBase {
 			case OpLt(t): printTextWithTrivia("<", t);
 			case OpLte(t): printTextWithTrivia("<=", t);
 			case OpIn(t): printTextWithTrivia("in", t);
+			case OpIs(t): printTextWithTrivia("is", t);
 			case OpAnd(t): printTextWithTrivia("&&", t);
 			case OpOr(t): printTextWithTrivia("||", t);
 			case OpShl(t): printTextWithTrivia("<<", t);

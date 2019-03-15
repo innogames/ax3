@@ -33,10 +33,9 @@ class TypedTreeTools {
 			case TEFor(f): f.syntax.keyword.pos;
 			case TEForIn(f): f.syntax.forKeyword.pos;
 			case TEForEach(f): f.syntax.forKeyword.pos;
-			case TEBinop(a, OpAdd(t) | OpSub(t) | OpDiv(t) | OpMul(t) | OpMod(t) | OpAssign(t) | OpAssignAdd(t) | OpAssignSub(t) | OpAssignMul(t) | OpAssignDiv(t) | OpAssignMod(t) | OpAssignAnd(t) | OpAssignOr(t) | OpAssignBitAnd(t) | OpAssignBitOr(t) | OpAssignBitXor(t) | OpAssignShl(t) | OpAssignShr(t) | OpAssignUshr(t) | OpEquals(t) | OpNotEquals(t) | OpStrictEquals(t) | OpNotStrictEquals(t) | OpGt(t) | OpGte(t) | OpLt(t) | OpLte(t) | OpIn(t) | OpAnd(t) | OpOr(t) | OpShl(t) | OpShr(t) | OpUshr(t) | OpBitAnd(t) | OpBitOr(t) | OpBitXor(t) | OpComma(t), b): t.pos;
+			case TEBinop(a, OpAdd(t) | OpSub(t) | OpDiv(t) | OpMul(t) | OpMod(t) | OpAssign(t) | OpAssignAdd(t) | OpAssignSub(t) | OpAssignMul(t) | OpAssignDiv(t) | OpAssignMod(t) | OpAssignAnd(t) | OpAssignOr(t) | OpAssignBitAnd(t) | OpAssignBitOr(t) | OpAssignBitXor(t) | OpAssignShl(t) | OpAssignShr(t) | OpAssignUshr(t) | OpEquals(t) | OpNotEquals(t) | OpStrictEquals(t) | OpNotStrictEquals(t) | OpGt(t) | OpGte(t) | OpLt(t) | OpLte(t) | OpIn(t) | OpIs(t) | OpAnd(t) | OpOr(t) | OpShl(t) | OpShr(t) | OpUshr(t) | OpBitAnd(t) | OpBitOr(t) | OpBitXor(t) | OpComma(t), b): t.pos;
 			case TEPreUnop(PreNot(t) | PreNeg(t) | PreIncr(t) | PreDecr(t) | PreBitNeg(t), e): t.pos;
 			case TEPostUnop(e, PostIncr(t) | PostDecr(t)): t.pos;
-			case TEIs(e, keyword, etype): keyword.pos;
 			case TEAs(e, keyword, type): keyword.pos;
 			case TESwitch(s): s.syntax.keyword.pos;
 			case TENew(keyword, eclass, args): keyword.pos;
@@ -148,7 +147,6 @@ class TypedTreeTools {
 			case TEBinop(a, _, _): removeLeadingTrivia(a);
 			case TEPreUnop(PreNot(t) | PreNeg(t) | PreIncr(t) | PreDecr(t) | PreBitNeg(t), _): r(t);
 			case TEPostUnop(e, _): removeLeadingTrivia(e);
-			case TEIs(e, _, _): removeLeadingTrivia(e);
 			case TEAs(e, _, _): removeLeadingTrivia(e);
 			case TESwitch(s): r(s.syntax.keyword);
 			case TENew(keyword, _, _): r(keyword);
@@ -217,7 +215,6 @@ class TypedTreeTools {
 			case TEBinop(_, _, b): removeTrailingTrivia(b);
 			case TEPreUnop(_, e): removeTrailingTrivia(e);
 			case TEPostUnop(_, PostIncr(t) | PostDecr(t)): r(t);
-			case TEIs(_, _, etype): removeTrailingTrivia(etype);
 			case TEAs(_, _, type): fromSyntaxType(type.syntax);
 			case TESwitch(s): r(s.syntax.closeBrace);
 			case TENew(_, eclass, args):
@@ -357,9 +354,6 @@ class TypedTreeTools {
 
 			case TEPostUnop(e, op):
 				e1.with(kind = TEPostUnop(f(e), op));
-
-			case TEIs(e, keyword, etype):
-				e1.with(kind = TEIs(f(e), keyword, f(etype)));
 
 			case TEAs(e, keyword, type):
 				e1.with(kind = TEAs(f(e), keyword, type));

@@ -995,7 +995,7 @@ class Parser {
 					case "in":
 						return parseBinop(first, OpIn, allowComma);
 					case "is":
-						return parseExprNext(EIs(first, scanner.consume(), parseExpr(allowComma)), allowComma);
+						return parseBinop(first, OpIs, allowComma);
 					case "as":
 						return parseExprNext(EAs(first, scanner.consume(), parseSyntaxType(false)), allowComma);
 					case _:
@@ -1078,7 +1078,7 @@ class Parser {
 				{p: 2, assoc: Left};
 
 			// Relational
-			case OpGt(_) | OpGte(_) | OpLt(_) | OpLte(_) | OpIn(_):
+			case OpGt(_) | OpGte(_) | OpLt(_) | OpLte(_) | OpIn(_) | OpIs(_):
 				{p: 3, assoc: Left};
 
 			// Equality

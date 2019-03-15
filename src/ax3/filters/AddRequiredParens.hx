@@ -36,11 +36,8 @@ class AddRequiredParens extends AbstractFilter {
 			case TEBinop(a, op = OpShl(_) | OpShr(_) | OpUshr(_), b):
 				binop(a, op, b, 6);
 
-			case TEBinop(a, op = OpGt(_) | OpGte(_) | OpLt(_) | OpLte(_) | OpIn(_), b):
+			case TEBinop(a, op = OpGt(_) | OpGte(_) | OpLt(_) | OpLte(_) | OpIn(_) | OpIs(_), b):
 				binop(a, op, b, 7);
-
-			case TEIs(e2, kwd, etype):
-				maybeWrap(e.with(kind = TEIs(loop(e2, 7), kwd, loop(etype, 7))), 7);
 
 			case TEAs(e2, kwd, type):
 				maybeWrap(e.with(kind = TEAs(loop(e2, 7), kwd, type)), 7);

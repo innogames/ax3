@@ -235,7 +235,6 @@ enum TExprKind {
 	TEBinop(a:TExpr, op:Binop, b:TExpr);
 	TEPreUnop(op:PreUnop, e:TExpr);
 	TEPostUnop(e:TExpr, op:PostUnop);
-	TEIs(e:TExpr, keyword:Token, etype:TExpr);
 	TEAs(e:TExpr, keyword:Token, type:TTypeRef);
 	TESwitch(s:TSwitch);
 	TENew(keyword:Token, eclass:TExpr, args:Null<TCallArgs>);

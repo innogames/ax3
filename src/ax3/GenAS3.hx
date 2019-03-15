@@ -297,7 +297,6 @@ class GenAS3 extends PrinterBase {
 			case TEBinop(a, op, b): printBinop(a, op, b);
 			case TEPreUnop(op, e): printPreUnop(op, e);
 			case TEPostUnop(e, op): printPostUnop(e, op);
-			case TEIs(e, keyword, etype): printExpr(e); printTextWithTrivia("is", keyword); printExpr(etype);
 			case TEAs(e, keyword, type): printExpr(e); printTextWithTrivia("as", keyword); printSyntaxType(type.syntax);
 			case TESwitch(s): printSwitch(s);
 			case TENew(keyword, eclass, args): printNew(keyword, eclass, args);
@@ -575,6 +574,7 @@ class GenAS3 extends PrinterBase {
 			case OpLt(t): printTextWithTrivia("<", t);
 			case OpLte(t): printTextWithTrivia("<=", t);
 			case OpIn(t): printTextWithTrivia("in", t);
+			case OpIs(t): printTextWithTrivia("is", t);
 			case OpAnd(t): printTextWithTrivia("&&", t);
 			case OpOr(t): printTextWithTrivia("||", t);
 			case OpShl(t): printTextWithTrivia("<<", t);

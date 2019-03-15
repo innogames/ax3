@@ -524,7 +524,6 @@ class Typer {
 			case EPostUnop(e, op): typePostUnop(e, op, expectedType);
 			case EVars(kind, vars): typeVars(kind, vars, expectedType);
 			case EAs(e, keyword, t): typeAs(e, keyword, t, expectedType);
-			case EIs(e, keyword, et): typeIs(e, keyword, et, expectedType);
 			case EVector(v): typeVector(v, expectedType);
 			case ESwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace): typeSwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace, expectedType);
 			case ETry(keyword, block, catches, finally_): typeTry(keyword, block, catches, finally_, expectedType);
@@ -701,18 +700,12 @@ class Typer {
 		return mk(TEAs(e, keyword, {syntax: t, type: type}), type, expectedType);
 	}
 
-	function typeIs(e:Expr, keyword:Token, etype:Expr, expectedType:TType):TExpr {
-		var e = typeExpr(e, TTAny);
-		var etype = typeExpr(etype, TTAny);
-		return mk(TEIs(e, keyword, etype), TTBoolean, expectedType);
-	}
-
 	function typeBinop(a:Expr, op:Binop, b:Expr, expectedType:TType):TExpr {
 		var a = typeExpr(a, TTAny);
 		var b = typeExpr(b, TTAny);
 		var type = switch (op) { // TODO: this can be more accurate
 			case OpEquals(_) | OpNotEquals(_) | OpStrictEquals(_) | OpNotStrictEquals(_): TTBoolean;
-			case OpGt(_) | OpGte(_) | OpLt(_) | OpLte(_) | OpIn(_): TTBoolean;
+			case OpGt(_) | OpGte(_) | OpLt(_) | OpLte(_) | OpIn(_) | OpIs(_): TTBoolean;
 			case OpAdd(_) | OpSub(_) | OpDiv(_) | OpMul(_) | OpMod(_): a.type;
 			case OpAssignAdd(_) | OpAssignSub(_) | OpAssignMul(_) | OpAssignDiv(_) | OpAssignMod(_): a.type;
 			case OpAssignBitAnd(_) | OpAssignBitOr(_) | OpAssignBitXor(_): a.type;
