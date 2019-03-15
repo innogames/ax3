@@ -25,20 +25,21 @@ class CoerceToBool extends AbstractFilter {
 				var trail = removeTrailingTrivia(e);
 				mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), mkNullExpr(e.type, [], trail)), TTBoolean, TTBoolean);
 
-			case TTInt | TTUint:
-				var trail = removeTrailingTrivia(e);
-				var zeroExpr = mk(TELiteral(TLInt(new Token(0, TkDecimalInteger, "0", [], trail))), e.type, e.type);
-				mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), zeroExpr), TTBoolean, TTBoolean);
+			// case TTInt | TTUint:
+			// 	var trail = removeTrailingTrivia(e);
+			// 	var zeroExpr = mk(TELiteral(TLInt(new Token(0, TkDecimalInteger, "0", [], trail))), e.type, e.type);
+			// 	mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), zeroExpr), TTBoolean, TTBoolean);
 
-			case TTString if (canBeRepeated(e)):
-				var trail = removeTrailingTrivia(e);
-				var nullExpr = mkNullExpr(TTString);
-				var emptyExpr = mk(TELiteral(TLString(new Token(0, TkStringDouble, '""', [], trail))), TTString, TTString);
-				var nullCheck = mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), nullExpr), TTBoolean, TTBoolean);
-				var emptyCheck = mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), emptyExpr), TTBoolean, TTBoolean);
-				mk(TEBinop(nullCheck, OpAnd(mkAndAndToken()), emptyCheck), TTBoolean, TTBoolean);
+			// case TTString if (canBeRepeated(e)):
+			// 	var trail = removeTrailingTrivia(e);
+			// 	var nullExpr = mkNullExpr(TTString);
+			// 	var emptyExpr = mk(TELiteral(TLString(new Token(0, TkStringDouble, '""', [], trail))), TTString, TTString);
+			// 	var nullCheck = mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), nullExpr), TTBoolean, TTBoolean);
+			// 	var emptyCheck = mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), emptyExpr), TTBoolean, TTBoolean);
+			// 	mk(TEBinop(nullCheck, OpAnd(mkAndAndToken()), emptyCheck), TTBoolean, TTBoolean);
 
-			case TTString | TTNumber | TTAny | TTVoid | TTBuiltin:
+			case _:
+			// case TTString | TTNumber | TTAny | TTVoid | TTBuiltin:
 				// reportError(exprPos(e), "TODO: bool coecion");
 				// TODO
 				// string: null or empty
