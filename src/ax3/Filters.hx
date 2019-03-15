@@ -55,10 +55,10 @@ class Filters {
 
 	public static function run(context:Context, structure:Structure, modules:Array<TModule>) {
 		for (f in [
-			// new AddParens(),
+			new AddParens(context),
 			// new CoerceToBool(context),
 			// new RestArgs(),
-			new AddRequiredParens(context),
+			// new AddRequiredParens(context),
 		]) {
 			f.run(modules);
 		}

@@ -513,19 +513,30 @@ class Parser {
 			case TkBraceOpen:
 				return parseBlockOrObject(scanner.consume());
 			case TkExclamation:
-				return EPreUnop(PreNot(scanner.consume()), parseExpr(allowComma));
+				return makePreUnop(PreNot(scanner.consume()), parseExpr(allowComma));
 			case TkTilde:
-				return EPreUnop(PreBitNeg(scanner.consume()), parseExpr(allowComma));
+				return makePreUnop(PreBitNeg(scanner.consume()), parseExpr(allowComma));
 			case TkMinus:
-				return EPreUnop(PreNeg(scanner.consume()), parseExpr(allowComma));
+				return makePreUnop(PreNeg(scanner.consume()), parseExpr(allowComma));
 			case TkPlusPlus:
-				return EPreUnop(PreIncr(scanner.consume()), parseExpr(allowComma));
+				return makePreUnop(PreIncr(scanner.consume()), parseExpr(allowComma));
 			case TkMinusMinus:
-				return EPreUnop(PreDecr(scanner.consume()), parseExpr(allowComma));
+				return makePreUnop(PreDecr(scanner.consume()), parseExpr(allowComma));
 			case TkBracketOpen:
 				return parseExprNext(EArrayDecl(parseArrayDecl(scanner.consume())), allowComma);
 			case _:
 				return null;
+		}
+	}
+
+	function makePreUnop(op:PreUnop, e:Expr):Expr {
+		return switch e {
+			case EBinop(a, bop, b):
+				EBinop(makePreUnop(op, a), bop, b);
+			case ETernary(econd, question, ethen, colon, eelse):
+				ETernary(makePreUnop(op, econd), question, ethen, colon, eelse);
+			case _:
+				EPreUnop(op, e);
 		}
 	}
 
