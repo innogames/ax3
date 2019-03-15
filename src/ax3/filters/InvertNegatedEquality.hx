@@ -5,14 +5,22 @@ class InvertNegatedEquality extends AbstractFilter {
 		e = mapExpr(processExpr, e);
 		return switch (e.kind) {
 			case TEPreUnop(PreNot(notToken), e2):
+
+				function moveTrivia(a:TExpr) {
+					processLeadingToken(t -> t.leadTrivia = notToken.leadTrivia.concat(notToken.trailTrivia).concat(t.leadTrivia), a);
+				}
+
 				switch (e2.kind) {
-					// TODO: add trivia from notToken to `a` expr
 					case TEBinop(a, OpEquals(t), b):
+						moveTrivia(a);
 						var t = new Token(t.pos, TkExclamationEquals, "!=", t.leadTrivia, t.trailTrivia);
 						e.with(kind = TEBinop(a, OpNotEquals(t), b));
+
 					case TEBinop(a, OpNotEquals(t), b):
+						moveTrivia(a);
 						var t = new Token(t.pos, TkEqualsEquals, "==", t.leadTrivia, t.trailTrivia);
 						e.with(kind = TEBinop(a, OpEquals(t), b));
+
 					case _:
 						e;
 				}

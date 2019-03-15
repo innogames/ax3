@@ -99,74 +99,67 @@ class TypedTreeTools {
 
 	/** remove and return the leading trivia of an expression **/
 	public static function removeLeadingTrivia(e:TExpr):Array<Trivia> {
-		function r(token:Token) {
-			var trivia = token.leadTrivia;
-			token.leadTrivia = [];
+		return processLeadingToken(function(t) {
+			var trivia = t.leadTrivia;
+			t.leadTrivia = [];
 			return trivia;
-		}
+		}, e);
+	}
 
-		inline function fromDotPath(p:DotPath) {
-			return r(p.first);
-		}
-
-		function fromSyntaxType(t:SyntaxType) {
-			return switch (t) {
-				case TAny(star): r(star);
-				case TPath(path): fromDotPath(path);
-				case TVector(v): r(v.t.gt);
-			}
-		}
-
+	public static function processLeadingToken<T>(r:Token->T, e:TExpr):T {
+		inline function fromDotPath(p:DotPath) return r(p.first);
 		return switch e.kind {
 			case TEParens(openParen, _, _): r(openParen);
 			case TELocalFunction(f): r(f.syntax.keyword);
 			case TELiteral(TLThis(t) | TLSuper(t)| TLBool(t)| TLNull(t)| TLUndefined(t)| TLInt(t)| TLNumber(t)| TLString(t)| TLRegExp(t)): r(t);
 			case TELocal(t, _): r(t);
 			case TEField({kind: TOImplicitThis(_) | TOImplicitClass(_)}, _, fieldToken): r(fieldToken);
-			case TEField({kind: TOExplicit(_, obj)}, _, _): removeLeadingTrivia(obj);
+			case TEField({kind: TOExplicit(_, obj)}, _, _): processLeadingToken(r, obj);
 			case TEBuiltin(t, _): r(t);
 			case TEDeclRef(path, _): fromDotPath(path);
-			case TECall(eobj, _): removeLeadingTrivia(eobj);
+			case TECall(eobj, _): processLeadingToken(r, eobj);
 			case TECast(c): fromDotPath(c.syntax.path);
 			case TEArrayDecl(a): r(a.syntax.openBracket);
 			case TEVectorDecl(v): r(v.syntax.newKeyword);
 			case TEReturn(keyword, _) | TEThrow(keyword, _) | TEDelete(keyword, _) | TEBreak(keyword) | TEContinue(keyword): r(keyword);
 			case TEVars(VVar(t) | VConst(t), _): r(t);
 			case TEObjectDecl(o): r(o.syntax.openBrace);
-			case TEArrayAccess(a): removeLeadingTrivia(a.eobj);
+			case TEArrayAccess(a): processLeadingToken(r, a.eobj);
 			case TEBlock(block): r(block.syntax.openBrace);
 			case TETry(t): r(t.keyword);
 			case TEVector(syntax, _): r(syntax.name);
-			case TETernary(t): removeLeadingTrivia(t.econd);
+			case TETernary(t): processLeadingToken(r, t.econd);
 			case TEIf(i): r(i.syntax.keyword);
 			case TEWhile(w): r(w.syntax.keyword);
 			case TEDoWhile(w): r(w.syntax.doKeyword);
 			case TEFor(f): r(f.syntax.keyword);
 			case TEForIn(f): r(f.syntax.forKeyword);
 			case TEForEach(f): r(f.syntax.forKeyword);
-			case TEBinop(a, _, _): removeLeadingTrivia(a);
+			case TEBinop(a, _, _): processLeadingToken(r, a);
 			case TEPreUnop(PreNot(t) | PreNeg(t) | PreIncr(t) | PreDecr(t) | PreBitNeg(t), _): r(t);
-			case TEPostUnop(e, _): removeLeadingTrivia(e);
-			case TEAs(e, _, _): removeLeadingTrivia(e);
+			case TEPostUnop(e, _): processLeadingToken(r, e);
+			case TEAs(e, _, _): processLeadingToken(r, e);
 			case TESwitch(s): r(s.syntax.keyword);
 			case TENew(keyword, _, _): r(keyword);
 			case TECondCompValue(v) | TECondCompBlock(v, _): r(v.syntax.ns);
-			case TEXmlChild(x): removeLeadingTrivia(x.eobj);
-			case TEXmlAttr(x): removeLeadingTrivia(x.eobj);
-			case TEXmlAttrExpr(x): removeLeadingTrivia(x.eobj);
-			case TEXmlDescend(x): removeLeadingTrivia(x.eobj);
+			case TEXmlChild(x): processLeadingToken(r, x.eobj);
+			case TEXmlAttr(x): processLeadingToken(r, x.eobj);
+			case TEXmlAttrExpr(x): processLeadingToken(r, x.eobj);
+			case TEXmlDescend(x): processLeadingToken(r, x.eobj);
 			case TEUseNamespace(ns): r(ns.useKeyword);
 		}
 	}
 
 	/** remove and return the trailing trivia of an expression **/
 	public static function removeTrailingTrivia(e:TExpr):Array<Trivia> {
-		function r(token:Token) {
+		return processTrailingToken(function(token) {
 			var trivia = token.trailTrivia;
 			token.trailTrivia = [];
 			return trivia;
-		}
+		}, e);
+	}
 
+	public static function processTrailingToken<T>(r:Token->T, e:TExpr):T {
 		function fromDotPath(p:DotPath) {
 			return
 				if (p.rest.length == 0) r(p.first)
@@ -183,7 +176,7 @@ class TypedTreeTools {
 
 		return switch e.kind {
 			case TEParens(_, _, closeParen): r(closeParen);
-			case TELocalFunction(f): removeTrailingTrivia(f.fun.expr);
+			case TELocalFunction(f): processTrailingToken(r, f.fun.expr);
 			case TELiteral(TLThis(t) | TLSuper(t)| TLBool(t)| TLNull(t)| TLUndefined(t)| TLInt(t)| TLNumber(t)| TLString(t)| TLRegExp(t)): r(t);
 			case TELocal(t, _): r(t);
 			case TEField(_, _, t): r(t);
@@ -194,34 +187,34 @@ class TypedTreeTools {
 			case TEArrayDecl(a): r(a.syntax.closeBracket);
 			case TEVectorDecl(v): r(v.elements.syntax.closeBracket);
 			case TEBreak(keyword) | TEContinue(keyword) | TEReturn(keyword, null): r(keyword);
-			case TEReturn(_, e) | TEThrow(_, e) | TEDelete(_, e): removeTrailingTrivia(e);
+			case TEReturn(_, e) | TEThrow(_, e) | TEDelete(_, e): processTrailingToken(r, e);
 			case TEObjectDecl(o): r(o.syntax.closeBrace);
 			case TEArrayAccess(a): r(a.syntax.closeBracket);
 			case TEBlock(block): r(block.syntax.closeBrace);
-			case TETry(t): removeTrailingTrivia(t.catches[t.catches.length - 1].expr);
-			case TEIf(i): removeTrailingTrivia(if (i.eelse == null) i.ethen else i.eelse.expr);
+			case TETry(t): processTrailingToken(r, t.catches[t.catches.length - 1].expr);
+			case TEIf(i): processTrailingToken(r, if (i.eelse == null) i.ethen else i.eelse.expr);
 			case TEVars(_, vars):
 				var v = vars[vars.length - 1];
-				if (v.init != null) removeTrailingTrivia(v.init.expr)
+				if (v.init != null) processTrailingToken(r, v.init.expr)
 				else if (v.syntax.type != null) fromSyntaxType(v.syntax.type.type)
 				else r(v.syntax.name);
 			case TEVector(syntax, type): r(syntax.t.gt);
-			case TETernary(t): removeTrailingTrivia(t.eelse);
-			case TEWhile(w): removeTrailingTrivia(w.body);
+			case TETernary(t): processTrailingToken(r, t.eelse);
+			case TEWhile(w): processTrailingToken(r, w.body);
 			case TEDoWhile(w): r(w.syntax.closeParen);
-			case TEFor(f): removeTrailingTrivia(f.body);
-			case TEForIn(f): removeTrailingTrivia(f.body);
-			case TEForEach(f): removeTrailingTrivia(f.body);
-			case TEBinop(_, _, b): removeTrailingTrivia(b);
-			case TEPreUnop(_, e): removeTrailingTrivia(e);
+			case TEFor(f): processTrailingToken(r, f.body);
+			case TEForIn(f): processTrailingToken(r, f.body);
+			case TEForEach(f): processTrailingToken(r, f.body);
+			case TEBinop(_, _, b): processTrailingToken(r, b);
+			case TEPreUnop(_, e): processTrailingToken(r, e);
 			case TEPostUnop(_, PostIncr(t) | PostDecr(t)): r(t);
 			case TEAs(_, _, type): fromSyntaxType(type.syntax);
 			case TESwitch(s): r(s.syntax.closeBrace);
 			case TENew(_, eclass, args):
-				if (args == null) removeTrailingTrivia(eclass)
+				if (args == null) processTrailingToken(r, eclass)
 				else r(args.closeParen);
 			case TECondCompValue(v): r(v.syntax.name);
-			case TECondCompBlock(_, expr): removeTrailingTrivia(expr);
+			case TECondCompBlock(_, expr): processTrailingToken(r, expr);
 			case TEXmlChild(x): r(x.syntax.name);
 			case TEXmlAttr(x): r(x.syntax.name);
 			case TEXmlAttrExpr(x): r(x.syntax.closeBracket);
