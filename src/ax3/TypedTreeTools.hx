@@ -235,38 +235,45 @@ class TypedTreeTools {
 			case TEVector(_) | TELiteral(_) | TEUseNamespace(_) | TELocal(_) | TEBuiltin(_) | TEDeclRef(_) | TEReturn(_, null) | TEBreak(_) | TEContinue(_) | TECondCompValue(_):
 				e1;
 
+			case TEField({kind: TOImplicitThis(_) | TOImplicitClass(_)}, _, _):
+				e1;
+
 			case TECast(c):
-				e1.with(kind = TECast(c.with(expr = f(c.expr))));
+				var mapped = f(c.expr);
+				return if (mapped == c.expr) e1 else e1.with(kind = TECast(c.with(expr = mapped)));
 
 			case TEParens(openParen, e, closeParen):
-				e1.with(kind = TEParens(openParen, f(e), closeParen));
+				var mapped = f(e);
+				return if (mapped == e) e1 else e1.with(kind = TEParens(openParen, mapped, closeParen));
 
-			case TEField(obj, fieldName, fieldToken):
-				var obj = switch (obj.kind) {
-					case TOExplicit(dot, e):
-						obj.with(kind = TOExplicit(dot, f(e)));
-					case TOImplicitThis(_) | TOImplicitClass(_):
-						obj;
-				};
-				e1.with(kind = TEField(obj, fieldName, fieldToken));
+
+			case TEField(obj = {kind: TOExplicit(dot, e)}, fieldName, fieldToken):
+				var mapped = f(e);
+				return if (mapped == e) e1 else e1.with(kind = TEField(obj.with(kind = TOExplicit(dot, mapped)), fieldName, fieldToken));
 
 			case TECall(eobj, args):
-				e1.with(kind = TECall(f(eobj), mapCallArgs(f, args)));
+				var mappedObj = f(eobj);
+				var mappedArgs = mapCallArgs(f, args);
+				return if (mappedObj == eobj && mappedArgs == args) e1 else e1.with(kind = TECall(mappedObj, mappedArgs));
 
 			case TEArrayDecl(a):
 				e1.with(kind = TEArrayDecl(mapArrayDecl(f, a)));
 
 			case TEReturn(keyword, e):
-				e1.with(kind = TEReturn(keyword, f(e)));
+				var mapped = f(e);
+				return if (mapped == e) e1 else e1.with(kind = TEReturn(keyword, mapped));
 
 			case TEThrow(keyword, e):
-				e1.with(kind = TEThrow(keyword, f(e)));
+				var mapped = f(e);
+				return if (mapped == e) e1 else e1.with(kind = TEThrow(keyword, mapped));
 
 			case TEDelete(keyword, e):
-				e1.with(kind = TEDelete(keyword, f(e)));
+				var mapped = f(e);
+				return if (mapped == e) e1 else e1.with(kind = TEDelete(keyword, mapped));
 
 			case TEBlock(block):
-				e1.with(kind = TEBlock(mapBlock(f, block)));
+				var mapped = mapBlock(f, block);
+				return if (mapped == block) e1 else e1.with(kind = TEBlock(block));
 
 			case TEIf(e):
 				e1.with(kind = TEIf(e.with(
@@ -290,10 +297,9 @@ class TypedTreeTools {
 				e1.with(kind = TEVectorDecl(v.with(elements = mapArrayDecl(f, v.elements))));
 
 			case TEArrayAccess(a):
-				e1.with(kind = TEArrayAccess(a.with(
-					eobj = f(a.eobj),
-					eindex = f(a.eindex)
-				)));
+				var mappedObj = f(a.eobj);
+				var mappedIdx = f(a.eindex);
+				return if (mappedObj == a.eobj && mappedIdx == a.eindex) e1 else e1.with(kind = TEArrayAccess(a.with(eobj = mappedObj, eindex = mappedIdx)));
 
 			case TEVars(kind, vars):
 				e1.with(kind = TEVars(kind, [
@@ -347,16 +353,21 @@ class TypedTreeTools {
 				)));
 
 			case TEBinop(a, op, b):
-				e1.with(kind = TEBinop(f(a), op, f(b)));
+				var mappedA = f(a);
+				var mappedB = f(b);
+				return if (mappedA == a && mappedB == b) e1 else e1.with(kind = TEBinop(mappedA, op, mappedB));
 
 			case TEPreUnop(op, e):
-				e1.with(kind = TEPreUnop(op, f(e)));
+				var mapped = f(e);
+				return if (mapped == e) e1 else e1.with(kind = TEPreUnop(op, mapped));
 
 			case TEPostUnop(e, op):
-				e1.with(kind = TEPostUnop(f(e), op));
+				var mapped = f(e);
+				return if (mapped == e) e1 else e1.with(kind = TEPostUnop(mapped, op));
 
 			case TEAs(e, keyword, type):
-				e1.with(kind = TEAs(f(e), keyword, type));
+				var mapped = f(e);
+				return if (mapped == e) e1 else e1.with(kind = TEAs(mapped, keyword, type));
 
 			case TESwitch(s):
 				e1.with(kind = TESwitch(s.with(
@@ -369,7 +380,9 @@ class TypedTreeTools {
 				)));
 
 			case TENew(keyword, eclass, args):
-				e1.with(kind = TENew(keyword, f(eclass), if (args == null) null else mapCallArgs(f, args)));
+				var mappedClass = f(eclass);
+				var mappedArgs = if (args == null) null else mapCallArgs(f, args);
+				return if (mappedClass == eclass && mappedArgs == args) e1 else e1.with(kind = TENew(keyword, mappedClass, mappedArgs));
 
 			case TECondCompBlock(v, expr):
 				e1.with(kind = TECondCompBlock(v, f(expr)));
@@ -396,14 +409,37 @@ class TypedTreeTools {
 	}
 
 	static function mapCallArgs(f:TExpr->TExpr, a:TCallArgs):TCallArgs {
-		return a.with(args = [for (arg in a.args) arg.with(expr = f(arg.expr))]);
+		var r:Null<Array<{expr:TExpr, comma:Null<Token>}>> = null;
+		for (i in 0...a.args.length) {
+			var arg = a.args[i];
+			var mapped = f(arg.expr);
+			if (mapped != arg.expr) {
+				if (r == null) r = a.args.slice(0, i);
+				r.push(arg.with(expr = mapped));
+			} else if (r != null) {
+				r.push(arg);
+			}
+		}
+		return if (r == null) a else a.with(args = r);
 	}
 
 	static function mapBlock(f:TExpr->TExpr, b:TBlock):TBlock {
-		return b.with(exprs = mapBlockExprs(f, b.exprs));
+		var mapped = mapBlockExprs(f, b.exprs);
+		return if (mapped == b.exprs) b else b.with(exprs = mapped);
 	}
 
 	static function mapBlockExprs(f:TExpr->TExpr, exprs:Array<TBlockExpr>):Array<TBlockExpr> {
-		return [for (e in exprs) e.with(expr = f(e.expr))];
+		var r:Null<Array<TBlockExpr>> = null;
+		for (i in 0...exprs.length) {
+			var e = exprs[i];
+			var mapped = f(e.expr);
+			if (mapped != e.expr) {
+				if (r == null) r = exprs.slice(0, i);
+				r.push(e.with(expr = mapped));
+			} else if (r != null) {
+				r.push(e);
+			}
+		}
+		return if (r == null) exprs else r;
 	}
 }
