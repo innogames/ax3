@@ -25,10 +25,10 @@ class CoerceToBool extends AbstractFilter {
 				var trail = removeTrailingTrivia(e);
 				mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), mkNullExpr(e.type, [], trail)), TTBoolean, TTBoolean);
 
-			// case TTInt | TTUint:
-			// 	var trail = removeTrailingTrivia(e);
-			// 	var zeroExpr = mk(TELiteral(TLInt(new Token(0, TkDecimalInteger, "0", [], trail))), e.type, e.type);
-			// 	mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), zeroExpr), TTBoolean, TTBoolean);
+			case TTInt | TTUint:
+				var trail = removeTrailingTrivia(e);
+				var zeroExpr = mk(TELiteral(TLInt(new Token(0, TkDecimalInteger, "0", [], trail))), e.type, e.type);
+				mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), zeroExpr), TTBoolean, TTBoolean);
 
 			// case TTString if (canBeRepeated(e)):
 			// 	var trail = removeTrailingTrivia(e);
