@@ -543,7 +543,7 @@ class Parser {
 	function parseIdent(consumedToken:Token, allowComma:Bool):Expr {
 		switch consumedToken.text {
 			case "new":
-				return parseNewNext(consumedToken);
+				return parseNewNext(consumedToken, allowComma);
 			case "return":
 				return EReturn(consumedToken, parseOptionalExpr(allowComma));
 			case "throw":
@@ -846,7 +846,7 @@ class Parser {
 		});
 	}
 
-	function parseNewNext(keyword:Token):Expr {
+	function parseNewNext(keyword:Token, allowComma:Bool):Expr {
 		return switch scanner.advance().kind {
 			case TkLt:
 				var t = parseTypeParam(scanner.consume());
@@ -855,7 +855,7 @@ class Parser {
 			case _:
 				var newObject = parseNewObject();
 				var args = parseOptionalCallArgs();
-				parseExprNext(ENew(keyword, newObject, args), true);
+				parseExprNext(ENew(keyword, newObject, args), allowComma);
 		}
 	}
 
