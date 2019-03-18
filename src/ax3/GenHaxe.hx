@@ -150,7 +150,7 @@ class GenHaxe extends PrinterBase {
 				case TMCondCompBegin(b): printCondCompBegin(b);
 				case TMCondCompEnd(b): printCompCondEnd(b);
 				case TMField(f): printClassField(f);
-				case TMUseNamespace(n, semicolon): printUseNamespace(n); printSemicolon(semicolon);
+				case TMUseNamespace(n, semicolon): printUseNamespace(n); printTextWithTrivia("", semicolon);
 				case TMStaticInit(i): //printExpr(i.expr);
 			}
 		}
@@ -182,7 +182,7 @@ class GenHaxe extends PrinterBase {
 	function printClassField(f:TClassField) {
 		printMetadata(f.metadata);
 
-		if (f.namespace != null) printTextWithTrivia(f.namespace.text, f.namespace);
+		if (f.namespace != null) printTextWithTrivia("/*"+f.namespace.text+"*/", f.namespace);
 
 		for (m in f.modifiers) {
 			switch (m) {
@@ -192,7 +192,7 @@ class GenHaxe extends PrinterBase {
 				case FMInternal(t): printTextWithTrivia("/*internal*/", t);
 				case FMOverride(t): printTextWithTrivia("override", t);
 				case FMStatic(t): printTextWithTrivia("static", t);
-				case FMFinal(t): printTextWithTrivia("@:final", t);
+				case FMFinal(t): printTextWithTrivia("@:final", t); // TODO: in haxe3 @:final should go before other modifiers
 			}
 		}
 
@@ -343,7 +343,7 @@ class GenHaxe extends PrinterBase {
 			case TEVectorDecl(v): printVectorDecl(v);
 			case TEReturn(keyword, e): printTextWithTrivia("return", keyword); if (e != null) printExpr(e);
 			case TEThrow(keyword, e): printTextWithTrivia("throw", keyword); printExpr(e);
-			case TEDelete(keyword, e): printTextWithTrivia("delete", keyword); printExpr(e);
+			case TEDelete(keyword, e): throw "assert";
 			case TEBreak(keyword): printTextWithTrivia("break", keyword);
 			case TEContinue(keyword): printTextWithTrivia("continue", keyword);
 			case TEVars(kind, vars): printVars(kind, vars);
@@ -578,9 +578,14 @@ class GenHaxe extends PrinterBase {
 	}
 
 	function printVectorDecl(d:TVectorDecl) {
-		printTextWithTrivia("new", d.syntax.newKeyword);
-		printTypeParam(d.syntax.typeParam);
+		// printTextWithTrivia("new", d.syntax.newKeyword);
+		// printTypeParam(d.syntax.typeParam);
+		printTextWithTrivia("flash.Vector.ofArray(", d.syntax.newKeyword);
+		var t = d.elements.syntax.closeBracket.trailTrivia;
+		d.elements.syntax.closeBracket.trailTrivia = [];
 		printArrayDecl(d.elements);
+		buf.add(")");
+		printTrivia(t);
 	}
 
 	function printArrayDecl(d:TArrayDecl) {
@@ -671,7 +676,6 @@ class GenHaxe extends PrinterBase {
 			case OpLt(t): printTextWithTrivia("<", t);
 			case OpLte(t): printTextWithTrivia("<=", t);
 			case OpIn(t): printTextWithTrivia("in", t);
-			case OpIs(t): printTextWithTrivia("is", t);
 			case OpAnd(t): printTextWithTrivia("&&", t);
 			case OpOr(t): printTextWithTrivia("||", t);
 			case OpShl(t): printTextWithTrivia("<<", t);
@@ -681,6 +685,7 @@ class GenHaxe extends PrinterBase {
 			case OpBitOr(t): printTextWithTrivia("|", t);
 			case OpBitXor(t): printTextWithTrivia("^", t);
 			case OpComma(t): printTextWithTrivia(",", t);
+			case OpIs(t): throw "assert";
 		}
 		printExpr(b);
 	}

@@ -3,9 +3,53 @@ package ax3;
 import ax3.ParseTree;
 import ax3.TypedTree;
 import ax3.Token;
+import ax3.TokenTools.*;
 using ax3.WithMacro;
 
+import ax3.TokenTools.mkSemicolon;
+
 class TypedTreeTools {
+	public static function concatExprs(a:TExpr, b:TExpr):TExpr {
+		return switch [a.kind, b.kind] {
+			case [TEBlock(aBlock), TEBlock(bBlock)]:
+				mk(TEBlock({
+					syntax: {
+						openBrace: aBlock.syntax.openBrace,
+						closeBrace: bBlock.syntax.closeBrace,
+					},
+					exprs: aBlock.exprs.concat(bBlock.exprs)
+				}), TTVoid, TTVoid);
+
+			case [TEBlock(block), _]:
+				a.with(
+					kind = TEBlock(block.with(
+						exprs = block.exprs.concat([{expr: b, semicolon: mkSemicolon()}])
+					))
+				);
+
+			case [_, TEBlock(block)]:
+				b.with(
+					kind = TEBlock(block.with(
+						exprs = [{expr: a, semicolon: mkSemicolon()}].concat(block.exprs)
+					))
+				);
+
+			case _:
+				var lead = removeLeadingTrivia(a);
+				var trail = removeTrailingTrivia(b);
+				mk(TEBlock({
+						syntax: {
+							openBrace: new Token(0, TkBraceOpen, "{", lead, []),
+							closeBrace: new Token(0, TkBraceClose, "}", [], trail),
+						},
+						exprs: [
+							{expr: a, semicolon: mkSemicolon()},
+							{expr: b, semicolon: mkSemicolon()},
+						]
+				}), TTVoid, TTVoid);
+		}
+	}
+
 	public static function exprPos(e:TExpr):Int {
 		return switch e.kind {
 			case TEParens(openParen, _): openParen.pos;
@@ -88,6 +132,24 @@ class TypedTreeTools {
 
 	public static inline function mkNullExpr(t = TTAny, ?lead, ?trail):TExpr {
 		return mk(TELiteral(TLNull(new Token(0, TkIdent, "null", if (lead != null) lead else [], if (trail != null) trail else []))), t, t);
+	}
+
+	public static inline function mkBuiltin(n:String, t:TType):TExpr {
+		return mk(TEBuiltin(new Token(0, TkIdent, n, [], []), n), t, t);
+	}
+
+	public static function mkCall(obj:TExpr, args:Array<TExpr>, ?t:TType):TExpr {
+		if (t == null) {
+			t = switch obj.type {
+				case TTFun(_, ret): ret;
+				case _: TTAny;
+			}
+		}
+		return mk(TECall(obj, {
+			openParen: mkOpenParen(),
+			args: [for (i in 0...args.length) {expr: args[i], comma: if (i == args.length - 1) null else mkComma()}],
+			closeParen: mkCloseParen(),
+		}), t, t);
 	}
 
 	public static function skipParens(e:TExpr):TExpr {

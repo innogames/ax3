@@ -12,8 +12,18 @@ class TokenTools {
 		return true;
 	}
 
+	public static inline function mkIdent(n) return new Token(0, TkIdent, n, [], []);
+	public static inline function mkOpenParen() return new Token(0, TkParenOpen, "(", [], []);
+	public static inline function mkCloseParen() return new Token(0, TkParenClose, ")", [], []);
+	public static inline function mkComma() return new Token(0, TkComma, ",", [], []);
+	public static inline function mkDot() return new Token(0, TkDot, ".", [], []);
+	public static inline function mkSemicolon() return new Token(0, TkSemicolon, ";", [], []);
+
+	public static inline function mkWhitespace() return new Trivia(TrWhitespace, " ");
+	public static inline function mkNewline() return new Trivia(TrNewline, "\n");
+
 	public static function mkTokenWithSpaces(kind:TokenKind, text:String):Token {
-		return new Token(0, kind, text, [new Trivia(TrWhitespace, " ")], [new Trivia(TrWhitespace, " ")]);
+		return new Token(0, kind, text, [mkWhitespace()], [mkWhitespace()]);
 	}
 
 	public static inline function mkEqualsEqualsToken():Token {

@@ -55,7 +55,10 @@ class Filters {
 
 	public static function run(context:Context, structure:Structure, modules:Array<TModule>) {
 		for (f in [
-			// new RestArgs(context),
+			new RestArgs(context),
+			new RewriteIs(context),
+			new RewriteCFor(context),
+			new RewriteDelete(context),
 			new CoerceToBool(context),
 			new InvertNegatedEquality(context),
 			// new AddParens(context),

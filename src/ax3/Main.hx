@@ -5,8 +5,8 @@ import ax3.Utils.*;
 
 private typedef Config = {
 	var src:String;
-	var out:String;
 	var swc:Array<String>;
+	var ?out:String;
 	var ?hxout:String;
 	var ?dump:String;
 }
@@ -37,24 +37,26 @@ class Main {
 		Filters.run(ctx, structure, modules);
 		Timers.filters += (stamp() - t);
 
-		var outDir = FileSystem.absolutePath(config.out);
+		var outDir = if (config.out == null) null else FileSystem.absolutePath(config.out);
 		var dumpDir = if (config.dump == null) null else FileSystem.absolutePath(config.dump);
 		var haxeDir = if (config.hxout == null) null else FileSystem.absolutePath(config.hxout);
 		t = stamp();
 		for (mod in modules) {
-			var gen = new ax3.GenAS3();
-			gen.writeModule(mod);
-			var out = gen.toString();
+			if (outDir != null) {
+				var gen = new ax3.GenAS3();
+				gen.writeModule(mod);
+				var out = gen.toString();
 
-			var dir = haxe.io.Path.join({
-				var parts = mod.pack.name.split(".");
-				parts.unshift(outDir);
-				parts;
-			});
-			Utils.createDirectory(dir);
+				var dir = haxe.io.Path.join({
+					var parts = mod.pack.name.split(".");
+					parts.unshift(outDir);
+					parts;
+				});
+				Utils.createDirectory(dir);
 
-			var path = dir + "/" + mod.name + ".as";
-			sys.io.File.saveContent(path, out);
+				var path = dir + "/" + mod.name + ".as";
+				sys.io.File.saveContent(path, out);
+			}
 
 			if (haxeDir != null) {
 				var gen = new ax3.GenHaxe();
