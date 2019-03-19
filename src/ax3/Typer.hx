@@ -743,10 +743,7 @@ class Typer {
 
 			// TODO: sort these out
 			case OpAdd(_) | OpSub(_) | OpDiv(_) | OpMul(_) | OpMod(_) |
-			     OpAssignAdd(_) | OpAssignSub(_) | OpAssignMul(_) | OpAssignDiv(_) | OpAssignMod(_) |
-			     OpAssignBitAnd(_) | OpAssignBitOr(_) | OpAssignBitXor(_) |
-			     OpAssignShl(_) | OpAssignShr(_) | OpAssignUshr(_) | OpAssign(_) |
-			     OpAssignAnd(_) | OpAssignOr(_) |
+			     OpAssign(_) | OpAssignOp(_) |
 			     OpShl(_) | OpShr(_) | OpUshr(_) |
 			     OpBitAnd(_) | OpBitOr(_) | OpBitXor(_):
 				var a = typeExpr(a, TTAny);

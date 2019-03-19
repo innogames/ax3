@@ -501,19 +501,7 @@ enum Binop {
 	OpMul(t:Token);
 	OpMod(t:Token);
 	OpAssign(t:Token);
-	OpAssignAdd(t:Token);
-	OpAssignSub(t:Token);
-	OpAssignMul(t:Token);
-	OpAssignDiv(t:Token);
-	OpAssignMod(t:Token);
-	OpAssignAnd(t:Token);
-	OpAssignOr(t:Token);
-	OpAssignBitAnd(t:Token);
-	OpAssignBitOr(t:Token);
-	OpAssignBitXor(t:Token);
-	OpAssignShl(t:Token);
-	OpAssignShr(t:Token);
-	OpAssignUshr(t:Token);
+	OpAssignOp(op:AssignOp);
 	OpEquals(t:Token);
 	OpNotEquals(t:Token);
 	OpStrictEquals(t:Token);
@@ -533,6 +521,22 @@ enum Binop {
 	OpBitXor(t:Token);
 	OpIs(t:Token);
 	OpComma(t:Token);
+}
+
+enum AssignOp {
+	AOpAdd(t:Token);
+	AOpSub(t:Token);
+	AOpMul(t:Token);
+	AOpDiv(t:Token);
+	AOpMod(t:Token);
+	AOpAnd(t:Token);
+	AOpOr(t:Token);
+	AOpBitAnd(t:Token);
+	AOpBitOr(t:Token);
+	AOpBitXor(t:Token);
+	AOpShl(t:Token);
+	AOpShr(t:Token);
+	AOpUshr(t:Token);
 }
 
 typedef BlockElement = {

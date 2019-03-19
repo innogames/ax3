@@ -68,9 +68,7 @@ class AddRequiredParens extends AbstractFilter {
 				)));
 				maybeWrap(e, 14);
 
-			case TEBinop(a,
-				op = OpAssign(_) | OpAssignAdd(_) | OpAssignSub(_) | OpAssignMul(_) | OpAssignDiv(_) | OpAssignMod(_) | OpAssignAnd(_) | OpAssignOr(_) | OpAssignBitAnd(_) | OpAssignBitOr(_) | OpAssignBitXor(_) | OpAssignShl(_) | OpAssignShr(_) | OpAssignUshr(_),
-				b):
+			case TEBinop(a, op = OpAssign(_) | OpAssignOp(_), b):
 				binop(a, op, b, 15);
 
 			case TEBinop(a, op = OpComma(_), b):

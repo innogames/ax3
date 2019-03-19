@@ -912,27 +912,27 @@ class Parser {
 			case TkPlus:
 				return parseBinop(first, OpAdd, allowComma);
 			case TkPlusEquals:
-				return parseBinop(first, OpAssignAdd, allowComma);
+				return parseBinop(first, t -> OpAssignOp(AOpAdd(t)), allowComma);
 			case TkPlusPlus:
 				return parseExprNext(EPostUnop(first, PostIncr(scanner.consume())), allowComma);
 			case TkMinus:
 				return parseBinop(first, OpSub, allowComma);
 			case TkMinusEquals:
-				return parseBinop(first, OpAssignSub, allowComma);
+				return parseBinop(first, t -> OpAssignOp(AOpSub(t)), allowComma);
 			case TkMinusMinus:
 				return parseExprNext(EPostUnop(first, PostDecr(scanner.consume())), allowComma);
 			case TkAsterisk:
 				return parseBinop(first, OpMul, allowComma);
 			case TkAsteriskEquals:
-				return parseBinop(first, OpAssignMul, allowComma);
+				return parseBinop(first, t -> OpAssignOp(AOpMul(t)), allowComma);
 			case TkSlash:
 				return parseBinop(first, OpDiv, allowComma);
 			case TkSlashEquals:
-				return parseBinop(first, OpAssignDiv, allowComma);
+				return parseBinop(first, t -> OpAssignOp(AOpDiv(t)), allowComma);
 			case TkPercent:
 				return parseBinop(first, OpMod, allowComma);
 			case TkPercentEquals:
-				return parseBinop(first, OpAssignMod, allowComma);
+				return parseBinop(first, t -> OpAssignOp(AOpMod(t)), allowComma);
 			case TkEquals:
 				return parseBinop(first, OpAssign, allowComma);
 			case TkEqualsEquals:
@@ -948,7 +948,7 @@ class Parser {
 			case TkLtLt:
 				return parseBinop(first, OpShl, allowComma);
 			case TkLtLtEquals:
-				return parseBinop(first, OpAssignShl, allowComma);
+				return parseBinop(first, t -> OpAssignOp(AOpShl(t)), allowComma);
 			case TkLtEquals:
 				return parseBinop(first, OpLte, allowComma);
 			case TkGt:
@@ -956,11 +956,11 @@ class Parser {
 			case TkGtGt:
 				return parseBinop(first, OpShr, allowComma);
 			case TkGtGtEquals:
-				return parseBinop(first, OpAssignShr, allowComma);
+				return parseBinop(first, t -> OpAssignOp(AOpShr(t)), allowComma);
 			case TkGtGtGt:
 				return parseBinop(first, OpUshr, allowComma);
 			case TkGtGtGtEquals:
-				return parseBinop(first, OpAssignUshr, allowComma);
+				return parseBinop(first, t -> OpAssignOp(AOpUshr(t)), allowComma);
 			case TkGtEquals:
 				return parseBinop(first, OpGte, allowComma);
 			case TkAmpersand:
@@ -968,21 +968,21 @@ class Parser {
 			case TkAmpersandAmpersand:
 				return parseBinop(first, OpAnd, allowComma);
 			case TkAmpersandAmpersandEquals:
-				return parseBinop(first, OpAssignAnd, allowComma);
+				return parseBinop(first, t -> OpAssignOp(AOpAnd(t)), allowComma);
 			case TkAmpersandEquals:
-				return parseBinop(first, OpAssignBitAnd, allowComma);
+				return parseBinop(first, t -> OpAssignOp(AOpBitAnd(t)), allowComma);
 			case TkPipe:
 				return parseBinop(first, OpBitOr, allowComma);
 			case TkPipePipe:
 				return parseBinop(first, OpOr, allowComma);
 			case TkPipePipeEquals:
-				return parseBinop(first, OpAssignOr, allowComma);
+				return parseBinop(first, t -> OpAssignOp(AOpOr(t)), allowComma);
 			case TkPipeEquals:
-				return parseBinop(first, OpAssignBitOr, allowComma);
+				return parseBinop(first, t -> OpAssignOp(AOpBitOr(t)), allowComma);
 			case TkCaret:
 				return parseBinop(first, OpBitXor, allowComma);
 			case TkCaretEquals:
-				return parseBinop(first, OpAssignBitXor, allowComma);
+				return parseBinop(first, t -> OpAssignOp(AOpBitXor(t)), allowComma);
 			case TkBracketOpen:
 				var openBracket = scanner.consume();
 				var eindex = parseExpr(true);
@@ -1035,21 +1035,7 @@ class Parser {
 
 	function binopHigherThanTernary(op:Binop) {
 		return switch (op) {
-			case OpAssign(_)
-				| OpAssignAdd(_)
-				| OpAssignSub(_)
-				| OpAssignMul(_)
-				| OpAssignDiv(_)
-				| OpAssignMod(_)
-				| OpAssignAnd(_)
-				| OpAssignOr(_)
-				| OpAssignBitAnd(_)
-				| OpAssignBitOr(_)
-				| OpAssignBitXor(_)
-				| OpAssignShl(_)
-				| OpAssignShr(_)
-				| OpAssignUshr(_)
-				| OpComma(_):
+			case OpAssign(_) | OpAssignOp(_) | OpComma(_):
 				false;
 			case _:
 				true;
@@ -1106,7 +1092,7 @@ class Parser {
 				{p: 9, assoc: Left};
 
 			// Assignment
-			case OpAssign(_) | OpAssignAdd(_) | OpAssignSub(_) | OpAssignMul(_) | OpAssignDiv(_) | OpAssignMod(_) | OpAssignAnd(_) | OpAssignOr(_) | OpAssignBitAnd(_) | OpAssignBitOr(_) | OpAssignBitXor(_) | OpAssignShl(_) | OpAssignShr(_) | OpAssignUshr(_):
+			case OpAssign(_) | OpAssignOp(_):
 				{p: 10, assoc: Right};
 
 			case OpComma(_):
