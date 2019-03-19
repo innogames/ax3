@@ -366,9 +366,8 @@ class GenHaxe extends PrinterBase {
 			case TEIf(i): printIf(i);
 			case TEWhile(w): printWhile(w);
 			case TEDoWhile(w): printDoWhile(w);
-			case TEFor(f): printFor(f);
-			case TEForIn(f): printForIn(f);
-			case TEForEach(f): printForEach(f);
+			case TEHaxeFor(f): printFor(f);
+			case TEFor(_) | TEForIn(_) | TEForEach(_): throw "unprocessed `for` expression";
 			case TEBinop(a, op, b): printBinop(a, op, b);
 			case TEPreUnop(op, e): printPreUnop(op, e);
 			case TEPostUnop(e, op): printPostUnop(e, op);
@@ -565,42 +564,14 @@ class GenHaxe extends PrinterBase {
 		printCloseParen(w.syntax.closeParen);
 	}
 
-	function printFor(f:TFor) {
-		return buf.add("{}");
-		printTextWithTrivia("for", f.syntax.keyword);
-		printOpenParen(f.syntax.openParen);
-		if (f.einit != null) printExpr(f.einit);
-		printSemicolon(f.syntax.initSep);
-		if (f.econd != null) printExpr(f.econd);
-		printSemicolon(f.syntax.condSep);
-		if (f.eincr != null) printExpr(f.eincr);
-		printCloseParen(f.syntax.closeParen);
-		printExpr(f.body);
-	}
-
-	function printForIn(f:TForIn) {
-		return buf.add("{}");
+	function printFor(f:THaxeFor) {
 		printTextWithTrivia("for", f.syntax.forKeyword);
 		printOpenParen(f.syntax.openParen);
-		printForInIter(f.iter);
+		printTextWithTrivia(f.vit.name, f.syntax.itName);
+		printTextWithTrivia("in", f.syntax.inKeyword);
+		printExpr(f.iter);
 		printCloseParen(f.syntax.closeParen);
 		printExpr(f.body);
-	}
-
-	function printForEach(f:TForEach) {
-		return buf.add("{}");
-		printTextWithTrivia("for", f.syntax.forKeyword);
-		printTextWithTrivia("each", f.syntax.eachKeyword);
-		printOpenParen(f.syntax.openParen);
-		printForInIter(f.iter);
-		printCloseParen(f.syntax.closeParen);
-		printExpr(f.body);
-	}
-
-	function printForInIter(i:TForInIter) {
-		printExpr(i.eit);
-		printTextWithTrivia("in", i.inKeyword);
-		printExpr(i.eobj);
 	}
 
 	function printNew(keyword:Token, eclass:TExpr, args:Null<TCallArgs>) {

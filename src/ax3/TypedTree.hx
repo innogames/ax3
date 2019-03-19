@@ -243,6 +243,7 @@ enum TExprKind {
 	TEFor(f:TFor);
 	TEForIn(f:TForIn);
 	TEForEach(f:TForEach);
+	TEHaxeFor(f:THaxeFor);
 	TEBinop(a:TExpr, op:Binop, b:TExpr);
 	TEPreUnop(op:PreUnop, e:TExpr);
 	TEPostUnop(e:TExpr, op:PostUnop);
@@ -387,6 +388,19 @@ typedef TForEach = {
 		var closeParen:Token;
 	}
 	var iter:TForInIter;
+	var body:TExpr;
+}
+
+typedef THaxeFor = {
+	var syntax:{
+		var forKeyword:Token;
+		var openParen:Token;
+		var itName:Token;
+		var inKeyword:Token;
+		var closeParen:Token;
+	};
+	var vit:TVar;
+	var iter:TExpr;
 	var body:TExpr;
 }
 

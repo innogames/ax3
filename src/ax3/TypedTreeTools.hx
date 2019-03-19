@@ -77,6 +77,7 @@ class TypedTreeTools {
 			case TEFor(f): f.syntax.keyword.pos;
 			case TEForIn(f): f.syntax.forKeyword.pos;
 			case TEForEach(f): f.syntax.forKeyword.pos;
+			case TEHaxeFor(f): f.syntax.forKeyword.pos;
 			case TEBinop(a, OpAdd(t) | OpSub(t) | OpDiv(t) | OpMul(t) | OpMod(t) | OpAssign(t) | OpEquals(t) | OpNotEquals(t) | OpStrictEquals(t) | OpNotStrictEquals(t) | OpGt(t) | OpGte(t) | OpLt(t) | OpLte(t) | OpIn(t) | OpIs(t) | OpAnd(t) | OpOr(t) | OpShl(t) | OpShr(t) | OpUshr(t) | OpBitAnd(t) | OpBitOr(t) | OpBitXor(t) | OpComma(t), b): t.pos;
 			case TEBinop(a, OpAssignOp(AOpAdd(t) | AOpSub(t) | AOpMul(t) | AOpDiv(t) | AOpMod(t) | AOpAnd(t) | AOpOr(t) | AOpBitAnd(t) | AOpBitOr(t) | AOpBitXor(t) | AOpShl(t) | AOpShr(t) | AOpUshr(t)), b): t.pos;
 			case TEPreUnop(PreNot(t) | PreNeg(t) | PreIncr(t) | PreDecr(t) | PreBitNeg(t), e): t.pos;
@@ -198,6 +199,7 @@ class TypedTreeTools {
 			case TEFor(f): r(f.syntax.keyword);
 			case TEForIn(f): r(f.syntax.forKeyword);
 			case TEForEach(f): r(f.syntax.forKeyword);
+			case TEHaxeFor(f): r(f.syntax.forKeyword);
 			case TEBinop(a, _, _): processLeadingToken(r, a);
 			case TEPreUnop(PreNot(t) | PreNeg(t) | PreIncr(t) | PreDecr(t) | PreBitNeg(t), _): r(t);
 			case TEPostUnop(e, _): processLeadingToken(r, e);
@@ -265,6 +267,7 @@ class TypedTreeTools {
 			case TETernary(t): processTrailingToken(r, t.eelse);
 			case TEWhile(w): processTrailingToken(r, w.body);
 			case TEDoWhile(w): r(w.syntax.closeParen);
+			case TEHaxeFor(f): processTrailingToken(r, f.body);
 			case TEFor(f): processTrailingToken(r, f.body);
 			case TEForIn(f): processTrailingToken(r, f.body);
 			case TEForEach(f): processTrailingToken(r, f.body);
@@ -402,6 +405,12 @@ class TypedTreeTools {
 				e1.with(kind = TEDoWhile(w.with(
 					body = f(w.body),
 					cond = f(w.cond)
+				)));
+
+			case TEHaxeFor(l):
+				e1.with(kind = TEHaxeFor(l.with(
+					iter = f(l.iter),
+					body = f(l.body)
 				)));
 
 			case TEFor(l):

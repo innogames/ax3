@@ -86,6 +86,7 @@ class AddRequiredParens extends AbstractFilter {
 			case TEIf(_): mapExpr(loop.bind(_, 100), e);
 			case TEWhile(_): mapExpr(loop.bind(_, 100), e);
 			case TEDoWhile(_): mapExpr(loop.bind(_, 100), e);
+			case TEHaxeFor(_): mapExpr(loop.bind(_, 100), e);
 			case TEFor(_): mapExpr(loop.bind(_, 100), e);
 			case TEForIn(_): mapExpr(loop.bind(_, 100), e);
 			case TEForEach(_): mapExpr(loop.bind(_, 100), e);
