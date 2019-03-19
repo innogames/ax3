@@ -144,20 +144,25 @@ class Typer {
 					case DImport(imp):
 						var condCompBegin = if (i == 0) condCompBegin else null;
 						var condCompEnd = if (i == len - 1) condCompEnd else null;
-						var importKind =
-							switch imp.wildcard {
-								case null:
-									var parts = dotPathToArray(imp.path);
-									var name:String = @:nullSafety(Off) parts.pop();
-									var pack = parts.join(".");
-									var decl = structure.getDecl(pack, name);
-									TIDecl(decl);
-								case w:
-									var packName = dotPathToString(imp.path);
-									var pack = structure.packages[packName];
-									if (pack == null) throw "no such package: " + packName;
-									TIPack(pack, w.dot, w.asterisk);
-							};
+						var pack:SPackage, importKind;
+						switch imp.wildcard {
+							case null:
+								var parts = dotPathToArray(imp.path);
+								var name:String = @:nullSafety(Off) parts.pop();
+								var packName = parts.join(".");
+
+								pack = structure.getPackage(packName);
+
+								var mod = pack.getModule(name);
+								if (mod == null) throw 'no such module $packName::$name';
+								importKind = TIDecl(mod.mainDecl);
+
+							case w:
+								var packName = dotPathToString(imp.path);
+								pack = structure.getPackage(packName);
+
+								importKind = TIAll(w.dot, w.asterisk);
+						}
 						result.push({
 							syntax: {
 								condCompBegin: condCompBegin,
@@ -166,6 +171,7 @@ class Typer {
 								semicolon: imp.semicolon,
 								condCompEnd: condCompEnd
 							},
+							pack: pack,
 							kind: importKind
 						});
 					case DCondComp(v, openBrace, decls, closeBrace): loop(decls, {v: typeCondCompVar(v), openBrace: openBrace}, {closeBrace: closeBrace});

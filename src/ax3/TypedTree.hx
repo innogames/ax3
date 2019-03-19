@@ -32,12 +32,13 @@ typedef TImport = {
 		var semicolon:Token;
 		var condCompEnd:Null<TCondCompEnd>;
 	}
+	var pack:SPackage;
 	var kind:TImportKind;
 }
 
 enum TImportKind {
 	TIDecl(d:SDecl);
-	TIPack(p:SPackage, dot:Token, asterisk:Token);
+	TIAll(dot:Token, asterisk:Token);
 }
 
 typedef TCondCompBegin = {

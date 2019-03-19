@@ -43,7 +43,7 @@ class SWCLoader {
 				var n = getPublicName(abc, cls.name);
 				if (n == null || shouldSkipClass(n.ns, n.name)) continue;
 
-				var pack = structure.getPackage(n.ns);
+				var pack = structure.getOrCreatePackage(n.ns);
 
 				if (pack.getModule(n.name) != null) {
 					// trace('Duplicate module: ' + n.ns + "::" + n.name);
@@ -127,7 +127,7 @@ class SWCLoader {
 					var n = getPublicName(abc, f.name);
 					if (n == null) continue;
 
-					var pack = structure.getPackage(n.ns);
+					var pack = structure.getOrCreatePackage(n.ns);
 
 					var decl = switch (f.kind) {
 						case FVar(type, value, const):

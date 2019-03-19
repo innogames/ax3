@@ -39,7 +39,7 @@ class StructureBuilder {
 		var imports = getImports(file);
 
 		var packName = getPackagePath(pack).join(".");
-		var sPack = structure.getPackage(packName);
+		var sPack = structure.getOrCreatePackage(packName);
 		var sModule = sPack.createModule(file.name);
 
 		sModule.mainDecl = {

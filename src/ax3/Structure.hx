@@ -77,6 +77,13 @@ class Structure {
 
 	public function getPackage(path:String):SPackage {
 		return switch packages[path] {
+			case null: throw 'No such package $path';
+			case pack: pack;
+		};
+	}
+
+	public function getOrCreatePackage(path:String):SPackage {
+		return switch packages[path] {
 			case null: packages[path] = new SPackage(path, this);
 			case pack: pack;
 		};
