@@ -21,6 +21,11 @@ class TokenTools {
 	public static inline function mkDot() return new Token(0, TkDot, ".", [], []);
 	public static inline function mkSemicolon() return new Token(0, TkSemicolon, ";", [], []);
 
+	public static inline function addTrailingNewline(t:Token):Token {
+		t.trailTrivia.push(mkNewline());
+		return t;
+	}
+
 	public static inline function mkWhitespace() return new Trivia(TrWhitespace, " ");
 	public static inline function mkNewline() return new Trivia(TrNewline, "\n");
 

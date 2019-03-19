@@ -23,14 +23,14 @@ class TypedTreeTools {
 			case [TEBlock(block), _]:
 				a.with(
 					kind = TEBlock(block.with(
-						exprs = block.exprs.concat([{expr: b, semicolon: mkSemicolon()}])
+						exprs = block.exprs.concat([{expr: b, semicolon: addTrailingNewline(mkSemicolon())}])
 					))
 				);
 
 			case [_, TEBlock(block)]:
 				b.with(
 					kind = TEBlock(block.with(
-						exprs = [{expr: a, semicolon: mkSemicolon()}].concat(block.exprs)
+						exprs = [{expr: a, semicolon: addTrailingNewline(mkSemicolon())}].concat(block.exprs)
 					))
 				);
 
@@ -43,8 +43,8 @@ class TypedTreeTools {
 							closeBrace: new Token(0, TkBraceClose, "}", [], trail),
 						},
 						exprs: [
-							{expr: a, semicolon: mkSemicolon()},
-							{expr: b, semicolon: mkSemicolon()},
+							{expr: a, semicolon: addTrailingNewline(mkSemicolon())},
+							{expr: b, semicolon: addTrailingNewline(mkSemicolon())},
 						]
 				}), TTVoid, TTVoid);
 		}
