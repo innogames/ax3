@@ -174,7 +174,7 @@ class SWCLoader {
 	}
 
 	static function getMethodType(abc:ABCData, i:Index<MethodType> ) : MethodType {
-		return switch i { case Idx(n): abc.methodTypes[n]; };
+		return abc.methodTypes[i.asInt()];
 	}
 
 	static function buildTypeStructure(abc:ABCData, name:IName):SType {
