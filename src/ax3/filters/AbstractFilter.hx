@@ -16,12 +16,22 @@ class AbstractFilter {
 	public function run(modules:Array<TModule>) {
 		for (mod in modules) {
 			currentPath = mod.path;
+
+			for (i in mod.pack.imports) {
+				processImport(i);
+			}
+
 			processDecl(mod.pack.decl);
+
 			for (decl in mod.privateDecls) {
 				processDecl(decl);
 			}
+
 			currentPath = null;
 		}
+	}
+
+	function processImport(i:TImport) {
 	}
 
 	function processDecl(decl:TDecl) {

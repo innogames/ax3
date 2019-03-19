@@ -111,7 +111,7 @@ class StructureBuilder {
 								var type = buildTypeStructure(fun.signature.ret.type);
 								if (fieldCollection.get(name.text) == null) {
 									// TODO: check if it was really a property getter/setter
-									fieldCollection.add({name: name.text, kind: SFVar({type: type})});
+									fieldCollection.add({name: name.text, kind: SFVar({swc: true, type: type})});
 								}
 							case FSetter(_, _, name, fun):
 								var type = switch (fun.signature.args.first) {
@@ -120,7 +120,7 @@ class StructureBuilder {
 								};
 								if (fieldCollection.get(name.text) == null) {
 									// TODO: check if it was really a property getter/setter
-									fieldCollection.add({name: name.text, kind: SFVar({type: type})});
+									fieldCollection.add({name: name.text, kind: SFVar({swc: true, type: type})});
 								}
 						}
 
@@ -158,7 +158,7 @@ class StructureBuilder {
 								var type = buildTypeStructure(fun.ret.type);
 								if (cls.fields.get(name.text) == null) {
 									// TODO: check if it was really a property getter/setter
-									cls.fields.add({name: name.text, kind: SFVar({type: type})});
+									cls.fields.add({name: name.text, kind: SFVar({swc: true, type: type})});
 								}
 							case IFSetter(_, _, name, fun):
 								var type = switch (fun.args.first) {
@@ -167,7 +167,7 @@ class StructureBuilder {
 								};
 								if (cls.fields.get(name.text) == null) {
 									// TODO: check if it was really a property getter/setter
-									cls.fields.add({name: name.text, kind: SFVar({type: type})});
+									cls.fields.add({name: name.text, kind: SFVar({swc: true, type: type})});
 								}
 						}
 					case MICondComp(v, openBrace, members, closeBrace):
@@ -204,7 +204,7 @@ class StructureBuilder {
 
 	static function buildVarStructure(v:VarDecl):SVarDecl {
 		var type = if (v.type == null) STAny else buildTypeStructure(v.type.type);
-		return {type: type};
+		return {swc: true, type: type};
 	}
 
 	static function getPackagePath(p:PackageDecl):Array<String> {

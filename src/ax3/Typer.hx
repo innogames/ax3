@@ -135,7 +135,7 @@ class Typer {
 	}
 
 	function typeImports(file:File):Array<TImport> {
-		var result = [];
+		var result = new Array<TImport>();
 		function loop(decls:Array<Declaration>, condCompBegin:Null<TCondCompBegin>, condCompEnd:Null<TCondCompEnd>) {
 			var len = decls.length;
 			for (i in 0...len) {
@@ -144,10 +144,29 @@ class Typer {
 					case DImport(imp):
 						var condCompBegin = if (i == 0) condCompBegin else null;
 						var condCompEnd = if (i == len - 1) condCompEnd else null;
+						var importKind =
+							switch imp.wildcard {
+								case null:
+									var parts = dotPathToArray(imp.path);
+									var name:String = @:nullSafety(Off) parts.pop();
+									var pack = parts.join(".");
+									var decl = structure.getDecl(pack, name);
+									TIDecl(decl);
+								case w:
+									var packName = dotPathToString(imp.path);
+									var pack = structure.packages[packName];
+									if (pack == null) throw "no such package: " + packName;
+									TIPack(pack, w.dot, w.asterisk);
+							};
 						result.push({
-							syntax: imp,
-							condCompBegin: condCompBegin,
-							condCompEnd: condCompEnd
+							syntax: {
+								condCompBegin: condCompBegin,
+								keyword: imp.keyword,
+								path: imp.path,
+								semicolon: imp.semicolon,
+								condCompEnd: condCompEnd
+							},
+							kind: importKind
 						});
 					case DCondComp(v, openBrace, decls, closeBrace): loop(decls, {v: typeCondCompVar(v), openBrace: openBrace}, {closeBrace: closeBrace});
 					case _:

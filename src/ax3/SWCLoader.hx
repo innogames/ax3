@@ -86,7 +86,7 @@ class SWCLoader {
 					switch (f.kind) {
 						case FVar(type, _, _):
 							// trace("  " + n);
-							collection.add({name: n.name, kind: SFVar({type: if (type != null) buildPublicType(type) else STAny})});
+							collection.add({name: n.name, kind: SFVar({swc: true, type: if (type != null) buildPublicType(type) else STAny})});
 
 						case FMethod(type, KNormal, _, _):
 							var f = buildFunDecl(abc, type);
@@ -96,7 +96,7 @@ class SWCLoader {
 							var methType = getMethodType(abc, type);
 							var type = if (methType.ret != null) buildPublicType(methType.ret) else STAny;
 							if (collection.get(n.name) == null) {
-								collection.add({name: n.name, kind: SFVar({type: type})});
+								collection.add({name: n.name, kind: SFVar({swc: true, type: type})});
 							}
 
 						case FMethod(type, KSetter, _, _):
@@ -104,7 +104,7 @@ class SWCLoader {
 							if (methType.args.length != 1) throw "assert";
 							var type = if (methType.args[0] != null) buildPublicType(methType.args[0]) else STAny;
 							if (collection.get(n.name) == null) {
-								collection.add({name: n.name, kind: SFVar({type: type})});
+								collection.add({name: n.name, kind: SFVar({swc: true, type: type})});
 							}
 
 						case FClass(_) | FFunction(_): throw "should not happen";
@@ -131,7 +131,7 @@ class SWCLoader {
 
 					var decl = switch (f.kind) {
 						case FVar(type, value, const):
-							SVar({type: if (type != null) buildTypeStructure(abc, type) else STAny});
+							SVar({swc: true, type: if (type != null) buildTypeStructure(abc, type) else STAny});
 						case FMethod(type, KNormal, _, _):
 							SFun(buildFunDecl(abc, type));
 						case FMethod(_, _, _, _):

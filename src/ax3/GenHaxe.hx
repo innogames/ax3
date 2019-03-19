@@ -39,15 +39,17 @@ class GenHaxe extends PrinterBase {
 	}
 
 	function printImport(i:TImport) {
-		if (i.condCompBegin != null) printCondCompBegin(i.condCompBegin);
+		if (i.syntax.condCompBegin != null) printCondCompBegin(i.syntax.condCompBegin);
 		printTextWithTrivia("import", i.syntax.keyword);
 		printDotPath(i.syntax.path);
-		if (i.syntax.wildcard != null) {
-			printDot(i.syntax.wildcard.dot);
-			printTextWithTrivia("*", i.syntax.wildcard.asterisk);
+		switch i.kind {
+			case TIDecl(_):
+			case TIPack(_, dot, asterisk):
+				printDot(dot);
+				printTextWithTrivia("*", asterisk);
 		}
 		printSemicolon(i.syntax.semicolon);
-		if (i.condCompEnd != null) printCompCondEnd(i.condCompEnd);
+		if (i.syntax.condCompEnd != null) printCompCondEnd(i.syntax.condCompEnd);
 	}
 
 	function printDecl(d:TDecl) {

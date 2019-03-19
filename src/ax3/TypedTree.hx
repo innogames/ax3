@@ -25,9 +25,19 @@ typedef TPackageDecl = {
 }
 
 typedef TImport = {
-	var condCompBegin:Null<TCondCompBegin>;
-	var syntax:ImportDecl;
-	var condCompEnd:Null<TCondCompEnd>;
+	var syntax:{
+		var condCompBegin:Null<TCondCompBegin>;
+		var keyword:Token;
+		var path:DotPath;
+		var semicolon:Token;
+		var condCompEnd:Null<TCondCompEnd>;
+	}
+	var kind:TImportKind;
+}
+
+enum TImportKind {
+	TIDecl(d:SDecl);
+	TIPack(p:SPackage, dot:Token, asterisk:Token);
 }
 
 typedef TCondCompBegin = {

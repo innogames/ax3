@@ -432,6 +432,7 @@ enum SDeclKind {
 }
 
 typedef SVarDecl = {
+	var swc:Bool;
 	var type:SType;
 }
 
