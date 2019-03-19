@@ -24,6 +24,10 @@ class RewriteDelete extends AbstractFilter {
 		// TODO: trivia \o/
 		return switch [a.eobj.type, a.eindex.type] {
 			case [TTInst({name: "Dictionary"}), _]: // TODO: it should really be FQN flash.utils.Dictionary here, but it's annoying
+				processLeadingToken(function(t) {
+					t.leadTrivia = deleteKeyword.leadTrivia.concat(t.leadTrivia);
+				}, a.eobj);
+
 				var eRemoveField = mk(TEField({kind: TOExplicit(mkDot(), a.eobj), type: a.eobj.type}, "remove", mkIdent("remove")), TTFunction, TTFunction);
 				mkCall(eRemoveField, [a.eindex], TTBoolean);
 
@@ -34,9 +38,15 @@ class RewriteDelete extends AbstractFilter {
 
 			case [TTArray, TTInt | TTUint]:
 				reportError(exprPos(a.eindex), 'delete on array?');
+
 				if (eDelete.expectedType == TTBoolean) {
 					throw "TODO"; // always true probably
 				}
+
+				processLeadingToken(function(t) {
+					t.leadTrivia = deleteKeyword.leadTrivia.concat(t.leadTrivia);
+				}, eDeleteObj);
+
 				mk(TEBinop(eDeleteObj, OpAssign(new Token(0, TkEquals, "=", [], [])), mkNullExpr()), TTVoid, TTVoid);
 
 			case _:

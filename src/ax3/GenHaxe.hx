@@ -151,7 +151,7 @@ class GenHaxe extends PrinterBase {
 			switch (m) {
 				case TMCondCompBegin(b): printCondCompBegin(b);
 				case TMCondCompEnd(b): printCompCondEnd(b);
-				case TMField(f): printClassField(f);
+				case TMField(f): printClassField(c.name, f);
 				case TMUseNamespace(n, semicolon): printUseNamespace(n); printTextWithTrivia("", semicolon);
 				case TMStaticInit(i): //printExpr(i.expr);
 			}
@@ -181,7 +181,7 @@ class GenHaxe extends PrinterBase {
 		}
 	}
 
-	function printClassField(f:TClassField) {
+	function printClassField(className:String, f:TClassField) {
 		printMetadata(f.metadata);
 
 		if (f.namespace != null) printTextWithTrivia("/*"+f.namespace.text+"*/", f.namespace);
@@ -203,8 +203,9 @@ class GenHaxe extends PrinterBase {
 				printVarField(v);
 			case TFFun(f):
 				printTextWithTrivia("function", f.syntax.keyword);
-				printTextWithTrivia(f.name, f.syntax.name);
-				printSignature(f.fun.sig);
+				var isCtor = f.name == className;
+				printTextWithTrivia(if (isCtor) "new" else f.name, f.syntax.name);
+				printSignature(f.fun.sig, !isCtor);
 				printExpr(f.fun.expr);
 			case TFGetter(f):
 				printTextWithTrivia("function", f.syntax.functionKeyword);
@@ -255,7 +256,7 @@ class GenHaxe extends PrinterBase {
 		}
 	}
 
-	function printSignature(sig:TFunctionSignature) {
+	function printSignature(sig:TFunctionSignature, printReturnType = true) {
 		printOpenParen(sig.syntax.openParen);
 		for (arg in sig.args) {
 			switch (arg.kind) {
@@ -277,7 +278,9 @@ class GenHaxe extends PrinterBase {
 			if (arg.comma != null) printComma(arg.comma);
 		}
 		printCloseParen(sig.syntax.closeParen);
-		printTypeHint(sig.ret);
+		if (printReturnType) {
+			printTypeHint(sig.ret);
+		}
 	}
 
 	function printTypeHint(hint:TTypeHint) {
@@ -338,7 +341,7 @@ class GenHaxe extends PrinterBase {
 			case TELiteral(l): printLiteral(l);
 			case TELocal(syntax, v): printTextWithTrivia(syntax.text, syntax);
 			case TEField(object, fieldName, fieldToken): printFieldAccess(object, fieldName, fieldToken);
-			case TEBuiltin(syntax, name): printTextWithTrivia(syntax.text, syntax);
+			case TEBuiltin(syntax, name): printBuiltin(syntax, name);
 			case TEDeclRef(dotPath, c): printDotPath(dotPath);
 			case TECall(eobj, args): printExpr(eobj); printCallArgs(args);
 			case TEArrayDecl(d): printArrayDecl(d);
@@ -382,6 +385,32 @@ class GenHaxe extends PrinterBase {
 		}
 	}
 
+	function printBuiltin(token:Token, name:String) {
+		// TODO: this is hacky (builtins in general are hacky...)
+		name = switch name {
+			case "Std.is" | "String" | "Reflect.deleteField": name;
+			case "Number": "Float";
+			case "int": "Int";
+			case "uint": "UInt";
+			case "Boolean": "Bool";
+			case "Object": "Dynamic";
+			case "XML": "flash.utils.XML";
+			case "XMLList": "flash.utils.XMLList";
+			case "Array": "Array";
+			case "RegExp": "flash.utils.RegExp";
+			case "parseInt": "Std.parseInt";
+			case "parseFloat": "Std.parseFloat";
+			case "NaN": "Math.NaN";
+			case "isNaN": "Math.isNaN";
+			case "escape": "escape";
+			case "arguments": "/*TODO*/arguments";
+			case "trace": "trace";
+			case _:
+				throw "unknown builtin: " + name;
+		}
+		printTextWithTrivia(name, token);
+	}
+
 	function printAs(e:TExpr, keyword:Token, type:TTypeRef) {
 		printTrivia(TypedTreeTools.removeLeadingTrivia(e));
 		buf.add("Std.instance(");
@@ -393,9 +422,14 @@ class GenHaxe extends PrinterBase {
 	}
 
 	function printCast(c:TCast) {
-		printDotPath(c.syntax.path);
+		printTrivia(c.syntax.path.first.leadTrivia);
+		c.syntax.path.first.leadTrivia = [];
+		buf.add("cast");
 		printOpenParen(c.syntax.openParen);
 		printExpr(c.expr);
+		buf.add(",");
+		// printDotPath(c.syntax.path);
+		printTType(c.type);
 		printCloseParen(c.syntax.closeParen);
 	}
 
@@ -671,8 +705,8 @@ class GenHaxe extends PrinterBase {
 			case OpAssignUshr(t): printTextWithTrivia(">>>=", t);
 			case OpEquals(t): printTextWithTrivia("==", t);
 			case OpNotEquals(t): printTextWithTrivia("!=", t);
-			case OpStrictEquals(t): printTextWithTrivia("===", t);
-			case OpNotStrictEquals(t): printTextWithTrivia("!==", t);
+			case OpStrictEquals(t): printTextWithTrivia("==", t);
+			case OpNotStrictEquals(t): printTextWithTrivia("!=", t);
 			case OpGt(t): printTextWithTrivia(">", t);
 			case OpGte(t): printTextWithTrivia(">=", t);
 			case OpLt(t): printTextWithTrivia("<", t);
@@ -755,7 +789,7 @@ class GenHaxe extends PrinterBase {
 			case TLThis(syntax): printTextWithTrivia("this", syntax);
 			case TLBool(syntax): printTextWithTrivia(syntax.text, syntax);
 			case TLNull(syntax): printTextWithTrivia("null", syntax);
-			case TLUndefined(syntax): printTextWithTrivia("undefined", syntax);
+			case TLUndefined(syntax): printTextWithTrivia("/*undefined*/null", syntax);
 			case TLInt(syntax): printTextWithTrivia(syntax.text, syntax);
 			case TLNumber(syntax): printTextWithTrivia(syntax.text, syntax);
 			case TLString(syntax): printTextWithTrivia(syntax.text, syntax);
@@ -775,8 +809,21 @@ class GenHaxe extends PrinterBase {
 		printExpr(e.expr);
 		if (e.semicolon != null) {
 			printSemicolon(e.semicolon);
-		} else if (!e.expr.kind.match(TEBlock(_) | TECondCompBlock(_))) {
+		} else if (!endsWithBlock(e.expr)) {
 			buf.add(";");
+		}
+	}
+
+	static function endsWithBlock(e:TExpr) {
+		return switch e.kind {
+			case TEBlock(_) | TECondCompBlock(_) | TETry(_) | TESwitch(_):
+				true;
+			case TEIf(i):
+				endsWithBlock(if (i.eelse != null) i.eelse.expr else i.ethen);
+			case TEFor({body: b}) | TEForIn({body: b}) | TEForEach({body: b}) | TEWhile({body: b}) | TEDoWhile({body: b}):
+				endsWithBlock(b);
+			case _:
+				false;
 		}
 	}
 
