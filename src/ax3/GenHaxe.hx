@@ -311,6 +311,7 @@ class GenHaxe extends PrinterBase {
 			case TTXMLList: buf.add("flash.xml.XMLList");
 			case TTRegExp: buf.add("flash.utils.RegExp");
 			case TTVector(t): buf.add("flash.Vector<"); printTType(t); buf.add(">");
+			case TTDictionary(_): buf.add("flash.Dictionary");
 			case TTBuiltin: buf.add("TODO");
 			case TTFun(args, ret, rest):
 				if (args.length == 0) {

@@ -604,6 +604,7 @@ enum TType {
 	TTUint;
 	TTString;
 	TTArray(t:TType);
+	TTDictionary(k:TType, v:TType);
 	TTFunction;
 	TTClass;
 	TTObject;

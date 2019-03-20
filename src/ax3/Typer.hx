@@ -209,6 +209,7 @@ class Typer {
 			case STUint: TTUint;
 			case STString: TTString;
 			case STArray(t): TTArray(typeType(t, pos));
+			case STDictionary(k, v): TTDictionary(typeType(k, pos), typeType(v, pos));
 			case STFunction: TTFunction;
 			case STClass: TTClass;
 			case STObject: TTObject;
@@ -986,7 +987,7 @@ class Typer {
 
 	function typeCallArgs(args:CallArgs, callableType:TType):TCallArgs {
 		var getExpectedType = switch (callableType) {
-			case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTString | TTArray(_) | TTObject | TTXML | TTXMLList | TTRegExp | TTVector(_) | TTInst(_):
+			case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTString | TTArray(_) | TTObject | TTXML | TTXMLList | TTRegExp | TTVector(_) | TTInst(_) | TTDictionary(_):
 				throw "assert";
 			case TTClass:
 				throw "assert??";
@@ -1376,7 +1377,7 @@ class Typer {
 				case [_, {kind: TEBuiltin(_, "uint")}]: getNumericStaticFieldType(fieldToken, TTUint);
 				case [_, {kind: TEBuiltin(_, "String")}]: getStringStaticFieldType(fieldToken);
 				case [_, {type: TTAny | TTObject}]: TTAny; // untyped field access
-				case [_, {type: TTBuiltin | TTVoid | TTBoolean | TTClass}]: err('Attempting to get field on type ${obj.type.getName()}', fieldToken.pos); TTAny;
+				case [_, {type: TTBuiltin | TTVoid | TTBoolean | TTClass | TTDictionary(_)}]: err('Attempting to get field on type ${obj.type.getName()}', fieldToken.pos); TTAny;
 				case [_, {type: TTString}]: getStringInstanceFieldType(fieldToken);
 				case [_, {type: TTArray(t)}]: getArrayInstanceFieldType(fieldToken, t);
 				case [_, {type: TTVector(t)}]: getVectorInstanceFieldType(fieldToken, t);
@@ -1647,6 +1648,11 @@ class Typer {
 			case HTPath("Dynamic", []): TTAny;
 			case HTPath("Void", []): TTVoid;
 			case HTPath("FastXML", []): TTXML;
+			case HTPath("flash.utils.Object", []): TTObject;
+			case HTPath("Vector" | "flash.Vector", [t]): TTVector(resolveHaxeType(t, pos));
+			case HTPath("GenericDictionary", [k, v]): TTDictionary(resolveHaxeType(k, pos), resolveHaxeType(v, pos));
+			case HTPath("Class", [HTPath("Dynamic", [])]): TTClass;
+			case HTPath("Class", [HTPath(name, [])]): TTStatic(structure.getClass(name));
 			case HTPath("Null", [t]): resolveHaxeType(t, pos); // TODO: keep nullability?
 			case HTPath(path, []): typeType(currentModule.resolveTypePath(path), pos);
 			case HTPath(path, _): trace("TODO: " + path); TTAny;

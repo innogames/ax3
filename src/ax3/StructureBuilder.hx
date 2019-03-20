@@ -9,7 +9,7 @@ class StructureBuilder {
 		return switch (t) {
 			case TAny(_): STAny;
 			case TPath(path):
-				switch dotPathToArray(path).join(".").toString() {
+				Structure.changeDictionary(switch dotPathToArray(path).join(".").toString() {
 					case "void": STVoid;
 					case "Boolean": STBoolean;
 					case "Number": STUint;
@@ -24,7 +24,7 @@ class StructureBuilder {
 					case "XMLList": STXMLList;
 					case "RegExp": STRegExp;
 					case other: if (resolveModule != null) resolveModule.resolveTypePath(other) else STPath(other);
-				}
+				});
 			case TVector(v): STVector(buildTypeStructure(v.t.type, resolveModule));
 		}
 	}

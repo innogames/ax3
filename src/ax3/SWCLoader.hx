@@ -31,6 +31,7 @@ class SWCLoader {
 				| ["", "XML"]
 				| ["", "XMLList"]
 				| ["__AS3__.vec", "Vector"]
+				// | ["flash.utils", "Dictionary"]
 				: true;
 			case _: false;
 		}

@@ -119,6 +119,13 @@ class Structure {
 		return structure;
 	}
 
+	public static function changeDictionary(resolvedType:SType):SType { // TODO: this is hacky...
+		return switch resolvedType {
+			case STPath("flash.utils.Dictionary"): STDictionary(STAny, STAny);
+			case other: other;
+		}
+	}
+
 	public function resolve() {
 		for (pack in packages) {
 			for (mod in pack.modules) {
@@ -128,7 +135,8 @@ class Structure {
 						case STPrivate(_): throw "assert"; // this is only produces as a result of resolution
 						case STArray(t): STArray(resolveType(t));
 						case STVector(t): STVector(resolveType(t));
-						case STPath(path): mod.resolveTypePath(path);
+						case STDictionary(k, v): STDictionary(resolveType(k), resolveType(v));
+						case STPath(path): changeDictionary(mod.resolveTypePath(path));
 					};
 				}
 
@@ -415,6 +423,7 @@ class SModule {
 			case STUint: "uint";
 			case STString: "String";
 			case STArray(_): "Array";
+			case STDictionary(_): "Dictionary";
 			case STFunction: "Function";
 			case STClass: "Class";
 			case STObject: "Object";
@@ -503,6 +512,7 @@ enum SType {
 	STUint;
 	STString;
 	STArray(t:SType);
+	STDictionary(k:SType, v:SType);
 	STFunction;
 	STClass;
 	STObject;
