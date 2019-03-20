@@ -793,6 +793,8 @@ class GenHaxe extends PrinterBase {
 				endsWithBlock(if (i.eelse != null) i.eelse.expr else i.ethen);
 			case TEHaxeFor({body: b}), TEFor({body: b}) | TEForIn({body: b}) | TEForEach({body: b}) | TEWhile({body: b}) | TEDoWhile({body: b}):
 				endsWithBlock(b);
+			case TELocalFunction(f):
+				endsWithBlock(f.fun.expr);
 			case _:
 				false;
 		}
