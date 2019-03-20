@@ -10,6 +10,8 @@ class RewriteForIn extends AbstractFilter {
 			case TEForIn(f):
 				var body = processExpr(f.body);
 
+				// TODO: for...in on Dictionaries actually iterate over any keys
+
 				var itName, vit, eobj;
 				switch (f.iter.eit.kind) {
 					// for (var x in obj)
