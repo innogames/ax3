@@ -618,7 +618,7 @@ class GenAS3 extends PrinterBase {
 	}
 
 	function printVarInit(init:TVarInit) {
-		printTextWithTrivia("=", init.equals);
+		printTextWithTrivia("=", init.equalsToken);
 		printExpr(init.expr);
 	}
 

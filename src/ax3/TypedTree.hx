@@ -574,7 +574,7 @@ typedef TVarDecl = {
 }
 
 typedef TVarInit = {
-	var equals:Token;
+	var equalsToken:Token;
 	var expr:TExpr;
 }
 

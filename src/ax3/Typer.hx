@@ -1634,7 +1634,7 @@ class Typer {
 	}
 
 	function typeVarInit(init:VarInit, expectedType:TType):TVarInit {
-		return {equals: init.equals, expr: typeExpr(init.expr, expectedType)};
+		return {equalsToken: init.equalsToken, expr: typeExpr(init.expr, expectedType)};
 	}
 
 	function resolveHaxeType(t:HaxeType, pos:Int) {

@@ -31,7 +31,7 @@ class RewriteForIn extends AbstractFilter {
 
 							var varInit = mk(TEVars(kind, [
 								varDecl.with(init = {
-									equals: mkTokenWithSpaces(TkEquals, "="),
+									equalsToken: mkTokenWithSpaces(TkEquals, "="),
 									expr: mk(TELocal(new Token(0, TkIdent, vit.name, [], []), vit), vit.type, varDecl.v.type)
 								})
 							]), TTVoid, TTVoid);

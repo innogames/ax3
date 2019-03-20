@@ -253,7 +253,7 @@ class Printer extends PrinterBase {
 	}
 
 	function printVarInit(i:VarInit) {
-		printTextWithTrivia("=", i.equals);
+		printTextWithTrivia("=", i.equalsToken);
 		printExpr(i.expr);
 	}
 

@@ -351,7 +351,7 @@ typedef TypeHint = {
 }
 
 typedef VarInit = {
-	var equals:Token;
+	var equalsToken:Token;
 	var expr:Expr;
 }
 

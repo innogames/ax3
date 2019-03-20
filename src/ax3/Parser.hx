@@ -330,7 +330,7 @@ class Parser {
 		if (token.kind == TkEquals) {
 			var equals = scanner.consume();
 			var expr = parseExpr(false);
-			return {equals: equals, expr: expr};
+			return {equalsToken: equals, expr: expr};
 		} else {
 			return null;
 		}
