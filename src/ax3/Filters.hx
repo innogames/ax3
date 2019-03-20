@@ -13,6 +13,7 @@ class Filters {
 			new RewriteArrayAccess(context),
 			new RewriteIs(context),
 			new RewriteCFor(context),
+			new RewriteForEach(context),
 			new RewriteForIn(context),
 			new RewriteDelete(context),
 			new CoerceToBool(context),

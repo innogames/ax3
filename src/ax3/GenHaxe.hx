@@ -368,7 +368,7 @@ class GenHaxe extends PrinterBase {
 			case TEWhile(w): printWhile(w);
 			case TEDoWhile(w): printDoWhile(w);
 			case TEHaxeFor(f): printFor(f);
-			case TEFor(_) | TEForIn(_) | TEForEach(_): throw "unprocessed `for` expression";
+			case TEFor(_) | TEForIn(_) | TEForEach(_): //throw "unprocessed `for` expression";
 			case TEBinop(a, op, b): printBinop(a, op, b);
 			case TEPreUnop(op, e): printPreUnop(op, e);
 			case TEPostUnop(e, op): printPostUnop(e, op);

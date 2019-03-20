@@ -1,6 +1,6 @@
 {
 	"src": "../foe/Frontend/client/src",
-	"out": "../OUT",
+	"hxout": "../OUT",
 	"swc": [
 		"playerglobal32_0.swc",
 		"libs/starling-1.7.1-20151208.155452-1.swc",
