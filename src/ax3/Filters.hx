@@ -19,7 +19,7 @@ class Filters {
 			new InvertNegatedEquality(context),
 			// new AddParens(context),
 			new AddRequiredParens(context),
-			new CheckExpectedTypes(context)
+			// new CheckExpectedTypes(context)
 		]) {
 			f.run(modules);
 		}
