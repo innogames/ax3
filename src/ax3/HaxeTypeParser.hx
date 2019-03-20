@@ -6,7 +6,6 @@ using StringTools;
 enum HaxeType {
 	HTPath(path:String, params:Array<HaxeType>);
 	HTFun(args:Array<HaxeType>, ret:HaxeType);
-	HTParen(t:HaxeType);
 }
 
 typedef HaxeSignature = {
@@ -30,7 +29,10 @@ class HaxeTypeParser {
 	public inline static function malformed():Dynamic throw "malformed @haxe-type annotation";
 
 	static function parseTypeHint(typeString:String):HaxeType {
-		return parseType(new MiniScanner(typeString));
+		var s = new MiniScanner(typeString);
+		var t = parseType(s);
+		s.expect(TkCloseParen);
+		return t;
 	}
 
 	static function parseType(s:MiniScanner):HaxeType {
@@ -105,7 +107,7 @@ class HaxeTypeParser {
 				s.consume();
 				var t = parseType(s);
 				s.expect(TkCloseParen);
-				HTParen(t);
+				t;
 
 			case TkIdent(i):
 				s.consume();
@@ -141,6 +143,8 @@ class HaxeTypeParser {
 		}
 
 		if (ret == null) malformed();
+
+		s.expect(TkCloseParen);
 
 		return {
 			args: args,

@@ -11,11 +11,11 @@ class RewriteArrayAccess extends AbstractFilter {
 				var eindex = processExpr(a.eindex);
 
 				switch [a.eobj.type, a.eindex.type] {
-					case [TTArray, TTInt | TTUint]:
+					case [TTArray(_), TTInt | TTUint]:
 						e;
 
-					case [TTArray, _]:
-						reportError(exprPos(e), "Non-int array access for Array");
+					case [TTArray(_), _]:
+						// reportError(exprPos(e), "Non-int array access for Array");
 						e;
 
 					case _:

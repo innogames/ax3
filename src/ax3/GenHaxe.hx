@@ -303,7 +303,7 @@ class GenHaxe extends PrinterBase {
 			case TTInt: buf.add("Int");
 			case TTUint: buf.add("UInt");
 			case TTString: buf.add("String");
-			case TTArray: buf.add("Array<Dynamic>");
+			case TTArray(t): buf.add("Array<"); printTType(t); buf.add(">");
 			case TTFunction: buf.add("haxe.Constraints.Function");
 			case TTClass: buf.add("Class<Dynamic>");
 			case TTObject: buf.add("Dynamic<Dynamic>");

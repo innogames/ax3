@@ -16,7 +16,7 @@ class StructureBuilder {
 					case "int": STInt;
 					case "uint": STUint;
 					case "String": STString;
-					case "Array": STArray;
+					case "Array": Structure.stUntypedArray;
 					case "Class": STClass;
 					case "Object": STObject;
 					case "Function": STFunction;
@@ -191,7 +191,7 @@ class StructureBuilder {
 					var type = if (a.type == null) STAny else buildTypeStructure(a.type.type);
 					{kind: SArgNormal(a.name.text, a.init != null), type: type};
 				case ArgRest(_, name):
-					{kind: SArgRest(name.text), type: STArray};
+					{kind: SArgRest(name.text), type: Structure.stUntypedArray};
 			}
 		}
 

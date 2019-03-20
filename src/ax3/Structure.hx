@@ -4,6 +4,8 @@ import ax3.ParseTree;
 import ax3.ParseTree.*;
 
 class Structure {
+	public static final stUntypedArray = STArray(STAny);
+
 	public final packages:Map<String, SPackage>;
 
 	function new() {
@@ -122,8 +124,9 @@ class Structure {
 			for (mod in pack.modules) {
 				function resolveType(t:SType) {
 					return switch (t) {
-						case STVoid | STAny | STBoolean | STNumber | STInt | STUint | STString | STArray | STFunction | STClass | STObject | STXML | STXMLList | STRegExp | STUnresolved(_): t;
+						case STVoid | STAny | STBoolean | STNumber | STInt | STUint | STString | STFunction | STClass | STObject | STXML | STXMLList | STRegExp | STUnresolved(_): t;
 						case STPrivate(_): throw "assert"; // this is only produces as a result of resolution
+						case STArray(t): STArray(resolveType(t));
 						case STVector(t): STVector(resolveType(t));
 						case STPath(path): mod.resolveTypePath(path);
 					};
@@ -411,7 +414,7 @@ class SModule {
 			case STInt: "int";
 			case STUint: "uint";
 			case STString: "String";
-			case STArray: "Array";
+			case STArray(_): "Array";
 			case STFunction: "Function";
 			case STClass: "Class";
 			case STObject: "Object";
@@ -477,6 +480,8 @@ class SClassDecl {
 		this.name = name;
 		this.extensions = [];
 	}
+
+	public inline function toString() return name;
 }
 
 typedef SClassField = {
@@ -497,7 +502,7 @@ enum SType {
 	STInt;
 	STUint;
 	STString;
-	STArray;
+	STArray(t:SType);
 	STFunction;
 	STClass;
 	STObject;

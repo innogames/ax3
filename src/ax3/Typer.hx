@@ -6,6 +6,8 @@ import ax3.Structure;
 import ax3.TypedTree;
 import ax3.TypedTreeTools.mk;
 import ax3.TypedTreeTools.skipParens;
+import ax3.TypedTreeTools.tUntypedArray;
+import ax3.HaxeTypeParser;
 
 typedef Locals = Map<String, TVar>;
 
@@ -195,7 +197,7 @@ class Typer {
 		return r;
 	}
 
-	function typeType(t:SType):TType {
+	function typeType(t:SType, pos:Int):TType {
 		return switch (t) {
 			case STVoid: TTVoid;
 			case STAny: TTAny;
@@ -204,22 +206,25 @@ class Typer {
 			case STInt: TTInt;
 			case STUint: TTUint;
 			case STString: TTString;
-			case STArray: TTArray;
+			case STArray(t): TTArray(typeType(t, pos));
 			case STFunction: TTFunction;
 			case STClass: TTClass;
 			case STObject: TTObject;
 			case STXML: TTXML;
 			case STXMLList: TTXMLList;
 			case STRegExp: TTRegExp;
-			case STVector(t): TTVector(typeType(t));
+			case STVector(t): TTVector(typeType(t, pos));
 			case STPath(path): TTInst(structure.getClass(path));
 			case STPrivate(mod, name): TTInst(structure.getPrivateClass(mod, name));
-			case STUnresolved(path):  throw "Unresolved type " + path;
+			case STUnresolved(path):
+				err("Unresolved type " + path, pos);
+				throw "assert";
+				// TTAny;
 		}
 	}
 
 	function resolveType(t:SyntaxType):TType {
-		return typeType(StructureBuilder.buildTypeStructure(t, currentModule));
+		return typeType(StructureBuilder.buildTypeStructure(t, currentModule), syntaxTypePos(t));
 	}
 
 	function typeInterface(i:InterfaceDecl):TInterfaceDecl {
@@ -442,8 +447,8 @@ class Typer {
 							if (addArgLocals) addLocal(a.name.text, type);
 							{syntax: {name: a.name}, name: a.name.text, type: type, kind: TArgNormal(a.type, init), comma: comma};
 						case ArgRest(dots, name):
-							if (addArgLocals) addLocal(name.text, TTArray);
-							{syntax: {name: name}, name: name.text, type: TTArray, kind: TArgRest(dots), comma: comma};
+							if (addArgLocals) addLocal(name.text, tUntypedArray);
+							{syntax: {name: name}, name: name.text, type: tUntypedArray, kind: TArgRest(dots), comma: comma};
 					}
 				});
 			} else {
@@ -880,7 +885,7 @@ class Typer {
 
 	function typeCallArgs(args:CallArgs, callableType:TType):TCallArgs {
 		var getExpectedType = switch (callableType) {
-			case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTString | TTArray | TTObject | TTXML | TTXMLList | TTRegExp | TTVector(_) | TTInst(_):
+			case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTString | TTArray(_) | TTObject | TTXML | TTXMLList | TTRegExp | TTVector(_) | TTInst(_):
 				throw "assert";
 			case TTClass:
 				throw "assert??";
@@ -1028,13 +1033,13 @@ class Typer {
 		var type = switch (e.type) {
 			case TTVector(t):
 				t;
-			case TTArray:
+			case TTArray(t):
 				switch (eindex.type) {
 					case TTNumber | TTInt | TTUint:
 					case _:
 						// err("Array access with non-numeric index", openBracket.pos);
 				}
-				TTAny;
+				t;
 			case TTObject | TTInst({name: "Dictionary"}):
 				TTAny;
 			case _:
@@ -1057,7 +1062,7 @@ class Typer {
 	}
 
 	function typeArrayDecl(d:ArrayDecl, expectedType:TType):TExpr {
-		return mk(TEArrayDecl(typeArrayDeclElements(d, TTAny)), TTArray, expectedType);
+		return mk(TEArrayDecl(typeArrayDeclElements(d, TTAny)), tUntypedArray, expectedType);
 	}
 
 	function typeVectorDecl(newKeyword:Token, t:TypeParam, d:ArrayDecl, expectedType:TType):TExpr {
@@ -1074,16 +1079,16 @@ class Typer {
 		var args = [], rest:Null<TRestKind> = null;
 		for (a in f.args) {
 			switch (a.kind) {
-				case SArgNormal(_): args.push(typeType(a.type));
+				case SArgNormal(_): args.push(typeType(a.type, 0));
 				case SArgRest(_): rest = if (f.swc) TRestSwc else TRestAs3;
 			}
 		}
-		return TTFun(args, typeType(f.ret), rest);
+		return TTFun(args, typeType(f.ret, 0), rest);
 	}
 
 	function mkDeclRef(path:DotPath, decl:SDecl, expectedType:TType):TExpr {
 		var type = switch (decl.kind) {
-			case SVar(v): typeType(v.type);
+			case SVar(v): typeType(v.type, path.first.pos);
 			case SFun(f): getTypeOfFunctionDecl(f);
 			case SClass(c): TTStatic(c);
 			case SNamespace: throw "assert"; // should NOT happen :)
@@ -1093,7 +1098,7 @@ class Typer {
 
 	function getFieldType(field:SClassField):TType {
 		var t = switch (field.kind) {
-			case SFVar(v): typeType(v.type);
+			case SFVar(v): typeType(v.type, 0);
 			case SFFun(f): getTypeOfFunctionDecl(f);
 		};
 		if (t == TTVoid) throw "assert";
@@ -1272,7 +1277,7 @@ class Typer {
 				case [_, {type: TTAny | TTObject}]: TTAny; // untyped field access
 				case [_, {type: TTBuiltin | TTVoid | TTBoolean | TTClass}]: err('Attempting to get field on type ${obj.type.getName()}', fieldToken.pos); TTAny;
 				case [_, {type: TTString}]: getStringInstanceFieldType(fieldToken);
-				case [_, {type: TTArray}]: getArrayInstanceFieldType(fieldToken);
+				case [_, {type: TTArray(t)}]: getArrayInstanceFieldType(fieldToken, t);
 				case [_, {type: TTVector(t)}]: getVectorInstanceFieldType(fieldToken, t);
 				case [_, {type: TTFunction | TTFun(_)}]: getFunctionInstanceFieldType(fieldToken);
 				case [_, {type: TTRegExp}]: getRegExpInstanceFieldType(fieldToken);
@@ -1359,18 +1364,18 @@ class Typer {
 		}
 	}
 
-	function getArrayInstanceFieldType(field:Token):TType {
+	function getArrayInstanceFieldType(field:Token, t:TType):TType {
 		return switch field.text {
 			case "length": TTUint;
 			case "join": TTFun([TTAny], TTString);
-			case "push" | "unshift": TTFun([TTAny], TTUint, TRestSwc);
-			case "pop" | "shift": TTFun([], TTAny);
-			case "concat": TTFun([TTArray], TTArray);
-			case "indexOf" | "lastIndexOf": TTFun([TTAny, TTInt], TTInt);
-			case "slice": TTFun([TTInt, TTInt], TTArray);
-			case "splice": TTFun([TTInt, TTUint, TTAny], TTArray);
-			case "sort": TTFun([TTAny], TTArray);
-			case "sortOn": TTFun([TTString, TTObject], TTArray);
+			case "push" | "unshift": TTFun([t], TTUint, TRestSwc);
+			case "pop" | "shift": TTFun([], t);
+			case "concat": TTFun([tUntypedArray], TTArray(t));
+			case "indexOf" | "lastIndexOf": TTFun([t, TTInt], TTInt);
+			case "slice": TTFun([TTInt, TTInt], TTArray(t));
+			case "splice": TTFun([TTInt, TTUint, TTAny], TTArray(t));
+			case "sort": TTFun([TTAny], TTArray(t));
+			case "sortOn": TTFun([TTString, TTObject], TTArray(t));
 			case other: err('Unknown Array instance field $other', field.pos); TTAny;
 		}
 	}
@@ -1398,13 +1403,13 @@ class Typer {
 			case "substr" | "substring" | "slice": TTFun([TTNumber, TTNumber], TTString);
 			case "toLowerCase" | "toUpperCase" | "toLocaleLowerCase" | "toLocaleUpperCase": TTFun([], TTString);
 			case "indexOf" | "lastIndexOf": TTFun([TTString, TTNumber], TTInt);
-			case "split": TTFun([TTAny, TTNumber], TTArray);
+			case "split": TTFun([TTAny, TTNumber], TTArray(TTString));
 			case "charAt": TTFun([TTNumber], TTString);
 			case "charCodeAt": TTFun([TTNumber], TTNumber);
 			case "concat": TTFun([TTAny], TTString);
 			case "search": TTFun([TTAny], TTInt);
 			case "replace": TTFun([TTAny, TTObject], TTString);
-			case "match": TTFun([TTAny], TTArray);
+			case "match": TTFun([TTAny], TTArray(TTString));
 			case other: err('Unknown String instance field $other', field.pos); TTAny;
 		}
 	}
@@ -1529,8 +1534,28 @@ class Typer {
 		return {equals: init.equals, expr: typeExpr(init.expr, expectedType)};
 	}
 
+	function resolveHaxeType(t:HaxeType, pos:Int) {
+		return switch t {
+			case HTPath("Array", [elemT]): TTArray(resolveHaxeType(elemT, pos));
+			case HTPath("Int", []): TTInt;
+			case HTPath("UInt", []): TTUint;
+			case HTPath("Float", []): TTNumber;
+			case HTPath("Bool", []): TTBoolean;
+			case HTPath("String", []): TTString;
+			case HTPath("Dynamic", []): TTAny;
+			case HTPath("Void", []): TTVoid;
+			case HTPath(path, []): typeType(currentModule.resolveTypePath(path), pos);
+			case HTPath(path, _): trace("TODO: " + path); TTAny;
+			case HTFun(args, ret): TTFun([for (a in args) resolveHaxeType(a, pos)], resolveHaxeType(ret, pos));
+		};
+	}
+
 	function typeVars(kind:VarDeclKind, vars:Separated<VarDecl>, expectedType:TType):TExpr {
-		var haxeType = HaxeTypeParser.readHaxeType(switch kind { case VVar(t) | VConst(t): t.leadTrivia; });
+		var varToken = switch kind { case VVar(t) | VConst(t): t; };
+		var haxeType = HaxeTypeParser.readHaxeType(varToken.leadTrivia);
+		if (haxeType != null) {
+			var t = resolveHaxeType(haxeType, varToken.pos);
+		}
 
 		switch expectedType {
 			case TTAny: // for (var i)

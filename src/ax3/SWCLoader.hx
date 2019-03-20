@@ -167,7 +167,7 @@ class SWCLoader {
 			args.push({kind: SArgNormal("arg", false), type: type});
 		}
 		if (methType.extra != null && methType.extra.variableArgs) {
-			args.push({kind: SArgRest("arg"), type: STArray});
+			args.push({kind: SArgRest("arg"), type: Structure.stUntypedArray});
 		}
 		var ret = if (methType.ret != null) buildTypeStructure(abc, methType.ret) else STAny;
 		return {args: args, ret: ret, swc: true};
@@ -193,7 +193,7 @@ class SWCLoader {
 									case "int": STInt;
 									case "uint": STUint;
 									case "String": STString;
-									case "Array": STArray;
+									case "Array": Structure.stUntypedArray;
 									case "Class": STClass;
 									case "Object": STObject;
 									case "Function": STFunction;

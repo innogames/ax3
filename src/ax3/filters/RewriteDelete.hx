@@ -36,7 +36,7 @@ class RewriteDelete extends AbstractFilter {
 				var eindex = if (a.eindex.type != TTString) a.eindex.with(expectedType = TTString) else a.eindex;
 				mkCall(eDeleteField, [a.eobj, eindex]);
 
-			case [TTArray, TTInt | TTUint]:
+			case [TTArray(_), TTInt | TTUint]:
 				reportError(exprPos(a.eindex), 'delete on array?');
 
 				if (eDelete.expectedType == TTBoolean) {

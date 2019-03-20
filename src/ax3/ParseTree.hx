@@ -9,6 +9,14 @@ class ParseTree {
 		return foldSeparated(d, [], (part, acc) -> acc.push(part.text));
 	}
 
+	public static function syntaxTypePos(t:SyntaxType):Int {
+		return switch (t) {
+			case TAny(star): star.pos;
+			case TPath(path): path.first.pos;
+			case TVector(v): v.name.pos;
+		}
+	}
+
 	public static function exprPos(e:Expr):Int {
 		return switch (e) {
 			case EIdent(t) | ELiteral(LString(t) | LDecInt(t) | LHexInt(t) | LFloat(t) | LRegExp(t)): t.pos;

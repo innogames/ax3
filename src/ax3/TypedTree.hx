@@ -603,7 +603,7 @@ enum TType {
 	TTInt;
 	TTUint;
 	TTString;
-	TTArray;
+	TTArray(t:TType);
 	TTFunction;
 	TTClass;
 	TTObject;

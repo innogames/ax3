@@ -41,7 +41,7 @@ class RestArgs extends AbstractFilter {
 							closeBracket: new Token(0, TkBracketClose, "]", [], trail),
 						},
 						elements: restArgs
-					}), TTArray, TTArray),
+					}), tUntypedArray, tUntypedArray),
 					comma: null
 				});
 				args.args = normalArgs;
