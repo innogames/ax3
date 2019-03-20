@@ -1534,6 +1534,11 @@ class Typer {
 		return {equals: init.equals, expr: typeExpr(init.expr, expectedType)};
 	}
 
+	function readHaxeTypeOverride(token:Token):Null<TType> {
+		var t = HaxeTypeParser.readHaxeType(token.leadTrivia);
+		return if (t == null) null else resolveHaxeType(t, token.pos);
+	}
+
 	function resolveHaxeType(t:HaxeType, pos:Int) {
 		return switch t {
 			case HTPath("Array", [elemT]): TTArray(resolveHaxeType(elemT, pos));
@@ -1551,11 +1556,7 @@ class Typer {
 	}
 
 	function typeVars(kind:VarDeclKind, vars:Separated<VarDecl>, expectedType:TType):TExpr {
-		var varToken = switch kind { case VVar(t) | VConst(t): t; };
-		var haxeType = HaxeTypeParser.readHaxeType(varToken.leadTrivia);
-		if (haxeType != null) {
-			var t = resolveHaxeType(haxeType, varToken.pos);
-		}
+		var overrideType = readHaxeTypeOverride(switch kind { case VVar(t) | VConst(t): t; });
 
 		switch expectedType {
 			case TTAny: // for (var i)
@@ -1564,7 +1565,7 @@ class Typer {
 		}
 
 		var vars = separatedToArray(vars, function(v, comma) {
-			var type = if (v.type == null) TTAny else resolveType(v.type.type);
+			var type = if (overrideType != null) overrideType else if (v.type == null) TTAny else resolveType(v.type.type);
 			var init = if (v.init != null) typeVarInit(v.init, type) else null;
 			var tvar = addLocal(v.name.text, type);
 			return {
