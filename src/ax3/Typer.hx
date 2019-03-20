@@ -7,7 +7,7 @@ import ax3.TypedTree;
 import ax3.TypedTreeTools.mk;
 import ax3.TypedTreeTools.skipParens;
 import ax3.TypedTreeTools.tUntypedArray;
-import ax3.HaxeTypeParser;
+import ax3.HaxeTypeAnnotation;
 
 typedef Locals = Map<String, TVar>;
 
@@ -117,21 +117,23 @@ class Typer {
 	}
 
 	function typeModuleFunction(v:FunctionDecl):TFunctionDecl {
+		var typeOverrides = extractHaxeTypeAnnotationFromModuleFunDecl(v);
 		return {
 			metadata: v.metadata,
 			modifiers: v.modifiers,
 			syntax: {keyword: v.keyword, name: v.name},
 			name: v.name.text,
-			fun: typeFunction(v.fun)
+			fun: typeFunction(v.fun, typeOverrides)
 		};
 	}
 
 	function typeModuleVars(v:ModuleVarDecl):TModuleVarDecl {
+		var overrideType = extractHaxeTypeAnnotationFromModuleVarDecl(v);
 		return {
 			metadata: v.metadata,
 			modifiers: v.modifiers,
 			kind: v.kind,
-			vars: typeVarFieldDecls(v.vars),
+			vars: typeVarFieldDecls(v.vars, overrideType),
 			semicolon: v.semicolon
 		}
 	}
@@ -266,11 +268,13 @@ class Typer {
 	}
 
 	function typeInterfaceField(f:InterfaceField):TInterfaceField {
+		var haxeType = extractHaxeTypeAnnotationFromInterfaceField(f);
+
 		var kind = switch (f.kind) {
 			case IFFun(keyword, name, sig):
 				initLocals();
 				// TODO: can use structure to get arg types (speedup \o/)
-				var sig = typeFunctionSignature(sig, false);
+				var sig = typeFunctionSignature(sig, false, haxeType);
 				TIFFun({
 					syntax: {
 						keyword: keyword,
@@ -282,7 +286,7 @@ class Typer {
 			case IFGetter(keyword, get, name, sig):
 				initLocals();
 				// TODO: can use structure to get arg types (speedup \o/)
-				var sig = typeFunctionSignature(sig, false);
+				var sig = typeFunctionSignature(sig, false, haxeType);
 				TIFGetter({
 					syntax: {
 						functionKeyword: keyword,
@@ -295,7 +299,7 @@ class Typer {
 			case IFSetter(keyword, set, name, sig):
 				initLocals();
 				// TODO: can use structure to get arg types (speedup \o/)
-				var sig = typeFunctionSignature(sig, false);
+				var sig = typeFunctionSignature(sig, false, haxeType);
 				TIFSetter({
 					syntax: {
 						functionKeyword: keyword,
@@ -364,9 +368,11 @@ class Typer {
 		}
 	}
 
-	function typeVarFieldDecls(vars:Separated<VarDecl>):Array<TVarFieldDecl> {
+	function typeVarFieldDecls(vars:Separated<VarDecl>, haxeType:Null<HaxeTypeAnnotation>):Array<TVarFieldDecl> {
+		var overrideType = resolveHaxeTypeHint(haxeType, vars.first.name.pos);
+
 		return separatedToArray(vars, function(v, comma) {
-			var type = if (v.type == null) TTAny else resolveType(v.type.type);
+			var type:TType = if (overrideType != null) overrideType else if (v.type == null) TTAny else resolveType(v.type.type);
 			var init = if (v.init != null) typeVarInit(v.init, type) else null;
 			return {
 				syntax:{
@@ -382,17 +388,19 @@ class Typer {
 	}
 
 	function typeClassField(f:ClassField):TClassField {
+		var haxeType = extractHaxeTypeAnnotationFromClassField(f);
+
 		var kind = switch (f.kind) {
 			case FVar(kind, vars, semicolon):
 				TFVar({
 					kind: kind,
-					vars: typeVarFieldDecls(vars),
+					vars: typeVarFieldDecls(vars, haxeType),
 					semicolon: semicolon
 				});
 			case FFun(keyword, name, fun):
 				initLocals();
 				// TODO: can use structure to get arg types (speedup \o/)
-				var f = typeFunction(fun);
+				var f = typeFunction(fun, haxeType);
 				TFFun({
 					syntax: {
 						keyword: keyword,
@@ -404,7 +412,7 @@ class Typer {
 			case FGetter(keyword, get, name, fun):
 				initLocals();
 				// TODO: can use structure to get arg types (speedup \o/)
-				var f = typeFunction(fun);
+				var f = typeFunction(fun, haxeType);
 				TFGetter({
 					syntax: {
 						functionKeyword: keyword,
@@ -417,7 +425,7 @@ class Typer {
 			case FSetter(keyword, set, name, fun):
 				initLocals();
 				// TODO: can use structure to get arg types (speedup \o/)
-				var f = typeFunction(fun);
+				var f = typeFunction(fun, haxeType);
 				TFSetter({
 					syntax: {
 						functionKeyword: keyword,
@@ -436,16 +444,21 @@ class Typer {
 		};
 	}
 
-	function typeFunctionSignature(sig:FunctionSignature, addArgLocals:Bool):TFunctionSignature {
+	function typeFunctionSignature(sig:FunctionSignature, addArgLocals:Bool, haxeType:Null<HaxeTypeAnnotation>):TFunctionSignature {
+		var typeOverrides = resolveHaxeSignature(haxeType, sig.openParen.pos);
+
 		var targs =
 			if (sig.args != null) {
 				separatedToArray(sig.args, function(arg, comma) {
 					return switch (arg) {
 						case ArgNormal(a):
-							var type = if (a.type == null) TTAny else resolveType(a.type.type);
+							var typeOverride = if (typeOverrides == null) null else typeOverrides.args[a.name.text];
+
+							var type:TType = if (typeOverride != null) typeOverride else if (a.type == null) TTAny else resolveType(a.type.type);
 							var init = if (a.init == null) null else typeVarInit(a.init, type);
 							if (addArgLocals) addLocal(a.name.text, type);
 							{syntax: {name: a.name}, name: a.name.text, type: type, kind: TArgNormal(a.type, init), comma: comma};
+
 						case ArgRest(dots, name):
 							if (addArgLocals) addLocal(name.text, tUntypedArray);
 							{syntax: {name: name}, name: name.text, type: tUntypedArray, kind: TArgRest(dots), comma: comma};
@@ -458,11 +471,11 @@ class Typer {
 		var tret:TTypeHint;
 		if (sig.ret != null) {
 			tret = {
-				type: resolveType(sig.ret.type),
+				type: if (typeOverrides != null) typeOverrides.ret else resolveType(sig.ret.type),
 				syntax: sig.ret
 			};
 		} else {
-			tret = {type: TTAny, syntax: null};
+			tret = {type: if (typeOverrides != null) typeOverrides.ret else TTAny, syntax: null};
 		}
 
 		return {
@@ -475,10 +488,10 @@ class Typer {
 		};
 	}
 
-	function typeFunction(fun:Function):TFunction {
+	function typeFunction(fun:Function, haxeType:Null<HaxeTypeAnnotation>):TFunction {
 		pushLocals();
 
-		var sig = typeFunctionSignature(fun.signature, true);
+		var sig = typeFunctionSignature(fun.signature, true, haxeType);
 
 		var oldReturnType = currentReturnType;
 		currentReturnType = sig.ret.type;
@@ -568,11 +581,97 @@ class Typer {
 		}
 	}
 
+	function extractHaxeTypeAnnotationFromMetadata(m:Array<Metadata>):Null<HaxeTypeAnnotation> {
+		if (m.length > 0) {
+			return HaxeTypeAnnotation.extract(m[0].openBracket.leadTrivia);
+		} else {
+			return null;
+		}
+	}
+
+	function extractHaxeTypeAnnotationFromDeclModifiers(m:Array<DeclModifier>):Null<HaxeTypeAnnotation> {
+		if (m.length > 0) {
+			return HaxeTypeAnnotation.extract(switch (m[0]) {
+				case DMPublic(t) | DMInternal(t) | DMFinal(t) | DMDynamic(t): t.leadTrivia;
+			});
+		} else {
+			return null;
+		}
+	}
+
+	function extractHaxeTypeAnnotationFromClassField(f:ClassField):Null<HaxeTypeAnnotation> {
+		// before first meta
+		var t = extractHaxeTypeAnnotationFromMetadata(f.metadata);
+		if (t != null) return t;
+
+		// before namespace
+		if (f.namespace != null) {
+			var t = HaxeTypeAnnotation.extract(f.namespace.leadTrivia);
+			if (t != null) return t;
+		}
+
+		// before first modifier
+		if (f.modifiers.length > 0) {
+			var tok = switch (f.modifiers[0]) {
+				case FMPublic(t) | FMPrivate(t) | FMProtected(t) | FMInternal(t) | FMOverride(t) | FMStatic(t) | FMFinal(t): t;
+			};
+			var t = HaxeTypeAnnotation.extract(tok.leadTrivia);
+			if (t != null) return t;
+		}
+
+		// before the keyword
+		switch (f.kind) {
+			case FVar(VVar(keyword) | VConst(keyword), _) | FFun(keyword, _) | FGetter(keyword, _) | FSetter(keyword, _):
+				return HaxeTypeAnnotation.extract(keyword.leadTrivia);
+		}
+	}
+
+	function extractHaxeTypeAnnotationFromInterfaceField(f:InterfaceField):Null<HaxeTypeAnnotation> {
+		// before first meta
+		var t = extractHaxeTypeAnnotationFromMetadata(f.metadata);
+		if (t != null) return t;
+
+		// before the keyword
+		switch (f.kind) {
+			case IFFun(keyword, _) | IFGetter(keyword, _) | IFSetter(keyword, _):
+				return HaxeTypeAnnotation.extract(keyword.leadTrivia);
+		}
+	}
+
+	function extractHaxeTypeAnnotationFromModuleVarDecl(v:ModuleVarDecl):Null<HaxeTypeAnnotation> {
+		// before first meta
+		var t = extractHaxeTypeAnnotationFromMetadata(v.metadata);
+		if (t != null) return t;
+
+		// before first modifier
+		t = extractHaxeTypeAnnotationFromDeclModifiers(v.modifiers);
+		if (t != null) t;
+
+		// before the keyword
+		return switch (v.kind) {
+			case VVar(t) | VConst(t): HaxeTypeAnnotation.extract(t.leadTrivia);
+		}
+	}
+
+	function extractHaxeTypeAnnotationFromModuleFunDecl(f:FunctionDecl):Null<HaxeTypeAnnotation> {
+		// before first meta
+		var t = extractHaxeTypeAnnotationFromMetadata(f.metadata);
+		if (t != null) return t;
+
+		// before first modifier
+		t = extractHaxeTypeAnnotationFromDeclModifiers(f.modifiers);
+		if (t != null) t;
+
+		// before the keyword
+		return HaxeTypeAnnotation.extract(f.keyword.leadTrivia);
+	}
+
 	function typeLocalFunction(keyword:Token, name:Null<Token>, fun:Function, expectedType:TType):TExpr {
+		var haxeTypes = HaxeTypeAnnotation.extract(keyword.leadTrivia);
 		return mk(TELocalFunction({
 			syntax: {keyword: keyword},
 			name: if (name == null) null else {name: name.text, syntax: name},
-			fun: typeFunction(fun),
+			fun: typeFunction(fun, haxeTypes),
 		}), TTFunction, expectedType); // TODO: TTFun, why not?
 	}
 
@@ -1534,11 +1633,6 @@ class Typer {
 		return {equals: init.equals, expr: typeExpr(init.expr, expectedType)};
 	}
 
-	function readHaxeTypeOverride(token:Token):Null<TType> {
-		var t = HaxeTypeParser.readHaxeType(token.leadTrivia);
-		return if (t == null) null else resolveHaxeType(t, token.pos);
-	}
-
 	function resolveHaxeType(t:HaxeType, pos:Int) {
 		return switch t {
 			case HTPath("Array", [elemT]): TTArray(resolveHaxeType(elemT, pos));
@@ -1555,8 +1649,24 @@ class Typer {
 		};
 	}
 
+	function resolveHaxeTypeHint(a:Null<HaxeTypeAnnotation>, p:Int):Null<TType> {
+		return if (a == null) null else resolveHaxeType(a.parseTypeHint(), p);
+	}
+
+	function resolveHaxeSignature(a:Null<HaxeTypeAnnotation>, p:Int):Null<{args:Map<String,TType>, ret:TType}> {
+		if (a == null) {
+			return null;
+		}
+		var sig = a.parseSignature();
+		return {
+			args: [for (name => type in sig.args) name => resolveHaxeType(type, p)],
+			ret: resolveHaxeType(sig.ret, p)
+		};
+	}
+
 	function typeVars(kind:VarDeclKind, vars:Separated<VarDecl>, expectedType:TType):TExpr {
-		var overrideType = readHaxeTypeOverride(switch kind { case VVar(t) | VConst(t): t; });
+		var varToken = switch kind { case VVar(t) | VConst(t): t; };
+		var overrideType = resolveHaxeTypeHint(HaxeTypeAnnotation.extract(varToken.leadTrivia), varToken.pos);
 
 		switch expectedType {
 			case TTAny: // for (var i)

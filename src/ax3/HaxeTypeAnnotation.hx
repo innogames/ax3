@@ -13,22 +13,33 @@ typedef HaxeSignature = {
 	var ret:HaxeType;
 }
 
-@:nullSafety
-class HaxeTypeParser {
-	public static function readHaxeType(trivia:Array<Trivia>):Null<HaxeType> {
-		var typeString = extractHaxeType(trivia);
-		return if (typeString == null) null else parseTypeHint(typeString);
+abstract HaxeTypeAnnotation(String) {
+	public static function extract(trivia:Array<Trivia>):Null<HaxeTypeAnnotation> {
+		for (tr in trivia) {
+			if (tr.kind == TrLineComment) {
+				var comment = tr.text.substring(2).ltrim(); // strip `//` and trim whitespaces
+				if (comment.startsWith("@haxe-type(")) {
+					return cast comment.substring("@haxe-type(".length);
+				}
+			}
+		}
+		return null;
 	}
 
-	public static function readHaxeSignature(trivia:Array<Trivia>):Null<HaxeSignature> {
-		var typeString = extractHaxeType(trivia);
-		return if (typeString == null) null else parseSignature(typeString);
+	public inline function parseTypeHint():HaxeType {
+		return HaxeTypeParser.parseTypeHint(this);
 	}
 
+	public inline function parseSignature():HaxeSignature {
+		return HaxeTypeParser.parseSignature(this);
+	}
+}
+
+private class HaxeTypeParser {
 	@:noCompletion
 	public inline static function malformed():Dynamic throw "malformed @haxe-type annotation";
 
-	static function parseTypeHint(typeString:String):HaxeType {
+	public static function parseTypeHint(typeString:String):HaxeType {
 		var s = new MiniScanner(typeString);
 		var t = parseType(s);
 		s.expect(TkCloseParen);
@@ -118,7 +129,7 @@ class HaxeTypeParser {
 		}
 	}
 
-	static function parseSignature(typeString:String):HaxeSignature {
+	public static function parseSignature(typeString:String):HaxeSignature {
 		var s = new MiniScanner(typeString);
 		var args = new Map<String,HaxeType>();
 		var ret:Null<HaxeType> = null;
@@ -150,18 +161,6 @@ class HaxeTypeParser {
 			args: args,
 			ret: (ret:HaxeType) // null-safety is dumb
 		};
-	}
-
-	static function extractHaxeType(trivia:Array<Trivia>):Null<String> {
-		for (tr in trivia) {
-			if (tr.kind == TrLineComment) {
-				var comment = tr.text.substring(2).ltrim(); // strip `//` and trim whitespaces
-				if (comment.startsWith("@haxe-type(")) {
-					return comment.substring("@haxe-type(".length);
-				}
-			}
-		}
-		return null;
 	}
 }
 
