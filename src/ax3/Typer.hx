@@ -1530,6 +1530,9 @@ class Typer {
 	}
 
 	function typeVars(kind:VarDeclKind, vars:Separated<VarDecl>, expectedType:TType):TExpr {
+		var haxeType = HaxeTypeParser.readHaxeType(switch (kind) { case VVar(t) | VConst(t): t.leadTrivia; });
+		trace(haxeType);
+
 		switch expectedType {
 			case TTAny: // for (var i)
 			case TTVoid: // block-level vars
