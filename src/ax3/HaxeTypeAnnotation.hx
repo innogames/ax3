@@ -36,7 +36,7 @@ abstract HaxeTypeAnnotation(String) {
 }
 
 private class HaxeTypeParser {
-	@:noCompletion
+	@:noCompletion // TODO: keep and properly report positions
 	public inline static function malformed():Dynamic throw "malformed @haxe-type annotation";
 
 	public static function parseTypeHint(typeString:String):HaxeType {
@@ -152,8 +152,6 @@ private class HaxeTypeParser {
 				case _: break;
 			}
 		}
-
-		if (ret == null) malformed();
 
 		s.expect(TkCloseParen);
 

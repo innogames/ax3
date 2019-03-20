@@ -468,14 +468,16 @@ class Typer {
 				[];
 			};
 
+		var returnTypeOverride = if (typeOverrides == null) null else typeOverrides.ret;
+
 		var tret:TTypeHint;
 		if (sig.ret != null) {
 			tret = {
-				type: if (typeOverrides != null) typeOverrides.ret else resolveType(sig.ret.type),
+				type: if (returnTypeOverride != null) returnTypeOverride else resolveType(sig.ret.type),
 				syntax: sig.ret
 			};
 		} else {
-			tret = {type: if (typeOverrides != null) typeOverrides.ret else TTAny, syntax: null};
+			tret = {type: if (returnTypeOverride != null) returnTypeOverride else TTAny, syntax: null};
 		}
 
 		return {
@@ -1384,7 +1386,7 @@ class Typer {
 					return typeXMLFieldAccess(obj, dot, fieldToken, expectedType);
 				case [_, {type: TTXMLList}]:
 					return typeXMLListFieldAccess(obj, dot, fieldToken, expectedType);
-				case [_, {type: TTInst(cls)}]: typeInstanceField(cls, fieldName);
+				case [_, {type: TTInst(cls)}]: typeInstanceField(cls, fieldName, fieldToken.pos);
 				case [_, {type: TTStatic(cls)}]: typeStaticField(cls, fieldName);
 		}
 		return mkExplicitFieldAccess(obj, dot, fieldToken, type, expectedType);
@@ -1584,7 +1586,7 @@ class Typer {
 		return getTypedField(eobj, dot, name, expectedType);
 	}
 
-	function typeInstanceField(cls:SClassDecl, fieldName:String):TType {
+	function typeInstanceField(cls:SClassDecl, fieldName:String, pos):TType {
 		function loop(cls:SClassDecl):Null<SClassField> {
 			var field = cls.fields.get(fieldName);
 			if (field != null) {
@@ -1604,6 +1606,7 @@ class Typer {
 			return getFieldType(field);
 		}
 
+		err("here", pos); // TODO: cleanup this mess omg
 		throw 'Unknown instance field $fieldName on class ${cls.name}';
 	}
 
@@ -1643,6 +1646,8 @@ class Typer {
 			case HTPath("String", []): TTString;
 			case HTPath("Dynamic", []): TTAny;
 			case HTPath("Void", []): TTVoid;
+			case HTPath("FastXML", []): TTXML;
+			case HTPath("Null", [t]): resolveHaxeType(t, pos); // TODO: keep nullability?
 			case HTPath(path, []): typeType(currentModule.resolveTypePath(path), pos);
 			case HTPath(path, _): trace("TODO: " + path); TTAny;
 			case HTFun(args, ret): TTFun([for (a in args) resolveHaxeType(a, pos)], resolveHaxeType(ret, pos));
@@ -1653,14 +1658,14 @@ class Typer {
 		return if (a == null) null else resolveHaxeType(a.parseTypeHint(), p);
 	}
 
-	function resolveHaxeSignature(a:Null<HaxeTypeAnnotation>, p:Int):Null<{args:Map<String,TType>, ret:TType}> {
+	function resolveHaxeSignature(a:Null<HaxeTypeAnnotation>, p:Int):Null<{args:Map<String,TType>, ret:Null<TType>}> {
 		if (a == null) {
 			return null;
 		}
 		var sig = a.parseSignature();
 		return {
 			args: [for (name => type in sig.args) name => resolveHaxeType(type, p)],
-			ret: resolveHaxeType(sig.ret, p)
+			ret: if (sig.ret == null) null else resolveHaxeType(sig.ret, p)
 		};
 	}
 
