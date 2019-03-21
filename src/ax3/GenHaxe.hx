@@ -3,6 +3,7 @@ package ax3;
 import haxe.macro.TypedExprTools;
 import ax3.ParseTree;
 import ax3.TypedTree;
+import ax3.Token.Trivia;
 
 @:nullSafety
 class GenHaxe extends PrinterBase {
@@ -100,37 +101,52 @@ class GenHaxe extends PrinterBase {
 			}
 		}
 		printOpenBrace(i.syntax.openBrace);
+
+		var properties = new Map();
+		function prop(name:String, set:Bool, meta:Array<Metadata>, trivia:Array<Trivia>, type:TType) {
+			var p = switch properties[name] {
+				case null: properties[name] = {trivia: [], meta: [], get: false, set: false, type: type};
+				case existing: existing;
+			};
+			p.meta = p.meta.concat(meta);
+			p.trivia = p.trivia.concat(trivia);
+			if (set) p.set = true else p.get = true;
+		}
+
 		for (m in i.members) {
 			switch (m) {
-				case TIMField(f): printInterfaceField(f);
+				case TIMField(field):
+					switch field.kind {
+						case TIFFun(f):
+							printMetadata(field.metadata);
+							printTextWithTrivia("function", f.syntax.keyword);
+							printTextWithTrivia(f.name, f.syntax.name);
+							printSignature(f.sig);
+							printSemicolon(field.semicolon);
+
+						case TIFGetter(f):
+							prop(f.name, false, field.metadata, f.syntax.functionKeyword.leadTrivia.concat(field.semicolon.trailTrivia), f.sig.ret.type);
+
+						case TIFSetter(f):
+							prop(f.name, true, field.metadata, f.syntax.functionKeyword.leadTrivia.concat(field.semicolon.trailTrivia), f.sig.args[0].type);
+					}
 				case TIMCondCompBegin(b): printCondCompBegin(b);
 				case TIMCondCompEnd(b): printCompCondEnd(b);
 			}
 		}
-		printCloseBrace(i.syntax.closeBrace);
-	}
 
-	function printInterfaceField(f:TInterfaceField) {
-		printMetadata(f.metadata);
-
-		switch (f.kind) {
-			case TIFFun(f):
-				printTextWithTrivia("function", f.syntax.keyword);
-				printTextWithTrivia(f.name, f.syntax.name);
-				printSignature(f.sig);
-			case TIFGetter(f):
-				printTextWithTrivia("function", f.syntax.functionKeyword);
-				printTokenTrivia(f.syntax.accessorKeyword);
-				printTextWithTrivia("get_" + f.name, f.syntax.name);
-				printSignature(f.sig);
-			case TIFSetter(f):
-				printTextWithTrivia("function", f.syntax.functionKeyword);
-				printTokenTrivia(f.syntax.accessorKeyword);
-				printTextWithTrivia("set_" + f.name, f.syntax.name);
-				printSignature(f.sig);
+		for (name => desc in properties) {
+			printTrivia(desc.trivia);
+			printMetadata(desc.meta);
+			buf.add("var ");
+			buf.add(name);
+			buf.add(if (desc.get) "(get," else "(never,");
+			buf.add(if (desc.set) "set):" else "never):");
+			printTType(desc.type);
+			buf.add(";\n");
 		}
 
-		printSemicolon(f.semicolon);
+		printCloseBrace(i.syntax.closeBrace);
 	}
 
 	function printClassDecl(c:TClassDecl) {
