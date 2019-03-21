@@ -1,6 +1,7 @@
 package ax3;
 
 import ax3.Token;
+import ax3.ParseTree;
 using StringTools;
 
 enum HaxeType {
@@ -14,6 +15,92 @@ typedef HaxeSignature = {
 }
 
 abstract HaxeTypeAnnotation(String) {
+
+	static function extractFromMetadata(m:Array<Metadata>):Null<HaxeTypeAnnotation> {
+		if (m.length > 0) {
+			return HaxeTypeAnnotation.extract(m[0].openBracket.leadTrivia);
+		} else {
+			return null;
+		}
+	}
+
+	static function extractFromDeclModifiers(m:Array<DeclModifier>):Null<HaxeTypeAnnotation> {
+		if (m.length > 0) {
+			return HaxeTypeAnnotation.extract(switch (m[0]) {
+				case DMPublic(t) | DMInternal(t) | DMFinal(t) | DMDynamic(t): t.leadTrivia;
+			});
+		} else {
+			return null;
+		}
+	}
+
+	public static function extractFromClassField(f:ClassField):Null<HaxeTypeAnnotation> {
+		// before first meta
+		var t = extractFromMetadata(f.metadata);
+		if (t != null) return t;
+
+		// before namespace
+		if (f.namespace != null) {
+			var t = HaxeTypeAnnotation.extract(f.namespace.leadTrivia);
+			if (t != null) return t;
+		}
+
+		// before first modifier
+		if (f.modifiers.length > 0) {
+			var tok = switch (f.modifiers[0]) {
+				case FMPublic(t) | FMPrivate(t) | FMProtected(t) | FMInternal(t) | FMOverride(t) | FMStatic(t) | FMFinal(t): t;
+			};
+			var t = HaxeTypeAnnotation.extract(tok.leadTrivia);
+			if (t != null) return t;
+		}
+
+		// before the keyword
+		switch (f.kind) {
+			case FVar(VVar(keyword) | VConst(keyword), _) | FFun(keyword, _) | FGetter(keyword, _) | FSetter(keyword, _):
+				return HaxeTypeAnnotation.extract(keyword.leadTrivia);
+		}
+	}
+
+	public static function extractFromInterfaceField(f:InterfaceField):Null<HaxeTypeAnnotation> {
+		// before first meta
+		var t = extractFromMetadata(f.metadata);
+		if (t != null) return t;
+
+		// before the keyword
+		switch (f.kind) {
+			case IFFun(keyword, _) | IFGetter(keyword, _) | IFSetter(keyword, _):
+				return HaxeTypeAnnotation.extract(keyword.leadTrivia);
+		}
+	}
+
+	public static function extractFromModuleVarDecl(v:ModuleVarDecl):Null<HaxeTypeAnnotation> {
+		// before first meta
+		var t = extractFromMetadata(v.metadata);
+		if (t != null) return t;
+
+		// before first modifier
+		t = extractFromDeclModifiers(v.modifiers);
+		if (t != null) t;
+
+		// before the keyword
+		return switch (v.kind) {
+			case VVar(t) | VConst(t): HaxeTypeAnnotation.extract(t.leadTrivia);
+		}
+	}
+
+	public static function extractFromModuleFunDecl(f:FunctionDecl):Null<HaxeTypeAnnotation> {
+		// before first meta
+		var t = extractFromMetadata(f.metadata);
+		if (t != null) return t;
+
+		// before first modifier
+		t = extractFromDeclModifiers(f.modifiers);
+		if (t != null) t;
+
+		// before the keyword
+		return HaxeTypeAnnotation.extract(f.keyword.leadTrivia);
+	}
+
 	public static function extract(trivia:Array<Trivia>):Null<HaxeTypeAnnotation> {
 		for (tr in trivia) {
 			if (tr.kind == TrLineComment) {

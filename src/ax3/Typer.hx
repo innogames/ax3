@@ -118,7 +118,7 @@ class Typer {
 	}
 
 	function typeModuleFunction(v:FunctionDecl):TFunctionDecl {
-		var typeOverrides = extractHaxeTypeAnnotationFromModuleFunDecl(v);
+		var typeOverrides = HaxeTypeAnnotation.extractFromModuleFunDecl(v);
 		return {
 			metadata: v.metadata,
 			modifiers: v.modifiers,
@@ -129,7 +129,7 @@ class Typer {
 	}
 
 	function typeModuleVars(v:ModuleVarDecl):TModuleVarDecl {
-		var overrideType = extractHaxeTypeAnnotationFromModuleVarDecl(v);
+		var overrideType = HaxeTypeAnnotation.extractFromModuleVarDecl(v);
 		return {
 			metadata: v.metadata,
 			modifiers: v.modifiers,
@@ -270,7 +270,7 @@ class Typer {
 	}
 
 	function typeInterfaceField(f:InterfaceField):TInterfaceField {
-		var haxeType = extractHaxeTypeAnnotationFromInterfaceField(f);
+		var haxeType = HaxeTypeAnnotation.extractFromInterfaceField(f);
 
 		var kind = switch (f.kind) {
 			case IFFun(keyword, name, sig):
@@ -390,7 +390,7 @@ class Typer {
 	}
 
 	function typeClassField(f:ClassField):TClassField {
-		var haxeType = extractHaxeTypeAnnotationFromClassField(f);
+		var haxeType = HaxeTypeAnnotation.extractFromClassField(f);
 
 		var kind = switch (f.kind) {
 			case FVar(kind, vars, semicolon):
@@ -583,91 +583,6 @@ class Typer {
 			case ECondCompBlock(v, b): typeCondCompBlock(v, b, expectedType);
 			case EUseNamespace(ns): mk(TEUseNamespace(ns), TTVoid, expectedType);
 		}
-	}
-
-	function extractHaxeTypeAnnotationFromMetadata(m:Array<Metadata>):Null<HaxeTypeAnnotation> {
-		if (m.length > 0) {
-			return HaxeTypeAnnotation.extract(m[0].openBracket.leadTrivia);
-		} else {
-			return null;
-		}
-	}
-
-	function extractHaxeTypeAnnotationFromDeclModifiers(m:Array<DeclModifier>):Null<HaxeTypeAnnotation> {
-		if (m.length > 0) {
-			return HaxeTypeAnnotation.extract(switch (m[0]) {
-				case DMPublic(t) | DMInternal(t) | DMFinal(t) | DMDynamic(t): t.leadTrivia;
-			});
-		} else {
-			return null;
-		}
-	}
-
-	function extractHaxeTypeAnnotationFromClassField(f:ClassField):Null<HaxeTypeAnnotation> {
-		// before first meta
-		var t = extractHaxeTypeAnnotationFromMetadata(f.metadata);
-		if (t != null) return t;
-
-		// before namespace
-		if (f.namespace != null) {
-			var t = HaxeTypeAnnotation.extract(f.namespace.leadTrivia);
-			if (t != null) return t;
-		}
-
-		// before first modifier
-		if (f.modifiers.length > 0) {
-			var tok = switch (f.modifiers[0]) {
-				case FMPublic(t) | FMPrivate(t) | FMProtected(t) | FMInternal(t) | FMOverride(t) | FMStatic(t) | FMFinal(t): t;
-			};
-			var t = HaxeTypeAnnotation.extract(tok.leadTrivia);
-			if (t != null) return t;
-		}
-
-		// before the keyword
-		switch (f.kind) {
-			case FVar(VVar(keyword) | VConst(keyword), _) | FFun(keyword, _) | FGetter(keyword, _) | FSetter(keyword, _):
-				return HaxeTypeAnnotation.extract(keyword.leadTrivia);
-		}
-	}
-
-	function extractHaxeTypeAnnotationFromInterfaceField(f:InterfaceField):Null<HaxeTypeAnnotation> {
-		// before first meta
-		var t = extractHaxeTypeAnnotationFromMetadata(f.metadata);
-		if (t != null) return t;
-
-		// before the keyword
-		switch (f.kind) {
-			case IFFun(keyword, _) | IFGetter(keyword, _) | IFSetter(keyword, _):
-				return HaxeTypeAnnotation.extract(keyword.leadTrivia);
-		}
-	}
-
-	function extractHaxeTypeAnnotationFromModuleVarDecl(v:ModuleVarDecl):Null<HaxeTypeAnnotation> {
-		// before first meta
-		var t = extractHaxeTypeAnnotationFromMetadata(v.metadata);
-		if (t != null) return t;
-
-		// before first modifier
-		t = extractHaxeTypeAnnotationFromDeclModifiers(v.modifiers);
-		if (t != null) t;
-
-		// before the keyword
-		return switch (v.kind) {
-			case VVar(t) | VConst(t): HaxeTypeAnnotation.extract(t.leadTrivia);
-		}
-	}
-
-	function extractHaxeTypeAnnotationFromModuleFunDecl(f:FunctionDecl):Null<HaxeTypeAnnotation> {
-		// before first meta
-		var t = extractHaxeTypeAnnotationFromMetadata(f.metadata);
-		if (t != null) return t;
-
-		// before first modifier
-		t = extractHaxeTypeAnnotationFromDeclModifiers(f.modifiers);
-		if (t != null) t;
-
-		// before the keyword
-		return HaxeTypeAnnotation.extract(f.keyword.leadTrivia);
 	}
 
 	function typeLocalFunction(keyword:Token, name:Null<Token>, fun:Function, expectedType:TType):TExpr {
