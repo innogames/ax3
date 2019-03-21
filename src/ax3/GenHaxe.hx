@@ -300,7 +300,7 @@ class GenHaxe extends PrinterBase {
 	function printTType(t:TType) {
 		switch t {
 			case TTVoid: buf.add("Void");
-			case TTAny: buf.add("Dynamic");
+			case TTAny: buf.add("ASAny");
 			case TTBoolean: buf.add("Bool");
 			case TTNumber: buf.add("Float");
 			case TTInt: buf.add("Int");
@@ -309,13 +309,13 @@ class GenHaxe extends PrinterBase {
 			case TTArray(t): buf.add("Array<"); printTType(t); buf.add(">");
 			case TTFunction: buf.add("haxe.Constraints.Function");
 			case TTClass: buf.add("Class<Dynamic>");
-			case TTObject(TTAny): buf.add("Dynamic<Dynamic>");
+			case TTObject(TTAny): buf.add("ASObject");
 			case TTObject(t): buf.add("haxe.DynamicAccess<"); printTType(t); buf.add(">");
 			case TTXML: buf.add("flash.xml.XML");
 			case TTXMLList: buf.add("flash.xml.XMLList");
 			case TTRegExp: buf.add("flash.utils.RegExp");
 			case TTVector(t): buf.add("flash.Vector<"); printTType(t); buf.add(">");
-			case TTDictionary(_): buf.add("flash.utils.Dictionary");
+			case TTDictionary(k, v): buf.add("ASDictionary<"); printTType(k); buf.add(","); printTType(v); buf.add(">");
 			case TTBuiltin: buf.add("TODO");
 			case TTFun(args, ret, rest):
 				if (args.length == 0) {
@@ -397,7 +397,7 @@ class GenHaxe extends PrinterBase {
 			case "int": "Int";
 			case "uint": "UInt";
 			case "Boolean": "Bool";
-			case "Object": "Dynamic";
+			case "Object": "ASObject";
 			case "XML": "flash.utils.XML";
 			case "XMLList": "flash.utils.XMLList";
 			case "Array": "Array";
