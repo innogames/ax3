@@ -12,7 +12,7 @@ class StructureBuilder {
 				Structure.changeDictionary(switch dotPathToArray(path).join(".").toString() {
 					case "void": STVoid;
 					case "Boolean": STBoolean;
-					case "Number": STUint;
+					case "Number": STNumber;
 					case "int": STInt;
 					case "uint": STUint;
 					case "String": STString;
