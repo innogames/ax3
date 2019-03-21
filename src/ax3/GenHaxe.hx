@@ -1,9 +1,10 @@
 package ax3;
 
-import haxe.macro.TypedExprTools;
 import ax3.ParseTree;
 import ax3.TypedTree;
 import ax3.Token.Trivia;
+
+typedef RegisterPropertyCallback = (name:String, set:Bool, isPublic:Bool, type:TType)->Void;
 
 @:nullSafety
 class GenHaxe extends PrinterBase {
@@ -166,15 +167,37 @@ class GenHaxe extends PrinterBase {
 			}
 		}
 		printOpenBrace(c.syntax.openBrace);
+
+		var properties = new Map();
+		function registerProperty(name:String, set:Bool, isPublic:Bool, type:TType) {
+			var prop = switch properties[name] {
+				case null: properties[name] = {get: false, set: false, isPublic: false, type: type};
+				case existing: existing;
+			}
+			if (set) prop.set = true else prop.get = true;
+			if (isPublic) prop.isPublic = true;
+		}
+
 		for (m in c.members) {
 			switch (m) {
 				case TMCondCompBegin(b): printCondCompBegin(b);
 				case TMCondCompEnd(b): printCompCondEnd(b);
-				case TMField(f): printClassField(c.name, f);
+				case TMField(f): printClassField(c.name, f, registerProperty);
 				case TMUseNamespace(n, semicolon): printUseNamespace(n); printTextWithTrivia("", semicolon);
-				case TMStaticInit(i): //printExpr(i.expr);
+				case TMStaticInit(i): trace("TODO: INIT EXPR FOR " + c.name);//printExpr(i.expr);
 			}
 		}
+
+		for (name => desc in properties) {
+			if (desc.isPublic) buf.add("public ");
+			buf.add("var ");
+			buf.add(name);
+			buf.add(if (desc.get) "(get," else "(never,");
+			buf.add(if (desc.set) "set):" else "never):");
+			printTType(desc.type);
+			buf.add(";\n");
+		}
+
 		printCloseBrace(c.syntax.closeBrace);
 	}
 
@@ -200,14 +223,17 @@ class GenHaxe extends PrinterBase {
 		}
 	}
 
-	function printClassField(className:String, f:TClassField) {
+	function printClassField(className:String, f:TClassField, registerProperty:RegisterPropertyCallback) {
 		printMetadata(f.metadata);
 
 		if (f.namespace != null) printTextWithTrivia("/*"+f.namespace.text+"*/", f.namespace);
 
+		var isPublic = false;
 		for (m in f.modifiers) {
 			switch (m) {
-				case FMPublic(t): printTextWithTrivia("public", t);
+				case FMPublic(t):
+					isPublic = true;
+					printTextWithTrivia("public", t);
 				case FMPrivate(t): printTextWithTrivia("private", t);
 				case FMProtected(t): printTextWithTrivia("/*protected*/private", t);
 				case FMInternal(t): printTextWithTrivia("/*internal*/", t);
@@ -232,12 +258,14 @@ class GenHaxe extends PrinterBase {
 				printTextWithTrivia("get_" + f.name, f.syntax.name);
 				printSignature(f.fun.sig);
 				printExpr(f.fun.expr);
+				registerProperty(f.name, false, isPublic, f.fun.sig.ret.type);
 			case TFSetter(f):
 				printTextWithTrivia("function", f.syntax.functionKeyword);
 				printTokenTrivia(f.syntax.accessorKeyword);
 				printTextWithTrivia("set_" + f.name, f.syntax.name);
 				printSignature(f.fun.sig);
 				printExpr(f.fun.expr);
+				registerProperty(f.name, true, isPublic, f.fun.sig.args[0].type);
 		}
 	}
 
