@@ -764,9 +764,13 @@ class Typer {
 				var b = typeExpr(b, TTAny);
 				return mk(TEBinop(a, op, b), TTBoolean, expectedType);
 
+			case OpAssign(_) | OpAssignOp(_):
+				var a = typeExpr(a, TTAny);
+				var b = typeExpr(b, a.type);
+				return mk(TEBinop(a, op, b), a.type, expectedType);
+
 			// TODO: sort these out
 			case OpAdd(_) | OpSub(_) | OpDiv(_) | OpMul(_) | OpMod(_) |
-			     OpAssign(_) | OpAssignOp(_) |
 			     OpShl(_) | OpShr(_) | OpUshr(_) |
 			     OpBitAnd(_) | OpBitOr(_) | OpBitXor(_):
 				var a = typeExpr(a, TTAny);
