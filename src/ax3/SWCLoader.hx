@@ -165,10 +165,10 @@ class SWCLoader {
 		for (i in 0...methType.args.length) {
 			var arg = methType.args[i];
 			var type = if (arg != null) buildTypeStructure(abc, arg) else STAny;
-			args.push({kind: SArgNormal("arg", false), type: type});
+			args.push({name: "arg" + i, kind: SArgNormal(false), type: type});
 		}
 		if (methType.extra != null && methType.extra.variableArgs) {
-			args.push({kind: SArgRest("arg"), type: Structure.stUntypedArray});
+			args.push({name: "rest", kind: SArgRest, type: Structure.stUntypedArray});
 		}
 		var ret = if (methType.ret != null) buildTypeStructure(abc, methType.ret) else STAny;
 		return {args: args, ret: ret, swc: true};

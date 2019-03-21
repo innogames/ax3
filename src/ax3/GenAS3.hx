@@ -40,6 +40,7 @@ class GenAS3 extends PrinterBase {
 		printDotPath(i.syntax.path);
 		switch i.kind {
 			case TIDecl(_):
+			case TIAliased(_): throw "assert";
 			case TIAll(dot, asterisk):
 				printDot(dot);
 				printTextWithTrivia("*", asterisk);

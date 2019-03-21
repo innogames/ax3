@@ -6,9 +6,9 @@ import ax3.filters.*;
 
 class Filters {
 	public static function run(context:Context, structure:Structure, modules:Array<TModule>) {
-		// var externImports = new ExternModuleLevelImports(context);
+		var externImports = new ExternModuleLevelImports(context);
 		for (f in [
-			// externImports,
+			externImports,
 			new RestArgs(context),
 			new RewriteArrayAccess(context),
 			new RewriteIs(context),
@@ -25,6 +25,6 @@ class Filters {
 			f.run(modules);
 		}
 
-		// modules.push(externImports.makeGlobalsModule());
+		sys.io.File.saveContent("OUT/Globals.hx", externImports.printGlobalsClass());
 	}
 }

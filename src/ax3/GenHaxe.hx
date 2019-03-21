@@ -44,6 +44,9 @@ class GenHaxe extends PrinterBase {
 		printDotPath(i.syntax.path);
 		switch i.kind {
 			case TIDecl(_):
+			case TIAliased(d, as, name):
+				printTextWithTrivia("as", as);
+				printTextWithTrivia(name.text, name);
 			case TIAll(dot, asterisk):
 				printDot(dot);
 				printTextWithTrivia("*", asterisk);
@@ -194,7 +197,7 @@ class GenHaxe extends PrinterBase {
 				case FMInternal(t): printTextWithTrivia("/*internal*/", t);
 				case FMOverride(t): printTextWithTrivia("override", t);
 				case FMStatic(t): printTextWithTrivia("static", t);
-				case FMFinal(t): printTextWithTrivia("@:final", t); // TODO: in haxe3 @:final should go before other modifiers
+				case FMFinal(t): printTextWithTrivia("/*final*/", t); // TODO: in haxe3 @:final should go before other modifiers
 			}
 		}
 

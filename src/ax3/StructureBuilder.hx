@@ -189,9 +189,9 @@ class StructureBuilder {
 			return switch (arg) {
 				case ArgNormal(a):
 					var type = if (a.type == null) STAny else buildTypeStructure(a.type.type);
-					{kind: SArgNormal(a.name.text, a.init != null), type: type};
+					{name: a.name.text, kind: SArgNormal(a.init != null), type: type};
 				case ArgRest(_, name):
-					{kind: SArgRest(name.text), type: Structure.stUntypedArray};
+					{name: name.text, kind: SArgRest, type: Structure.stUntypedArray};
 			}
 		}
 

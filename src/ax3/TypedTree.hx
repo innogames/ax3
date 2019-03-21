@@ -38,6 +38,7 @@ typedef TImport = {
 
 enum TImportKind {
 	TIDecl(d:SDecl);
+	TIAliased(d:SDecl, as:Token, name:Token);
 	TIAll(dot:Token, asterisk:Token);
 }
 

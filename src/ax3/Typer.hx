@@ -1100,7 +1100,7 @@ class Typer {
 		for (a in f.args) {
 			switch (a.kind) {
 				case SArgNormal(_): args.push(typeType(a.type, 0));
-				case SArgRest(_): rest = if (f.swc) TRestSwc else TRestAs3;
+				case SArgRest: rest = if (f.swc) TRestSwc else TRestAs3;
 			}
 		}
 		return TTFun(args, typeType(f.ret, 0), rest);

@@ -401,8 +401,8 @@ class SModule {
 
 	static function dumpFun(name:String, f:SFunDecl):String {
 		var args = [for (a in f.args) switch (a.kind) {
-			case SArgNormal(name, opt): (if (opt) "?" else "") + name + ":" + dumpType(a.type);
-			case SArgRest(name): "..." + name;
+			case SArgNormal(opt): (if (opt) "?" else "") + a.name + ":" + dumpType(a.type);
+			case SArgRest: "..." + a.name;
 		}];
 		return "FUN " + name + "(" + args.join(", ") + "):" + dumpType(f.ret);
 	}
@@ -459,13 +459,13 @@ typedef SVarDecl = {
 
 typedef SFunDecl = {
 	var swc:Bool;
-	var args:Array<{kind:SFunArgKind, type:SType}>;
+	var args:Array<{name:String, kind:SFunArgKind, type:SType}>;
 	var ret:SType;
 }
 
 enum SFunArgKind {
-	SArgNormal(name:String, opt:Bool);
-	SArgRest(name:String);
+	SArgNormal(opt:Bool);
+	SArgRest;
 }
 
 @:forward(iterator)
