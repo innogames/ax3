@@ -103,6 +103,7 @@ class GenHaxe extends PrinterBase {
 		}
 		printOpenBrace(i.syntax.openBrace);
 
+		// TODO: not generate properties that are already present in parent classes... we might have to do this properly in a separate pass....
 		var properties = new Map();
 		function prop(name:String, set:Bool, meta:Array<Metadata>, trivia:Array<Trivia>, type:TType) {
 			var p = switch properties[name] {
