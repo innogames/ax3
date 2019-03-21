@@ -501,6 +501,7 @@ typedef TFunctionArg = {
 	}
 	var name:String;
 	var type:TType;
+	var v:Null<TVar>;
 	var kind:TFunctionArgKind;
 	var comma:Null<Token>;
 }

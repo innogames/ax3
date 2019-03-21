@@ -51,7 +51,8 @@ class AbstractFilter {
 					switch (field.kind) {
 						case TFVar(v): processVarFields(v.vars);
 						case TFFun(field): processFunction(field.fun);
-						case TFGetter(field) | TFSetter(field): processFunction(field.fun);
+						case TFGetter(field): processFunction(field.fun);
+						case TFSetter(field): processSetter(field);
 					}
 				case TMStaticInit(i): i.expr = processExpr(i.expr);
 				case TMUseNamespace(_):
@@ -59,6 +60,10 @@ class AbstractFilter {
 				case TMCondCompEnd(_):
 			}
 		}
+	}
+
+	function processSetter(field:TAccessorField) {
+		processFunction(field.fun);
 	}
 
 	function processInterface(i:TInterfaceDecl) {

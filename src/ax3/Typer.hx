@@ -458,12 +458,12 @@ class Typer {
 
 							var type:TType = if (typeOverride != null) typeOverride else if (a.type == null) TTAny else resolveType(a.type.type);
 							var init = if (a.init == null) null else typeVarInit(a.init, type);
-							if (addArgLocals) addLocal(a.name.text, type);
-							{syntax: {name: a.name}, name: a.name.text, type: type, kind: TArgNormal(a.type, init), comma: comma};
+							var v = if (addArgLocals) addLocal(a.name.text, type) else null;
+							{syntax: {name: a.name}, name: a.name.text, type: type, kind: TArgNormal(a.type, init), v: v, comma: comma};
 
 						case ArgRest(dots, name):
-							if (addArgLocals) addLocal(name.text, tUntypedArray);
-							{syntax: {name: name}, name: name.text, type: tUntypedArray, kind: TArgRest(dots), comma: comma};
+							var v = if (addArgLocals) addLocal(name.text, tUntypedArray) else null;
+							{syntax: {name: name}, name: name.text, type: tUntypedArray, kind: TArgRest(dots), v: v, comma: comma};
 					}
 				});
 			} else {
