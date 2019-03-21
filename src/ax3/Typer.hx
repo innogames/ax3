@@ -7,6 +7,7 @@ import ax3.TypedTree;
 import ax3.TypedTreeTools.mk;
 import ax3.TypedTreeTools.skipParens;
 import ax3.TypedTreeTools.tUntypedArray;
+import ax3.TypedTreeTools.tUntypedObject;
 import ax3.HaxeTypeAnnotation;
 
 typedef Locals = Map<String, TVar>;
@@ -212,7 +213,7 @@ class Typer {
 			case STDictionary(k, v): TTDictionary(typeType(k, pos), typeType(v, pos));
 			case STFunction: TTFunction;
 			case STClass: TTClass;
-			case STObject: TTObject;
+			case STObject(t): TTObject(typeType(t, pos));
 			case STXML: TTXML;
 			case STXMLList: TTXMLList;
 			case STRegExp: TTRegExp;
@@ -750,7 +751,7 @@ class Typer {
 
 	function typeVector(v:VectorSyntax, expectedType:TType):TExpr {
 		var type = resolveType(v.t.type);
-		return mk(TEVector(v, type), TTFun([TTObject], TTVector(type)), expectedType);
+		return mk(TEVector(v, type), TTFun([tUntypedObject], TTVector(type)), expectedType);
 	}
 
 	function typeTry(keyword:Token, block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>, expectedType:TType):TExpr {
@@ -987,7 +988,7 @@ class Typer {
 
 	function typeCallArgs(args:CallArgs, callableType:TType):TCallArgs {
 		var getExpectedType = switch (callableType) {
-			case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTString | TTArray(_) | TTObject | TTXML | TTXMLList | TTRegExp | TTVector(_) | TTInst(_) | TTDictionary(_):
+			case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTString | TTArray(_) | TTObject(_) | TTXML | TTXMLList | TTRegExp | TTVector(_) | TTInst(_) | TTDictionary(_):
 				throw "assert";
 			case TTClass:
 				throw "assert??";
@@ -1106,7 +1107,7 @@ class Typer {
 				type = TTInst(cls);
 			case _:
 				ctorType = TTFunction;
-				type = TTObject; // TODO: is this correct?
+				type = tUntypedObject; // TODO: is this correct?
 		};
 
 		var args = if (args != null) typeCallArgs(args, ctorType) else null;
@@ -1142,8 +1143,10 @@ class Typer {
 						// err("Array access with non-numeric index", openBracket.pos);
 				}
 				t;
-			case TTObject | TTInst({name: "Dictionary"}):
-				TTAny;
+			case TTObject(t):
+				t; // TODO: set expectedType for eindex to TTString?
+			case TTDictionary(k, v):
+				v; // TODO: set expectedType for eindex to k?
 			case _:
 				// err("Untyped array access", openBracket.pos);
 				TTAny;
@@ -1370,13 +1373,14 @@ class Typer {
 				case [_, {type: TTInt | TTUint | TTNumber}]: getNumericInstanceFieldType(fieldToken, obj.type);
 				case ["toString", _]: TTFun([], TTString);
 				case ["hasOwnProperty", _]: TTFun([TTString], TTBoolean);
-				case ["prototype", _]: TTObject;
+				case ["prototype", _]: tUntypedObject;
 				case [_, {kind: TEBuiltin(_, "Array")}]: getArrayStaticFieldType(fieldToken);
 				case [_, {kind: TEBuiltin(_, "Number")}]: getNumericStaticFieldType(fieldToken, TTNumber);
 				case [_, {kind: TEBuiltin(_, "int")}]: getNumericStaticFieldType(fieldToken, TTInt);
 				case [_, {kind: TEBuiltin(_, "uint")}]: getNumericStaticFieldType(fieldToken, TTUint);
 				case [_, {kind: TEBuiltin(_, "String")}]: getStringStaticFieldType(fieldToken);
-				case [_, {type: TTAny | TTObject}]: TTAny; // untyped field access
+				case [_, {type: TTAny}]: TTAny; // untyped field access
+				case [_, {type: TTObject(valueType)}]: valueType;
 				case [_, {type: TTBuiltin | TTVoid | TTBoolean | TTClass | TTDictionary(_)}]: err('Attempting to get field on type ${obj.type.getName()}', fieldToken.pos); TTAny;
 				case [_, {type: TTString}]: getStringInstanceFieldType(fieldToken);
 				case [_, {type: TTArray(t)}]: getArrayInstanceFieldType(fieldToken, t);
@@ -1395,24 +1399,24 @@ class Typer {
 
 	function typeXMLFieldAccess(xml:TExpr, dot:Token, field:Token, expectedType:TType):TExpr {
 		var fieldType = switch field.text {
-			case "addNamespace": TTFun([TTObject], TTXML);
-			case "appendChild": TTFun([TTObject], TTXML);
+			case "addNamespace": TTFun([tUntypedObject], TTXML);
+			case "appendChild": TTFun([tUntypedObject], TTXML);
 			case "attribute": TTFun([TTAny], TTXMLList);
 			case "attributes": TTFun([], TTXMLList);
-			case "child": TTFun([TTObject], TTXMLList);
+			case "child": TTFun([tUntypedObject], TTXMLList);
 			case "childIndex": TTFun([], TTInt);
 			case "children": TTFun([], TTXMLList);
 			case "comments": TTFun([], TTXMLList);
 			case "contains": TTFun([TTXML], TTBoolean);
 			case "copy": TTFun([], TTXML);
-			case "descendants": TTFun([TTObject], TTXMLList);
-			case "elements": TTFun([TTObject], TTXMLList);
+			case "descendants": TTFun([tUntypedObject], TTXMLList);
+			case "elements": TTFun([tUntypedObject], TTXMLList);
 			case "length": TTFun([], TTInt);
 			case "toXMLString": TTFun([], TTString);
 			case _: null;
 		}
 		if (fieldType != null) {
-			return mkExplicitFieldAccess(xml, dot, field, TTFun([TTObject], TTXML), expectedType);
+			return mkExplicitFieldAccess(xml, dot, field, TTFun([tUntypedObject], TTXML), expectedType);
 		} else {
 			// err('TODO XML instance field: ${field.text} assumed to be a child', field.pos);
 			return mk(TEXmlChild({syntax: {dot: dot, name: field}, eobj: xml, name: field.text}), TTXMLList, expectedType);
@@ -1426,7 +1430,7 @@ class Typer {
 			case _: null;
 		}
 		if (fieldType != null) {
-			return mkExplicitFieldAccess(xml, dot, field, TTFun([TTObject], TTXML), expectedType);
+			return mkExplicitFieldAccess(xml, dot, field, TTFun([tUntypedObject], TTXML), expectedType);
 		} else {
 			// err('TODO XMLList instance field: ${field.text} assumed to be a child', field.pos);
 			return mk(TEXmlChild({syntax: {dot: dot, name: field}, eobj: xml, name: field.text}), TTXMLList, expectedType);
@@ -1443,7 +1447,7 @@ class Typer {
 	function getRegExpInstanceFieldType(field:Token):TType {
 		return switch field.text {
 			case "test": TTFun([TTString], TTBoolean);
-			case "exec": TTFun([TTString], TTObject);
+			case "exec": TTFun([TTString], tUntypedObject);
 			case other: err('Unknown RegExp instance field: $other', field.pos); TTAny;
 		}
 	}
@@ -1477,7 +1481,7 @@ class Typer {
 			case "slice": TTFun([TTInt, TTInt], TTArray(t));
 			case "splice": TTFun([TTInt, TTUint, TTAny], TTArray(t));
 			case "sort": TTFun([TTAny], TTArray(t));
-			case "sortOn": TTFun([TTString, TTObject], TTArray(t));
+			case "sortOn": TTFun([TTString, tUntypedObject], TTArray(t));
 			case other: err('Unknown Array instance field $other', field.pos); TTAny;
 		}
 	}
@@ -1494,7 +1498,7 @@ class Typer {
 			case "sort": TTFun([TTAny], TTVector(t));
 			case "concat": TTFun([TTVector(t)], TTVector(t));
 			case "reverse": TTFun([], TTVector(t));
-			case "forEach": TTFun([TTFunction, TTObject], TTVoid);
+			case "forEach": TTFun([TTFunction, tUntypedObject], TTVoid);
 			case other: err('Unknown Vector instance field $other', field.pos); TTAny;
 		}
 	}
@@ -1510,7 +1514,7 @@ class Typer {
 			case "charCodeAt": TTFun([TTNumber], TTNumber);
 			case "concat": TTFun([TTAny], TTString);
 			case "search": TTFun([TTAny], TTInt);
-			case "replace": TTFun([TTAny, TTObject], TTString);
+			case "replace": TTFun([TTAny, tUntypedObject], TTString);
 			case "match": TTFun([TTAny], TTArray(TTString));
 			case other: err('Unknown String instance field $other', field.pos); TTAny;
 		}
@@ -1630,7 +1634,7 @@ class Typer {
 		return mk(TEObjectDecl({
 			syntax: {openBrace: openBrace, closeBrace: closeBrace},
 			fields: fields
-		}), TTObject, expectedType);
+		}), tUntypedObject, expectedType);
 	}
 
 	function typeVarInit(init:VarInit, expectedType:TType):TVarInit {
@@ -1648,7 +1652,8 @@ class Typer {
 			case HTPath("Dynamic", []): TTAny;
 			case HTPath("Void", []): TTVoid;
 			case HTPath("FastXML", []): TTXML;
-			case HTPath("flash.utils.Object", []): TTObject;
+			case HTPath("haxe.DynamicAccess", [elemT]): TTObject(resolveHaxeType(elemT, pos));
+			case HTPath("flash.utils.Object", []): tUntypedObject;
 			case HTPath("Vector" | "flash.Vector", [t]): TTVector(resolveHaxeType(t, pos));
 			case HTPath("GenericDictionary", [k, v]): TTDictionary(resolveHaxeType(k, pos), resolveHaxeType(v, pos));
 			case HTPath("Class", [HTPath("Dynamic", [])]): TTClass;

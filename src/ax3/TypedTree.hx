@@ -607,7 +607,7 @@ enum TType {
 	TTDictionary(k:TType, v:TType);
 	TTFunction;
 	TTClass;
-	TTObject;
+	TTObject(t:TType);
 	TTXML;
 	TTXMLList;
 	TTRegExp;

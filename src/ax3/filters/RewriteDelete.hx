@@ -31,7 +31,7 @@ class RewriteDelete extends AbstractFilter {
 				var eRemoveField = mk(TEField({kind: TOExplicit(mkDot(), a.eobj), type: a.eobj.type}, "remove", mkIdent("remove")), TTFunction, TTFunction);
 				mkCall(eRemoveField, [a.eindex.with(expectedType = keyType)], TTBoolean);
 
-			case [TTObject, _] | [_, TTString]:
+			case [TTObject(_), _] | [_, TTString]:
 				// make sure the expected type is string so further filters add the cast
 				var eindex = if (a.eindex.type != TTString) a.eindex.with(expectedType = TTString) else a.eindex;
 				mkCall(eDeleteField, [a.eobj, eindex]);

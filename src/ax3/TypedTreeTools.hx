@@ -10,6 +10,7 @@ import ax3.TokenTools.mkSemicolon;
 
 class TypedTreeTools {
 	public static final tUntypedArray = TTArray(TTAny);
+	public static final tUntypedObject = TTObject(TTAny);
 
 	public static function concatExprs(a:TExpr, b:TExpr):TExpr {
 		return switch [a.kind, b.kind] {

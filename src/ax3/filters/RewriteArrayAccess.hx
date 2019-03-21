@@ -1,8 +1,10 @@
 package ax3.filters;
 
+import ax3.TypedTreeTools.tUntypedObject;
+
 class RewriteArrayAccess extends AbstractFilter {
-	static final eGetProperty = mkBuiltin("Reflect.getProperty", TTFun([TTObject, TTString], TTAny));
-	static final eSetProperty = mkBuiltin("Reflect.setProperty", TTFun([TTObject, TTString, TTAny], TTVoid));
+	static final eGetProperty = mkBuiltin("Reflect.getProperty", TTFun([tUntypedObject, TTString], TTAny));
+	static final eSetProperty = mkBuiltin("Reflect.setProperty", TTFun([tUntypedObject, TTString, TTAny], TTVoid));
 
 	override function processExpr(e:TExpr):TExpr {
 		return switch e.kind {

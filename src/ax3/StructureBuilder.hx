@@ -17,8 +17,8 @@ class StructureBuilder {
 					case "uint": STUint;
 					case "String": STString;
 					case "Array": Structure.stUntypedArray;
+					case "Object": Structure.stUntypedObject;
 					case "Class": STClass;
-					case "Object": STObject;
 					case "Function": STFunction;
 					case "XML": STXML;
 					case "XMLList": STXMLList;

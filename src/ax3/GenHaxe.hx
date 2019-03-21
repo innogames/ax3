@@ -306,7 +306,8 @@ class GenHaxe extends PrinterBase {
 			case TTArray(t): buf.add("Array<"); printTType(t); buf.add(">");
 			case TTFunction: buf.add("haxe.Constraints.Function");
 			case TTClass: buf.add("Class<Dynamic>");
-			case TTObject: buf.add("Dynamic<Dynamic>");
+			case TTObject(TTAny): buf.add("Dynamic<Dynamic>");
+			case TTObject(t): buf.add("haxe.DynamicAccess<"); printTType(t); buf.add(">");
 			case TTXML: buf.add("flash.xml.XML");
 			case TTXMLList: buf.add("flash.xml.XMLList");
 			case TTRegExp: buf.add("flash.utils.RegExp");

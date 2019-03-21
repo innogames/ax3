@@ -5,6 +5,7 @@ import ax3.ParseTree.*;
 
 class Structure {
 	public static final stUntypedArray = STArray(STAny);
+	public static final stUntypedObject = STObject(STAny);
 
 	public final packages:Map<String, SPackage>;
 
@@ -131,10 +132,11 @@ class Structure {
 			for (mod in pack.modules) {
 				function resolveType(t:SType) {
 					return switch (t) {
-						case STVoid | STAny | STBoolean | STNumber | STInt | STUint | STString | STFunction | STClass | STObject | STXML | STXMLList | STRegExp | STUnresolved(_): t;
+						case STVoid | STAny | STBoolean | STNumber | STInt | STUint | STString | STFunction | STClass | STXML | STXMLList | STRegExp | STUnresolved(_): t;
 						case STPrivate(_): throw "assert"; // this is only produces as a result of resolution
 						case STArray(t): STArray(resolveType(t));
 						case STVector(t): STVector(resolveType(t));
+						case STObject(t): STObject(resolveType(t));
 						case STDictionary(k, v): STDictionary(resolveType(k), resolveType(v));
 						case STPath(path): changeDictionary(mod.resolveTypePath(path));
 					};
@@ -423,10 +425,10 @@ class SModule {
 			case STUint: "uint";
 			case STString: "String";
 			case STArray(_): "Array";
+			case STObject(_): "Object";
 			case STDictionary(_): "Dictionary";
 			case STFunction: "Function";
 			case STClass: "Class";
-			case STObject: "Object";
 			case STXML: "XML";
 			case STXMLList: "XMLList";
 			case STRegExp: "RegExp";
@@ -515,7 +517,7 @@ enum SType {
 	STDictionary(k:SType, v:SType);
 	STFunction;
 	STClass;
-	STObject;
+	STObject(t:SType);
 	STXML;
 	STXMLList;
 	STRegExp;
