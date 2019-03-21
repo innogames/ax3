@@ -24,6 +24,14 @@ abstract ASAny(Dynamic) from Dynamic {
 		return value;
 	}
 
+	@:op(!a) inline function __not():Bool {
+		return !___toBool();
+	}
+
+	@:op(a || b) static inline function __or(a:ASAny, b:ASAny):ASAny {
+		return if (a) a else b;
+	}
+
 	@:op([]) inline function ___arrayGet(name) return ___get(name);
 	@:op([]) inline function ___arraySet(name, value) return ___set(name, value);
 }

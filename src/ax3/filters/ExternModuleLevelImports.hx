@@ -49,16 +49,23 @@ class ExternModuleLevelImports extends AbstractFilter {
 					var args = [], callArgs = [];
 					for (arg in f.args) {
 						switch (arg.kind) {
-							case SArgNormal(opt): args.push(if (opt) "?" + arg.name else arg.name);
+							case SArgNormal(opt):
+								var type = "Dynamic";
+								args.push((if (opt) "?" + arg.name else arg.name) + ":" + type);
 							case SArgRest: trace("TODO: rest args for " + desc.dotPath);
 						}
 						callArgs.push(arg.name);
 					}
-					var returnPrefix = switch (f.ret) {
-						case STVoid: "";
-						case _: "return ";
+					var returnPrefix, returnType;
+					switch (f.ret) {
+						case STVoid:
+							returnPrefix = "";
+							returnType = "Void";
+						case _:
+							returnPrefix = "return ";
+							returnType = "Dynamic";
 					};
-					buf.add('\tpublic static function $name(${args.join(", ")}) {\n\t\t$returnPrefix$globalRef(${callArgs.join(", ")});\n\t}\n');
+					buf.add('\tpublic static function $name(${args.join(", ")}):$returnType {\n\t\t$returnPrefix$globalRef(${callArgs.join(", ")});\n\t}\n');
 
 				case SClass(_) | SNamespace: throw "assert";
 			}
