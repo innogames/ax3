@@ -23,13 +23,13 @@ class RewriteDelete extends AbstractFilter {
 	function rewrite(deleteKeyword:Token, a:TArrayAccess, eDeleteObj:TExpr, eDelete:TExpr):TExpr {
 		// TODO: trivia \o/
 		return switch [a.eobj.type, a.eindex.type] {
-			case [TTDictionary(_), _]: // TODO: it should really be FQN flash.utils.Dictionary here, but it's annoying
+			case [TTDictionary(keyType, _), _]: // TODO: it should really be FQN flash.utils.Dictionary here, but it's annoying
 				processLeadingToken(function(t) {
 					t.leadTrivia = deleteKeyword.leadTrivia.concat(t.leadTrivia);
 				}, a.eobj);
 
 				var eRemoveField = mk(TEField({kind: TOExplicit(mkDot(), a.eobj), type: a.eobj.type}, "remove", mkIdent("remove")), TTFunction, TTFunction);
-				mkCall(eRemoveField, [a.eindex], TTBoolean);
+				mkCall(eRemoveField, [a.eindex.with(expectedType = keyType)], TTBoolean);
 
 			case [TTObject, _] | [_, TTString]:
 				// make sure the expected type is string so further filters add the cast
