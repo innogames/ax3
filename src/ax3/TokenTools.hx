@@ -15,6 +15,8 @@ class TokenTools {
 	public static inline function mkIdent(n) return new Token(0, TkIdent, n, [], []);
 	public static inline function mkOpenParen() return new Token(0, TkParenOpen, "(", [], []);
 	public static inline function mkCloseParen() return new Token(0, TkParenClose, ")", [], []);
+	public static inline function mkOpenBracket() return new Token(0, TkBracketOpen, "[", [], []);
+	public static inline function mkCloseBracket() return new Token(0, TkBracketClose, "]", [], []);
 	public static inline function mkOpenBrace() return new Token(0, TkBraceOpen, "{", [], []);
 	public static inline function mkCloseBrace() return new Token(0, TkBraceClose, "}", [], []);
 	public static inline function mkComma() return new Token(0, TkComma, ",", [], []);

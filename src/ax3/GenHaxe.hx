@@ -426,7 +426,7 @@ class GenHaxe extends PrinterBase {
 	function printBuiltin(token:Token, name:String) {
 		// TODO: this is hacky (builtins in general are hacky...)
 		name = switch name {
-			case "Std.is" | "Std.int" | "String" | "Reflect.deleteField": name;
+			case "Std.is" | "Std.int" | "String" | "Reflect.deleteField" | "Type.createInstance": name;
 			case "Number": "Float";
 			case "int": "Int";
 			case "uint": "UInt";
@@ -451,7 +451,7 @@ class GenHaxe extends PrinterBase {
 
 	function printAs(e:TExpr, keyword:Token, type:TTypeRef) {
 		printTrivia(TypedTreeTools.removeLeadingTrivia(e));
-		buf.add("Std.instance(");
+		buf.add("Std.instance("); // TODO: this is actually incorrect, as Std.instance doesn't support interfaces on e.g. js, we should have a filter that rewrites this
 		printExpr(e);
 		printTextWithTrivia(",", keyword);
 		printTType(type.type);
@@ -617,11 +617,8 @@ class GenHaxe extends PrinterBase {
 		printTextWithTrivia("new", keyword);
 		switch (eclass.kind) {
 			case TEDeclRef(_) | TEVector(_) | TEBuiltin(_): printExpr(eclass);
-			case other:
-				trace(Std.string(other));
-				buf.add("/*local*/String");
+			case other: throw "unprocessed expr for `new`: " + other;
 		}
-		// printExpr(eclass);
 		if (args != null) printCallArgs(args) else buf.add("()");
 	}
 

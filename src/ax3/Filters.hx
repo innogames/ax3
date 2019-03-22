@@ -11,6 +11,7 @@ class Filters {
 			externImports,
 			new RestArgs(context),
 			new RewriteRegexLiterals(context),
+			new RewriteDynamicNew(context),
 			new RewriteArrayAccess(context),
 			new RewriteIs(context),
 			new RewriteCFor(context),
