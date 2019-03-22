@@ -53,6 +53,7 @@ class AbstractFilter {
 						case TFFun(field): processFunction(field.fun);
 						case TFGetter(field): processFunction(field.fun);
 						case TFSetter(field): processSetter(field);
+						case TFHaxeProp(_):
 					}
 				case TMStaticInit(i): i.expr = processExpr(i.expr);
 				case TMUseNamespace(_):

@@ -22,6 +22,9 @@ class TypedTreeDumpMacro {
 			case TInst(_.get() => {pack: ["ax3"], name: "Token"}, _):
 				return macro printToken;
 
+			case TInst(_.get() => {pack: ["ax3"], name: "Trivia"}, _):
+				return macro function(_, _) {};
+
 			case TInst(_.get() => {pack: ["ax3"], name: "SClassDecl"}, _):
 				return macro function(c:ax3.Structure.SClassDecl, indent) str(c.name);
 

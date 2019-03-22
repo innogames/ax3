@@ -267,6 +267,14 @@ class GenHaxe extends PrinterBase {
 				printSignature(f.fun.sig);
 				printExpr(f.fun.expr);
 				registerProperty(f.name, true, isPublic, f.fun.sig.args[0].type);
+			case TFHaxeProp(f):
+				printTrivia(f.syntax.leadTrivia);
+				buf.add("var ");
+				buf.add(f.name);
+				buf.add(if (f.get) "(get," else "(never,");
+				buf.add(if (f.set) "set):" else "never):");
+				printTType(f.type);
+				buf.add(";\n");
 		}
 	}
 

@@ -2,6 +2,7 @@ package ax3;
 
 import ax3.ParseTree;
 import ax3.Structure;
+import ax3.Token;
 
 typedef TModule = {
 	var path:String;
@@ -170,6 +171,17 @@ enum TClassFieldKind {
 	TFFun(f:TFunctionField);
 	TFGetter(f:TAccessorField);
 	TFSetter(f:TAccessorField);
+	TFHaxeProp(f:THaxePropDecl);
+}
+
+typedef THaxePropDecl = {
+	var syntax:{
+		var leadTrivia:Array<Trivia>; // for indentation
+	}
+	var name:String;
+	var get:Bool;
+	var set:Bool;
+	var type:TType;
 }
 
 typedef TFunctionField = {
