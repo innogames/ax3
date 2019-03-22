@@ -179,9 +179,14 @@ class GenHaxe extends PrinterBase {
 		}
 		if (c.implement != null) {
 			printTextWithTrivia("implements", c.implement.syntax.keyword);
-			for (i in c.implement.interfaces) {
+			printDotPath(c.implement.interfaces[0].syntax);
+			for (i in 1...c.implement.interfaces.length) {
+				var prevComma = c.implement.interfaces[i - 1].comma;
+				if (prevComma != null) printTextWithTrivia("", prevComma); // don't lose comments around comma, if there are any
+
+				var i = c.implement.interfaces[i];
+				buf.add(" implements ");
 				printDotPath(i.syntax);
-				if (i.comma != null) printComma(i.comma);
 			}
 		}
 		printOpenBrace(c.syntax.openBrace);
@@ -225,7 +230,7 @@ class GenHaxe extends PrinterBase {
 	}
 
 	function printCompCondEnd(e:TCondCompEnd) {
-		printTextWithTrivia("#end", e.closeBrace);
+		printTextWithTrivia("#end ", e.closeBrace);
 	}
 
 	function printDeclModifiers(modifiers:Array<DeclModifier>) {
@@ -478,7 +483,16 @@ class GenHaxe extends PrinterBase {
 		buf.add("Std.instance("); // TODO: this is actually incorrect, as Std.instance doesn't support interfaces on e.g. js, we should have a filter that rewrites this
 		printExpr(e);
 		printTextWithTrivia(",", keyword);
-		printTType(type.type);
+
+		// TODO: This is all wrong, but I want to quickly get something compileable
+		switch (type.type) {
+			case TTArray(t): buf.add("Array");
+			case TTDictionary(k, v): buf.add("flash.utils.Dictionary");
+			case TTObject(t): buf.add("Object");
+			case TTClass: buf.add("Class");
+			case TTVector(_): buf.add("flash.Vector"); // This might not work at all actually
+			case _: printTType(type.type);
+		}
 		// printSyntaxType(type.syntax);
 		buf.add(")");
 	}
@@ -579,7 +593,7 @@ class GenHaxe extends PrinterBase {
 		printTokenTrivia(v.syntax.sep);
 		printTextWithTrivia("#if " + v.ns + "_" + v.name, v.syntax.name);
 		printExpr(expr);
-		buf.add("#end");
+		buf.add("#end ");
 	}
 
 	function printCondCompVar(v:TCondCompVar) {
@@ -809,11 +823,17 @@ class GenHaxe extends PrinterBase {
 		switch (obj.kind) {
 			case TOExplicit(dot, e):
 				printExpr(e);
-				printDot(dot);
-			case TOImplicitThis(_):
-			case TOImplicitClass(_):
+
+				printTrivia(dot.leadTrivia);
+				printTrivia(dot.trailTrivia); // haxe doesn't support some.<whitespace>fieldName, so we move whitespace before the dot (hopefully there won't be any line comments)
+				printTrivia(token.leadTrivia);
+				buf.add(".");
+
+			case TOImplicitThis(_) | TOImplicitClass(_):
+				printTrivia(token.leadTrivia);
 		}
-		printTextWithTrivia(name, token);
+		buf.add(name);
+		printTrivia(token.trailTrivia);
 	}
 
 	function printLiteral(l:TLiteral) {

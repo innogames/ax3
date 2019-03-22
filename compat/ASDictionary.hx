@@ -15,4 +15,8 @@ abstract ASDictionary<K,V>(flash.utils.Dictionary) from flash.utils.Dictionary {
 	public inline function remove(key:K):Bool {
 		return untyped __delete__(this, key);
 	}
+
+	public inline function exists(key:K):Bool {
+		return false;
+	}
 }

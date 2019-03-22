@@ -19,3 +19,9 @@
  - rewrite module-level functions/vars into classes with statics
  - rewrite "untyped" field access to getProperty
 6) output Haxe files
+
+
+TODO:
+ - splice
+ - E4X
+ - fix @haxe-type path (check if it's imported and use full path if not)
