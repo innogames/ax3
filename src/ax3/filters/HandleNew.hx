@@ -1,13 +1,18 @@
 package ax3.filters;
 
-class RewriteDynamicNew extends AbstractFilter {
+class HandleNew extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
 		e = mapExpr(processExpr, e);
 		return switch e.kind {
 			case TENew(keyword, eclass, args):
 				switch eclass.kind {
-					case TEBuiltin(_) | TEDeclRef(_) | TEVector(_): // typed `new` - nothing to do
+					case TEDeclRef(_, {kind: SClass(c)}): // just a class instantiation, nothing to rewrite, but mark the class for constructor injection
+						c.wasInstantiated = true;
 						e;
+
+					case TEBuiltin(_) | TEVector(_): // other kinds of typed `new` - nothing to do
+						e;
+
 					case _: // anything else - rewrite to Type.createInstance
 						var leadTrivia = keyword.leadTrivia;
 						var trailTrivia = removeTrailingTrivia(e);

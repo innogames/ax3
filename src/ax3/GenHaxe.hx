@@ -1,17 +1,28 @@
 package ax3;
 
+import ax3.Structure;
 import ax3.ParseTree;
 import ax3.TypedTree;
 import ax3.Token.Trivia;
 
 @:nullSafety
 class GenHaxe extends PrinterBase {
+	var currentModule:Null<SModule>;
+	final structure:Structure;
+
+	public function new(structure) {
+		super();
+		this.structure = structure;
+	}
+
 	public function writeModule(m:TModule) {
+		currentModule = structure.getPackage(m.pack.name).getModule(m.name);
 		printPackage(m.pack);
 		for (d in m.privateDecls) {
 			printDecl(d);
 		}
 		printTrivia(m.eof.leadTrivia);
+		currentModule = null;
 	}
 
 	function printPackage(p:TPackageDecl) {
@@ -150,6 +161,14 @@ class GenHaxe extends PrinterBase {
 	}
 
 	function printClassDecl(c:TClassDecl) {
+		var needsEmptyCtor = // kill me
+			@:nullSafety(Off) switch (currentModule.getDecl(c.name).kind) {
+				case SClass(c):
+					c.wasInstantiated && structure.getConstructor(c) == null;
+				case _:
+					throw "assert";
+			}
+
 		printMetadata(c.metadata);
 		printDeclModifiers(c.modifiers);
 		printTextWithTrivia("class", c.syntax.keyword);
@@ -166,6 +185,10 @@ class GenHaxe extends PrinterBase {
 			}
 		}
 		printOpenBrace(c.syntax.openBrace);
+
+		if (needsEmptyCtor) {
+			buf.add("\tpublic function new() {} // added for Haxe\n");
+		}
 
 		for (m in c.members) {
 			switch (m) {

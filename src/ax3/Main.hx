@@ -59,7 +59,7 @@ class Main {
 			}
 
 			if (haxeDir != null) {
-				var gen = new ax3.GenHaxe();
+				var gen = new ax3.GenHaxe(structure);
 				gen.writeModule(mod);
 				var out = gen.toString();
 

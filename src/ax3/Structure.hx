@@ -487,6 +487,8 @@ class SClassDecl {
 	public final fields = new FieldCollection();
 	public final statics = new FieldCollection();
 
+	public var wasInstantiated = false;
+
 	public function new(name) {
 		this.name = name;
 		this.extensions = [];
