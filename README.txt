@@ -31,3 +31,4 @@ TODO:
  - arithmetic binop type coercion
  - block-level && chains
  - flash native @:getter @:setter for overloaded accessors
+ - inline `static const` for literals
