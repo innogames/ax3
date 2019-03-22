@@ -204,6 +204,7 @@ class GenHaxe extends PrinterBase {
 			for (p in c.properties) {
 				printTrivia(p.syntax.leadTrivia);
 				if (p.isPublic) buf.add("public ");
+				if (p.isStatic) buf.add("static ");
 				buf.add("var ");
 				buf.add(p.name);
 				buf.add(if (p.get) "(get," else "(never,");

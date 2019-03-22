@@ -1,5 +1,11 @@
 package ax3.filters;
 
+private typedef Modifiers = {
+	final isPublic:Bool;
+	final isStatic:Bool;
+	final isOverride:Bool;
+}
+
 class HaxeProperties extends AbstractFilter {
 	var currentProperties:Null<Map<String,THaxePropDecl>>;
 
@@ -9,12 +15,12 @@ class HaxeProperties extends AbstractFilter {
 		currentProperties = null;
 	}
 
-	function addProperty(name:String, set:Bool, type:TType, isPublic:Bool) {
+	function addProperty(name:String, set:Bool, type:TType, mods:Modifiers) {
 		if (currentProperties == null) currentProperties = new Map();
 
 		var prop = currentProperties[name];
 		if (prop == null) {
-			prop = {syntax: {leadTrivia: []}, name: name, get: false, set: false, type: type, isPublic: isPublic};
+			prop = {syntax: {leadTrivia: []}, name: name, get: false, set: false, type: type, isPublic: mods.isPublic, isStatic: mods.isStatic};
 			currentProperties.set(name, prop);
 		}
 
@@ -25,38 +31,36 @@ class HaxeProperties extends AbstractFilter {
 		switch (f.kind) {
 			case TFVar(v): processVarFields(v.vars);
 			case TFFun(field): processFunction(field.fun);
-			case TFGetter(field): processGetter(field, isOverriden(f), isPublic(f));
-			case TFSetter(field): processSetter(field, isOverriden(f), isPublic(f));
+			case TFGetter(field): processGetter(field, getMods(f));
+			case TFSetter(field): processSetter(field, getMods(f));
 		}
 	}
 
-	// TODO: be smarter and check for property incompatibilities
-	function isOverriden(f:TClassField):Bool {
+	function getMods(f:TClassField):Modifiers {
+		var isPublic = false, isStatic = false, isOverride = false;
 		for (m in f.modifiers) {
-			if (m.match(FMOverride(_))) {
-				return true;
+			switch m {
+				case FMInternal(_) | FMPublic(_): isPublic = true;
+				case FMOverride(_): isOverride = true;
+				case FMStatic(_): isStatic = true;
+				case FMPrivate(_) | FMProtected(_) | FMFinal(_):
 			}
 		}
-		return false;
+		return {
+			isPublic: isPublic,
+			isStatic: isStatic,
+			isOverride: isOverride
+		};
 	}
 
-	function isPublic(f:TClassField):Bool {
-		for (m in f.modifiers) {
-			if (m.match(FMPublic(_))) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	function processGetter(field:TAccessorField, isOverriden:Bool, isPublic:Bool) {
+	function processGetter(field:TAccessorField, mods:Modifiers) {
 		processFunction(field.fun);
-		if (!isOverriden) {
-			addProperty(field.name, false, field.fun.sig.ret.type, isPublic);
+		if (!mods.isOverride) {
+			addProperty(field.name, false, field.fun.sig.ret.type, mods);
 		}
 	}
 
-	function processSetter(field:TAccessorField, isOverriden:Bool, isPublic:Bool) {
+	function processSetter(field:TAccessorField, mods:Modifiers) {
 		var sig = field.fun.sig;
 		var arg = sig.args[0];
 		var type = arg.type;
@@ -69,8 +73,8 @@ class HaxeProperties extends AbstractFilter {
 		var returnExpr = mk(TEReturn(returnKeyword, argLocal), TTVoid, TTVoid);
 		field.fun.expr = concatExprs(field.fun.expr, returnExpr);
 
-		if (!isOverriden) {
-			addProperty(field.name, true, type, isPublic);
+		if (!mods.isOverride) {
+			addProperty(field.name, true, type, mods);
 		}
 	}
 }

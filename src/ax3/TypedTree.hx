@@ -179,6 +179,7 @@ typedef THaxePropDecl = {
 		var leadTrivia:Array<Trivia>; // for indentation
 	}
 	var isPublic:Bool;
+	var isStatic:Bool;
 	var name:String;
 	var get:Bool;
 	var set:Bool;
