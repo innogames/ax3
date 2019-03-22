@@ -94,6 +94,7 @@ typedef TClassDecl = {
 		var openBrace:Token;
 		var closeBrace:Token;
 	};
+	var properties:Null<Map<String,THaxePropDecl>>;
 	var metadata:Array<Metadata>;
 	var modifiers:Array<DeclModifier>;
 	var name:String;
@@ -171,13 +172,13 @@ enum TClassFieldKind {
 	TFFun(f:TFunctionField);
 	TFGetter(f:TAccessorField);
 	TFSetter(f:TAccessorField);
-	TFHaxeProp(f:THaxePropDecl);
 }
 
 typedef THaxePropDecl = {
 	var syntax:{
 		var leadTrivia:Array<Trivia>; // for indentation
 	}
+	var isPublic:Bool;
 	var name:String;
 	var get:Bool;
 	var set:Bool;

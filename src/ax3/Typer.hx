@@ -367,6 +367,7 @@ class Typer {
 			implement: implement,
 			modifiers: c.modifiers,
 			members: tMembers,
+			properties: null,
 		}
 	}
 

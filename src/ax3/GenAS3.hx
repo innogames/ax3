@@ -213,8 +213,6 @@ class GenAS3 extends PrinterBase {
 				printTextWithTrivia(f.name, f.syntax.name);
 				printSignature(f.fun.sig);
 				printExpr(f.fun.expr);
-			case TFHaxeProp(_):
-				throw "assert";
 		}
 	}
 

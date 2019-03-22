@@ -9,7 +9,6 @@ class Filters {
 		var externImports = new ExternModuleLevelImports(context);
 		for (f in [
 			externImports,
-			new RewriteSetters(context),
 			new RestArgs(context),
 			new RewriteArrayAccess(context),
 			new RewriteIs(context),
@@ -20,6 +19,7 @@ class Filters {
 			new CoerceToBool(context),
 			new NumberToInt(context),
 			new InvertNegatedEquality(context),
+			new HaxeProperties(context),
 			// new AddParens(context),
 			new AddRequiredParens(context),
 			// new CheckExpectedTypes(context)

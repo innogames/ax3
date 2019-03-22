@@ -37,6 +37,9 @@ class TypedTreeDumpMacro {
 			case TAbstract(_.get() => {pack: [], name: "Bool"}, _):
 				return macro function(s, indent) str(if (s) "true" else "false");
 
+			case TAbstract(_.get() => {pack: ["haxe", "ds"], name: "Map"}, _):
+				return macro function(_, _) {};
+
 			case TInst(_.get() => {pack: [], name: "Array"}, [elemT]) if (name != null):
 				return walkSeq(elemT, origType, name, macro printArray, fields);
 

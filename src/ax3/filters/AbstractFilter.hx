@@ -47,14 +47,7 @@ class AbstractFilter {
 	function processClass(c:TClassDecl) {
 		for (m in c.members) {
 			switch (m) {
-				case TMField(field):
-					switch (field.kind) {
-						case TFVar(v): processVarFields(v.vars);
-						case TFFun(field): processFunction(field.fun);
-						case TFGetter(field): processFunction(field.fun);
-						case TFSetter(field): processSetter(field);
-						case TFHaxeProp(_):
-					}
+				case TMField(field): processClassField(field);
 				case TMStaticInit(i): i.expr = processExpr(i.expr);
 				case TMUseNamespace(_):
 				case TMCondCompBegin(_):
@@ -63,8 +56,13 @@ class AbstractFilter {
 		}
 	}
 
-	function processSetter(field:TAccessorField) {
-		processFunction(field.fun);
+	function processClassField(field:TClassField) {
+		switch (field.kind) {
+			case TFVar(v): processVarFields(v.vars);
+			case TFFun(field): processFunction(field.fun);
+			case TFGetter(field): processFunction(field.fun);
+			case TFSetter(field): processFunction(field.fun);
+		}
 	}
 
 	function processInterface(i:TInterfaceDecl) {
