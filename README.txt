@@ -32,3 +32,5 @@ TODO:
  - block-level && chains
  - flash native @:getter @:setter for overloaded accessors
  - inline `static const` for literals
+ - fix priority for `new something()[expr]`
+
