@@ -6,7 +6,7 @@ class RewriteDynamicNew extends AbstractFilter {
 		return switch e.kind {
 			case TENew(keyword, eclass, args):
 				switch eclass.kind {
-					case TEBuiltin(_) | TEDeclRef(_): // typed `new` - nothing to do
+					case TEBuiltin(_) | TEDeclRef(_) | TEVector(_): // typed `new` - nothing to do
 						e;
 					case _: // anything else - rewrite to Type.createInstance
 						var leadTrivia = keyword.leadTrivia;
