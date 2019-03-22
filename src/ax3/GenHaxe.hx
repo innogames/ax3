@@ -616,8 +616,7 @@ class GenHaxe extends PrinterBase {
 	function printNew(keyword:Token, eclass:TExpr, args:Null<TCallArgs>) {
 		printTextWithTrivia("new", keyword);
 		switch (eclass.kind) {
-			case TEDeclRef(_) | TEVector(_): printExpr(eclass);
-			case TEBuiltin(token, "Array"): printTextWithTrivia("Array", token);
+			case TEDeclRef(_) | TEVector(_) | TEBuiltin(_): printExpr(eclass);
 			case other:
 				trace(Std.string(other));
 				buf.add("/*local*/String");
@@ -806,7 +805,7 @@ class GenHaxe extends PrinterBase {
 			case TLInt(syntax): printTextWithTrivia(syntax.text, syntax);
 			case TLNumber(syntax): printTextWithTrivia(syntax.text, syntax);
 			case TLString(syntax): printTextWithTrivia(syntax.text, syntax);
-			case TLRegExp(syntax): printTextWithTrivia("~"+syntax.text, syntax);
+			case TLRegExp(syntax): throw "assert";
 		}
 	}
 
