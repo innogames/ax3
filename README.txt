@@ -30,3 +30,4 @@ TODO:
  - hasOwnProperty for dicts (and dict API in general)
  - arithmetic binop type coercion
  - block-level && chains
+ - flash native @:getter @:setter for overloaded accessors
