@@ -1,4 +1,8 @@
 abstract ASAny(Dynamic) from Dynamic {
+	public inline function hasOwnProperty(name:String):Bool {
+		return Reflect.hasField(this, name);
+	}
+
 	@:to function ___toString():String {
 		return this; // TODO
 	}
