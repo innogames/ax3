@@ -139,8 +139,10 @@ class TypedTreeTools {
 		return mk(TELiteral(TLNull(new Token(0, TkIdent, "null", if (lead != null) lead else [], if (trail != null) trail else []))), t, t);
 	}
 
-	public static inline function mkBuiltin(n:String, t:TType):TExpr {
-		return mk(TEBuiltin(new Token(0, TkIdent, n, [], []), n), t, t);
+	public static function mkBuiltin(n:String, t:TType, ?leadTrivia, ?trailTrivia):TExpr {
+		if (leadTrivia == null) leadTrivia = [];
+		if (trailTrivia == null) trailTrivia = [];
+		return mk(TEBuiltin(new Token(0, TkIdent, n, leadTrivia, trailTrivia), n), t, t);
 	}
 
 	public static function mkCall(obj:TExpr, args:Array<TExpr>, ?t:TType):TExpr {

@@ -11,16 +11,28 @@ class RewriteArraySplice extends AbstractFilter {
 						// but only if the value is not used (because `insert` returns Void, while splice returns `Array`)
 						// TODO: enable this (needs making sure that the value is unused)
 						// e;
+
 					case [_, _]:
 						// just two arguments - no inserted values, so it's a splice just like in Haxe, leave as is
 						e;
+
+					case [eIndex]: // single arg - remove everything beginning with the given index
+						var eCompatMethod = mkBuiltin("ASCompat.arraySpliceAll", TTFunction, removeLeadingTrivia(eArray), []);
+						e.with(kind = TECall(eCompatMethod, args.with(
+							args = [
+								{expr: eArray, comma: mkCommaWithSpace()},
+								eIndex
+							]
+						)));
+
 					case _:
+						if (args.args.length < 3) throw "assert";
+
 						// rewrite anything else to a compat call
-						var leadTrivia = removeLeadingTrivia(eArray);
-						var eCompatMethod = mk(TEBuiltin(new Token(0, TkIdent, "ASCompat.arraySplice", leadTrivia, []), "ASCompat.arraySplice"), TTFunction, TTFunction);
+						var eCompatMethod = mkBuiltin("ASCompat.arraySplice", TTFunction, removeLeadingTrivia(eArray), []);
 
 						var newArgs = [
-							{expr: eArray, comma: new Token(0, TkComma, ",", [], [mkWhitespace()])}, // array instance
+							{expr: eArray, comma: mkCommaWithSpace()}, // array instance
 							args.args[0], // index
 							args.args[1], // delete count
 							{

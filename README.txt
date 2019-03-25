@@ -33,7 +33,7 @@ TODO:
  - inline `static const` for literals
  - fix priority for `new something()[expr]`
  - implement class-wrapping for module-level vars/functions
- - rewrite Int.MIN_VALUE/MAX_VALUE, Array.sortOn (and related constants), String.match, Array.splice (rewrite splice(x,0,el) to insert(x,el))
+ - rewrite Int.MIN_VALUE/MAX_VALUE, Array.sortOn (and related constants), String.match
  - rewrite x.toString() to Std.string(x)
  - rewrite `new Date()` to `Date.now()`, rewrite some getters to function calls
  - rewrite float.toFixed()
