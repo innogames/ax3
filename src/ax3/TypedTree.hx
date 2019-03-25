@@ -207,6 +207,7 @@ typedef TAccessorField = {
 
 typedef TVarField = {
 	var kind:VarDeclKind;
+	var isInline:Bool;
 	var vars:Array<TVarFieldDecl>;
 	var semicolon:Token;
 }

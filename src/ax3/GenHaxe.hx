@@ -290,6 +290,10 @@ class GenHaxe extends PrinterBase {
 	}
 
 	function printVarField(v:TVarField) {
+		if (v.isInline) buf.add("inline ");
+
+		// TODO: complain if there's more than one var declaration here (this should be rewritten into multiple ones)
+
 		printVarKind(v.kind);
 		for (v in v.vars) {
 			printTextWithTrivia(v.name, v.syntax.name);

@@ -134,6 +134,7 @@ class Typer {
 			metadata: v.metadata,
 			modifiers: v.modifiers,
 			kind: v.kind,
+			isInline: false,
 			vars: typeVarFieldDecls(v.vars, overrideType),
 			semicolon: v.semicolon
 		}
@@ -398,7 +399,8 @@ class Typer {
 				TFVar({
 					kind: kind,
 					vars: typeVarFieldDecls(vars, haxeType),
-					semicolon: semicolon
+					semicolon: semicolon,
+					isInline: false,
 				});
 			case FFun(keyword, name, fun):
 				initLocals();

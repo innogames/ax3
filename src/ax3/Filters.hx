@@ -9,6 +9,7 @@ class Filters {
 		var externImports = new ExternModuleLevelImports(context);
 		for (f in [
 			externImports,
+			new InlineStaticConsts(context),
 			new RewriteArraySplice(context),
 			new RewriteArraySetLength(context),
 			new RestArgs(context),
