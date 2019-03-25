@@ -867,24 +867,29 @@ class GenHaxe extends PrinterBase {
 	function printBlockExpr(e:TBlockExpr) {
 		printExpr(e.expr);
 		if (e.semicolon != null) {
-			printSemicolon(e.semicolon);
-		} else if (!endsWithBlock(e.expr)) {
+			if (e.expr.kind.match(TEUseNamespace(_))) {
+				printTrivia(e.semicolon.leadTrivia);
+				printTrivia(e.semicolon.trailTrivia);
+			} else {
+				printSemicolon(e.semicolon);
+			}
+		} else if (needsSemicolon(e.expr)) {
 			buf.add(";");
 		}
 	}
 
-	static function endsWithBlock(e:TExpr) {
+	static function needsSemicolon(e:TExpr) {
 		return switch e.kind {
-			case TEBlock(_) | TECondCompBlock(_) | TETry(_) | TESwitch(_):
-				true;
-			case TEIf(i):
-				endsWithBlock(if (i.eelse != null) i.eelse.expr else i.ethen);
-			case TEHaxeFor({body: b}), TEFor({body: b}) | TEForIn({body: b}) | TEForEach({body: b}) | TEWhile({body: b}) | TEDoWhile({body: b}):
-				endsWithBlock(b);
-			case TELocalFunction(f):
-				endsWithBlock(f.fun.expr);
-			case _:
+			case TEBlock(_) | TECondCompBlock(_) | TETry(_) | TESwitch(_) | TEUseNamespace(_):
 				false;
+			case TEIf(i):
+				needsSemicolon(if (i.eelse != null) i.eelse.expr else i.ethen);
+			case TEHaxeFor({body: b}), TEFor({body: b}) | TEForIn({body: b}) | TEForEach({body: b}) | TEWhile({body: b}) | TEDoWhile({body: b}):
+				needsSemicolon(b);
+			case TELocalFunction(f):
+				needsSemicolon(f.fun.expr);
+			case _:
+				true;
 		}
 	}
 
