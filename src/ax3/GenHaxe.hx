@@ -4,6 +4,7 @@ import ax3.Structure;
 import ax3.ParseTree;
 import ax3.TypedTree;
 import ax3.Token.Trivia;
+using StringTools;
 
 @:nullSafety
 class GenHaxe extends PrinterBase {
@@ -472,6 +473,7 @@ class GenHaxe extends PrinterBase {
 			case "escape": "escape";
 			case "arguments": "/*TODO*/arguments";
 			case "trace": "trace";
+			case _ if (name.startsWith("ASCompat.")): name;
 			case _:
 				throw "unknown builtin: " + name;
 		}
