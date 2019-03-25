@@ -85,18 +85,20 @@ class GenHaxe extends PrinterBase {
 
 	function printImport(i:TImport) {
 		if (i.syntax.condCompBegin != null) printCondCompBegin(i.syntax.condCompBegin);
-		printTextWithTrivia("import", i.syntax.keyword);
-		printDotPath(i.syntax.path);
-		switch i.kind {
-			case TIDecl(_):
-			case TIAliased(d, as, name):
-				printTextWithTrivia("as", as);
-				printTextWithTrivia(name.text, name);
-			case TIAll(dot, asterisk):
-				printDot(dot);
-				printTextWithTrivia("*", asterisk);
+		if (!i.kind.match(TIDecl({kind: SNamespace}))) { // TODO: still print trivia from namespace imports?
+			printTextWithTrivia("import", i.syntax.keyword);
+			printDotPath(i.syntax.path);
+			switch i.kind {
+				case TIDecl(_):
+				case TIAliased(d, as, name):
+					printTextWithTrivia("as", as);
+					printTextWithTrivia(name.text, name);
+				case TIAll(dot, asterisk):
+					printDot(dot);
+					printTextWithTrivia("*", asterisk);
+			}
+			printSemicolon(i.syntax.semicolon);
 		}
-		printSemicolon(i.syntax.semicolon);
 		if (i.syntax.condCompEnd != null) printCompCondEnd(i.syntax.condCompEnd);
 	}
 
