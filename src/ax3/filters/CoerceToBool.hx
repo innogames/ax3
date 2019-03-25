@@ -15,6 +15,9 @@ class CoerceToBool extends AbstractFilter {
 		}
 	}
 
+	static final tStringAsBool = TTFun([TTString], TTBoolean);
+	static final tFloatAsBool = TTFun([TTNumber], TTBoolean);
+
 	function coerce(e:TExpr):TExpr {
 		// TODO: add parens where needed
 		return switch (e.type) {
@@ -38,9 +41,31 @@ class CoerceToBool extends AbstractFilter {
 			// 	var emptyCheck = mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), emptyExpr), TTBoolean, TTBoolean);
 			// 	mk(TEBinop(nullCheck, OpAnd(mkAndAndToken()), emptyCheck), TTBoolean, TTBoolean);
 
-			case _:
-			// case TTString | TTNumber | TTAny | TTVoid | TTBuiltin:
-				// reportError(exprPos(e), "TODO: bool coecion");
+			case TTString:
+				var lead = removeLeadingTrivia(e);
+				var tail = removeTrailingTrivia(e);
+				var eStringAsBoolMethod = mkBuiltin("ASCompat.stringAsBool", tStringAsBool, lead, []);
+				mk(TECall(eStringAsBoolMethod, {
+					openParen: mkOpenParen(),
+					closeParen: new Token(0, TkParenClose, ")", [], tail),
+					args: [{expr: e, comma: null}],
+				}), TTBoolean, TTBoolean);
+
+			case TTNumber:
+				var lead = removeLeadingTrivia(e);
+				var tail = removeTrailingTrivia(e);
+				var eFloatAsBoolMethod = mkBuiltin("ASCompat.floatAsBool", tFloatAsBool, lead, []);
+				mk(TECall(eFloatAsBoolMethod, {
+					openParen: mkOpenParen(),
+					closeParen: new Token(0, TkParenClose, ")", [], tail),
+					args: [{expr: e, comma: null}],
+				}), TTBoolean, TTBoolean);
+
+			case TTAny:
+				e; // handled by the ASAny abstract \o/
+
+			case TTVoid | TTBuiltin:
+				reportError(exprPos(e), "TODO: bool coecion");
 				// TODO
 				// string: null or empty
 				// number: Nan or 0

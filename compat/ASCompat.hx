@@ -1,4 +1,12 @@
 class ASCompat {
+	public static inline function stringAsBool(s:Null<String>):Bool {
+		return s != null && s != "";
+	}
+
+	public static inline function floatAsBool(f:Null<Float>):Bool {
+		return f != null && !Math.isNaN(f);
+	}
+
 	public static inline function arraySetLength<T>(a:Array<T>, newLength:Int):Int {
 		a.resize(newLength);
 		return newLength;
