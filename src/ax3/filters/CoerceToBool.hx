@@ -62,18 +62,11 @@ class CoerceToBool extends AbstractFilter {
 				}), TTBoolean, TTBoolean);
 
 			case TTAny:
-				e; // handled by the ASAny abstract \o/
+				e; // handled at run-time by the ASAny abstract \o/
 
 			case TTVoid | TTBuiltin:
 				reportError(exprPos(e), "TODO: bool coecion");
-				// TODO
-				// string: null or empty
-				// number: Nan or 0
-				// any: runtime helper + warning?
-				// builtin: gotta remove this really
-				// void: should NOT happen (cases like `v && v.f()` should be filtered before)
-				// trace("(not) coercing " + e.type.getName());
-				e;
+				throw "should not happen";
 		}
 	}
 }
