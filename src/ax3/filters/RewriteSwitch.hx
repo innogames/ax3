@@ -19,6 +19,8 @@ class RewriteSwitch extends AbstractFilter {
 							var expr = v.value;
 							processLeadingToken(function(t) {
 								t.leadTrivia = t.leadTrivia.concat(v.syntax.keyword.leadTrivia);
+							}, expr);
+							processTrailingToken(function(t) {
 								t.trailTrivia = t.trailTrivia.concat(v.syntax.colon.leadTrivia).concat(v.syntax.colon.trailTrivia);
 							}, expr);
 							values.push(expr);
@@ -38,7 +40,6 @@ class RewriteSwitch extends AbstractFilter {
 								reportError(exprPos(lastExpr), "Non-terminal expression inside a switch case, possible fall-through?");
 						}
 
-						// TODO: something is reall wrong with trivia here
 						newCases.push({
 							syntax: {
 								keyword: new Token(0, TkIdent, "case", removeLeadingTrivia(values[0]), [mkWhitespace()]),
