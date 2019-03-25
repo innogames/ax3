@@ -10,6 +10,7 @@ class Filters {
 		for (f in [
 			externImports,
 			new InlineStaticConsts(context),
+			new RewriteE4X(context),
 			new RewriteArraySplice(context),
 			new RewriteArraySetLength(context),
 			new RestArgs(context),

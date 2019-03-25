@@ -490,10 +490,7 @@ class GenHaxe extends PrinterBase {
 			case TENew(keyword, eclass, args): printNew(keyword, eclass, args);
 			case TECondCompValue(v): printCondCompVar(v);
 			case TECondCompBlock(v, expr): printCondCompBlock(v, expr);
-			case TEXmlChild(x): printXmlChild(x);
-			case TEXmlAttr(x): printXmlAttr(x);
-			case TEXmlAttrExpr(x): printXmlAttrExpr(x);
-			case TEXmlDescend(x): printXmlDescend(x);
+			case TEXmlChild(_) | TEXmlAttr(_) | TEXmlAttrExpr(_) | TEXmlDescend(_): throw 'unprocessed E4X';
 			case TEUseNamespace(ns): printUseNamespace(ns);
 		}
 	}
@@ -561,34 +558,6 @@ class GenHaxe extends PrinterBase {
 		if (f.name != null) printTextWithTrivia(f.name.name, f.name.syntax);
 		printSignature(f.fun.sig);
 		printExpr(f.fun.expr);
-	}
-
-	function printXmlDescend(x:TXmlDescend) {
-		printExpr(x.eobj);
-		printTextWithTrivia("..", x.syntax.dotDot);
-		printTextWithTrivia(x.name, x.syntax.name);
-	}
-
-	function printXmlChild(x:TXmlChild) {
-		printExpr(x.eobj);
-		printDot(x.syntax.dot);
-		printTextWithTrivia(x.name, x.syntax.name);
-	}
-
-	function printXmlAttr(x:TXmlAttr) {
-		printExpr(x.eobj);
-		printDot(x.syntax.dot);
-		printTextWithTrivia("@", x.syntax.at);
-		printTextWithTrivia(x.name, x.syntax.name);
-	}
-
-	function printXmlAttrExpr(x:TXmlAttrExpr) {
-		printExpr(x.eobj);
-		printDot(x.syntax.dot);
-		printTextWithTrivia("@", x.syntax.at);
-		printOpenBracket(x.syntax.openBracket);
-		printExpr(x.eattr);
-		printCloseBracket(x.syntax.closeBracket);
 	}
 
 	function printSwitch(s:TSwitch) {
