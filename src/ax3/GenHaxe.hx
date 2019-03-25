@@ -569,7 +569,11 @@ class GenHaxe extends PrinterBase {
 		printOpenBrace(s.syntax.openBrace);
 		for (c in s.cases) {
 			printTextWithTrivia("case", c.syntax.keyword);
-			printExpr(c.value);
+			var first = true;
+			for (e in c.values) {
+				if (first) first = false else buf.add("|");
+				printExpr(e);
+			}
 			printColon(c.syntax.colon);
 			for (e in c.body) {
 				printBlockExpr(e);

@@ -460,7 +460,7 @@ class TypedTreeTools {
 					subj = f(s.subj),
 					cases = [
 						for (c in s.cases)
-							c.with(value = f(c.value), body = mapBlockExprs(f, c.body))
+							c.with(values = [for (e in c.values) f(e)], body = mapBlockExprs(f, c.body))
 					],
 					def = if (s.def == null) null else s.def.with(body = mapBlockExprs(f, s.def.body))
 				)));

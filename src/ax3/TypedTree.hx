@@ -544,7 +544,7 @@ typedef TSwitchCase = {
 		var keyword:Token;
 		var colon:Token;
 	}
-	var value:TExpr;
+	var values:Array<TExpr>;
 	var body:Array<TBlockExpr>;
 }
 

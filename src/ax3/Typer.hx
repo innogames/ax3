@@ -717,7 +717,7 @@ class Typer {
 							keyword: keyword,
 							colon: colon,
 						},
-						value: typeExpr(v, TTAny),
+						values: [typeExpr(v, TTAny)],
 						body: [for (e in body) {expr: typeExpr(e.expr, TTVoid), semicolon: e.semicolon}]
 					});
 				case CDefault(keyword, colon, body):

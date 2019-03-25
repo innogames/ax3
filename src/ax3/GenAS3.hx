@@ -364,8 +364,10 @@ class GenAS3 extends PrinterBase {
 		printOpenBrace(s.syntax.openBrace);
 		for (c in s.cases) {
 			printTextWithTrivia("case", c.syntax.keyword);
-			printExpr(c.value);
-			printColon(c.syntax.colon);
+			for (v in c.values) {
+				printExpr(v);
+				printColon(c.syntax.colon);
+			}
 			for (e in c.body) {
 				printBlockExpr(e);
 			}
