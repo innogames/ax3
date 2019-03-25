@@ -1,4 +1,9 @@
 class ASCompat {
+	public static inline function arraySetLength<T>(a:Array<T>, newLength:Int):Int {
+		a.resize(newLength);
+		return newLength;
+	}
+
 	public static inline function arraySpliceAll<T>(a:Array<T>, startIndex:Int):Array<T> {
 		return a.splice(startIndex, a.length);
 	}
