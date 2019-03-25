@@ -40,3 +40,4 @@ TODO:
  - finish compat abstracts
  - go through TODOs in the code
  - get rid of rework Structure so it's less awkward to work with
+ - rewrite unqualified static field access for the parent classes to qualified
