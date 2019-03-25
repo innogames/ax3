@@ -7,6 +7,26 @@ class RewriteSwitch extends AbstractFilter {
 			case TESwitch(s):
 				var newCases:Array<TSwitchCase> = [];
 				var valueAcc = [];
+
+				function processCaseBody(block:Array<TBlockExpr>, allowNonTerminalLast:Bool) {
+					switch block {
+						case [{expr: {kind: TEBlock(b)}}]: block = b.exprs; // for cases with "braced" body: `case value: {...}`
+						case _:
+					}
+
+					if (block.length == 0) return; // empty block - nothing to do here
+
+					var lastExpr = block[block.length - 1].expr;
+					switch lastExpr.kind {
+						case TEBreak(_): block.pop(); // TODO: move trivia to the previous one
+						case TEReturn(_) | TEContinue(_) | TEThrow(_): // allowed terminators
+						case _:
+							if (!allowNonTerminalLast) {
+								reportError(exprPos(lastExpr), "Non-terminal expression inside a switch case, possible fall-through?");
+							}
+					}
+				}
+
 				for (c in s.cases) {
 					var value = switch c.values {
 						case [value]: value;
@@ -26,19 +46,7 @@ class RewriteSwitch extends AbstractFilter {
 							values.push(expr);
 						}
 
-						var block = c.body;
-						switch block {
-							case [{expr: {kind: TEBlock(b)}}]: block = b.exprs;
-							case _:
-						}
-
-						var lastExpr = block[block.length - 1].expr;
-						switch lastExpr.kind {
-							case TEBreak(_): block.pop(); // TODO: move trivia to the previous one
-							case TEReturn(_) | TEContinue(_) | TEThrow(_): // allowed terminators
-							case _:
-								reportError(exprPos(lastExpr), "Non-terminal expression inside a switch case, possible fall-through?");
-						}
+						processCaseBody(c.body, false);
 
 						newCases.push({
 							syntax: {
@@ -51,6 +59,8 @@ class RewriteSwitch extends AbstractFilter {
 						valueAcc = [];
 					}
 				}
+
+				if (s.def != null) processCaseBody(s.def.body, true);
 
 				var newDef = s.def;
 
