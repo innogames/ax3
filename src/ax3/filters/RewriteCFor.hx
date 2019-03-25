@@ -1,7 +1,7 @@
 package ax3.filters;
 
 class RewriteCFor extends AbstractFilter {
-	var currentIncrExpr:Null<TExpr>;
+	var currentIncrExpr:Null<TExpr>; // TODO: handle comma here for the nicer output
 
 	override function processExpr(e:TExpr):TExpr {
 		return switch e.kind {

@@ -482,6 +482,7 @@ class GenHaxe extends PrinterBase {
 			case TEDoWhile(w): printDoWhile(w);
 			case TEHaxeFor(f): printFor(f);
 			case TEFor(_) | TEForIn(_) | TEForEach(_): //throw "unprocessed `for` expression";
+			case TEBinop(a, OpComma(t), b): printCommaOperator(a, t, b);
 			case TEBinop(a, op, b): printBinop(a, op, b);
 			case TEPreUnop(op, e): printPreUnop(op, e);
 			case TEPostUnop(e, op): printPostUnop(e, op);
@@ -744,6 +745,17 @@ class GenHaxe extends PrinterBase {
 		}
 	}
 
+	function printCommaOperator(a:TExpr, comma:Token, b:TExpr) {
+		// TODO: flatten nested commas (maybe this should be a filter...)
+		printTrivia(TypedTreeTools.removeLeadingTrivia(a));
+		buf.add("{");
+		printExpr(a);
+		printSemicolon(comma);
+		printExpr(b);
+		buf.add(";}");
+		printTrivia(TypedTreeTools.removeTrailingTrivia(b));
+	}
+
 	function printBinop(a:TExpr, op:Binop, b:TExpr) {
 		printExpr(a);
 		switch (op) {
@@ -877,7 +889,7 @@ class GenHaxe extends PrinterBase {
 	function printBlockExpr(e:TBlockExpr) {
 		printExpr(e.expr);
 		if (e.semicolon != null) {
-			if (e.expr.kind.match(TEUseNamespace(_))) {
+			if (e.expr.kind.match(TEUseNamespace(_) | TEBinop(_, OpComma(_), _))) {
 				printTrivia(e.semicolon.leadTrivia);
 				printTrivia(e.semicolon.trailTrivia);
 			} else {
@@ -890,7 +902,7 @@ class GenHaxe extends PrinterBase {
 
 	static function needsSemicolon(e:TExpr) {
 		return switch e.kind {
-			case TEBlock(_) | TECondCompBlock(_) | TETry(_) | TESwitch(_) | TEUseNamespace(_):
+			case TEBlock(_) | TECondCompBlock(_) | TETry(_) | TESwitch(_) | TEUseNamespace(_) | TEBinop(_, OpComma(_), _):
 				false;
 			case TEIf(i):
 				needsSemicolon(if (i.eelse != null) i.eelse.expr else i.ethen);
