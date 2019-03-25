@@ -11,6 +11,7 @@ class Filters {
 			externImports,
 			new InlineStaticConsts(context),
 			new RewriteE4X(context),
+			new RewriteSwitch(context),
 			new RewriteArraySplice(context),
 			new RewriteArraySetLength(context),
 			new RestArgs(context),

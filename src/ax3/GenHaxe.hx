@@ -571,7 +571,12 @@ class GenHaxe extends PrinterBase {
 			printTextWithTrivia("case", c.syntax.keyword);
 			var first = true;
 			for (e in c.values) {
-				if (first) first = false else buf.add("|");
+				if (first) {
+					first = false;
+				} else {
+					printTrivia(TypedTreeTools.removeLeadingTrivia(e));
+					buf.add("| ");
+				}
 				printExpr(e);
 			}
 			printColon(c.syntax.colon);
