@@ -21,7 +21,7 @@ class CoerceToBool extends AbstractFilter {
 			case TTBoolean:
 				e; // shouldn't happen really
 
-			case TTFunction | TTFun(_) | TTClass | TTObject(_) | TTInst(_) | TTStatic(_) | TTArray(_) | TTVector(_) | TTRegExp | TTXML | TTXMLList:
+			case TTFunction | TTFun(_) | TTClass | TTObject(_) | TTInst(_) | TTStatic(_) | TTArray(_) | TTVector(_) | TTRegExp | TTXML | TTXMLList | TTDictionary(_, _):
 				var trail = removeTrailingTrivia(e);
 				mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), mkNullExpr(e.type, [], trail)), TTBoolean, TTBoolean);
 
