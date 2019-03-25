@@ -14,8 +14,6 @@ class RewriteSwitch extends AbstractFilter {
 					};
 					valueAcc.push({syntax: c.syntax, value: value});
 					if (c.body.length > 0) {
-						var body = c.body;
-
 						var values = [];
 						for (v in valueAcc) {
 							var expr = v.value;
@@ -26,13 +24,28 @@ class RewriteSwitch extends AbstractFilter {
 							values.push(expr);
 						}
 
+						var block = c.body;
+						switch block {
+							case [{expr: {kind: TEBlock(b)}}]: block = b.exprs;
+							case _:
+						}
+
+						var lastExpr = block[block.length - 1].expr;
+						switch lastExpr.kind {
+							case TEBreak(_): block.pop(); // TODO: move trivia to the previous one
+							case TEReturn(_) | TEContinue(_) | TEThrow(_): // allowed terminators
+							case _:
+								reportError(exprPos(lastExpr), "Non-terminal expression inside a switch case, possible fall-through?");
+						}
+
+						// TODO: something is reall wrong with trivia here
 						newCases.push({
 							syntax: {
 								keyword: new Token(0, TkIdent, "case", removeLeadingTrivia(values[0]), [mkWhitespace()]),
 								colon: new Token(0, TkColon, ":", [], removeTrailingTrivia(values[values.length - 1]))
 							},
 							values: values,
-							body: body
+							body: c.body // mutated inplace
 						});
 						valueAcc = [];
 					}
