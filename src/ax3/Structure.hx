@@ -482,6 +482,7 @@ abstract FieldCollection(Map<String,SClassField>) {
 
 class SClassDecl {
 	public var extensions:Array<String>;
+	public final publicFQN:Null<String>;
 	public final name:String;
 
 	public final fields = new FieldCollection();
@@ -489,8 +490,9 @@ class SClassDecl {
 
 	public var wasInstantiated = false;
 
-	public function new(name) {
+	public function new(name, publicFQN) {
 		this.name = name;
+		this.publicFQN = publicFQN;
 		this.extensions = [];
 	}
 

@@ -5,6 +5,10 @@ import ax3.ParseTree.*;
 import ax3.Structure;
 
 class StructureBuilder {
+	public static function makeFQN(ns:String, n:String):String {
+		return if (ns == "") n else ns + "." + n;
+	}
+
 	public static function buildTypeStructure(t:SyntaxType, ?resolveModule:SModule):SType {
 		return switch (t) {
 			case TAny(_): STAny;
@@ -43,13 +47,13 @@ class StructureBuilder {
 		var sModule = sPack.createModule(file.name);
 
 		sModule.mainDecl = {
-			var dl = buildDeclStructure(mainDecl);
+			var dl = buildDeclStructure(mainDecl, packName);
 			if (dl.length > 1) throw "more than one main declarations?"; // shouldn't happen really
 			dl[0];
 		};
 
 		for (d in privateDecls) {
-			for (s in buildDeclStructure(d))
+			for (s in buildDeclStructure(d, null))
 				sModule.privateDecls.push(s);
 		}
 
@@ -63,12 +67,12 @@ class StructureBuilder {
 		return if (i.wildcard != null) SIAll(path.join(".")) else {var name = path.pop(); SISingle(path.join("."), name);}
 	}
 
-	static function buildDeclStructure(d:Declaration):Array<SDecl> {
+	static function buildDeclStructure(d:Declaration, pack:Null<String>):Array<SDecl> {
 		switch (d) {
 			case DClass(c):
-				return [buildClassStructure(c)];
+				return [buildClassStructure(c, pack)];
 			case DInterface(i):
-				return [buildInterfaceStructure(i)];
+				return [buildInterfaceStructure(i, pack)];
 			case DFunction(f):
 				return [{name: f.name.text, kind: SFun(buildFunctionStructure(f.fun.signature))}];
 			case DVar(v):
@@ -80,8 +84,8 @@ class StructureBuilder {
 		}
 	}
 
-	static function buildClassStructure(v:ClassDecl):SDecl {
-		var cls = new SClassDecl(v.name.text);
+	static function buildClassStructure(v:ClassDecl, pack:String):SDecl {
+		var cls = new SClassDecl(v.name.text, if (pack == null) null else makeFQN(pack, v.name.text));
 		if (v.extend != null) {
 			cls.extensions.push(dotPathToString(v.extend.path));
 		}
@@ -140,8 +144,8 @@ class StructureBuilder {
 		};
 	}
 
-	static function buildInterfaceStructure(v:InterfaceDecl):SDecl {
-		var cls = new SClassDecl(v.name.text);
+	static function buildInterfaceStructure(v:InterfaceDecl, pack:Null<String>):SDecl {
+		var cls = new SClassDecl(v.name.text, if (pack == null) null else makeFQN(pack, v.name.text));
 		if (v.extend != null) {
 			iterSeparated(v.extend.paths, p -> cls.extensions.push(dotPathToString(p)));
 		}

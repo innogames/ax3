@@ -6,6 +6,7 @@ import format.abc.Data.MethodType;
 import format.abc.Data.Index;
 import format.abc.Data.ABCData;
 import ax3.Structure;
+import ax3.StructureBuilder.makeFQN;
 
 class SWCLoader {
 	public static function load(structure:Structure, file:String) {
@@ -53,20 +54,20 @@ class SWCLoader {
 
 				var mod = pack.createModule(n.name);
 
-				var decl = new SClassDecl(n.name);
+				var decl = new SClassDecl(n.name, makeFQN(n.ns, n.name));
 
 				if (cls.isInterface) {
 					for (iface in cls.interfaces) {
 						var n = getPublicName(abc, iface);
 						if (n != null) {
-							decl.extensions.push(if (n.ns == "") n.name else n.ns + "." + n.name);
+							decl.extensions.push(makeFQN(n.ns, n.name));
 						}
 					}
 				} else {
 					if (cls.superclass != null) {
 						var n = getPublicName(abc, cls.superclass);
 						if (n != null) {
-							decl.extensions.push(if (n.ns == "") n.name else n.ns + "." + n.name);
+							decl.extensions.push(makeFQN(n.ns, n.name));
 						}
 					}
 

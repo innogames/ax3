@@ -8,7 +8,7 @@ using StringTools;
 
 @:nullSafety
 class GenHaxe extends PrinterBase {
-	var currentModule:Null<SModule>;
+	var currentModule:Null<{s:SModule, t:TModule}>; // TODO: get rid of Structure...
 	final structure:Structure;
 
 	public function new(structure) {
@@ -17,13 +17,46 @@ class GenHaxe extends PrinterBase {
 	}
 
 	public function writeModule(m:TModule) {
-		currentModule = structure.getPackage(m.pack.name).getModule(m.name);
+		currentModule = {t: m, s: structure.getPackage(m.pack.name).getModule(m.name)};
 		printPackage(m.pack);
 		for (d in m.privateDecls) {
 			printDecl(d);
 		}
 		printTrivia(m.eof.leadTrivia);
 		currentModule = null;
+	}
+
+	function isImported(c:SClassDecl) {
+		// TODO: optimize this, because this is done A LOT
+		// actually, we might want to store the "local" flag in the TEDeclRef/TTypeHint/etc.
+		if (currentModule != null) {
+			for (i in currentModule.t.pack.imports) {
+				switch i.kind {
+					case TIDecl({kind: SClass(importedClass)}) if (importedClass == c):
+						return true;
+
+					case TIAll(_):
+						for (mod in i.pack.modules) {
+							switch mod.mainDecl.kind {
+								case SClass(importedClass) if (importedClass == c):
+									return true;
+
+								case _:
+							}
+						}
+
+					case TIDecl(_) | TIAliased(_): // other decls and aliased decls
+				}
+			}
+			for (mod in currentModule.s.pack.modules) {
+				switch mod.mainDecl.kind {
+					case SClass(importedClass) if (importedClass == c):
+						return true;
+					case _:
+				}
+			}
+		}
+		return false;
 	}
 
 	function printPackage(p:TPackageDecl) {
@@ -163,7 +196,7 @@ class GenHaxe extends PrinterBase {
 
 	function printClassDecl(c:TClassDecl) {
 		var needsEmptyCtor = // kill me
-			@:nullSafety(Off) switch (currentModule.getDecl(c.name).kind) {
+			@:nullSafety(Off) switch (currentModule.s.getDecl(c.name).kind) {
 				case SClass(c):
 					c.wasInstantiated && structure.getConstructor(c) == null;
 				case _:
@@ -396,9 +429,15 @@ class GenHaxe extends PrinterBase {
 				}
 				printTType(ret);
 
-			case TTInst(cls): buf.add(cls.name);
-			case TTStatic(cls): buf.add("Class<" + cls.name + ">");
+			case TTInst(cls):
+				buf.add(getClassLocalPath(cls));
+			case TTStatic(cls):
+				buf.add("Class<" + getClassLocalPath(cls) + ">");
 		}
+	}
+
+	inline function getClassLocalPath(cls:SClassDecl):String {
+		return if (cls.publicFQN == null || isImported(cls)) cls.name else cls.publicFQN;
 	}
 
 	function printSyntaxTypeHint(t:TypeHint) {
