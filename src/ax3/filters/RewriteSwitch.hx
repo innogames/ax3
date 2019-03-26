@@ -23,11 +23,13 @@ class RewriteSwitch extends AbstractFilter {
 						case _:
 							if (!allowNonTerminalLast) {
 								reportError(exprPos(lastExpr), "Non-terminal expression inside a switch case, possible fall-through?");
+								throw "assert";
 							}
 					}
 				}
 
-				for (c in s.cases) {
+				for (i in 0...s.cases.length) {
+					var c = s.cases[i];
 					var value = switch c.values {
 						case [value]: value;
 						case _: throw "assert";
@@ -46,7 +48,8 @@ class RewriteSwitch extends AbstractFilter {
 							values.push(expr);
 						}
 
-						processCaseBody(c.body, false);
+						var isLast = (i == s.cases.length - 1) && s.def == null;
+						processCaseBody(c.body, isLast);
 
 						newCases.push({
 							syntax: {
