@@ -772,9 +772,13 @@ class Typer {
 				var b = typeExpr(b, a.type);
 				return mk(TEBinop(a, op, b), a.type, expectedType);
 
+			case OpShl(_) | OpShr(_) | OpUshr(_):
+				var a = typeExpr(a, TTInt);
+				var b = typeExpr(b, TTInt);
+				return mk(TEBinop(a, op, b), TTInt, expectedType);
+
 			// TODO: sort these out
 			case OpAdd(_) | OpSub(_) | OpDiv(_) | OpMul(_) | OpMod(_) |
-			     OpShl(_) | OpShr(_) | OpUshr(_) |
 			     OpBitAnd(_) | OpBitOr(_) | OpBitXor(_):
 				var a = typeExpr(a, TTAny);
 				var b = typeExpr(b, TTAny);
