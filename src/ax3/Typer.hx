@@ -329,7 +329,7 @@ class Typer {
 
 		var extend:Null<TClassExtend> =
 			if (c.extend == null) null
-			else {syntax: c.extend};
+			else {syntax: c.extend, superClass: structure.getClass(currentClass.extensions[0])};
 
 		var implement:Null<TClassImplement> =
 			if (c.implement == null) null

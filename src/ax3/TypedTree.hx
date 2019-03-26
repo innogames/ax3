@@ -141,6 +141,7 @@ typedef TIAccessorField = {
 }
 
 typedef TClassExtend = {
+	var superClass:SClassDecl;
 	var syntax:{
 		var keyword:Token;
 		var path:DotPath;
