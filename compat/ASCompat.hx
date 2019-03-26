@@ -7,6 +7,12 @@ class ASCompat {
 		return f != null && !Math.isNaN(f);
 	}
 
+	public static inline function allocArray<T>(length:Int):Array<T> {
+		var a = new Array<T>();
+		a.resize(length);
+		return a;
+	}
+
 	public static inline function arraySetLength<T>(a:Array<T>, newLength:Int):Int {
 		a.resize(newLength);
 		return newLength;
