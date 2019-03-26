@@ -9,7 +9,7 @@ class Filters {
 		var externImports = new ExternModuleLevelImports(context);
 		for (f in [
 			externImports,
-			new InlineStaticConsts(context),
+			// new InlineStaticConsts(context),
 			new RewriteE4X(context),
 			new RewriteSwitch(context),
 			new RewriteArraySplice(context),
@@ -29,6 +29,7 @@ class Filters {
 			new NumberToInt(context),
 			new InvertNegatedEquality(context),
 			new HaxeProperties(context),
+			new UnqualifiedSuperStatics(context),
 			// new AddParens(context),
 			new AddRequiredParens(context),
 			// new CheckExpectedTypes(context)

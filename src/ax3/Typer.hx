@@ -358,10 +358,9 @@ class Typer {
 		}
 		loop(c.members);
 
-		currentClass = null;
-
-		return {
+		var result:TClassDecl = {
 			syntax: c,
+			structure: (currentClass : SClassDecl), // null-safety checker is dumb
 			name: c.name.text,
 			metadata: c.metadata,
 			extend: extend,
@@ -370,6 +369,10 @@ class Typer {
 			members: tMembers,
 			properties: null,
 		}
+
+		currentClass = null;
+
+		return result;
 	}
 
 	function typeVarFieldDecls(vars:Separated<VarDecl>, haxeType:Null<HaxeTypeAnnotation>):Array<TVarFieldDecl> {
@@ -1230,8 +1233,8 @@ class Typer {
 						if (field != null) {
 							// found a field
 							var eobj = {
-								kind: TOImplicitClass(currentClass),
-								type: TTStatic(currentClass),
+								kind: TOImplicitClass(c),
+								type: TTStatic(c),
 							};
 							var type = getFieldType(field);
 							return mk(TEField(eobj, ident, i), type, expectedType);

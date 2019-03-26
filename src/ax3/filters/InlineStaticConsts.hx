@@ -2,9 +2,10 @@ package ax3.filters;
 
 class InlineStaticConsts extends AbstractFilter {
 	override function processClassField(field:TClassField) {
+		// TODO: this must also change field access expressions
 		switch field.kind {
 			case TFVar(v):
-				@:nullSafety(Off) // TODO: minimize and report this
+				@:nullSafety(Off)
 				var isConstantLiteral = switch v {
 					case {kind: VConst(_), vars: [{init: {expr: {kind: TELiteral(_)}}}]}: true;
 					case _: false;

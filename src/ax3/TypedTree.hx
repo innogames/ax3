@@ -89,7 +89,6 @@ typedef TClassDecl = {
 	var syntax:{
 		var keyword:Token;
 		var name:Token;
-		var extend:Null<{keyword:Token, path:DotPath}>;
 		var implement:Null<{keyword:Token, paths:Separated<DotPath>}>;
 		var openBrace:Token;
 		var closeBrace:Token;
@@ -98,6 +97,7 @@ typedef TClassDecl = {
 	var metadata:Array<Metadata>;
 	var modifiers:Array<DeclModifier>;
 	var name:String;
+	var structure:SClassDecl;
 	var extend:Null<TClassExtend>;
 	var implement:Null<TClassImplement>;
 	var members:Array<TClassMember>;
