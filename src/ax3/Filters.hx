@@ -10,7 +10,6 @@ class Filters {
 		for (f in [
 			externImports,
 			new InlineStaticConsts(context),
-			new AddSuperCtorCall(context),
 			new RewriteE4X(context),
 			new RewriteSwitch(context),
 			new RewriteArraySplice(context),
@@ -18,6 +17,7 @@ class Filters {
 			new RestArgs(context),
 			new RewriteRegexLiterals(context),
 			new HandleNew(context),
+			new AddSuperCtorCall(context),
 			new RewriteBlockBinops(context),
 			new RewriteArrayAccess(context),
 			new RewriteIs(context),

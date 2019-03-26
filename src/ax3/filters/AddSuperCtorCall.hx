@@ -19,9 +19,10 @@ class AddSuperCtorCall extends AbstractFilter {
 	}
 
 	function processCtorExpr(e:TExpr, superClass:SClassDecl):TExpr {
-		if (hasSuper(e)) {
+		if (hasSuperCall(e)) {
 			return e;
 		} else {
+			superClass.wasInstantiated = true; // generate empty ctor if required (TODO: we should actually skip generating `super()` if there are no ctors in the whole chain)
 			var tSuper = TTInst(superClass);
 			var eSuper = mk(TELiteral(TLSuper(mkIdent("super"))), tSuper, tSuper);
 			var eSuperCall = mkCall(eSuper, [], TTVoid);
@@ -29,17 +30,17 @@ class AddSuperCtorCall extends AbstractFilter {
 		}
 	}
 
-	function hasSuper(e:TExpr):Bool {
+	function hasSuperCall(e:TExpr):Bool {
 		switch e.kind {
 			case TEParens(_, e, _):
-				return hasSuper(e);
+				return hasSuperCall(e);
 
 			case TECall({kind: TELiteral(TLSuper(_))}, _):
 				return true;
 
 			case TEBlock(block):
 				for (e in block.exprs) {
-					if (hasSuper(e.expr)) {
+					if (hasSuperCall(e.expr)) {
 						return true;
 					}
 				}
