@@ -32,8 +32,14 @@ abstract ASAny(Dynamic) from Dynamic {
 		return !___toBool();
 	}
 
+	// TODO we probably don't want to apply `ASAny` conversions for something that is already Bool
 	@:op(a || b) static inline function __or(a:ASAny, b:ASAny):ASAny {
 		return if (a) a else b;
+	}
+
+	// TODO: same comment as above
+	@:op(a && b) static inline function __and(a:ASAny, b:ASAny):ASAny {
+		return if (a) b else a;
 	}
 
 	@:op([]) inline function ___arrayGet(name) return ___get(name);
