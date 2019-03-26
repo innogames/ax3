@@ -25,4 +25,18 @@ class ASCompat {
 		}
 		return result;
 	}
+
+	public static inline function vectorSpliceAll<T>(a:flash.Vector<T>, startIndex:Int):flash.Vector<T> {
+		return a.splice(startIndex, a.length);
+	}
+
+	public static function vectorSplice<T>(a:flash.Vector<T>, startIndex:Int, deleteCount:Int, ?values:Array<T>):flash.Vector<T> {
+		var result = a.splice(startIndex, deleteCount);
+		if (values != null) {
+			for (i in 0...values.length) {
+				a.insert(startIndex + i, values[i]);
+			}
+		}
+		return result;
+	}
 }

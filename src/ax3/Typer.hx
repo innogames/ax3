@@ -754,10 +754,11 @@ class Typer {
 	function typeBinop(a:Expr, op:Binop, b:Expr, expectedType:TType):TExpr {
 		switch (op) {
 			case OpAnd(_) | OpOr(_):
-				// && and || return the type of their expr, so we apply the expected type of a binop
 				var a = typeExpr(a, expectedType);
 				var b = typeExpr(b, expectedType);
-				return mk(TEBinop(a, op, b), expectedType, expectedType);
+				var type = if (Type.enumEq(a.type, b.type)) a.type else TTAny;
+				// these two must be further processed to be Haxe-friendly
+				return mk(TEBinop(a, op, b), type, expectedType);
 
 			case OpEquals(_) | OpNotEquals(_) | OpStrictEquals(_) | OpNotStrictEquals(_) |
 			     OpGt(_) | OpGte(_) | OpLt(_) | OpLte(_) |

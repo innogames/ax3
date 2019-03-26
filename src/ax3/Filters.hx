@@ -17,6 +17,7 @@ class Filters {
 			new RestArgs(context),
 			new RewriteRegexLiterals(context),
 			new HandleNew(context),
+			new RewriteBlockBinops(context),
 			new RewriteArrayAccess(context),
 			new RewriteIs(context),
 			new RewriteCFor(context),

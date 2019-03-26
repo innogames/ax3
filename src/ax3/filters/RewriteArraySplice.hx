@@ -4,7 +4,10 @@ class RewriteArraySplice extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
 		e = mapExpr(processExpr, e);
 		return switch (e.kind) {
-			case TECall({kind: TEField({kind: TOExplicit(_, eArray), type: TTArray(_)}, "splice", _)}, args):
+			case TECall({kind: TEField({kind: TOExplicit(_, eArray), type: t = TTArray(_) | TTVector(_)}, "splice", _)}, args):
+				var isVector = t.match(TTVector(_));
+				var methodNamePrefix = if (isVector) "vector" else "array";
+
 				switch args.args {
 					// case [eIndex, {expr: {kind: TELiteral(TLInt({text: "0"}))}}, eInserted]:
 						// this is a special case that we want to rewrite to a nice `array.insert(pos, elem)`
@@ -17,7 +20,7 @@ class RewriteArraySplice extends AbstractFilter {
 						e;
 
 					case [eIndex]: // single arg - remove everything beginning with the given index
-						var eCompatMethod = mkBuiltin("ASCompat.arraySpliceAll", TTFunction, removeLeadingTrivia(eArray), []);
+						var eCompatMethod = mkBuiltin('ASCompat.${methodNamePrefix}SpliceAll', TTFunction, removeLeadingTrivia(eArray), []);
 						e.with(kind = TECall(eCompatMethod, args.with(
 							args = [
 								{expr: eArray, comma: mkCommaWithSpace()},
@@ -29,7 +32,7 @@ class RewriteArraySplice extends AbstractFilter {
 						if (args.args.length < 3) throw "assert";
 
 						// rewrite anything else to a compat call
-						var eCompatMethod = mkBuiltin("ASCompat.arraySplice", TTFunction, removeLeadingTrivia(eArray), []);
+						var eCompatMethod = mkBuiltin('ASCompat.${methodNamePrefix}Splice', TTFunction, removeLeadingTrivia(eArray), []);
 
 						var newArgs = [
 							{expr: eArray, comma: mkCommaWithSpace()}, // array instance

@@ -509,7 +509,7 @@ class TypedTreeTools {
 		return if (r == null) a else a.with(args = r);
 	}
 
-	static function mapBlock(f:TExpr->TExpr, b:TBlock):TBlock {
+	public static function mapBlock(f:TExpr->TExpr, b:TBlock):TBlock {
 		var mapped = mapBlockExprs(f, b.exprs);
 		return if (mapped == b.exprs) b else b.with(exprs = mapped);
 	}

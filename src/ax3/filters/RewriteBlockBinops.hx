@@ -3,17 +3,14 @@ package ax3.filters;
 /**
 	Replace block-level `something && doSomething()` expressions with `if (something) doSomething()`.
 **/
-class RewriteBlockBinops {
-	public static function process(e:TExpr):TExpr {
-		e = mapExpr(process, e);
-
+class RewriteBlockBinops extends AbstractFilter {
+	override function processExpr(e:TExpr):TExpr {
+		e = mapExpr(processExpr, e);
 		return switch e.kind {
 			case TEBlock(b):
-				e.with(
-					kind = TEBlock(b.with(
-						exprs = [for (e in b.exprs) e.with(expr = modifyBlockExpr(e.expr))]
-					)
-				));
+				var mapped = mapBlock(modifyBlockExpr, b);
+				if (mapped == b) e else e.with(kind = TEBlock(mapped));
+
 			case _:
 				e;
 		}
@@ -57,23 +54,27 @@ class RewriteBlockBinops {
 			econd: cond,
 			ethen: check.action,
 			eelse: null,
-		}), TTVoid);
+		}), TTVoid, TTVoid);
 	}
 
 	/** for `e1 && e2` returns `{check: e1, action: e2}` otherwise returns `null` **/
 	static function extract(e:TExpr):Null<{check:TExpr, action:TExpr, andToken:Token}> {
+		inline function toBool(e:TExpr):TExpr {
+			return if (e.expectedType == TTBoolean) e else e.with(expectedType = TTBoolean);
+		}
+
 		return switch (e.kind) {
 			case TEBinop(a, op = OpAnd(t), b):
 				var more = extract(b); // see if there was more chained `&&`
 				if (more == null) {
 					{
-						check: a,
+						check: toBool(a),
 						action: b,
 						andToken: t,
 					};
 				} else {
 					{
-						check: e.with(kind = TEBinop(a, op, more.check)),
+						check: mk(TEBinop(toBool(a), op, more.check), TTBoolean, TTBoolean),
 						action: more.action,
 						andToken: more.andToken,
 					};
