@@ -517,7 +517,23 @@ class Parser {
 			case TkTilde:
 				return makePreUnop(PreBitNeg(scanner.consume()), parseExpr(allowComma));
 			case TkMinus:
-				return makePreUnop(PreNeg(scanner.consume()), parseExpr(allowComma));
+				var minusToken = scanner.consume();
+				if (minusToken.trailTrivia.length == 0) {
+					inline function mkNegative(ctor:Token->Literal, numberToken:Token):Expr {
+						return parseExprNext(ELiteral(ctor(new Token(minusToken.pos, numberToken.kind, minusToken.text + numberToken.text, minusToken.leadTrivia, numberToken.trailTrivia))), allowComma);
+					}
+					switch scanner.advanceExprStart() {
+						case {kind: TkDecimalInteger, leadTrivia: []}:
+							return mkNegative(LDecInt, scanner.consume());
+						case {kind: TkHexadecimalInteger, leadTrivia: []}:
+							return mkNegative(LHexInt, scanner.consume());
+						case {kind: TkFloat, leadTrivia: []}:
+							return mkNegative(LFloat, scanner.consume());
+						case _:
+					}
+				}
+				return makePreUnop(PreNeg(minusToken), parseExpr(allowComma));
+
 			case TkPlusPlus:
 				return makePreUnop(PreIncr(scanner.consume()), parseExpr(allowComma));
 			case TkMinusMinus:

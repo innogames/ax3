@@ -20,7 +20,7 @@ class Token {
 	}
 }
 
-@:forward(kind, text)
+@:forward(kind, text, leadTrivia, trailTrivia)
 abstract PeekToken(Token) from Token {}
 
 class Trivia {
