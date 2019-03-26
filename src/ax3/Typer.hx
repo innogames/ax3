@@ -763,26 +763,45 @@ class Typer {
 			     OpGt(_) | OpGte(_) | OpLt(_) | OpLte(_) |
 			     OpIn(_) | OpIs(_):
 				// relation operators are always boolean
-				var a = typeExpr(a, TTAny); // TODO: should comparisons expect Number?
+				var a = typeExpr(a, TTAny); // not only numbers, but also strings
 				var b = typeExpr(b, TTAny);
 				return mk(TEBinop(a, op, b), TTBoolean, expectedType);
 
-			case OpAssign(_) | OpAssignOp(_):
+			case OpAssign(_) | OpAssignOp(_): // TODO: handle expected types for OpAssignOp
 				var a = typeExpr(a, TTAny);
 				var b = typeExpr(b, a.type);
 				return mk(TEBinop(a, op, b), a.type, expectedType);
 
-			case OpShl(_) | OpShr(_) | OpUshr(_):
+			case OpShl(_) | OpShr(_) | OpUshr(_) | OpBitAnd(_) | OpBitOr(_) | OpBitXor(_):
 				var a = typeExpr(a, TTInt);
 				var b = typeExpr(b, TTInt);
 				return mk(TEBinop(a, op, b), TTInt, expectedType);
 
-			// TODO: sort these out
-			case OpAdd(_) | OpSub(_) | OpDiv(_) | OpMul(_) | OpMod(_) |
-			     OpBitAnd(_) | OpBitOr(_) | OpBitXor(_):
+			case OpAdd(_):
 				var a = typeExpr(a, TTAny);
 				var b = typeExpr(b, TTAny);
-				return mk(TEBinop(a, op, b), a.type, expectedType);
+
+				var type =
+					if (a.type == TTString || b.type == TTString) TTString // string concat
+					else if (a.type == TTNumber || b.type == TTNumber) TTNumber // always number
+					else a.type; // probably int/uint
+
+				return mk(TEBinop(a, op, b), type, expectedType);
+
+			case OpMul(_) | OpSub(_) | OpMod(_):
+				var a = typeExpr(a, TTNumber);
+				var b = typeExpr(b, TTNumber);
+
+				var type =
+					if (a.type == TTNumber || b.type == TTNumber) TTNumber // always number
+					else a.type; // probably int/uint
+
+				return mk(TEBinop(a, op, b), type, expectedType);
+
+			case OpDiv(_):
+				var a = typeExpr(a, TTNumber);
+				var b = typeExpr(b, TTNumber);
+				return mk(TEBinop(a, op, b), TTNumber, expectedType);
 
 			case OpComma(_):
 				var a = typeExpr(a, TTAny);
