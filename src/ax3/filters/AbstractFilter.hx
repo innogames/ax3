@@ -9,8 +9,13 @@ class AbstractFilter {
 		this.context = context;
 	}
 
-	private function reportError(pos:Int, msg:String) {
+	function reportError(pos:Int, msg:String) {
 		context.reportError(currentPath, pos, msg);
+	}
+
+	inline function throwError(pos:Int, msg:String):Dynamic {
+		context.reportError(currentPath, pos, msg);
+		throw "assert"; // TODO do it nicer
 	}
 
 	public function run(modules:Array<TModule>) {
