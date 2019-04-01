@@ -274,7 +274,7 @@ class GenHaxe extends PrinterBase {
 			switch (m) {
 				case DMPublic(t): printTokenTrivia(t);
 				case DMInternal(t): printTextWithTrivia("/*internal*/", t);
-				case DMFinal(t): printTextWithTrivia("@:final", t);
+				case DMFinal(t): printTextWithTrivia("final", t);
 				case DMDynamic(t): printTextWithTrivia("/*dynamic*/", t);
 			}
 		}
@@ -296,7 +296,7 @@ class GenHaxe extends PrinterBase {
 				case FMInternal(t): printTextWithTrivia("/*internal*/", t);
 				case FMOverride(t): printTextWithTrivia("override", t);
 				case FMStatic(t): printTextWithTrivia("static", t);
-				case FMFinal(t): printTextWithTrivia("/*final*/", t); // TODO: in haxe3 @:final should go before other modifiers
+				case FMFinal(t): printTextWithTrivia("final", t);
 			}
 		}
 
@@ -820,7 +820,7 @@ class GenHaxe extends PrinterBase {
 	function printVarKind(kind:VarDeclKind) {
 		switch (kind) {
 			case VVar(t): printTextWithTrivia("var", t);
-			case VConst(t): printTextWithTrivia("/*final*/var", t);
+			case VConst(t): printTextWithTrivia("final", t);
 		}
 	}
 
