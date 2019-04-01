@@ -1,4 +1,9 @@
 class ASCompat {
+	// TODO: this is temporary
+	public static inline function thisOrDefault<T>(value:T, def:T):T {
+		return if ((value : ASAny)) value else def;
+	}
+
 	public static inline function stringAsBool(s:Null<String>):Bool {
 		return s != null && s != "";
 	}

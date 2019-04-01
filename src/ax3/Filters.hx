@@ -19,6 +19,7 @@ class Filters {
 			new HandleNew(context),
 			new AddSuperCtorCall(context),
 			new RewriteBlockBinops(context),
+			new RewriteNonBoolOr(context),
 			new RewriteNewArray(context),
 			new RewriteArrayAccess(context),
 			new RewriteIs(context),
