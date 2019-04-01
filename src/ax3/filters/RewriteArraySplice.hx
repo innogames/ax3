@@ -23,7 +23,7 @@ class RewriteArraySplice extends AbstractFilter {
 						var eCompatMethod = mkBuiltin('ASCompat.${methodNamePrefix}SpliceAll', TTFunction, removeLeadingTrivia(eArray), []);
 						e.with(kind = TECall(eCompatMethod, args.with(
 							args = [
-								{expr: eArray, comma: mkCommaWithSpace()},
+								{expr: eArray, comma: commaWithSpace},
 								eIndex
 							]
 						)));
@@ -35,7 +35,7 @@ class RewriteArraySplice extends AbstractFilter {
 						var eCompatMethod = mkBuiltin('ASCompat.${methodNamePrefix}Splice', TTFunction, removeLeadingTrivia(eArray), []);
 
 						var newArgs = [
-							{expr: eArray, comma: mkCommaWithSpace()}, // array instance
+							{expr: eArray, comma: commaWithSpace}, // array instance
 							args.args[0], // index
 							args.args[1], // delete count
 							{

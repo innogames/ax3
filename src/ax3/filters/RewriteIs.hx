@@ -10,7 +10,7 @@ class RewriteIs extends AbstractFilter {
 				e.with(kind = TECall(stdIs, {
 					openParen: mkOpenParen(),
 					args: [
-						{expr: a, comma: mkComma()},
+						{expr: a, comma: commaWithSpace},
 						{expr: b, comma: null},
 					],
 					closeParen: mkCloseParen(),

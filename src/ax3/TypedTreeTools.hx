@@ -155,7 +155,7 @@ class TypedTreeTools {
 		}
 		return mk(TECall(obj, {
 			openParen: mkOpenParen(),
-			args: [for (i in 0...args.length) {expr: args[i], comma: if (i == args.length - 1) null else mkComma()}],
+			args: [for (i in 0...args.length) {expr: args[i], comma: if (i == args.length - 1) null else commaWithSpace}],
 			closeParen: mkCloseParen(),
 		}), t, t);
 	}

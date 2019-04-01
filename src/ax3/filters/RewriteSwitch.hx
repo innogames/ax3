@@ -53,7 +53,7 @@ class RewriteSwitch extends AbstractFilter {
 
 						newCases.push({
 							syntax: {
-								keyword: new Token(0, TkIdent, "case", removeLeadingTrivia(values[0]), [mkWhitespace()]),
+								keyword: new Token(0, TkIdent, "case", removeLeadingTrivia(values[0]), [whitespace]),
 								colon: new Token(0, TkColon, ":", [], removeTrailingTrivia(values[values.length - 1]))
 							},
 							values: values,

@@ -23,7 +23,7 @@ class HandleNew extends AbstractFilter {
 						e.with(kind = TECall(eCreateInstance, {
 							openParen: mkOpenParen(),
 							args: [
-								{expr: eclass, comma: new Token(0, TkComma, ",", [], [mkWhitespace()])},
+								{expr: eclass, comma: commaWithSpace},
 								{
 									expr: mk(TEArrayDecl({
 										syntax: {

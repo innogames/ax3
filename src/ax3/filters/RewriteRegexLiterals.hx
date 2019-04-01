@@ -16,14 +16,14 @@ class RewriteRegexLiterals extends AbstractFilter {
 				if (options != "") {
 					var eOptions = mk(TELiteral(TLString(new Token(0, TkStringDouble, haxe.Json.stringify(options), [], []))), TTString, TTString);
 					args = [
-						{expr: ePattern, comma: new Token(0, TkComma, ",", [], [mkWhitespace()])},
+						{expr: ePattern, comma: commaWithSpace},
 						{expr: eOptions, comma: null}
 					];
 				} else {
 					args = [{expr: ePattern, comma: null}];
 				}
 
-				var newToken = new Token(token.pos, TkIdent, "new", token.leadTrivia, [mkWhitespace()]);
+				var newToken = new Token(token.pos, TkIdent, "new", token.leadTrivia, [whitespace]);
 				var eRegExp = mk(TEBuiltin(mkIdent("RegExp"), "RegExp"), TTBuiltin, TTBuiltin);
 				var args:TCallArgs = {
 					openParen: mkOpenParen(),

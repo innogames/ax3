@@ -20,20 +20,20 @@ class TokenTools {
 	public static inline function mkOpenBrace() return new Token(0, TkBraceOpen, "{", [], []);
 	public static inline function mkCloseBrace() return new Token(0, TkBraceClose, "}", [], []);
 	public static inline function mkComma() return new Token(0, TkComma, ",", [], []);
-	public static inline function mkCommaWithSpace() return new Token(0, TkComma, ",", [], [mkWhitespace()]);
 	public static inline function mkDot() return new Token(0, TkDot, ".", [], []);
 	public static inline function mkSemicolon() return new Token(0, TkSemicolon, ";", [], []);
 
 	public static inline function addTrailingNewline(t:Token):Token {
-		t.trailTrivia.push(mkNewline());
+		t.trailTrivia.push(newline);
 		return t;
 	}
 
-	public static inline function mkWhitespace() return new Trivia(TrWhitespace, " ");
-	public static inline function mkNewline() return new Trivia(TrNewline, "\n");
+	public static final whitespace = new Trivia(TrWhitespace, " ");
+	public static final newline = new Trivia(TrNewline, "\n");
+	public static final commaWithSpace = new Token(0, TkComma, ",", [], [whitespace]);
 
 	public static function mkTokenWithSpaces(kind:TokenKind, text:String):Token {
-		return new Token(0, kind, text, [mkWhitespace()], [mkWhitespace()]);
+		return new Token(0, kind, text, [whitespace], [whitespace]);
 	}
 
 	public static inline function mkEqualsEqualsToken():Token {

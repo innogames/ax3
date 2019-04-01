@@ -26,7 +26,7 @@ class RewriteArraySetLength extends AbstractFilter {
 						openParen: mkOpenParen(),
 						closeParen: mkCloseParen(),
 						args: [
-							{expr: eArray, comma: mkCommaWithSpace()},
+							{expr: eArray, comma: commaWithSpace},
 							{expr: eNewLength, comma: null}
 						]
 					}));

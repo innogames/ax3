@@ -2,7 +2,7 @@ package ax3.filters;
 
 class RewriteForIn extends AbstractFilter {
 	static inline function mkTempIterName() {
-		return new Token(0, TkIdent, "__tmp", [], [mkWhitespace()]);
+		return new Token(0, TkIdent, "__tmp", [], [whitespace]);
 	}
 
 	override function processExpr(e:TExpr):TExpr {
@@ -21,7 +21,7 @@ class RewriteForIn extends AbstractFilter {
 							// easy - iterate over string keys
 							itName = varDecl.syntax.name;
 							if (itName.trailTrivia.length == 0) {
-								itName.trailTrivia.push(mkWhitespace());
+								itName.trailTrivia.push(whitespace);
 							}
 							vit = varDecl.v;
 						} else {
