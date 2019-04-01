@@ -324,25 +324,26 @@ class GenHaxe extends PrinterBase {
 		}
 	}
 
-	function printVarField(v:TVarField) {
-		if (v.isInline) buf.add("inline ");
-
-		// TODO: complain if there's more than one var declaration here (this should be rewritten into multiple ones)
-
-		printVarKind(v.kind);
-		for (v in v.vars) {
-			printTextWithTrivia(v.name, v.syntax.name);
-			if (v.syntax.type != null) {
-				// printSyntaxTypeHint(v.syntax.type);
-				printColon(v.syntax.type.colon);
-			} else {
-				buf.add(":");
-			}
-			printTType(v.type);
-			if (v.init != null) printVarInit(v.init);
-			if (v.comma != null) printComma(v.comma);
+	function printVarField(vf:TVarField) {
+		switch vf.vars {
+			case [v]:
+				if (vf.isInline) buf.add("inline ");
+				printVarKind(vf.kind);
+				printTextWithTrivia(v.name, v.syntax.name);
+				if (v.syntax.type != null) {
+					// printSyntaxTypeHint(v.syntax.type);
+					printColon(v.syntax.type.colon);
+				} else {
+					buf.add(":");
+				}
+				printTType(v.type);
+				if (v.init != null) printVarInit(v.init);
+				if (v.comma != null) throw "assert";
+				printSemicolon(vf.semicolon);
+			case _:
+				// TODO: it should be rewritten into multiple fields
+				throw "multiple var declaration with a single keyword is not supported";
 		}
-		printSemicolon(v.semicolon);
 	}
 
 	function printMetadata(metas:Array<Metadata>) {

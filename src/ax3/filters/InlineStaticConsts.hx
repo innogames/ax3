@@ -2,7 +2,6 @@ package ax3.filters;
 
 class InlineStaticConsts extends AbstractFilter {
 	override function processClassField(field:TClassField) {
-		// TODO: this must also change field access expressions
 		switch field.kind {
 			case TFVar(v):
 				@:nullSafety(Off)
@@ -12,10 +11,15 @@ class InlineStaticConsts extends AbstractFilter {
 				}
 
 				if (isConstantLiteral) {
-					v.isInline = true;
+					var isStatic = Lambda.exists(field.modifiers, m -> m.match(FMStatic(_)));
 					// TODO: deal with leading trivia here
-					if (!Lambda.exists(field.modifiers, m -> m.match(FMStatic(_)))) {
-						field.modifiers.push(FMStatic(new Token(0, TkIdent, "static", [], [mkWhitespace()])));
+					// TODO: static is disabled because we also need to change field access expressions
+					// if (!isStatic) {
+					// 	field.modifiers.push(FMStatic(new Token(0, TkIdent, "static", [], [whitespace])));
+					// 	isStatic = true;
+					// }
+					if (isStatic) {
+						v.isInline = true;
 					}
 				}
 
