@@ -26,6 +26,7 @@ class Filters {
 			new RewriteForEach(context),
 			new RewriteForIn(context),
 			new RewriteDelete(context),
+			new RewriteHasOwnProperty(context),
 			new CoerceToBool(context),
 			new NumberToInt(context),
 			new InvertNegatedEquality(context),
