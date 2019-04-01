@@ -4,7 +4,7 @@ class RewriteNonBoolOr extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
 		e = mapExpr(processExpr, e);
 		return switch e.kind {
-			case TEBinop(a, op = OpOr(_), b): // TODO not for TTBoolean
+			case TEBinop(a, OpOr(_), b) if (a.type != TTBoolean || b.type != TTBoolean):
 				var lead = removeLeadingTrivia(a);
 				var tail = removeTrailingTrivia(b);
 
