@@ -493,6 +493,15 @@ class GenHaxe extends PrinterBase {
 			case TECondCompBlock(v, expr): printCondCompBlock(v, expr);
 			case TEXmlChild(_) | TEXmlAttr(_) | TEXmlAttrExpr(_) | TEXmlDescend(_): throw 'unprocessed E4X';
 			case TEUseNamespace(ns): printUseNamespace(ns);
+			case TEHaxeRetype(einner):
+				printTrivia(TypedTreeTools.removeLeadingTrivia(einner));
+				buf.add("(");
+				var trail = TypedTreeTools.removeTrailingTrivia(einner);
+				printExpr(einner);
+				buf.add(":");
+				printTType(e.type);
+				buf.add(")");
+				printTrivia(trail);
 		}
 	}
 

@@ -95,6 +95,7 @@ class TypedTreeTools {
 			case TEXmlAttrExpr(x): x.syntax.openBracket.pos;
 			case TEXmlDescend(x): x.syntax.dotDot.pos;
 			case TEUseNamespace(ns): ns.useKeyword.pos;
+			case TEHaxeRetype(e): exprPos(e);
 		}
 	}
 
@@ -217,6 +218,7 @@ class TypedTreeTools {
 			case TEXmlAttrExpr(x): processLeadingToken(r, x.eobj);
 			case TEXmlDescend(x): processLeadingToken(r, x.eobj);
 			case TEUseNamespace(ns): r(ns.useKeyword);
+			case TEHaxeRetype(e): processLeadingToken(r, e);
 		}
 	}
 
@@ -291,6 +293,7 @@ class TypedTreeTools {
 			case TEXmlAttrExpr(x): r(x.syntax.closeBracket);
 			case TEXmlDescend(x): r(x.syntax.name);
 			case TEUseNamespace(ns): r(ns.name);
+			case TEHaxeRetype(e): processTrailingToken(r, e);
 		}
 	}
 
@@ -487,6 +490,10 @@ class TypedTreeTools {
 
 			case TEXmlDescend(x):
 				e1.with(kind = TEXmlDescend(x.with(eobj = f(x.eobj))));
+
+			case TEHaxeRetype(e):
+				var mapped = f(e);
+				if (mapped == e) e1 else e1.with(kind = TEHaxeRetype(mapped));
 		}
 	}
 
@@ -494,7 +501,7 @@ class TypedTreeTools {
 		return a.with(elements = [for (e in a.elements) e.with(expr = f(e.expr))]);
 	}
 
-	static function mapCallArgs(f:TExpr->TExpr, a:TCallArgs):TCallArgs {
+	public static function mapCallArgs(f:TExpr->TExpr, a:TCallArgs):TCallArgs {
 		var r:Null<Array<{expr:TExpr, comma:Null<Token>}>> = null;
 		for (i in 0...a.args.length) {
 			var arg = a.args[i];

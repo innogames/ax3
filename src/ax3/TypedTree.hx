@@ -274,6 +274,7 @@ enum TExprKind {
 	TEXmlAttrExpr(x:TXmlAttrExpr);
 	TEXmlDescend(x:TXmlDescend);
 	TEUseNamespace(ns:UseNamespace);
+	TEHaxeRetype(e:TExpr);
 }
 
 typedef TCast = {

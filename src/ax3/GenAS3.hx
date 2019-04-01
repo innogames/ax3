@@ -297,7 +297,7 @@ class GenAS3 extends PrinterBase {
 			case TEFor(f): printFor(f);
 			case TEForIn(f): printForIn(f);
 			case TEForEach(f): printForEach(f);
-			case TEHaxeFor(_): throw "assert";
+			case TEHaxeFor(_) | TEHaxeRetype(_): throw "assert";
 			case TEBinop(a, op, b): printBinop(a, op, b);
 			case TEPreUnop(op, e): printPreUnop(op, e);
 			case TEPostUnop(e, op): printPostUnop(e, op);

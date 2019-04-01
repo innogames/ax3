@@ -12,23 +12,22 @@ class RewriteArrayAccess extends AbstractFilter {
 				var eobj = processExpr(a.eobj);
 				var eindex = processExpr(a.eindex);
 
-				switch [a.eobj.type, a.eindex.type] {
+				switch [eobj.type, eindex.type] {
 					case [TTArray(_), TTInt | TTUint]:
 						e;
 
 					case [TTArray(_), _]:
 						// reportError(exprPos(e), "Non-int array access for Array");
-						e;
+
+						e.with(kind = TEArrayAccess({
+							syntax: a.syntax,
+							eobj: eobj.with(kind = TEHaxeRetype(eobj), type = TTAny),
+							eindex: eindex.with(expectedType = TTString)
+						}));
 
 					case _:
 						e;
 				}
-
-			case TEBinop(ea = {kind: TEArrayAccess(a)}, op = OpAssign(_) | OpAssignOp(_), eb):
-				var eobj = processExpr(a.eobj);
-				var eindex = processExpr(a.eindex);
-
-				e;
 
 			case _:
 				mapExpr(processExpr, e);
