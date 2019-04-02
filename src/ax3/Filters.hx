@@ -36,6 +36,9 @@ class Filters {
 			// new AddParens(context),
 			new AddRequiredParens(context),
 			// new CheckExpectedTypes(context)
+			new StringApi(context),
+			new FunctionApply(context),
+			new NamespacedToPublic(context),
 		]) {
 			f.run(modules);
 		}

@@ -1,4 +1,16 @@
+import flash.utils.RegExp;
+import haxe.Constraints.Function;
+import haxe.extern.EitherType;
+
 class ASCompat {
+	public static inline function regExpReplace(s:String, r:RegExp, by:EitherType<String,Function>):String {
+		return (cast s).replace(r, by);
+	}
+
+	public static inline function regExpMatch(s:String, r:RegExp):Array<String> {
+		return (cast s).match(r, by);
+	}
+
 	// TODO: this is temporary
 	public static inline function thisOrDefault<T>(value:T, def:T):T {
 		return if ((value : ASAny)) value else def;

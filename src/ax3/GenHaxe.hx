@@ -509,7 +509,7 @@ class GenHaxe extends PrinterBase {
 	function printBuiltin(token:Token, name:String) {
 		// TODO: this is hacky (builtins in general are hacky...)
 		name = switch name {
-			case "Std.is" | "Std.int" | "String" | "Reflect.deleteField" | "Type.createInstance": name;
+			case "Std.is" | "Std.int" | "String" | "Reflect.deleteField" | "Type.createInstance" | "StringTools.replace" | "Reflect.callMethod": name;
 			case "Number": "Float";
 			case "int": "Int";
 			case "uint": "UInt";
