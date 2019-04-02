@@ -40,11 +40,14 @@ class StringApi extends AbstractFilter {
 						throwError(exprPos(e), "Unsupported String.match arguments");
 				}
 
+			case TEField(fobj = {type: TTString}, "slice", fieldToken):
+				mapExpr(processExpr, e).with(kind = TEField(fobj, "substring", new Token(fieldToken.pos, TkIdent, "substring", fieldToken.leadTrivia, fieldToken.trailTrivia)));
+
 			case TEField(fobj = {type: TTString}, "toLocaleLowerCase", fieldToken):
-				e.with(kind = TEField(fobj, "toLowerCase", new Token(fieldToken.pos, TkIdent, "toLowerCase", fieldToken.leadTrivia, fieldToken.trailTrivia)));
+				mapExpr(processExpr, e).with(kind = TEField(fobj, "toLowerCase", new Token(fieldToken.pos, TkIdent, "toLowerCase", fieldToken.leadTrivia, fieldToken.trailTrivia)));
 
 			case TEField(fobj = {type: TTString}, "toLocaleUpperCase", fieldToken):
-				e.with(kind = TEField(fobj, "toUpperCase", new Token(fieldToken.pos, TkIdent, "toUpperCase", fieldToken.leadTrivia, fieldToken.trailTrivia)));
+				mapExpr(processExpr, e).with(kind = TEField(fobj, "toUpperCase", new Token(fieldToken.pos, TkIdent, "toUpperCase", fieldToken.leadTrivia, fieldToken.trailTrivia)));
 
 			case TEField({type: TTString}, name = "replace" | "match", _):
 				throwError(exprPos(e), "closure on String." + name);
