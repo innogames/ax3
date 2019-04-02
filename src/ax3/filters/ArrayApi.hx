@@ -2,10 +2,31 @@ package ax3.filters;
 
 class ArrayApi extends AbstractFilter {
 	static final tResize = TTFun([TTInt], TTVoid);
+	static final tSortOn = TTFun([TTArray(TTAny), TTString, TTInt], TTArray(TTAny));
 
 	override function processExpr(e:TExpr):TExpr {
 		e = mapExpr(processExpr, e);
 		return switch e.kind {
+			case TEField({kind: TOExplicit(dot, {kind: TEBuiltin(arrayToken, "Array")})}, fieldName = "CASEINSENSITIVE" | "DESCENDING" | "NUMERIC" | "RETURNINDEXEDARRAY" | "UNIQUESORT", fieldToken):
+				var eCompatArray = mkBuiltin("ASCompat.ASArray", TTBuiltin, arrayToken.leadTrivia, arrayToken.trailTrivia);
+				var fieldObj = {kind: TOExplicit(dot, eCompatArray), type: TTBuiltin};
+				e.with(kind = TEField(fieldObj, fieldName, fieldToken));
+
+			case TECall({kind: TEField({kind: TOExplicit(dot, eArray = {type: TTArray(_)})}, "sortOn", fieldToken)}, args):
+				eArray = processExpr(eArray);
+				args = mapCallArgs(processExpr, args);
+				switch args.args {
+					case [eFieldName = {expr: {type: TTString}}, eOptions = {expr: {type: TTInt | TTUint}}]:
+						var eCompatArray = mkBuiltin("ASCompat.ASArray", TTBuiltin, removeLeadingTrivia(eArray));
+						var fieldObj = {kind: TOExplicit(dot, eCompatArray), type: eCompatArray.type};
+						var eMethod = mk(TEField(fieldObj, "sortOn", fieldToken), tSortOn, tSortOn);
+						e.with(kind = TECall(eMethod, args.with(args = [
+							{expr: eArray, comma: commaWithSpace}, eFieldName, eOptions
+						])));
+					case _:
+						throwError(exprPos(e), "Unsupported Array.sortOn arguments");
+				}
+
 			// set length
 			case TEBinop({kind: TEField(to = {kind: TOExplicit(dot, eArray), type: TTArray(_)}, "length", _)}, op = OpAssign(_), eNewLength):
 				if (e.expectedType == TTVoid) {

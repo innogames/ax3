@@ -63,3 +63,15 @@ class ASCompat {
 		return result;
 	}
 }
+
+class ASArray {
+	public static inline final CASEINSENSITIVE = 1;
+	public static inline final DESCENDING = 2;
+	public static inline final NUMERIC = 16;
+	public static inline final RETURNINDEXEDARRAY = 8;
+	public static inline final UNIQUESORT = 4;
+
+	public static function sortOn<T>(a:Array<T>, fieldName:String, options:Int):Array<T> {
+		return a; // TODO
+	}
+}
