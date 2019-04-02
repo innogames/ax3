@@ -37,6 +37,7 @@ class Filters {
 			new ArrayApi(context),
 			new StringApi(context),
 			new FunctionApply(context),
+			new ToString(context),
 			new NamespacedToPublic(context),
 		]) {
 			f.run(modules);
