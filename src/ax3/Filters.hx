@@ -12,8 +12,6 @@ class Filters {
 			new InlineStaticConsts(context),
 			new RewriteE4X(context),
 			new RewriteSwitch(context),
-			new RewriteArraySplice(context),
-			new RewriteArraySetLength(context),
 			new RestArgs(context),
 			new RewriteRegexLiterals(context),
 			new HandleNew(context),
@@ -36,6 +34,7 @@ class Filters {
 			// new AddParens(context),
 			new AddRequiredParens(context),
 			// new CheckExpectedTypes(context)
+			new ArrayApi(context),
 			new StringApi(context),
 			new FunctionApply(context),
 			new NamespacedToPublic(context),
