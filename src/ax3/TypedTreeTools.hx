@@ -385,11 +385,8 @@ class TypedTreeTools {
 				if (mappedObj == a.eobj && mappedIdx == a.eindex) e1 else e1.with(kind = TEArrayAccess(a.with(eobj = mappedObj, eindex = mappedIdx)));
 
 			case TEVars(kind, vars):
-				e1.with(kind = TEVars(kind, [
-					for (v in vars) {
-						if (v.init == null) v else v.with(init = v.init.with(expr = f(v.init.expr)));
-					}
-				]));
+				var mappedVars = mapVarDecls(f, vars);
+				if (mappedVars == vars) e1 else e1.with(kind = TEVars(kind, mappedVars));
 
 			case TEObjectDecl(o):
 				e1.with(kind = TEObjectDecl(o.with(
@@ -519,6 +516,31 @@ class TypedTreeTools {
 	public static function mapBlock(f:TExpr->TExpr, b:TBlock):TBlock {
 		var mapped = mapBlockExprs(f, b.exprs);
 		return if (mapped == b.exprs) b else b.with(exprs = mapped);
+	}
+
+	static function mapVarDecls(f:TExpr->TExpr, decls:Array<TVarDecl>):Array<TVarDecl> {
+		var r:Null<Array<TVarDecl>> = null;
+		for (i in 0...decls.length) {
+			var v = decls[i];
+			var mapped;
+			if (v.init == null) {
+				mapped = v;
+			} else {
+				var mappedInitExpr = f(v.init.expr);
+				if (mappedInitExpr != v.init.expr) {
+					mapped = v.with(init = v.init.with(expr = mappedInitExpr));
+				} else {
+					mapped = v;
+				}
+			}
+			if (mapped != v) {
+				if (r == null) r = decls.slice(0, i);
+				r.push(mapped);
+			} else if (r != null) {
+				r.push(v);
+			}
+		}
+		return if (r == null) decls else r;
 	}
 
 	static function mapBlockExprs(f:TExpr->TExpr, exprs:Array<TBlockExpr>):Array<TBlockExpr> {
