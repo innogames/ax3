@@ -449,6 +449,20 @@ class GenHaxe extends PrinterBase {
 	}
 
 	function printExpr(e:TExpr) {
+		var needsCast =
+			switch [e.type, e.expectedType] {
+				case [TTFunction, TTFun(_)]: true; // Function from AS3 code unified with proper function type
+				case [TTArray(TTAny), TTArray(TTAny)]: false; // untyped arrays
+				case [TTArray(elemType), TTArray(TTAny)]: true; // typed array to untyped array
+				case [TTDictionary(TTAny, TTAny), TTDictionary(TTAny, TTAny)]: false; // untyped dicts
+				case [TTDictionary(k, v), TTDictionary(TTAny, TTAny)]: true; // typed dicts into untyped dict
+				case _: false;
+			};
+
+		if (needsCast) {
+			buf.add("cast ");
+		}
+
 		switch (e.kind) {
 			case TEParens(openParen, e, closeParen): printOpenParen(openParen); printExpr(e); printCloseParen(closeParen);
 			case TECast(c): printCast(c);
