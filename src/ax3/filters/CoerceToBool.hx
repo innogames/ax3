@@ -6,8 +6,6 @@ package ax3.filters;
 class CoerceToBool extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
 		e = mapExpr(processExpr, e);
-		// TODO: transform `if (!object)` to `if (object == null)` because it's nicer
-		// (actually might be a good idea to have a separate filter for taht :))
 		if (e.expectedType == TTBoolean && e.type != TTBoolean) {
 			return coerce(e);
 		} else {
@@ -19,19 +17,23 @@ class CoerceToBool extends AbstractFilter {
 	static final tFloatAsBool = TTFun([TTNumber], TTBoolean);
 
 	function coerce(e:TExpr):TExpr {
-		// TODO: add parens where needed
+		if (e.kind.match(TEBinop(_, OpAnd(_) | OpOr(_), _))) {
+			// inner expressions are already coerced, so we just need to fix the type for the binop
+			return e.with(type = TTBoolean);
+		}
+
 		return switch (e.type) {
 			case TTBoolean:
 				e; // shouldn't happen really
 
 			case TTFunction | TTFun(_) | TTClass | TTObject(_) | TTInst(_) | TTStatic(_) | TTArray(_) | TTVector(_) | TTRegExp | TTXML | TTXMLList | TTDictionary(_, _):
 				var trail = removeTrailingTrivia(e);
-				mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), mkNullExpr(e.type, [], trail)), TTBoolean, TTBoolean);
+				mk(TEBinop(e.with(expectedType = e.type), OpNotEquals(mkNotEqualsToken()), mkNullExpr(e.type, [], trail)), TTBoolean, TTBoolean);
 
 			case TTInt | TTUint:
 				var trail = removeTrailingTrivia(e);
 				var zeroExpr = mk(TELiteral(TLInt(new Token(0, TkDecimalInteger, "0", [], trail))), e.type, e.type);
-				mk(TEBinop(e, OpNotEquals(mkNotEqualsToken()), zeroExpr), TTBoolean, TTBoolean);
+				mk(TEBinop(e.with(expectedType = e.type), OpNotEquals(mkNotEqualsToken()), zeroExpr), TTBoolean, TTBoolean);
 
 			// case TTString if (canBeRepeated(e)):
 			// 	var trail = removeTrailingTrivia(e);
@@ -48,7 +50,7 @@ class CoerceToBool extends AbstractFilter {
 				mk(TECall(eStringAsBoolMethod, {
 					openParen: mkOpenParen(),
 					closeParen: new Token(0, TkParenClose, ")", [], tail),
-					args: [{expr: e, comma: null}],
+					args: [{expr: e.with(expectedType = e.type), comma: null}],
 				}), TTBoolean, TTBoolean);
 
 			case TTNumber:
@@ -58,15 +60,14 @@ class CoerceToBool extends AbstractFilter {
 				mk(TECall(eFloatAsBoolMethod, {
 					openParen: mkOpenParen(),
 					closeParen: new Token(0, TkParenClose, ")", [], tail),
-					args: [{expr: e, comma: null}],
+					args: [{expr: e.with(expectedType = e.type), comma: null}],
 				}), TTBoolean, TTBoolean);
 
 			case TTAny:
-				e; // handled at run-time by the ASAny abstract \o/
+				e.with(expectedType = e.type); // handled at run-time by the ASAny abstract \o/
 
 			case TTVoid | TTBuiltin:
-				reportError(exprPos(e), "TODO: bool coecion");
-				throw "should not happen";
+				throwError(exprPos(e), "TODO: bool coecion");
 		}
 	}
 }
