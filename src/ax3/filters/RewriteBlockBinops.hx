@@ -65,7 +65,7 @@ class RewriteBlockBinops extends AbstractFilter {
 
 		return switch (e.kind) {
 			case TEBinop(a, op = OpAnd(t), b):
-				var more = extract(b); // see if there was more chained `&&`
+				var more = extract(a); // see if there was more chained `&&`
 				if (more == null) {
 					{
 						check: toBool(a),
@@ -74,8 +74,8 @@ class RewriteBlockBinops extends AbstractFilter {
 					};
 				} else {
 					{
-						check: mk(TEBinop(toBool(a), op, more.check), TTBoolean, TTBoolean),
-						action: more.action,
+						check: mk(TEBinop(more.check, op, toBool(more.action)), TTBoolean, TTBoolean),
+						action: b,
 						andToken: more.andToken,
 					};
 				}
