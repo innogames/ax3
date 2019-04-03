@@ -8,7 +8,7 @@ class ASCompat {
 	}
 
 	public static inline function regExpMatch(s:String, r:RegExp):Array<String> {
-		return (cast s).match(r, by);
+		return (cast s).match(r);
 	}
 
 	// TODO: this is temporary
