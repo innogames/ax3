@@ -68,10 +68,22 @@ class HaxeProperties extends AbstractFilter {
 			type: type,
 			syntax: null
 		};
-		var returnKeyword = new Token(0, TkIdent, "return", [], [new Trivia(TrWhitespace, " ")]);
-		var argLocal = mk(TELocal(mkIdent(arg.name), arg.v), arg.v.type, arg.v.type);
-		var returnExpr = mk(TEReturn(returnKeyword, argLocal), TTVoid, TTVoid);
-		field.fun.expr = concatExprs(field.fun.expr, returnExpr);
+		var argLocal = {
+			var tok = mkIdent(arg.name);
+			tok.leadTrivia.push(whitespace);
+			mk(TELocal(tok, arg.v), arg.v.type, arg.v.type);
+		}
+
+		function rewriteReturns(e:TExpr):TExpr {
+			return switch e.kind {
+				case TELocalFunction(_): e;
+				case TEReturn(keyword, null): e.with(kind = TEReturn(keyword, argLocal));
+				case _: mapExpr(rewriteReturns, e);
+			}
+		}
+
+		var finalReturnExpr = mk(TEReturn(mkIdent("return"), argLocal), TTVoid, TTVoid);
+		field.fun.expr = concatExprs(rewriteReturns(field.fun.expr), finalReturnExpr);
 
 		if (!mods.isOverride) {
 			addProperty(field.name, true, type, mods);
