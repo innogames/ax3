@@ -8,7 +8,8 @@ class RewriteCFor extends AbstractFilter {
 			case TEFor(f):
 				if (isSimpleSequence(f)) {
 					// rewriteToIntIter(f);
-					mapExpr(processExpr, e);
+					// mapExpr(processExpr, e);
+					rewriteToWhile(f);
 				} else {
 					rewriteToWhile(f);
 				}
