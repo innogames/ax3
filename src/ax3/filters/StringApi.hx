@@ -11,13 +11,13 @@ class StringApi extends AbstractFilter {
 				args = mapCallArgs(processExpr, args);
 				switch args.args {
 					case [ePattern = {expr: {type: TTRegExp}}, eBy = {expr: {type: TTString | TTFunction | TTFun(_) | TTAny /*hmm*/}}]:
-						var eCompatReplace = mkBuiltin("ASCompat.regExpReplace", tCompatReplace, removeTrailingTrivia(eString));
+						var eCompatReplace = mkBuiltin("ASCompat.regExpReplace", tCompatReplace, removeLeadingTrivia(eString));
 						e.with(kind = TECall(eCompatReplace, args.with(args = [
 							{expr: eString, comma: commaWithSpace}, ePattern, eBy
 						])));
 
 					case [ePattern = {expr: {type: TTString}}, eBy = {expr: {type: TTString}}]:
-						var eStringToolsReplace = mkBuiltin("StringTools.replace", tStringToolsReplace, removeTrailingTrivia(eString));
+						var eStringToolsReplace = mkBuiltin("StringTools.replace", tStringToolsReplace, removeLeadingTrivia(eString));
 						e.with(kind = TECall(eStringToolsReplace, args.with(args = [
 							{expr: eString, comma: commaWithSpace}, ePattern, eBy
 						])));
@@ -31,7 +31,7 @@ class StringApi extends AbstractFilter {
 				args = mapCallArgs(processExpr, args);
 				switch args.args {
 					case [ePattern = {expr: {type: TTRegExp}}]:
-						var eCompatReplace = mkBuiltin("ASCompat.regExpMatch", tCompatReplace, removeTrailingTrivia(eString));
+						var eCompatReplace = mkBuiltin("ASCompat.regExpMatch", tCompatReplace, removeLeadingTrivia(eString));
 						e.with(kind = TECall(eCompatReplace, args.with(args = [
 							{expr: eString, comma: commaWithSpace}, ePattern
 						])));
