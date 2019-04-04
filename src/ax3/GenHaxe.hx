@@ -459,8 +459,11 @@ class GenHaxe extends PrinterBase {
 				case _: false;
 			};
 
+		var trailTrivia:Null<Array<Trivia>> = null;
 		if (needsCast) {
-			buf.add("cast ");
+			printTrivia(TypedTreeTools.removeLeadingTrivia(e));
+			trailTrivia = TypedTreeTools.removeTrailingTrivia(e);
+			buf.add("(cast ");
 		}
 
 		switch (e.kind) {
@@ -517,6 +520,11 @@ class GenHaxe extends PrinterBase {
 				printTType(e.type);
 				buf.add(")");
 				printTrivia(trail);
+		}
+
+		if (needsCast) {
+			buf.add(")");
+			if (trailTrivia != null) printTrivia(trailTrivia);
 		}
 	}
 

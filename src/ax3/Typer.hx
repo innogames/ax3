@@ -213,6 +213,7 @@ class Typer {
 			case STArray(t): TTArray(typeType(t, pos));
 			case STDictionary(k, v): TTDictionary(typeType(k, pos), typeType(v, pos));
 			case STFunction: TTFunction;
+			case STFun(args, ret): TTFun([for (arg in args) typeType(arg, pos)], typeType(ret, pos));
 			case STClass: TTClass;
 			case STObject(t): TTObject(typeType(t, pos));
 			case STXML: TTXML;

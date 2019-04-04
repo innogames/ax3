@@ -138,6 +138,7 @@ class Structure {
 						case STVector(t): STVector(resolveType(t));
 						case STObject(t): STObject(resolveType(t));
 						case STDictionary(k, v): STDictionary(resolveType(k), resolveType(v));
+						case STFun(args, ret): STFun([for (t in args) resolveType(t)], resolveType(ret));
 						case STPath(path): changeDictionary(mod.resolveTypePath(path));
 					};
 				}
@@ -427,7 +428,7 @@ class SModule {
 			case STArray(_): "Array";
 			case STObject(_): "Object";
 			case STDictionary(_): "Dictionary";
-			case STFunction: "Function";
+			case STFunction | STFun(_): "Function";
 			case STClass: "Class";
 			case STXML: "XML";
 			case STXMLList: "XMLList";
@@ -520,6 +521,7 @@ enum SType {
 	STArray(t:SType);
 	STDictionary(k:SType, v:SType);
 	STFunction;
+	STFun(args:Array<SType>, ret:SType);
 	STClass;
 	STObject(t:SType);
 	STXML;

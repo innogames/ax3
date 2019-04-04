@@ -3,6 +3,9 @@ package ax3;
 import ax3.ParseTree;
 import ax3.ParseTree.*;
 import ax3.Structure;
+import ax3.Structure.stUntypedObject;
+import ax3.Structure.stUntypedArray;
+import ax3.HaxeTypeAnnotation;
 
 class StructureBuilder {
 	public static function makeFQN(ns:String, n:String):String {
@@ -76,7 +79,8 @@ class StructureBuilder {
 			case DFunction(f):
 				return [{name: f.name.text, kind: SFun(buildFunctionStructure(f.fun.signature))}];
 			case DVar(v):
-				return foldSeparated(v.vars, [], (v, acc) -> acc.push({name: v.name.text, kind: SVar(buildVarStructure(v))}));
+				var overrideType = resolveHaxeTypeHint(HaxeTypeAnnotation.extractFromModuleVarDecl(v), v.vars.first.name.pos);
+				return foldSeparated(v.vars, [], (v, acc) -> acc.push({name: v.name.text, kind: SVar(buildVarStructure(v, overrideType))}));
 			case DNamespace(n):
 				return [{name: n.name.text, kind: SNamespace}];
 			case DPackage(_) | DImport(_) | DUseNamespace(_, _) | DCondComp(_, _, _, _):
@@ -99,13 +103,17 @@ class StructureBuilder {
 			for (m in members) {
 				switch (m) {
 					case MField(f):
+						var haxeType = HaxeTypeAnnotation.extractFromClassField(f);
+
 						var isStatic = Lambda.exists(f.modifiers, m -> m.match(FMStatic(_)));
 						var fieldCollection = if (isStatic) cls.statics else cls.fields;
 
 						switch (f.kind) {
 							case FVar(_, vars, _):
+								var overrideType = resolveHaxeTypeHint(haxeType, vars.first.name.pos);
+
 								foldSeparated(vars, null, function(v, _) {
-									var s = buildVarStructure(v);
+									var s = buildVarStructure(v, overrideType);
 									fieldCollection.add({name: v.name.text, kind: SFVar(s)});
 								});
 							case FFun(_, name, fun):
@@ -206,12 +214,40 @@ class StructureBuilder {
 		};
 	}
 
-	static function buildVarStructure(v:VarDecl):SVarDecl {
-		var type = if (v.type == null) STAny else buildTypeStructure(v.type.type);
+	static function buildVarStructure(v:VarDecl, overrideType:Null<SType>):SVarDecl {
+		var type = if (overrideType != null) overrideType else if (v.type == null) STAny else buildTypeStructure(v.type.type);
 		return {swc: true, type: type};
 	}
 
 	static function getPackagePath(p:PackageDecl):Array<String> {
 		return if (p.name != null) dotPathToArray(p.name) else [];
+	}
+
+	static function resolveHaxeTypeHint(a:Null<HaxeTypeAnnotation>, p:Int):Null<SType> {
+		return if (a == null) null else resolveHaxeType(a.parseTypeHint(), p);
+	}
+
+	static function resolveHaxeType(t:HaxeType, pos:Int):SType {
+		return switch t {
+			case HTPath("Array", [elemT]): STArray(resolveHaxeType(elemT, pos));
+			case HTPath("Int", []): STInt;
+			case HTPath("UInt", []): STUint;
+			case HTPath("Float", []): STNumber;
+			case HTPath("Bool", []): STBoolean;
+			case HTPath("String", []): STString;
+			case HTPath("Dynamic", []): STAny;
+			case HTPath("Void", []): STVoid;
+			case HTPath("FastXML", []): STXML;
+			case HTPath("haxe.DynamicAccess", [elemT]): STObject(resolveHaxeType(elemT, pos));
+			case HTPath("flash.utils.Object", []): stUntypedObject;
+			case HTPath("Vector" | "flash.Vector", [t]): STVector(resolveHaxeType(t, pos));
+			case HTPath("GenericDictionary", [k, v]): STDictionary(resolveHaxeType(k, pos), resolveHaxeType(v, pos));
+			case HTPath("Class", [HTPath("Dynamic", [])]): STClass;
+			case HTPath("Class", [HTPath(name, [])]): STClass; // TODO?
+			case HTPath("Null", [t]): resolveHaxeType(t, pos); // TODO: keep nullability?
+			case HTPath(path, []): STPath(path);
+			case HTPath(path, _): trace("TODO: " + path); STAny;
+			case HTFun(args, ret): STFun([for (a in args) resolveHaxeType(a, pos)], resolveHaxeType(ret, pos));
+		};
 	}
 }
