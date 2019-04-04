@@ -74,4 +74,6 @@ class ASArray {
 	public static function sortOn<T>(a:Array<T>, fieldName:String, options:Int):Array<T> {
 		return a; // TODO
 	}
+
+	public static macro function pushMultiple<T>(a:ExprOf<Array<T>>, first:ExprOf<T>, rest:Array<ExprOf<T>>):ExprOf<Int>;
 }

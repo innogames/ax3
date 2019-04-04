@@ -7,11 +7,13 @@ class ArrayApi extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
 		e = mapExpr(processExpr, e);
 		return switch e.kind {
+			// sort constants
 			case TEField({kind: TOExplicit(dot, {kind: TEBuiltin(arrayToken, "Array")})}, fieldName = "CASEINSENSITIVE" | "DESCENDING" | "NUMERIC" | "RETURNINDEXEDARRAY" | "UNIQUESORT", fieldToken):
 				var eCompatArray = mkBuiltin("ASCompat.ASArray", TTBuiltin, arrayToken.leadTrivia, arrayToken.trailTrivia);
 				var fieldObj = {kind: TOExplicit(dot, eCompatArray), type: TTBuiltin};
 				e.with(kind = TEField(fieldObj, fieldName, fieldToken));
 
+			// sortOn
 			case TECall({kind: TEField({kind: TOExplicit(dot, eArray = {type: TTArray(_)})}, "sortOn", fieldToken)}, args):
 				eArray = processExpr(eArray);
 				args = mapCallArgs(processExpr, args);
@@ -26,6 +28,16 @@ class ArrayApi extends AbstractFilter {
 					case _:
 						throwError(exprPos(e), "Unsupported Array.sortOn arguments");
 				}
+
+			// push with multiple arguments
+			case TECall(ePush = {kind: TEField({kind: TOExplicit(dot, eArray = {type: TTArray(_)})}, "push", fieldToken)}, args) if (args.args.length > 1):
+				eArray = processExpr(eArray);
+				args = mapCallArgs(processExpr, args);
+
+				var eCompatArray = mkBuiltin("ASCompat.ASArray", TTBuiltin, removeLeadingTrivia(eArray));
+				var fieldObj = {kind: TOExplicit(dot, eCompatArray), type: eCompatArray.type};
+				var eMethod = mk(TEField(fieldObj, "pushMultiple", fieldToken), TTFunction, TTFunction);
+				e.with(kind = TECall(eMethod, args.with(args = [{expr: eArray, comma: commaWithSpace}].concat(args.args))));
 
 			// set length
 			case TEBinop({kind: TEField(to = {kind: TOExplicit(dot, eArray), type: TTArray(_)}, "length", _)}, op = OpAssign(_), eNewLength):
