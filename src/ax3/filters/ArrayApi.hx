@@ -115,6 +115,20 @@ class ArrayApi extends AbstractFilter {
 
 						e.with(kind = TECall(eCompatMethod, args.with(args = newArgs)));
 				}
+
+			case TECall({kind: TEVector(_)}, args):
+				switch args.args {
+					case [{expr: {type: TTVector(_)}}]:
+						var convertMethod = mkBuiltin("flash.Vector.convert", TTFunction, removeLeadingTrivia(e));
+						e.with(kind = TECall(convertMethod, args));
+
+					case [{expr: {type: TTArray(_) | TTAny}}]:
+						var convertMethod = mkBuiltin("flash.Vector.ofArray", TTFunction, removeLeadingTrivia(e));
+						e.with(kind = TECall(convertMethod, args));
+
+					case _:
+						throwError(exprPos(e), "Unsupported Vector<...> call");
+				}
 			case _:
 				e;
 		}
