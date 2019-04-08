@@ -2,7 +2,7 @@
 import haxe.macro.Expr;
 
 class ASArray {
-	public static macro function pushMultiple<T>(a:ExprOf<Array<T>>, first:ExprOf<T>, rest:Array<ExprOf<T>>):ExprOf<Int> {
+	static function pushMultiple<T>(a:Expr, first:Expr, rest:Array<Expr):Expr {
 		var exprs = [macro ___arr.push($first)];
 		for (expr in rest) {
 			exprs.push(macro ___arr.push($expr));
