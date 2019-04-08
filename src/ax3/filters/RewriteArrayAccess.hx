@@ -14,7 +14,7 @@ class RewriteArrayAccess extends AbstractFilter {
 
 				switch [eobj.type, eindex.type] {
 					case [TTArray(_), TTInt | TTUint]:
-						e;
+						e.with(kind = TEArrayAccess(a.with(eobj = eobj, eindex = eindex)));
 
 					case [TTArray(_), _]:
 						// reportError(exprPos(e), "Non-int array access for Array");
@@ -25,8 +25,14 @@ class RewriteArrayAccess extends AbstractFilter {
 							eindex: eindex.with(expectedType = TTString)
 						}));
 
+					case [TTDictionary(expectedKeyType, _), keyType]:
+						if (expectedKeyType != TTAny && keyType != TTAny && !Type.enumEq(expectedKeyType, keyType)) {
+							throwError(exprPos(e), 'Invalid dictionary key type, expected $expectedKeyType, got $keyType');
+						}
+						e.with(kind = TEArrayAccess(a.with(eobj = eobj, eindex = eindex)));
+
 					case _:
-						e;
+						mapExpr(processExpr, e);
 				}
 
 			case _:
