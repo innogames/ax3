@@ -14,7 +14,10 @@ class RestArgs extends AbstractFilter {
 						colon: new Token(0, TkColon, ":", [], []),
 						type: TPath({first: new Token(0, TkIdent, "Array", [], []), rest: []})
 					};
-					lastArg.kind = TArgNormal(hint, null);
+					lastArg.kind = TArgNormal(hint, {
+						equalsToken: new Token(0, TkEquals, "=", [whitespace], [whitespace]),
+						expr: mkNullExpr(TTArray(TTAny)) // TODO: actually we have to add a null check and assign `[]` there, but it's not what current converter does and people is okay with it, it seems
+					});
 					var dotsTrivia = dots.leadTrivia.concat(dots.trailTrivia);
 					lastArg.syntax.name.leadTrivia = dotsTrivia.concat(lastArg.syntax.name.leadTrivia);
 			}
