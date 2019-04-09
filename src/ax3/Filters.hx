@@ -36,6 +36,7 @@ class Filters {
 			// new CheckExpectedTypes(context)
 			new ArrayApi(context),
 			new StringApi(context),
+			new NumberApi(context),
 			new FunctionApply(context),
 			new ToString(context),
 			new NamespacedToPublic(context),

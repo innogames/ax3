@@ -3,6 +3,13 @@ import haxe.Constraints.Function;
 import haxe.extern.EitherType;
 
 class ASCompat {
+	public static final MAX_INT = 2147483647;
+	public static final MIN_INT = -2147483648;
+
+	public static inline function toFixed(n:Float):String {
+		return (cast n).toFixed();
+	}
+
 	public static inline function regExpReplace(s:String, r:RegExp, by:EitherType<String,Function>):String {
 		return (cast s).replace(r, by);
 	}
