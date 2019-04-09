@@ -13,10 +13,10 @@ class RewriteArrayAccess extends AbstractFilter {
 				var eindex = processExpr(a.eindex);
 
 				switch [eobj.type, eindex.type] {
-					case [TTArray(_), TTInt | TTUint]:
+					case [TTArray(_) | TTVector(_), TTInt | TTUint]:
 						e.with(kind = TEArrayAccess(a.with(eobj = eobj, eindex = eindex)));
 
-					case [TTArray(_), _]:
+					case [TTArray(_) | TTVector(_), _]:
 						// reportError(exprPos(e), "Non-int array access for Array");
 
 						e.with(kind = TEArrayAccess({
@@ -32,7 +32,9 @@ class RewriteArrayAccess extends AbstractFilter {
 						e.with(kind = TEArrayAccess(a.with(eobj = eobj, eindex = eindex)));
 
 					case _:
-						mapExpr(processExpr, e);
+						reportError(exprPos(e), "Dynamic array access?");
+						eobj = eobj.with(kind = TEHaxeRetype(eobj), type = TTAny);
+						e.with(kind = TEArrayAccess(a.with(eobj = eobj, eindex = eindex)));
 				}
 
 			case _:
