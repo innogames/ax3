@@ -325,7 +325,7 @@ class Typer {
 		switch currentModule.getDecl(c.name.text) {
 			case null: throw "assert"; // no way
 			case {kind: SClass(cls)}: currentClass = cls;
-			case _:
+			case _: throw "assert"; // no way
 		}
 
 		var extend:Null<TClassExtend> =
