@@ -27,7 +27,7 @@ class RewriteArrayAccess extends AbstractFilter {
 
 					case [TTDictionary(expectedKeyType, _), keyType]:
 						if (expectedKeyType != TTAny && keyType != TTAny && !Type.enumEq(expectedKeyType, keyType)) {
-							throwError(exprPos(e), 'Invalid dictionary key type, expected $expectedKeyType, got $keyType');
+							reportError(exprPos(e), 'Invalid dictionary key type, expected $expectedKeyType, got $keyType');
 						}
 						e.with(kind = TEArrayAccess(a.with(eobj = eobj, eindex = eindex)));
 
