@@ -30,6 +30,7 @@ class Main {
 			SWCLoader.load(tree, lib);
 		}
 		SWCLoader.resolve();
+		tree.resolve();
 
 		sys.io.File.saveContent("structure.txt", tree.dump());
 

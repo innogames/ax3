@@ -27,6 +27,124 @@ abstract TypedTree(Map<PackageName,TPackage>) {
 		};
 	}
 
+	public function resolve() {
+		for (packName => pack in this) {
+			for (modName => mod in pack.asMap()) {
+				function declToType(decl:TDecl):TType {
+					return switch decl {
+						case TDClass(c): TTInst(IClass(c));
+						case TDInterface(i): TTInst(IInterface(i));
+						case _: throw "assert";
+					}
+				}
+
+				function resolvePath(packName:String, name:String):TType {
+					if (packName != "") {
+						// already full path
+						return declToType(getDecl(packName, name));
+					}
+
+					if (mod.name == name) {
+						return declToType(mod.pack.decl);
+					}
+
+					var modInPack = pack.getModule(name);
+					if (modInPack != null) {
+						return declToType(modInPack.pack.decl);
+					}
+
+					var toplevel = this[""].getModule(name);
+					if (toplevel != null) {
+						return declToType(toplevel.pack.decl);
+					}
+
+					throw 'Unknown $packName::$name';
+				}
+
+				function resolveType(t:TType):TType {
+					return switch t {
+						case TTVoid
+						   | TTAny
+						   | TTBoolean
+						   | TTNumber
+						   | TTInt
+						   | TTUint
+						   | TTString
+						   | TTFunction
+						   | TTClass
+						   | TTXML
+						   | TTXMLList
+						   | TTRegExp
+						   | TTBuiltin
+						   | TTInst(_)
+						   | TTStatic(_)
+						   : t;
+						case TTArray(t):
+							TTArray(resolveType(t));
+						case TTVector(t):
+							TTVector(resolveType(t));
+						case TTObject(t):
+							TTObject(resolveType(t));
+						case TTDictionary(k, v):
+							TTDictionary(resolveType(k), resolveType(v));
+						case TTFun(args, ret, rest):
+							TTFun([for (t in args) resolveType(t)], resolveType(ret), rest);
+						case TTUnresolved(pack, name):
+							resolvePath(pack, name);
+					}
+				}
+
+				function resolveSig(sig:TFunctionSignature) {
+					for (arg in sig.args) {
+						arg.type = resolveType(arg.type);
+					}
+					sig.ret.type = resolveType(sig.ret.type);
+				}
+
+				function resolveVars(vars:Array<TVarFieldDecl>) {
+					for (v in vars) {
+						v.type = resolveType(v.type);
+					}
+				}
+
+				function resolveDecl(d:TDecl) {
+					switch (d) {
+						case TDNamespace(_):
+							// nothing to resolve :)
+
+						case TDClass(c):
+							for (m in c.members) {
+								switch m {
+									case TMField({kind: TFFun({fun: f}) | TFGetter({fun: f}) | TFSetter({fun: f})}):
+										resolveSig(f.sig);
+									case TMField({kind: TFVar(v)}):
+										resolveVars(v.vars);
+									case TMCondCompBegin(_) | TMCondCompEnd(_) | TMUseNamespace(_, _) | TMStaticInit(_):
+								}
+							}
+
+						case TDInterface(c):
+							for (m in c.members) {
+								switch m {
+									case TIMField({kind: TIFFun({sig: sig}) | TIFGetter({sig: sig}) | TIFSetter({sig: sig})}):
+										resolveSig(sig);
+									case TIMCondCompBegin(_) | TIMCondCompEnd(_):
+								}
+							}
+
+						case TDVar(v):
+							resolveVars(v.vars);
+
+						case TDFunction(f):
+							resolveSig(f.fun.sig);
+					}
+				}
+
+				resolveDecl(mod.pack.decl);
+			}
+		}
+	}
+
 	public function dump() {
 		return [for (name => pack in this) pack.dump(name)].join("\n\n\n");
 	}
@@ -36,6 +154,8 @@ abstract TPackage(Map<ModuleName,TModule>) {
 	public inline function new() {
 		this = new Map();
 	}
+
+	public inline function asMap() return this;
 
 	public inline function getModule(moduleName:ModuleName):Null<TModule> {
 		return this[moduleName];
@@ -153,7 +273,7 @@ abstract TPackage(Map<ModuleName,TModule>) {
 			case TTXMLList: "XMLList";
 			case TTRegExp: "RegExp";
 			case TTVector(t): "Vector.<" + dumpType(t) + ">";
-			case TTInst(c): c.name;
+			case TTInst(IClass({name: name}) | IInterface({name: name})): name;
 			case TTStatic(c): c.name;
 			case TTBuiltin: "BUILTIN";
 			case TTUnresolved(pack, name): 'UNRESOLVED<$pack::$name>';
@@ -797,10 +917,15 @@ enum TType {
 	TTBuiltin; // TODO: temporary
 
 	TTFun(args:Array<TType>, ret:TType, ?rest:Null<TRestKind>); // method and local function refs
-	TTInst(cls:SClassDecl); // class instance access (`obj` in `obj.some`)
-	TTStatic(cls:SClassDecl); // class statics access (`Cls` in `Cls.some`)
+	TTInst(i:TTInstKind); // class instance access (`obj` in `obj.some`)
+	TTStatic(cls:TClassDecl); // class statics access (`Cls` in `Cls.some`)
 
 	TTUnresolved(pack:String, name:String);
+}
+
+enum TTInstKind {
+	IClass(cls:TClassDecl);
+	IInterface(cls:TInterfaceDecl);
 }
 
 enum TRestKind {

@@ -29,7 +29,7 @@ class SWCLoader {
 				| ["", "Class"]
 				| ["", "Function"]
 				| ["", "Namespace"]
-				| ["", "QName"]
+				// | ["", "QName"]
 				| ["", "Boolean"]
 				| ["", "Number"]
 				| ["", "int"]
@@ -397,7 +397,10 @@ class SWCLoader {
 									case _: TTUnresolved(ns, name);
 								}
 							case _:
-								TTUnresolved(ns, name);
+								if (ns.indexOf("mx.core") == 0) // TODO: hacky hack
+									TTAny;
+								else
+									TTUnresolved(ns, name);
 						}
 					case NPrivate(ns):
 						var ns = abc.get(abc.strings, ns);
