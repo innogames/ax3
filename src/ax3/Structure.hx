@@ -102,11 +102,11 @@ class Structure {
 		}
 	}
 
-	public static function build(files:Array<File>, libs:Array<String>):Structure {
+	public static function build(tree:TypedTree, files:Array<File>, libs:Array<String>):Structure {
 		var structure = new Structure();
 		var t = stamp();
 		for (lib in libs) {
-			SWCLoader.load(structure, lib);
+			SWCLoader.load(tree, lib);
 		}
 		Timers.swcs += (stamp() - t);
 		t = stamp();

@@ -403,6 +403,7 @@ class GenHaxe extends PrinterBase {
 
 	function printTType(t:TType) {
 		switch t {
+			case TTUnresolved(_): throw "assert";
 			case TTVoid: buf.add("Void");
 			case TTAny: buf.add("ASAny");
 			case TTBoolean: buf.add("Bool");

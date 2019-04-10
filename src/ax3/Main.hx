@@ -24,14 +24,22 @@ class Main {
 		var total = stamp();
 		walk(config.src, files);
 
-		var structure = Structure.build(files, config.swc);
-		sys.io.File.saveContent("structure.txt", structure.dump());
+		var tree = new TypedTree();
 
-		var t = stamp();
-		var typer = new Typer(structure, ctx);
+		for (lib in config.swc) {
+			SWCLoader.load(tree, lib);
+		}
+		SWCLoader.resolve();
 
-		var modules = typer.process(files);
-		Timers.typing += (stamp() - t);
+		sys.io.File.saveContent("structure.txt", tree.dump());
+
+		// var t = stamp();
+		// var typer = new Typer(tree, structure, ctx);
+		// var modules = typer.process(files);
+		// Timers.typing += (stamp() - t);
+
+		/*
+
 
 		t = stamp();
 		Filters.run(ctx, structure, modules);
@@ -96,7 +104,7 @@ class Main {
 		print("typing    " + Timers.typing);
 		print("filters   " + Timers.filters);
 		print("output    " + Timers.output);
-		print("-- TOTAL  " + total);
+		print("-- TOTAL  " + total);*/
 	}
 
 	static function walk(dir:String, files:Array<ParseTree.File>) {

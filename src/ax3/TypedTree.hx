@@ -4,6 +4,163 @@ import ax3.ParseTree;
 import ax3.Structure;
 import ax3.Token;
 
+typedef PackageName = String;
+typedef ModuleName = String;
+
+abstract TypedTree(Map<PackageName,TPackage>) {
+	public inline function new() {
+		this = new Map();
+	}
+
+	public inline function getDecl(packName:String, name:String):TDecl {
+		var pack = this[packName];
+		if (pack == null) throw 'No such package $packName';
+		var mod = pack.getModule(name);
+		if (mod == null) throw 'No such module $packName::$name';
+		return mod.pack.decl;
+	}
+
+	public function getOrCreatePackage(packName:PackageName):TPackage {
+		return switch this[packName] {
+			case null: this[packName] = new TPackage();
+			case pack: pack;
+		};
+	}
+
+	public function dump() {
+		return [for (name => pack in this) pack.dump(name)].join("\n\n\n");
+	}
+}
+
+abstract TPackage(Map<ModuleName,TModule>) {
+	public inline function new() {
+		this = new Map();
+	}
+
+	public inline function getModule(moduleName:ModuleName):Null<TModule> {
+		return this[moduleName];
+	}
+
+	public inline function addModule(module:TModule) {
+		if (this.exists(module.name)) throw 'Module ${module.name} is already defined!';
+		this[module.name] = module;
+	}
+
+	public function dump(name:String) {
+		return (if (name == "") "<root>" else name) + "\n" + [for (name => module in this) dumpModule(name, module)].join("\n\n");
+	}
+
+	static final indent = "  ";
+
+	static function dumpModule(name:String, m:TModule) {
+		var r = [indent + name];
+		if (m.pack.decl != null) {
+			r.push(indent + indent + "MAIN:");
+			r.push(dumpDecl(m.pack.decl));
+		}
+		if (m.privateDecls.length > 0) {
+			r.push(indent + indent + "PRIVATE:");
+			for (d in m.privateDecls) {
+				r.push(dumpDecl(d));
+			}
+		}
+		return r.join("\n");
+	}
+
+	static function dumpDecl(d:TDecl):String {
+		var indent = indent + indent + indent;
+		switch (d) {
+			case TDVar(v):
+				return [for (v in v.vars) indent + dumpVar("VAR", v.name, v.type)].join("\n");
+			case TDFunction(f):
+				return indent + dumpFun(f.name, f.fun.sig);
+			case TDNamespace({name: {text: name}}):
+				return indent + "NS " + name;
+			case TDInterface(i):
+				var r = [indent + "IFACE " + i.name];
+				if (i.extend != null) {
+					r.push(indent + " - EXT: " + [for (i in i.extend.interfaces) i.iface.decl.name].join(", "));
+				}
+				for (m in i.members) {
+					switch (m) {
+						case TIMField(f): r.push(dumpInterfaceField(f));
+						case TIMCondCompBegin(_) | TIMCondCompEnd(_):
+					}
+				}
+				return r.join("\n");
+			case TDClass(c):
+				var r = [indent + "CLS " + c.name];
+				if (c.extend != null) {
+					r.push(indent + " - EXT: " + c.extend.superClass.name);
+				}
+				for (m in c.members) {
+					switch (m) {
+						case TMField(f): r.push(dumpClassField(f));
+						case TMCondCompBegin(_) | TMCondCompEnd(_):
+						case TMStaticInit(_) | TMUseNamespace(_):
+					}
+				}
+				return r.join("\n");
+		}
+	}
+
+	static function dumpVar(prefix:String, name:String, type:TType):String {
+		return prefix + " " + name + ":" + dumpType(type);
+	}
+
+	static function dumpFun(name:String, f:TFunctionSignature):String {
+		var args = [for (a in f.args) switch (a.kind) {
+			case TArgNormal(_, init): (if (init != null) "?" else "") + a.name + ":" + dumpType(a.type);
+			case TArgRest(_): "..." + a.name;
+		}];
+		return "FUN " + name + "(" + args.join(", ") + "):" + dumpType(f.ret.type);
+	}
+
+	static function dumpInterfaceField(f:TInterfaceField):String {
+		var prefix = indent + indent + indent + indent;
+		return prefix + switch (f.kind) {
+			case TIFFun(f): dumpFun(f.name, f.sig);
+			case TIFGetter(f): dumpVar("GET", f.name, f.sig.ret.type);
+			case TIFSetter(f): dumpVar("SET", f.name, f.sig.args[0].type);
+		}
+	}
+
+	static function dumpClassField(f:TClassField):String {
+		var prefix = indent + indent + indent + indent;
+		return switch (f.kind) {
+			case TFFun(f): prefix + dumpFun(f.name, f.fun.sig);
+			case TFVar(f): [for (v in f.vars) prefix + dumpVar("VAR", v.name, v.type) ].join("\n");
+			case TFGetter(f): prefix + dumpVar("GET", f.name, f.fun.sig.ret.type);
+			case TFSetter(f): prefix + dumpVar("SET", f.name, f.fun.sig.args[0].type);
+		};
+	}
+
+	static function dumpType(t:TType):String {
+		return switch (t) {
+			case TTVoid: "void";
+			case TTAny: "*";
+			case TTBoolean: "Boolean";
+			case TTNumber: "Number";
+			case TTInt: "int";
+			case TTUint: "uint";
+			case TTString: "String";
+			case TTArray(_): "Array";
+			case TTObject(_): "Object";
+			case TTDictionary(_): "Dictionary";
+			case TTFunction | TTFun(_): "Function";
+			case TTClass: "Class";
+			case TTXML: "XML";
+			case TTXMLList: "XMLList";
+			case TTRegExp: "RegExp";
+			case TTVector(t): "Vector.<" + dumpType(t) + ">";
+			case TTInst(c): c.name;
+			case TTStatic(c): c.name;
+			case TTBuiltin: "BUILTIN";
+			case TTUnresolved(pack, name): 'UNRESOLVED<$pack::$name>';
+		}
+	}
+}
+
 typedef TModule = {
 	var path:String;
 	var pack:TPackageDecl;
@@ -141,7 +298,7 @@ typedef TIAccessorField = {
 }
 
 typedef TClassExtend = {
-	var superClass:SClassDecl;
+	var superClass:TClassDecl;
 	var syntax:{
 		var keyword:Token;
 		var path:DotPath;
@@ -150,7 +307,12 @@ typedef TClassExtend = {
 
 typedef TClassImplement = {
 	var syntax:{keyword:Token};
-	var interfaces:Array<{syntax: DotPath, comma:Null<Token>}>;
+	var interfaces:Array<{iface:TInterfaceHeritage, comma:Null<Token>}>;
+}
+
+typedef TInterfaceHeritage = {
+	var syntax:DotPath;
+	var decl:TInterfaceDecl;
 }
 
 enum TClassMember {
@@ -503,8 +665,8 @@ typedef TFunctionSignature = {
 }
 
 typedef TTypeHint = {
-	var type:TType;
 	var syntax:Null<TypeHint>;
+	var type:TType;
 }
 
 typedef TTypeRef = {
@@ -637,6 +799,8 @@ enum TType {
 	TTFun(args:Array<TType>, ret:TType, ?rest:Null<TRestKind>); // method and local function refs
 	TTInst(cls:SClassDecl); // class instance access (`obj` in `obj.some`)
 	TTStatic(cls:SClassDecl); // class statics access (`Cls` in `Cls.some`)
+
+	TTUnresolved(pack:String, name:String);
 }
 
 enum TRestKind {

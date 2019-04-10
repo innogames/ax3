@@ -26,7 +26,10 @@ class Typer {
 	var currentClass:Null<SClassDecl>;
 	var currentPath:String = "<unknown>";
 
-	public function new(structure, context) {
+	final tree:TypedTree;
+
+	public function new(tree, structure, context) {
+		this.tree = tree;
 		this.structure = structure;
 		this.context = context;
 	}
@@ -69,8 +72,12 @@ class Typer {
 			var namespaceUses = getNamespaceUses(pack);
 
 			var packName = if (pack.name == null) "" else dotPathToString(pack.name);
+
 			var currentPackage = structure.packages[packName];
 			if (currentPackage == null) throw "assert";
+
+			var tPackage = tree.getOrCreatePackage(packName);
+
 
 			var mod = currentPackage.getModule(file.name);
 			if (mod == null) throw "assert";
@@ -81,7 +88,7 @@ class Typer {
 
 			@:nullSafety(Off) currentModule = null;
 
-			modules.push({
+			var tModule:TModule = {
 				path: file.path,
 				name: file.name,
 				pack: {
@@ -93,8 +100,9 @@ class Typer {
 				},
 				privateDecls: tPrivateDecls,
 				eof: file.eof
-			});
-
+			}
+			tPackage.addModule(tModule);
+			modules.push(tModule);
 		}
 
 		return modules;
@@ -941,7 +949,7 @@ class Typer {
 
 	function typeCallArgs(args:CallArgs, callableType:TType):TCallArgs {
 		var getExpectedType = switch (callableType) {
-			case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTString | TTArray(_) | TTObject(_) | TTXML | TTXMLList | TTRegExp | TTVector(_) | TTInst(_) | TTDictionary(_):
+			case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTString | TTArray(_) | TTObject(_) | TTXML | TTXMLList | TTRegExp | TTVector(_) | TTInst(_) | TTDictionary(_) | TTUnresolved(_):
 				throw "assert";
 			case TTClass:
 				throw "assert??";
@@ -1346,6 +1354,7 @@ class Typer {
 					return typeXMLListFieldAccess(obj, dot, fieldToken, expectedType);
 				case [_, {type: TTInst(cls)}]: typeInstanceField(cls, fieldName, fieldToken.pos);
 				case [_, {type: TTStatic(cls)}]: typeStaticField(cls, fieldName);
+				case [_, {type: TTUnresolved(_)}]: throw "assert";
 		}
 		return mkExplicitFieldAccess(obj, dot, fieldToken, type, expectedType);
 	}

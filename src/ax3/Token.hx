@@ -1,6 +1,8 @@
 package ax3;
 
 class Token {
+	public static final nullToken = new Token(-1, TkEof, "", [], []);
+
 	public final pos:Int;
 	public final kind:TokenKind;
 	public final text:String;

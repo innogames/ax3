@@ -5,13 +5,21 @@ import format.swf.Data.SWF;
 import format.abc.Data.MethodType;
 import format.abc.Data.Index;
 import format.abc.Data.ABCData;
-import ax3.Structure;
-import ax3.StructureBuilder.makeFQN;
+import ax3.Token.nullToken;
+import ax3.TypedTree;
+import ax3.TypedTreeTools.tUntypedArray;
+import ax3.TypedTreeTools.tUntypedObject;
 
 class SWCLoader {
-	public static function load(structure:Structure, file:String) {
+	static var delayed:Array<()->Void> = [];
+
+	public static function load(tree:TypedTree, file:String) {
 		// trace('Loading $file');
-		processLibrary(getLibrary(file), structure);
+		processLibrary(file, getLibrary(file), tree);
+	}
+
+	public static function resolve() {
+		for (f in delayed) f();
 	}
 
 	static function shouldSkipClass(ns:String, name:String):Bool {
@@ -38,44 +46,203 @@ class SWCLoader {
 		}
 	}
 
-	static function processLibrary(swf:SWF, structure:Structure) {
+	static function addModule(swcPath:String, tree:TypedTree, pack:String, name:String, decl:TDecl) {
+		var tPack = tree.getOrCreatePackage(pack);
+		if (tPack.getModule(name) != null) {
+			// trace('Duplicate module: ' + pack + "::" + name);
+			return;
+		}
+		tPack.addModule({
+			path: swcPath,
+			pack: {
+				syntax: null,
+				imports: [],
+				namespaceUses: [],
+				name: pack,
+				decl: decl
+			},
+			name: name,
+			privateDecls: [],
+			eof: nullToken
+		});
+	}
+
+	static function processLibrary(swcPath:String, swf:SWF, tree:TypedTree) {
 		var abcs = getAbcs(swf);
 		for (abc in abcs) {
 			for (cls in abc.classes) {
 				var n = getPublicName(abc, cls.name);
 				if (n == null || shouldSkipClass(n.ns, n.name)) continue;
 
-				var pack = structure.getOrCreatePackage(n.ns);
-
-				if (pack.getModule(n.name) != null) {
-					// trace('Duplicate module: ' + n.ns + "::" + n.name);
-					continue;
-				}
-
-				var mod = pack.createModule(n.name);
-
-				var decl = new SClassDecl(n.name, makeFQN(n.ns, n.name));
-
+				var tDecl, addVar, addMethod, addGetter, addSetter;
 				if (cls.isInterface) {
+					var members:Array<TInterfaceMember> = [];
+
+					addVar = function(name:String, type:TType) throw 'Var $name in interface ${n.name}';
+					addMethod = function(name:String, f:TFunctionSignature) {
+						members.push(TIMField({
+							metadata: [],
+							semicolon: null,
+							kind: TIFFun({
+								syntax: null,
+								name: name,
+								sig: f
+							})
+						}));
+					}
+					addGetter = function(name:String, f:TFunctionSignature) {
+						members.push(TIMField({
+							metadata: [],
+							semicolon: null,
+							kind: TIFGetter({
+								syntax: null,
+								name: name,
+								sig: f
+							})
+						}));
+					}
+					addSetter = function(name:String, f:TFunctionSignature) {
+						members.push(TIMField({
+							metadata: [],
+							semicolon: null,
+							kind: TIFSetter({
+								syntax: null,
+								name: name,
+								sig: f
+							})
+						}));
+					}
+
+					var iface:TInterfaceDecl = {
+						syntax: null,
+						metadata: [],
+						modifiers: [],
+						name: n.name,
+						extend: null,
+						members: members
+					};
+					tDecl = TDInterface(iface);
+
+					var extensions = [];
 					for (iface in cls.interfaces) {
-						var n = getPublicName(abc, iface);
-						if (n != null) {
-							decl.extensions.push(makeFQN(n.ns, n.name));
+						var ifaceN = getPublicName(abc, iface);
+						if (ifaceN != null) {
+							if (ifaceN.name == "DRMErrorListener") {
+								// TODO: something is bugged here, or I don't understand how to read SWC properly
+								ifaceN.ns = "com.adobe.tvsdk.mediacore";
+							}
+							extensions.push(ifaceN);
 						}
 					}
+
+					if (extensions.length > 0) {
+						delayed.push(function() {
+							var interfaces = [];
+							for (n in extensions) {
+								var ifaceDecl = switch tree.getDecl(n.ns, n.name) {
+									case TDInterface(iface): iface;
+									case _: throw '${n.ns}::${n.name} is not an interface';
+								}
+								interfaces.push({iface: {syntax: null, decl: ifaceDecl}, comma: null});
+							}
+							iface.extend = {
+								syntax: null,
+								interfaces: interfaces
+							}
+						});
+					}
+
 				} else {
+					var members:Array<TClassMember> = [];
+
+					addVar = function(name:String, type:TType) {
+						members.push(TMField({
+							metadata: [],
+							namespace: null,
+							modifiers: [],
+							kind: TFVar({
+								kind: VVar(null),
+								isInline: false,
+								vars: [{
+									syntax: null,
+									name: name,
+									type: type,
+									init: null,
+									comma: null
+								}],
+								semicolon: null
+							})
+						}));
+					}
+					addMethod = function(name:String, f:TFunctionSignature) {
+						members.push(TMField({
+							metadata: [],
+							namespace: null,
+							modifiers: [],
+							kind: TFFun({
+								syntax: null,
+								name: name,
+								fun: {sig: f, expr: null}
+							})
+						}));
+					}
+					addGetter = function(name:String, f:TFunctionSignature) {
+						members.push(TMField({
+							metadata: [],
+							namespace: null,
+							modifiers: [],
+							kind: TFGetter({
+								syntax: null,
+								name: name,
+								fun: {sig: f, expr: null}
+							})
+						}));
+					}
+					addSetter = function(name:String, f:TFunctionSignature) {
+						members.push(TMField({
+							metadata: [],
+							namespace: null,
+							modifiers: [],
+							kind: TFSetter({
+								syntax: null,
+								name: name,
+								fun: {sig: f, expr: null}
+							})
+						}));
+					}
+
+					var tCls:TClassDecl = {
+						syntax: null,
+						properties: null,
+						metadata: [],
+						modifiers: [],
+						name: n.name,
+						structure: null,
+						extend: null,
+						implement: null,
+						members: members
+					};
+					tDecl = TDClass(tCls);
+
 					if (cls.superclass != null) {
-						var n = getPublicName(abc, cls.superclass);
-						if (n != null) {
-							decl.extensions.push(makeFQN(n.ns, n.name));
+						switch getPublicName(abc, cls.superclass) {
+							case null | {ns: "", name: "Object"} | {ns: "mx.core", name: "UIComponent"}: // ignore mx.core.UIComponent
+							case n:
+								delayed.push(function() {
+									var classDecl = switch tree.getDecl(n.ns, n.name) {
+										case TDClass(c): c;
+										case _: throw '${n.ns}::${n.name} is not a class';
+									}
+									tCls.extend = {syntax: null, superClass: classDecl};
+								});
 						}
 					}
 
 					var ctor = buildFunDecl(abc, cls.constructor);
-					decl.fields.add({name: n.name, kind: SFFun(ctor)});
+					addMethod(n.name, ctor);
 				}
 
-				function processField(f:format.abc.Data.Field, collection:FieldCollection) {
+				function processField(f:format.abc.Data.Field) {
 					var n = getPublicName(abc, f.name, n.ns + ":" + n.name);
 					if (n == null) return;
 					// TODO: sort out namespaces
@@ -87,41 +254,30 @@ class SWCLoader {
 
 					switch (f.kind) {
 						case FVar(type, _, _):
-							// trace("  " + n);
-							collection.add({name: n.name, kind: SFVar({swc: true, type: if (type != null) buildPublicType(type) else STAny})});
+							addVar(n.name, if (type != null) buildPublicType(type) else TTAny);
 
 						case FMethod(type, KNormal, _, _):
-							var f = buildFunDecl(abc, type);
-							collection.add({name: n.name, kind: SFFun(f)});
+							addMethod(n.name, buildFunDecl(abc, type));
 
 						case FMethod(type, KGetter, _, _):
-							var methType = getMethodType(abc, type);
-							var type = if (methType.ret != null) buildPublicType(methType.ret) else STAny;
-							if (collection.get(n.name) == null) {
-								collection.add({name: n.name, kind: SFVar({swc: true, type: type})});
-							}
+							addGetter(n.name, buildFunDecl(abc, type));
 
 						case FMethod(type, KSetter, _, _):
-							var methType = getMethodType(abc, type);
-							if (methType.args.length != 1) throw "assert";
-							var type = if (methType.args[0] != null) buildPublicType(methType.args[0]) else STAny;
-							if (collection.get(n.name) == null) {
-								collection.add({name: n.name, kind: SFVar({swc: true, type: type})});
-							}
+							addSetter(n.name, buildFunDecl(abc, type));
 
 						case FClass(_) | FFunction(_): throw "should not happen";
 					}
 				}
 
 				for (f in cls.fields) {
-					processField(f, decl.fields);
+					processField(f);
 				}
 
 				for (f in cls.staticFields) {
-					processField(f, decl.statics);
+					processField(f);
 				}
 
-				mod.mainDecl = {name: n.name, kind: SClass(decl)};
+				addModule(swcPath, tree, n.ns, n.name, tDecl);
 			}
 
 			for (init in abc.inits) {
@@ -129,57 +285,93 @@ class SWCLoader {
 					var n = getPublicName(abc, f.name);
 					if (n == null) continue;
 
-					var pack = structure.getOrCreatePackage(n.ns);
-
 					var decl = switch (f.kind) {
 						case FVar(type, value, const):
-							SVar({swc: true, type: if (type != null) buildTypeStructure(abc, type) else STAny});
+							var type = if (type != null) buildTypeStructure(abc, type) else TTAny;
+							TDVar({
+								metadata: [],
+								modifiers: [],
+								kind: VVar(null),
+								isInline: false,
+								vars: [{
+									syntax: null,
+									name: n.name,
+									type: type,
+									init: null,
+									comma: null
+								}],
+								semicolon: null
+							});
+
 						case FMethod(type, KNormal, _, _):
-							SFun(buildFunDecl(abc, type));
+							TDFunction({
+								metadata: [],
+								modifiers: [],
+								syntax: null,
+								name: n.name,
+								fun: {sig: buildFunDecl(abc, type), expr: null}
+							});
+
 						case FMethod(_, _, _, _):
 							throw "assert";
+
 						case FClass(_):
 							// TODO: assert that class is there already (should be filled in by iterating abc.classes)
-							null;
+							continue;
+
 						case FFunction(f):
 							throw "assert"; // toplevel funcs are FMethods
 					}
-					if (decl == null) continue;
 
-					// TODO: code duplication with classes
-					if (pack.getModule(n.name) != null) {
-						// trace('Duplicate module: ' + n.ns + "::" + n.name);
-						continue;
-					}
-
-					var mod = pack.createModule(n.name);
-					mod.mainDecl = {name: n.name, kind: decl};
+					addModule(swcPath, tree, n.ns, n.name, decl);
 				}
 			}
 
 		}
 	}
 
-	static function buildFunDecl(abc:ABCData, methType:Index<MethodType>):SFunDecl {
+	static function buildFunDecl(abc:ABCData, methType:Index<MethodType>):TFunctionSignature {
 		var methType = getMethodType(abc, methType);
-		var args = [];
+		var args:Array<TFunctionArg> = [];
 		for (i in 0...methType.args.length) {
 			var arg = methType.args[i];
-			var type = if (arg != null) buildTypeStructure(abc, arg) else STAny;
-			args.push({name: "arg" + i, kind: SArgNormal(false), type: type});
+			var type = if (arg != null) buildTypeStructure(abc, arg) else TTAny;
+			args.push({
+				syntax: null,
+				comma: null,
+				name: "arg" + i,
+				type: type,
+				v: null,
+				kind: TArgNormal(null, null),
+			});
 		}
 		if (methType.extra != null && methType.extra.variableArgs) {
-			args.push({name: "rest", kind: SArgRest, type: Structure.stUntypedArray});
+			args.push({
+				syntax: null,
+				comma: null,
+				name: "rest",
+				type: TypedTreeTools.tUntypedArray,
+				v: null,
+				kind: TArgRest(null),
+			});
 		}
-		var ret = if (methType.ret != null) buildTypeStructure(abc, methType.ret) else STAny;
-		return {args: args, ret: ret, swc: true};
+		var ret = if (methType.ret != null) buildTypeStructure(abc, methType.ret) else TTAny;
+
+		return {
+			syntax: null,
+			args: args,
+			ret: {
+				syntax: null,
+				type: ret
+			}
+		};
 	}
 
 	static function getMethodType(abc:ABCData, i:Index<MethodType> ) : MethodType {
 		return abc.methodTypes[i.asInt()];
 	}
 
-	static function buildTypeStructure(abc:ABCData, name:IName):SType {
+	static function buildTypeStructure(abc:ABCData, name:IName):TType {
 		switch abc.get(abc.names, name) {
 			case NName(name, ns):
 				switch (abc.get(abc.namespaces, ns)) {
@@ -189,34 +381,34 @@ class SWCLoader {
 						return switch ns {
 							case "":
 								switch name {
-									case "void": STVoid;
-									case "Boolean": STBoolean;
-									case "Number": STNumber;
-									case "int": STInt;
-									case "uint": STUint;
-									case "String": STString;
-									case "Array": Structure.stUntypedArray;
-									case "Object": Structure.stUntypedObject;
-									case "Class": STClass;
-									case "Function": STFunction;
-									case "XML": STXML;
-									case "XMLList": STXMLList;
-									case "RegExp": STRegExp;
-									case _: STPath(name);
+									case "void": TTVoid;
+									case "Boolean": TTBoolean;
+									case "Number": TTNumber;
+									case "int": TTInt;
+									case "uint": TTUint;
+									case "String": TTString;
+									case "Array": tUntypedArray;
+									case "Object": tUntypedObject;
+									case "Class": TTClass;
+									case "Function": TTFunction;
+									case "XML": TTXML;
+									case "XMLList": TTXMLList;
+									case "RegExp": TTRegExp;
+									case _: TTUnresolved(ns, name);
 								}
 							case _:
-								STPath(ns + "." + name);
+								TTUnresolved(ns, name);
 						}
 					case NPrivate(ns):
 						var ns = abc.get(abc.strings, ns);
 						var name = abc.get(abc.strings, name);
 						// trace("Loading private type as *", ns, name);
-						return STAny;
+						return TTAny;
 					case NInternal(ns):
 						var ns = abc.get(abc.strings, ns);
 						var name = abc.get(abc.strings, name);
 						// trace("Loading internal type as *", ns, name);
-						return STAny;
+						return TTAny;
 					case other:
 						throw "assert" + other.getName();
 				}
@@ -225,7 +417,7 @@ class SWCLoader {
 				var n = getPublicName(abc, n);
 				switch [n.ns, n.name] {
 					case ["__AS3__.vec", "Vector"]:
-						return STVector(buildTypeStructure(abc, type));
+						return TTVector(buildTypeStructure(abc, type));
 					case _:
 						throw "assert: " + n;
 				}

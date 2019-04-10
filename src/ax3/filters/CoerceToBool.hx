@@ -23,6 +23,8 @@ class CoerceToBool extends AbstractFilter {
 		}
 
 		return switch (e.type) {
+			case TTUnresolved(_): throw "assert";
+
 			case TTBoolean:
 				e; // shouldn't happen really
 
