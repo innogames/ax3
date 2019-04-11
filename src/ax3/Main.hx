@@ -20,13 +20,15 @@ class Main {
 			throw "invalid args";
 		}
 		var config:Config = haxe.Json.parse(sys.io.File.getContent(args[0]));
-		var files = [];
+
 		var total = stamp();
-		walk(config.src, files);
 
 		var tree = new TypedTree();
-
 		SWCLoader.load(tree, config.swc);
+
+		var files = [];
+		walk(config.src, files);
+		Typer.process(tree, files);
 
 		sys.io.File.saveContent("structure.txt", tree.dump());
 

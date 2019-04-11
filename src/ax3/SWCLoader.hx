@@ -50,13 +50,13 @@ class SWCLoader {
 				| ["", "XML"]
 				| ["", "XMLList"]
 				| ["__AS3__.vec", "Vector"]
-				| ["flash.utils", "Dictionary"]
+				// | ["flash.utils", "Dictionary"]
 				: true;
 			case _: false;
 		}
 	}
 
-	static function addModule(swcPath:String, tree:TypedTree, pack:String, name:String, decl:TDecl) {
+	static function addModule(swcPath:String, tree:TypedTree, pack:String, name:String, decl:TDeclKind) {
 		var tPack = tree.getOrCreatePackage(pack);
 		if (tPack.getModule(name) != null) {
 			// trace('Duplicate module: ' + pack + "::" + name);
@@ -69,7 +69,7 @@ class SWCLoader {
 				imports: [],
 				namespaceUses: [],
 				name: pack,
-				decl: decl
+				decl: {name: name, kind: decl}
 			},
 			name: name,
 			privateDecls: [],
@@ -236,7 +236,7 @@ class SWCLoader {
 							case null | {ns: "", name: "Object"} | {ns: "mx.core", name: "UIComponent"}: // ignore mx.core.UIComponent
 							case n:
 								tree.delay(function() {
-									var classDecl = switch tree.getDecl(n.ns, n.name) {
+									var classDecl = switch tree.getDecl(n.ns, n.name).kind {
 										case TDClass(c): c;
 										case _: throw '${n.ns}::${n.name} is not a class';
 									}
@@ -390,7 +390,7 @@ class SWCLoader {
 	}
 
 	inline function resolveTypePath(ns:String, n:String):TType {
-		return TypedTree.declToType(tree.getDecl(ns, n));
+		return TypedTree.declToInst(tree.getDecl(ns, n));
 	}
 
 	function buildTypeStructure(abc:ABCData, name:IName):TType {

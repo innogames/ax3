@@ -86,6 +86,18 @@ class ParseTree {
 		return acc;
 	}
 
+	public static function getNamespaceUses(pack:PackageDecl):Array<{n:UseNamespace, semicolon:Token}> {
+		var r = [];
+		for (d in pack.declarations) {
+			switch d {
+				case DUseNamespace(n, semicolon):
+					r.push({n: n, semicolon: semicolon});
+				case _:
+			}
+		}
+		return r;
+	}
+
 	public static function getPackageDecl(file:File):PackageDecl {
 		var pack = null;
 		for (decl in file.declarations) {

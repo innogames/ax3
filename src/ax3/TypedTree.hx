@@ -19,21 +19,31 @@ class TypedTree {
 	}
 
 	public function flush() {
-		var delayed = delayedCalls;
-		delayedCalls = [];
-		for (f in delayed) f();
+		while (delayedCalls.length > 0) {
+			var delayed = delayedCalls;
+			delayedCalls = [];
+			for (f in delayed) f();
+		}
+	}
+
+	public function getPackage(packName:String):TPackage {
+		var pack = getPackageOrNull(packName);
+		if (pack == null) throw 'No such package $packName';
+		return pack;
+	}
+
+	public inline function getPackageOrNull(packName:String):Null<TPackage> {
+		return packages[packName];
 	}
 
 	public function getDecl(packName:String, name:String):TDecl {
-		var pack = packages[packName];
-		if (pack == null) throw 'No such package $packName';
-		var mod = pack.getModule(name);
+		var mod = getPackage(packName).getModule(name);
 		if (mod == null) throw 'No such module $packName::$name';
 		return mod.pack.decl;
 	}
 
 	public function getInterface(packName:String, name:String):TInterfaceDecl {
-		return switch getDecl(packName, name) {
+		return switch getDecl(packName, name).kind {
 			case TDInterface(iface): iface;
 			case _: throw '$packName::$name is not an interface';
 		}
@@ -46,10 +56,18 @@ class TypedTree {
 		};
 	}
 
-	public static function declToType(decl:TDecl):TType {
-		return switch decl {
+	public static function declToInst(decl:TDecl):TType {
+		return switch decl.kind {
 			case TDClass(c): TTInst(IClass(c));
 			case TDInterface(i): TTInst(IInterface(i));
+			case _: throw "assert";
+		}
+	}
+
+	public static function declToStatic(decl:TDecl):TType {
+		return switch decl.kind {
+			case TDClass(c): TTStatic(IClass(c));
+			case TDInterface(i): TTStatic(IInterface(i));
 			case _: throw "assert";
 		}
 	}
@@ -60,21 +78,21 @@ class TypedTree {
 				function resolvePath(packName:String, name:String):TType {
 					if (packName != "") {
 						// already full path
-						return declToType(getDecl(packName, name));
+						return declToInst(getDecl(packName, name));
 					}
 
 					if (mod.name == name) {
-						return declToType(mod.pack.decl);
+						return declToInst(mod.pack.decl);
 					}
 
 					var modInPack = pack.getModule(name);
 					if (modInPack != null) {
-						return declToType(modInPack.pack.decl);
+						return declToInst(modInPack.pack.decl);
 					}
 
 					var toplevel = packages[""].getModule(name);
 					if (toplevel != null) {
-						return declToType(toplevel.pack.decl);
+						return declToInst(toplevel.pack.decl);
 					}
 
 					throw 'Unknown $packName::$name';
@@ -125,7 +143,7 @@ class TypedTree {
 				}
 
 				function resolveDecl(d:TDecl) {
-					switch (d) {
+					switch (d.kind) {
 						case TDNamespace(_):
 							// nothing to resolve :)
 
@@ -172,6 +190,8 @@ abstract TPackage(Map<ModuleName,TModule>) {
 		this = new Map();
 	}
 
+	public inline function iterator() return this.iterator();
+
 	public inline function asMap() return this;
 
 	public inline function getModule(moduleName:ModuleName):Null<TModule> {
@@ -180,6 +200,10 @@ abstract TPackage(Map<ModuleName,TModule>) {
 
 	public inline function addModule(module:TModule) {
 		if (this.exists(module.name)) throw 'Module ${module.name} is already defined!';
+		this[module.name] = module;
+	}
+
+	public inline function replaceModule(module:TModule) {
 		this[module.name] = module;
 	}
 
@@ -206,7 +230,7 @@ abstract TPackage(Map<ModuleName,TModule>) {
 
 	static function dumpDecl(d:TDecl):String {
 		var indent = indent + indent + indent;
-		switch (d) {
+		switch (d.kind) {
 			case TDVar(v):
 				return [for (v in v.vars) indent + dumpVar("VAR", v.name, v.type)].join("\n");
 			case TDFunction(f):
@@ -291,7 +315,7 @@ abstract TPackage(Map<ModuleName,TModule>) {
 			case TTRegExp: "RegExp";
 			case TTVector(t): "Vector.<" + dumpType(t) + ">";
 			case TTInst(IClass({name: name}) | IInterface({name: name})): name;
-			case TTStatic(c): c.name;
+			case TTStatic(IClass({name: name}) | IInterface({name: name})): "Class<"+name+">";
 			case TTBuiltin: "BUILTIN";
 		}
 	}
@@ -326,14 +350,13 @@ typedef TImport = {
 		var semicolon:Token;
 		var condCompEnd:Null<TCondCompEnd>;
 	}
-	var pack:SPackage;
 	var kind:TImportKind;
 }
 
 enum TImportKind {
-	TIDecl(d:SDecl);
-	TIAliased(d:SDecl, as:Token, name:Token);
-	TIAll(dot:Token, asterisk:Token);
+	TIDecl(d:TDecl);
+	TIAliased(d:TDecl, as:Token, name:Token);
+	TIAll(pack:TPackage, dot:Token, asterisk:Token);
 }
 
 typedef TCondCompBegin = {
@@ -343,7 +366,12 @@ typedef TCondCompBegin = {
 
 typedef TCondCompEnd = {closeBrace:Token}
 
-enum TDecl {
+typedef TDecl = {
+	var name:String;
+	var kind:TDeclKind;
+}
+
+enum TDeclKind {
 	TDClass(c:TClassDecl);
 	TDInterface(c:TInterfaceDecl);
 	TDVar(v:TModuleVarDecl);
@@ -934,7 +962,7 @@ enum TType {
 
 	TTFun(args:Array<TType>, ret:TType, ?rest:Null<TRestKind>); // method and local function refs
 	TTInst(i:TTInstKind); // class instance access (`obj` in `obj.some`)
-	TTStatic(cls:TClassDecl); // class statics access (`Cls` in `Cls.some`)
+	TTStatic(cls:TTInstKind); // class statics access (`Cls` in `Cls.some`)
 }
 
 enum TTInstKind {
