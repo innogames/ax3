@@ -26,12 +26,7 @@ class Main {
 
 		var tree = new TypedTree();
 
-		for (lib in config.swc) {
-			SWCLoader.load(tree, lib);
-		}
-		tree.flush();
-
-		tree.resolve();
+		SWCLoader.load(tree, config.swc);
 
 		sys.io.File.saveContent("structure.txt", tree.dump());
 

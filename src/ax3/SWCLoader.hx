@@ -9,11 +9,28 @@ import ax3.Token.nullToken;
 import ax3.TypedTree;
 import ax3.TypedTreeTools.tUntypedArray;
 import ax3.TypedTreeTools.tUntypedObject;
+import ax3.TypedTreeTools.tUntypedDictionary;
 
 class SWCLoader {
-	public static function load(tree:TypedTree, file:String) {
-		// trace('Loading $file');
-		processLibrary(file, getLibrary(file), tree);
+	final tree:TypedTree;
+	final delayed:Array<()->Void> = [];
+
+	function new(tree:TypedTree) {
+		this.tree = tree;
+	}
+
+	public static function load(tree:TypedTree, files:Array<String>) {
+		// loading is done in two steps:
+		// 1. create modules and empty/untyped declarations
+		// 2. resolve type references
+		//   - setup heritage: link classes/interfaces to their parents)
+		//   - setup signatures: add fields with proper types linking to declarations
+		var loader = new SWCLoader(tree);
+		for (file in files) {
+			var swf = getLibrary(file);
+			loader.processLibrary(file, swf);
+		}
+		for (f in loader.delayed) f();
 	}
 
 	static function shouldSkipClass(ns:String, name:String):Bool {
@@ -34,7 +51,7 @@ class SWCLoader {
 				| ["", "XML"]
 				| ["", "XMLList"]
 				| ["__AS3__.vec", "Vector"]
-				// | ["flash.utils", "Dictionary"]
+				| ["flash.utils", "Dictionary"]
 				: true;
 			case _: false;
 		}
@@ -61,7 +78,7 @@ class SWCLoader {
 		});
 	}
 
-	static function processLibrary(swcPath:String, swf:SWF, tree:TypedTree) {
+	function processLibrary(swcPath:String, swf:SWF) {
 		var abcs = getAbcs(swf);
 		for (abc in abcs) {
 			for (cls in abc.classes) {
@@ -130,7 +147,7 @@ class SWCLoader {
 					}
 
 					if (extensions.length > 0) {
-						tree.delay(function() {
+						delayed.push(function() {
 							var interfaces = [];
 							for (n in extensions) {
 								var ifaceDecl = tree.getInterface(n.ns, n.name);
@@ -219,7 +236,7 @@ class SWCLoader {
 						switch getPublicName(abc, cls.superclass) {
 							case null | {ns: "", name: "Object"} | {ns: "mx.core", name: "UIComponent"}: // ignore mx.core.UIComponent
 							case n:
-								tree.delay(function() {
+								delayed.push(function() {
 									var classDecl = switch tree.getDecl(n.ns, n.name) {
 										case TDClass(c): c;
 										case _: throw '${n.ns}::${n.name} is not a class';
@@ -229,8 +246,10 @@ class SWCLoader {
 						}
 					}
 
-					var ctor = buildFunDecl(abc, cls.constructor);
-					addMethod(n.name, ctor);
+					delayed.push(function() {
+						var ctor = buildFunDecl(abc, cls.constructor);
+						addMethod(n.name, ctor);
+					});
 				}
 
 				function processField(f:format.abc.Data.Field) {
@@ -243,21 +262,23 @@ class SWCLoader {
 						return buildTypeStructure(abc, type);
 					}
 
-					switch (f.kind) {
-						case FVar(type, _, _):
-							addVar(n.name, if (type != null) buildPublicType(type) else TTAny);
+					delayed.push(function() {
+						switch (f.kind) {
+							case FVar(type, _, _):
+								addVar(n.name, if (type != null) buildPublicType(type) else TTAny);
 
-						case FMethod(type, KNormal, _, _):
-							addMethod(n.name, buildFunDecl(abc, type));
+							case FMethod(type, KNormal, _, _):
+								addMethod(n.name, buildFunDecl(abc, type));
 
-						case FMethod(type, KGetter, _, _):
-							addGetter(n.name, buildFunDecl(abc, type));
+							case FMethod(type, KGetter, _, _):
+								addGetter(n.name, buildFunDecl(abc, type));
 
-						case FMethod(type, KSetter, _, _):
-							addSetter(n.name, buildFunDecl(abc, type));
+							case FMethod(type, KSetter, _, _):
+								addSetter(n.name, buildFunDecl(abc, type));
 
-						case FClass(_) | FFunction(_): throw "should not happen";
-					}
+							case FClass(_) | FFunction(_): throw "should not happen";
+						}
+					});
 				}
 
 				for (f in cls.fields) {
@@ -278,29 +299,36 @@ class SWCLoader {
 
 					var decl = switch (f.kind) {
 						case FVar(type, value, const):
-							var type = if (type != null) buildTypeStructure(abc, type) else TTAny;
+							var v:TVarFieldDecl = {
+								syntax: null,
+								name: n.name,
+								type: TTAny,
+								init: null,
+								comma: null
+							};
+
+							if (type != null) {
+								delayed.push(() -> v.type = buildTypeStructure(abc, type));
+							}
+
 							TDVar({
 								metadata: [],
 								modifiers: [],
-								kind: VVar(null),
+								kind: if (const) VConst(null) else VVar(null),
 								isInline: false,
-								vars: [{
-									syntax: null,
-									name: n.name,
-									type: type,
-									init: null,
-									comma: null
-								}],
+								vars: [v],
 								semicolon: null
 							});
 
 						case FMethod(type, KNormal, _, _):
+							var fun:TFunction = {sig: null, expr: null};
+							delayed.push(() -> fun.sig = buildFunDecl(abc, type));
 							TDFunction({
 								metadata: [],
 								modifiers: [],
 								syntax: null,
 								name: n.name,
-								fun: {sig: buildFunDecl(abc, type), expr: null}
+								fun: fun
 							});
 
 						case FMethod(_, _, _, _):
@@ -321,7 +349,7 @@ class SWCLoader {
 		}
 	}
 
-	static function buildFunDecl(abc:ABCData, methType:Index<MethodType>):TFunctionSignature {
+	function buildFunDecl(abc:ABCData, methType:Index<MethodType>):TFunctionSignature {
 		var methType = getMethodType(abc, methType);
 		var args:Array<TFunctionArg> = [];
 		for (i in 0...methType.args.length) {
@@ -341,7 +369,7 @@ class SWCLoader {
 				syntax: null,
 				comma: null,
 				name: "rest",
-				type: TypedTreeTools.tUntypedArray,
+				type: tUntypedArray,
 				v: null,
 				kind: TArgRest(null),
 			});
@@ -362,36 +390,34 @@ class SWCLoader {
 		return abc.methodTypes[i.asInt()];
 	}
 
-	static function buildTypeStructure(abc:ABCData, name:IName):TType {
+	inline function resolveTypePath(ns:String, n:String):TType {
+		return TypedTree.declToType(tree.getDecl(ns, n));
+	}
+
+	function buildTypeStructure(abc:ABCData, name:IName):TType {
 		switch abc.get(abc.names, name) {
 			case NName(name, ns):
 				switch (abc.get(abc.namespaces, ns)) {
 					case NPublic(ns):
 						var ns = abc.get(abc.strings, ns);
 						var name = abc.get(abc.strings, name);
-						return switch ns {
-							case "":
-								switch name {
-									case "void": TTVoid;
-									case "Boolean": TTBoolean;
-									case "Number": TTNumber;
-									case "int": TTInt;
-									case "uint": TTUint;
-									case "String": TTString;
-									case "Array": tUntypedArray;
-									case "Object": tUntypedObject;
-									case "Class": TTClass;
-									case "Function": TTFunction;
-									case "XML": TTXML;
-									case "XMLList": TTXMLList;
-									case "RegExp": TTRegExp;
-									case _: TTUnresolved(ns, name);
-								}
-							case _:
-								if (ns.indexOf("mx.core") == 0) // TODO: hacky hack
-									TTAny;
-								else
-									TTUnresolved(ns, name);
+						return switch [ns, name] {
+							case ["", "void"]: TTVoid;
+							case ["", "Boolean"]: TTBoolean;
+							case ["", "Number"]: TTNumber;
+							case ["", "int"]: TTInt;
+							case ["", "uint"]: TTUint;
+							case ["", "String"]: TTString;
+							case ["", "Array"]: tUntypedArray;
+							case ["", "Object"]: tUntypedObject;
+							case ["", "Class"]: TTClass;
+							case ["", "Function"]: TTFunction;
+							case ["", "XML"]: TTXML;
+							case ["", "XMLList"]: TTXMLList;
+							case ["", "RegExp"]: TTRegExp;
+							case ["flash.utils", "Dictionary"]: tUntypedDictionary;
+							case ["mx.core", _]: TTAny; // TODO: hacky hack
+							case _: resolveTypePath(ns, name);
 						}
 					case NPrivate(ns):
 						var ns = abc.get(abc.strings, ns);

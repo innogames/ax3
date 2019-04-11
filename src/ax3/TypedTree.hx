@@ -45,17 +45,17 @@ class TypedTree {
 		};
 	}
 
+	public static function declToType(decl:TDecl):TType {
+		return switch decl {
+			case TDClass(c): TTInst(IClass(c));
+			case TDInterface(i): TTInst(IInterface(i));
+			case _: throw "assert";
+		}
+	}
+
 	public function resolve() {
 		for (packName => pack in packages) {
 			for (modName => mod in pack.asMap()) {
-				function declToType(decl:TDecl):TType {
-					return switch decl {
-						case TDClass(c): TTInst(IClass(c));
-						case TDInterface(i): TTInst(IInterface(i));
-						case _: throw "assert";
-					}
-				}
-
 				function resolvePath(packName:String, name:String):TType {
 					if (packName != "") {
 						// already full path
@@ -107,8 +107,6 @@ class TypedTree {
 							TTDictionary(resolveType(k), resolveType(v));
 						case TTFun(args, ret, rest):
 							TTFun([for (t in args) resolveType(t)], resolveType(ret), rest);
-						case TTUnresolved(pack, name):
-							resolvePath(pack, name);
 					}
 				}
 
@@ -294,7 +292,6 @@ abstract TPackage(Map<ModuleName,TModule>) {
 			case TTInst(IClass({name: name}) | IInterface({name: name})): name;
 			case TTStatic(c): c.name;
 			case TTBuiltin: "BUILTIN";
-			case TTUnresolved(pack, name): 'UNRESOLVED<$pack::$name>';
 		}
 	}
 }
@@ -937,8 +934,6 @@ enum TType {
 	TTFun(args:Array<TType>, ret:TType, ?rest:Null<TRestKind>); // method and local function refs
 	TTInst(i:TTInstKind); // class instance access (`obj` in `obj.some`)
 	TTStatic(cls:TClassDecl); // class statics access (`Cls` in `Cls.some`)
-
-	TTUnresolved(pack:String, name:String);
 }
 
 enum TTInstKind {

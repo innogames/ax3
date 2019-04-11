@@ -102,23 +102,23 @@ class Structure {
 		}
 	}
 
-	public static function build(tree:TypedTree, files:Array<File>, libs:Array<String>):Structure {
-		var structure = new Structure();
-		var t = stamp();
-		for (lib in libs) {
-			SWCLoader.load(tree, lib);
-		}
-		Timers.swcs += (stamp() - t);
-		t = stamp();
-		for (file in files) {
-			StructureBuilder.buildModule(structure, file);
-		}
-		Timers.structure += (stamp() - t);
-		t = stamp();
-		structure.resolve();
-		Timers.resolve += (stamp() - t);
-		return structure;
-	}
+	// public static function build(tree:TypedTree, files:Array<File>, libs:Array<String>):Structure {
+	// 	var structure = new Structure();
+	// 	var t = stamp();
+	// 	for (lib in libs) {
+	// 		SWCLoader.load(tree, lib);
+	// 	}
+	// 	Timers.swcs += (stamp() - t);
+	// 	t = stamp();
+	// 	for (file in files) {
+	// 		StructureBuilder.buildModule(structure, file);
+	// 	}
+	// 	Timers.structure += (stamp() - t);
+	// 	t = stamp();
+	// 	structure.resolve();
+	// 	Timers.resolve += (stamp() - t);
+	// 	return structure;
+	// }
 
 	public static function changeDictionary(resolvedType:SType):SType { // TODO: this is hacky...
 		return switch resolvedType {
