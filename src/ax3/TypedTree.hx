@@ -23,12 +23,19 @@ class TypedTree {
 		delayedCalls = [];
 	}
 
-	public inline function getDecl(packName:String, name:String):TDecl {
+	public function getDecl(packName:String, name:String):TDecl {
 		var pack = packages[packName];
 		if (pack == null) throw 'No such package $packName';
 		var mod = pack.getModule(name);
 		if (mod == null) throw 'No such module $packName::$name';
 		return mod.pack.decl;
+	}
+
+	public function getInterface(packName:String, name:String):TInterfaceDecl {
+		return switch getDecl(packName, name) {
+			case TDInterface(iface): iface;
+			case _: throw '$packName::$name is not an interface';
+		}
 	}
 
 	public function getOrCreatePackage(packName:PackageName):TPackage {

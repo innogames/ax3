@@ -133,10 +133,7 @@ class SWCLoader {
 						tree.delay(function() {
 							var interfaces = [];
 							for (n in extensions) {
-								var ifaceDecl = switch tree.getDecl(n.ns, n.name) {
-									case TDInterface(iface): iface;
-									case _: throw '${n.ns}::${n.name} is not an interface';
-								}
+								var ifaceDecl = tree.getInterface(n.ns, n.name);
 								interfaces.push({iface: {syntax: null, decl: ifaceDecl}, comma: null});
 							}
 							iface.extend = {
