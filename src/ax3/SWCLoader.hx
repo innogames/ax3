@@ -13,7 +13,6 @@ import ax3.TypedTreeTools.tUntypedDictionary;
 
 class SWCLoader {
 	final tree:TypedTree;
-	final delayed:Array<()->Void> = [];
 
 	function new(tree:TypedTree) {
 		this.tree = tree;
@@ -30,7 +29,7 @@ class SWCLoader {
 			var swf = getLibrary(file);
 			loader.processLibrary(file, swf);
 		}
-		for (f in loader.delayed) f();
+		tree.flush();
 	}
 
 	static function shouldSkipClass(ns:String, name:String):Bool {
@@ -147,7 +146,7 @@ class SWCLoader {
 					}
 
 					if (extensions.length > 0) {
-						delayed.push(function() {
+						tree.delay(function() {
 							var interfaces = [];
 							for (n in extensions) {
 								var ifaceDecl = tree.getInterface(n.ns, n.name);
@@ -236,7 +235,7 @@ class SWCLoader {
 						switch getPublicName(abc, cls.superclass) {
 							case null | {ns: "", name: "Object"} | {ns: "mx.core", name: "UIComponent"}: // ignore mx.core.UIComponent
 							case n:
-								delayed.push(function() {
+								tree.delay(function() {
 									var classDecl = switch tree.getDecl(n.ns, n.name) {
 										case TDClass(c): c;
 										case _: throw '${n.ns}::${n.name} is not a class';
@@ -246,7 +245,7 @@ class SWCLoader {
 						}
 					}
 
-					delayed.push(function() {
+					tree.delay(function() {
 						var ctor = buildFunDecl(abc, cls.constructor);
 						addMethod(n.name, ctor);
 					});
@@ -262,7 +261,7 @@ class SWCLoader {
 						return buildTypeStructure(abc, type);
 					}
 
-					delayed.push(function() {
+					tree.delay(function() {
 						switch (f.kind) {
 							case FVar(type, _, _):
 								addVar(n.name, if (type != null) buildPublicType(type) else TTAny);
@@ -308,7 +307,7 @@ class SWCLoader {
 							};
 
 							if (type != null) {
-								delayed.push(() -> v.type = buildTypeStructure(abc, type));
+								tree.delay(() -> v.type = buildTypeStructure(abc, type));
 							}
 
 							TDVar({
@@ -322,7 +321,7 @@ class SWCLoader {
 
 						case FMethod(type, KNormal, _, _):
 							var fun:TFunction = {sig: null, expr: null};
-							delayed.push(() -> fun.sig = buildFunDecl(abc, type));
+							tree.delay(() -> fun.sig = buildFunDecl(abc, type));
 							TDFunction({
 								metadata: [],
 								modifiers: [],

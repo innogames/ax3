@@ -19,8 +19,9 @@ class TypedTree {
 	}
 
 	public function flush() {
-		for (f in delayedCalls) f();
+		var delayed = delayedCalls;
 		delayedCalls = [];
+		for (f in delayed) f();
 	}
 
 	public function getDecl(packName:String, name:String):TDecl {
