@@ -7,13 +7,24 @@ import ax3.Token;
 typedef PackageName = String;
 typedef ModuleName = String;
 
-abstract TypedTree(Map<PackageName,TPackage>) {
-	public inline function new() {
-		this = new Map();
+class TypedTree {
+	final packages = new Map<PackageName,TPackage>();
+
+	var delayedCalls:Array<()->Void> = [];
+
+	public function new() {}
+
+	public inline function delay(f:()->Void) {
+		delayedCalls.push(f);
+	}
+
+	public function flush() {
+		for (f in delayedCalls) f();
+		delayedCalls = [];
 	}
 
 	public inline function getDecl(packName:String, name:String):TDecl {
-		var pack = this[packName];
+		var pack = packages[packName];
 		if (pack == null) throw 'No such package $packName';
 		var mod = pack.getModule(name);
 		if (mod == null) throw 'No such module $packName::$name';
@@ -21,14 +32,14 @@ abstract TypedTree(Map<PackageName,TPackage>) {
 	}
 
 	public function getOrCreatePackage(packName:PackageName):TPackage {
-		return switch this[packName] {
-			case null: this[packName] = new TPackage();
+		return switch packages[packName] {
+			case null: packages[packName] = new TPackage();
 			case pack: pack;
 		};
 	}
 
 	public function resolve() {
-		for (packName => pack in this) {
+		for (packName => pack in packages) {
 			for (modName => mod in pack.asMap()) {
 				function declToType(decl:TDecl):TType {
 					return switch decl {
@@ -53,7 +64,7 @@ abstract TypedTree(Map<PackageName,TPackage>) {
 						return declToType(modInPack.pack.decl);
 					}
 
-					var toplevel = this[""].getModule(name);
+					var toplevel = packages[""].getModule(name);
 					if (toplevel != null) {
 						return declToType(toplevel.pack.decl);
 					}
@@ -146,7 +157,7 @@ abstract TypedTree(Map<PackageName,TPackage>) {
 	}
 
 	public function dump() {
-		return [for (name => pack in this) pack.dump(name)].join("\n\n\n");
+		return [for (name => pack in packages) pack.dump(name)].join("\n\n\n");
 	}
 }
 

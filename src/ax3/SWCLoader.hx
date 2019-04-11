@@ -11,15 +11,9 @@ import ax3.TypedTreeTools.tUntypedArray;
 import ax3.TypedTreeTools.tUntypedObject;
 
 class SWCLoader {
-	static var delayed:Array<()->Void> = [];
-
 	public static function load(tree:TypedTree, file:String) {
 		// trace('Loading $file');
 		processLibrary(file, getLibrary(file), tree);
-	}
-
-	public static function resolve() {
-		for (f in delayed) f();
 	}
 
 	static function shouldSkipClass(ns:String, name:String):Bool {
@@ -136,7 +130,7 @@ class SWCLoader {
 					}
 
 					if (extensions.length > 0) {
-						delayed.push(function() {
+						tree.delay(function() {
 							var interfaces = [];
 							for (n in extensions) {
 								var ifaceDecl = switch tree.getDecl(n.ns, n.name) {
@@ -228,7 +222,7 @@ class SWCLoader {
 						switch getPublicName(abc, cls.superclass) {
 							case null | {ns: "", name: "Object"} | {ns: "mx.core", name: "UIComponent"}: // ignore mx.core.UIComponent
 							case n:
-								delayed.push(function() {
+								tree.delay(function() {
 									var classDecl = switch tree.getDecl(n.ns, n.name) {
 										case TDClass(c): c;
 										case _: throw '${n.ns}::${n.name} is not a class';

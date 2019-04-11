@@ -29,7 +29,8 @@ class Main {
 		for (lib in config.swc) {
 			SWCLoader.load(tree, lib);
 		}
-		SWCLoader.resolve();
+		tree.flush();
+
 		tree.resolve();
 
 		sys.io.File.saveContent("structure.txt", tree.dump());
