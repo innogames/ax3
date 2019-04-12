@@ -200,6 +200,7 @@ class TPackage {
 }
 
 typedef TModule = {
+	var isExtern:Bool;
 	var path:String;
 	var parentPack:TPackage;
 	var pack:TPackageDecl;

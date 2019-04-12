@@ -64,6 +64,7 @@ class SWCLoader {
 			return;
 		}
 		tPack.addModule({
+			isExtern: true,
 			path: swcPath,
 			parentPack: tPack,
 			pack: {

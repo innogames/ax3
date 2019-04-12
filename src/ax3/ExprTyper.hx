@@ -62,7 +62,7 @@ class ExprTyper {
 	}
 
 	public function typeExpr(e:Expr, expectedType:TType):TExpr {
-		return null;
+		return mk(TEBreak(TokenTools.mkIdent("lel")), expectedType, expectedType);
 	// 	return switch (e) {
 	// 		case EIdent(i):
 	// 			typeIdent(i, e, expectedType);

@@ -38,6 +38,7 @@ class Typer {
 		var tPack = tree.getOrCreatePackage(packName);
 
 		var tModule:TModule = {
+			isExtern: false,
 			path: file.path,
 			parentPack: tPack,
 			name: file.name,
