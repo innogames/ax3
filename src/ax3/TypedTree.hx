@@ -730,7 +730,7 @@ typedef TFunctionArg = {
 
 enum TFunctionArgKind {
 	TArgNormal(typeHint:Null<TypeHint>, init:Null<TVarInit>);
-	TArgRest(dots:Token);
+	TArgRest(dots:Token, kind:TRestKind);
 }
 
 typedef TSwitch = {

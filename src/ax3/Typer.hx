@@ -108,7 +108,7 @@ class Typer {
 				});
 
 				if (v.init != null) {
-					exprTypings.push(() -> tVar.init = typeVarInit(v.init, tVar.type));
+					exprTypings.push(() -> tVar.init = typeVarInit(mod, v.init, tVar.type));
 				}
 				return tVar;
 			}),
@@ -131,7 +131,7 @@ class Typer {
 			}
 		};
 		structureSetups.push(() -> d.fun.sig = typeFunctionSignature(mod, v.fun.signature, typeOverrides));
-		exprTypings.push(() -> d.fun.expr = new ExprTyper(context).typeFunctionExpr(d.fun.sig, v.fun.block));
+		exprTypings.push(() -> d.fun.expr = new ExprTyper(context, resolveType.bind(mod)).typeFunctionExpr(d.fun.sig, v.fun.block));
 		return d;
 	}
 
@@ -181,7 +181,7 @@ class Typer {
 				for (m in members) {
 					switch (m) {
 						case MCondComp(v, openBrace, members, closeBrace):
-							tMembers.push(TMCondCompBegin({v: typeCondCompVar(v), openBrace: openBrace}));
+							tMembers.push(TMCondCompBegin({v: ExprTyper.typeCondCompVar(v), openBrace: openBrace}));
 							loop(members);
 							tMembers.push(TMCondCompEnd({closeBrace: closeBrace}));
 						case MUseNamespace(n, semicolon):
@@ -190,7 +190,7 @@ class Typer {
 							tMembers.push(TMField(typeClassField(mod, f)));
 						case MStaticInit(block):
 							exprTypings.push(function() {
-								var expr = mk(TEBlock(new ExprTyper(context).typeBlock(block)), TTVoid, TTVoid);
+								var expr = mk(TEBlock(new ExprTyper(context, resolveType.bind(mod)).typeBlock(block)), TTVoid, TTVoid);
 								tMembers.push(TMStaticInit({expr: expr}));
 							});
 					}
@@ -210,7 +210,7 @@ class Typer {
 				sig: typeFunctionSignature(mod, fun.signature, haxeType),
 				expr: null,
 			};
-			exprTypings.push(() -> tFun.expr = new ExprTyper(context).typeFunctionExpr(tFun.sig, fun.block));
+			exprTypings.push(() -> tFun.expr = new ExprTyper(context, resolveType.bind(mod)).typeFunctionExpr(tFun.sig, fun.block));
 			return tFun;
 		}
 
@@ -276,14 +276,14 @@ class Typer {
 				comma: comma,
 			};
 			if (v.init != null) {
-				exprTypings.push(() -> tVar.init = typeVarInit(v.init, type));
+				exprTypings.push(() -> tVar.init = typeVarInit(mod, v.init, type));
 			}
 			return tVar;
 		});
 	}
 
-	function typeVarInit(init:VarInit, expectedType:TType):TVarInit {
-		return {equalsToken: init.equalsToken, expr: new ExprTyper(context).typeExpr(init.expr, expectedType)};
+	function typeVarInit(mod:TModule, init:VarInit, expectedType:TType):TVarInit {
+		return {equalsToken: init.equalsToken, expr: new ExprTyper(context, resolveType.bind(mod)).typeExpr(init.expr, expectedType)};
 	}
 
 	function typeInterface(i:InterfaceDecl, mod:TModule):TInterfaceDecl {
@@ -312,7 +312,7 @@ class Typer {
 				for (m in members) {
 					switch (m) {
 						case MICondComp(v, openBrace, members, closeBrace):
-							tMembers.push(TIMCondCompBegin({v: typeCondCompVar(v), openBrace: openBrace}));
+							tMembers.push(TIMCondCompBegin({v: ExprTyper.typeCondCompVar(v), openBrace: openBrace}));
 							loop(members);
 							tMembers.push(TIMCondCompEnd({closeBrace: closeBrace}));
 						case MIField(f):
@@ -428,12 +428,12 @@ class Typer {
 									equalsToken: a.init.equalsToken,
 									expr: null
 								};
-								exprTypings.push(() -> init.expr = new ExprTyper(context).typeExpr(a.init.expr, type));
+								exprTypings.push(() -> init.expr = new ExprTyper(context, resolveType.bind(mod)).typeExpr(a.init.expr, type));
 							}
 							{syntax: {name: a.name}, name: a.name.text, type: type, kind: TArgNormal(a.type, init), v: null, comma: comma};
 
 						case ArgRest(dots, name):
-							{syntax: {name: name}, name: name.text, type: tUntypedArray, kind: TArgRest(dots), v: null, comma: comma};
+							{syntax: {name: name}, name: name.text, type: tUntypedArray, kind: TArgRest(dots, TRestAs3), v: null, comma: comma};
 					}
 				});
 			} else {
@@ -490,20 +490,25 @@ class Typer {
 
 	function resolveDotPath(mod:TModule, path:Array<String>):TDecl {
 		var name = path.pop();
-		if (path.length > 0) { // fully qualified
+
+		// fully qualified
+		if (path.length > 0) {
 			return tree.getDecl(path.join("."), name);
 		}
 
+		// current main decl
 		if (mod.pack.decl.name == name) {
 			return mod.pack.decl;
 		}
 
+		// current private decls
 		for (decl in mod.privateDecls) {
 			if (decl.name == name) {
 				return decl;
 			}
 		}
 
+		// imported decls
 		for (i in mod.pack.imports) {
 			switch (i.kind) {
 				case TIAliased(d, as, alias):
@@ -517,11 +522,12 @@ class Typer {
 			}
 		}
 
-		var currentPack = tree.getPackage(mod.pack.name);
-		for (m in currentPack) {
+		// decls from the current package
+		for (m in mod.parentPack) {
 			if (m.name == name) return m.pack.decl;
 		}
 
+		// toplevel decls
 		var rootPack = tree.getPackageOrNull("");
 		if (rootPack != null) {
 			for (m in rootPack) {
@@ -565,7 +571,7 @@ class Typer {
 							},
 							kind: importKind
 						});
-					case DCondComp(v, openBrace, decls, closeBrace): loop(decls, {v: typeCondCompVar(v), openBrace: openBrace}, {closeBrace: closeBrace});
+					case DCondComp(v, openBrace, decls, closeBrace): loop(decls, {v: ExprTyper.typeCondCompVar(v), openBrace: openBrace}, {closeBrace: closeBrace});
 					case _:
 				}
 			}
@@ -574,7 +580,4 @@ class Typer {
 		return result;
 	}
 
-	static function typeCondCompVar(v:CondCompVar):TCondCompVar {
-		return {syntax: v, ns: v.ns.text, name: v.name.text};
-	}
 }
