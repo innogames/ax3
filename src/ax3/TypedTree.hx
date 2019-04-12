@@ -10,21 +10,7 @@ typedef ModuleName = String;
 class TypedTree {
 	final packages = new Map<PackageName,TPackage>();
 
-	var delayedCalls:Array<()->Void> = [];
-
 	public function new() {}
-
-	public inline function delay(f:()->Void) {
-		delayedCalls.push(f);
-	}
-
-	public function flush() {
-		while (delayedCalls.length > 0) {
-			var delayed = delayedCalls;
-			delayedCalls = [];
-			for (f in delayed) f();
-		}
-	}
 
 	public function getPackage(packName:String):TPackage {
 		var pack = getPackageOrNull(packName);
@@ -418,7 +404,6 @@ typedef TClassDecl = {
 	var metadata:Array<Metadata>;
 	var modifiers:Array<DeclModifier>;
 	var name:String;
-	var structure:SClassDecl;
 	var extend:Null<TClassExtend>;
 	var implement:Null<TClassImplement>;
 	var members:Array<TClassMember>;

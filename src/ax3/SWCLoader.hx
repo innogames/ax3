@@ -13,6 +13,7 @@ import ax3.TypedTreeTools.tUntypedDictionary;
 
 class SWCLoader {
 	final tree:TypedTree;
+	final structureSetups:Array<()->Void> = [];
 
 	function new(tree:TypedTree) {
 		this.tree = tree;
@@ -29,7 +30,7 @@ class SWCLoader {
 			var swf = getLibrary(file);
 			loader.processLibrary(file, swf);
 		}
-		tree.flush();
+		for (f in loader.structureSetups) f();
 	}
 
 	static function shouldSkipClass(ns:String, name:String):Bool {
@@ -146,7 +147,7 @@ class SWCLoader {
 					}
 
 					if (extensions.length > 0) {
-						tree.delay(function() {
+						structureSetups.push(function() {
 							var interfaces = [];
 							for (n in extensions) {
 								var ifaceDecl = tree.getInterface(n.ns, n.name);
@@ -224,7 +225,6 @@ class SWCLoader {
 						metadata: [],
 						modifiers: [],
 						name: n.name,
-						structure: null,
 						extend: null,
 						implement: null,
 						members: members
@@ -235,7 +235,7 @@ class SWCLoader {
 						switch getPublicName(abc, cls.superclass) {
 							case null | {ns: "", name: "Object"} | {ns: "mx.core", name: "UIComponent"}: // ignore mx.core.UIComponent
 							case n:
-								tree.delay(function() {
+								structureSetups.push(function() {
 									var classDecl = switch tree.getDecl(n.ns, n.name).kind {
 										case TDClass(c): c;
 										case _: throw '${n.ns}::${n.name} is not a class';
@@ -245,7 +245,7 @@ class SWCLoader {
 						}
 					}
 
-					tree.delay(function() {
+					structureSetups.push(function() {
 						var ctor = buildFunDecl(abc, cls.constructor);
 						addMethod(n.name, ctor);
 					});
@@ -261,7 +261,7 @@ class SWCLoader {
 						return buildTypeStructure(abc, type);
 					}
 
-					tree.delay(function() {
+					structureSetups.push(function() {
 						switch (f.kind) {
 							case FVar(type, _, _):
 								addVar(n.name, if (type != null) buildPublicType(type) else TTAny);
@@ -307,7 +307,7 @@ class SWCLoader {
 							};
 
 							if (type != null) {
-								tree.delay(() -> v.type = buildTypeStructure(abc, type));
+								structureSetups.push(() -> v.type = buildTypeStructure(abc, type));
 							}
 
 							TDVar({
@@ -321,7 +321,7 @@ class SWCLoader {
 
 						case FMethod(type, KNormal, _, _):
 							var fun:TFunction = {sig: null, expr: null};
-							tree.delay(() -> fun.sig = buildFunDecl(abc, type));
+							structureSetups.push(() -> fun.sig = buildFunDecl(abc, type));
 							TDFunction({
 								metadata: [],
 								modifiers: [],

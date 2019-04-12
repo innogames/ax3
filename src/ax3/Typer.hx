@@ -6,28 +6,29 @@ import ax3.TypedTree;
 import ax3.TypedTreeTools.tUntypedArray;
 import ax3.TypedTreeTools.tUntypedObject;
 import ax3.TypedTreeTools.tUntypedDictionary;
+import ax3.TypedTreeTools.mk;
 import ax3.HaxeTypeAnnotation;
 
 class Typer {
-	public static function process(tree:TypedTree, files:Array<File>) {
-		var typer = new Typer(tree);
+	public static function process(context:Context, tree:TypedTree, files:Array<File>) {
+		var typer = new Typer(context, tree);
 		for (file in files) {
 			typer.processFile(file);
 		}
 		for (f in typer.importSetups) f();
-		for (f in typer.heritageSetups) f();
 		for (f in typer.structureSetups) f();
 		for (f in typer.exprTypings) f();
 	}
 
+	final context:Context;
 	final tree:TypedTree;
 
 	final importSetups:Array<()->Void> = [];
-	final heritageSetups:Array<()->Void> = [];
 	final structureSetups:Array<()->Void> = [];
 	final exprTypings:Array<()->Void> = [];
 
-	function new(tree) {
+	function new(context, tree) {
+		this.context = context;
 		this.tree = tree;
 	}
 
@@ -62,19 +63,224 @@ class Typer {
 	function typeDecl(d:Declaration, mod:TModule):TDecl {
 		return switch (d) {
 			case DPackage(_) | DImport(_) | DUseNamespace(_): throw "assert";
-			// case DClass(c):
-			// 	TDClass(typeClass(c));
+			case DClass(c):
+				{name: c.name.text, kind: TDClass(typeClass(c, mod))};
 			case DInterface(i):
 				{name: i.name.text, kind: TDInterface(typeInterface(i, mod))};
-			// case DFunction(f):
-			// 	TDFunction(typeModuleFunction(f));
-			// case DVar(v):
-			// 	TDVar(typeModuleVars(v));
+			case DFunction(f):
+				{name: f.name.text, kind: TDFunction(typeModuleFunction(f, mod))};
+			case DVar(v):
+				if (v.vars.rest.length > 0) throw "assert"; // TODO
+				var name = v.vars.first.name.text;
+				{name: name, kind: TDVar(typeModuleVars(v, mod))};
 			case DNamespace(ns):
 				{name: null, kind: TDNamespace(ns)};
 			case DCondComp(v, openBrace, decls, closeBrace): throw "TODO";
 			case _: null;
 		}
+	}
+
+	function typeModuleVars(v:ModuleVarDecl, mod:TModule):TModuleVarDecl {
+		var overrideType = HaxeTypeAnnotation.extractFromModuleVarDecl(v);
+		var moduleVar:TModuleVarDecl = {
+			metadata: v.metadata,
+			modifiers: v.modifiers,
+			kind: v.kind,
+			isInline: false,
+			vars: separatedToArray(v.vars, function(v, comma) {
+				var tVar:TVarFieldDecl = {
+					syntax:{
+						name: v.name,
+						type: v.type
+					},
+					name: v.name.text,
+					type: null,
+					init: null,
+					comma: comma,
+				};
+
+				structureSetups.push(function() {
+					var overrideType = resolveHaxeTypeHint(mod, overrideType, v.name.pos); // TODO: no need to resolve this more than once
+					tVar.type = if (overrideType != null) overrideType else if (v.type == null) TTAny else resolveType(mod, v.type.type);
+				});
+
+				if (v.init != null) {
+					exprTypings.push(() -> tVar.init = typeVarInit(v.init, tVar.type));
+				}
+				return tVar;
+			}),
+			semicolon: v.semicolon
+		};
+
+		return moduleVar;
+	}
+
+	function typeModuleFunction(v:FunctionDecl, mod:TModule):TFunctionDecl {
+		var typeOverrides = HaxeTypeAnnotation.extractFromModuleFunDecl(v);
+		var d:TFunctionDecl = {
+			metadata: v.metadata,
+			modifiers: v.modifiers,
+			syntax: {keyword: v.keyword, name: v.name},
+			name: v.name.text,
+			fun: {
+				sig: null,
+				expr: null
+			}
+		};
+		structureSetups.push(() -> d.fun.sig = typeFunctionSignature(mod, v.fun.signature, typeOverrides));
+		exprTypings.push(() -> d.fun.expr = new ExprTyper(context).typeFunctionExpr(d.fun.sig, v.fun.block));
+		return d;
+	}
+
+	function typeClassImplement(mod:TModule, i:{keyword:Token, paths:Separated<DotPath>}):TClassImplement {
+		return {
+			syntax: {keyword: i.keyword},
+			interfaces: separatedToArray(i.paths, function(path, comma) {
+				var ifaceDecl = switch resolveDotPath(mod, dotPathToArray(path)).kind {
+					case TDInterface(i): i;
+					case _: throw "Not an interface";
+				}
+				return {iface: {syntax: path, decl: ifaceDecl}, comma: comma}
+			})
+		};
+	}
+
+	function typeClass(c:ClassDecl, mod:TModule):TClassDecl {
+		var tMembers = [];
+		var result:TClassDecl = {
+			syntax: c,
+			name: c.name.text,
+			metadata: c.metadata,
+			extend: null,
+			implement: null,
+			modifiers: c.modifiers,
+			members: tMembers,
+			properties: null,
+		}
+
+		if (c.extend != null) {
+			structureSetups.push(function() {
+				var classDecl = switch resolveDotPath(mod, dotPathToArray(c.extend.path)).kind {
+					case TDClass(i): i;
+					case _: throw "Not a ccass";
+				}
+				result.extend = {syntax: c.extend, superClass: classDecl};
+			});
+		}
+
+		if (c.implement != null) {
+			structureSetups.push(function() {
+				structureSetups.push(() -> result.implement = typeClassImplement(mod, c.implement));
+			});
+		}
+		structureSetups.push(function() {
+			function loop(members:Array<ClassMember>) {
+				for (m in members) {
+					switch (m) {
+						case MCondComp(v, openBrace, members, closeBrace):
+							tMembers.push(TMCondCompBegin({v: typeCondCompVar(v), openBrace: openBrace}));
+							loop(members);
+							tMembers.push(TMCondCompEnd({closeBrace: closeBrace}));
+						case MUseNamespace(n, semicolon):
+							tMembers.push(TMUseNamespace(n, semicolon));
+						case MField(f):
+							tMembers.push(TMField(typeClassField(mod, f)));
+						case MStaticInit(block):
+							exprTypings.push(function() {
+								var expr = mk(TEBlock(new ExprTyper(context).typeBlock(block)), TTVoid, TTVoid);
+								tMembers.push(TMStaticInit({expr: expr}));
+							});
+					}
+				}
+			}
+			loop(c.members);
+		});
+
+		return result;
+	}
+
+	function typeClassField(mod:TModule, f:ClassField):TClassField {
+		var haxeType = HaxeTypeAnnotation.extractFromClassField(f);
+
+		inline function typeFunction(fun:Function):TFunction {
+			var tFun:TFunction = {
+				sig: typeFunctionSignature(mod, fun.signature, haxeType),
+				expr: null,
+			};
+			exprTypings.push(() -> tFun.expr = new ExprTyper(context).typeFunctionExpr(tFun.sig, fun.block));
+			return tFun;
+		}
+
+		var kind = switch (f.kind) {
+			case FVar(kind, vars, semicolon):
+				TFVar({
+					kind: kind,
+					vars: typeVarFieldDecls(mod, vars, haxeType),
+					semicolon: semicolon,
+					isInline: false,
+				});
+			case FFun(keyword, name, fun):
+				TFFun({
+					syntax: {
+						keyword: keyword,
+						name: name,
+					},
+					name: name.text,
+					fun: typeFunction(fun)
+				});
+			case FGetter(keyword, get, name, fun):
+				TFGetter({
+					syntax: {
+						functionKeyword: keyword,
+						accessorKeyword: get,
+						name: name,
+					},
+					name: name.text,
+					fun: typeFunction(fun)
+				});
+			case FSetter(keyword, set, name, fun):
+				TFSetter({
+					syntax: {
+						functionKeyword: keyword,
+						accessorKeyword: set,
+						name: name,
+					},
+					name: name.text,
+					fun: typeFunction(fun)
+				});
+		}
+		return {
+			metadata: f.metadata,
+			namespace: f.namespace,
+			modifiers: f.modifiers,
+			kind: kind
+		};
+	}
+
+	function typeVarFieldDecls(mod:TModule, vars:Separated<VarDecl>, haxeType:Null<HaxeTypeAnnotation>):Array<TVarFieldDecl> {
+		var overrideType = resolveHaxeTypeHint(mod, haxeType, vars.first.name.pos);
+
+		return separatedToArray(vars, function(v, comma) {
+			var type:TType = if (overrideType != null) overrideType else if (v.type == null) TTAny else resolveType(mod, v.type.type);
+			var tVar:TVarFieldDecl = {
+				syntax:{
+					name: v.name,
+					type: v.type
+				},
+				name: v.name.text,
+				type: type,
+				init: null,
+				comma: comma,
+			};
+			if (v.init != null) {
+				exprTypings.push(() -> tVar.init = typeVarInit(v.init, type));
+			}
+			return tVar;
+		});
+	}
+
+	function typeVarInit(init:VarInit, expectedType:TType):TVarInit {
+		return {equalsToken: init.equalsToken, expr: new ExprTyper(context).typeExpr(init.expr, expectedType)};
 	}
 
 	function typeInterface(i:InterfaceDecl, mod:TModule):TInterfaceDecl {
@@ -95,18 +301,7 @@ class Typer {
 		}
 
 		if (i.extend != null) {
-			heritageSetups.push(function() {
-				iface.extend = {
-					syntax: {keyword: i.extend.keyword},
-					interfaces: separatedToArray(i.extend.paths, function(path, comma) {
-						var ifaceDecl = switch resolveDotPath(mod, dotPathToArray(path)).kind {
-							case TDInterface(i): i;
-							case _: throw "Not an interface";
-						}
-						return {iface: {syntax: path, decl: ifaceDecl}, comma: comma}
-					})
-				}
-			});
+			structureSetups.push(() -> iface.extend = typeClassImplement(mod, i.extend));
 		}
 
 		structureSetups.push(function() {
@@ -196,6 +391,10 @@ class Typer {
 		};
 	}
 
+	function resolveHaxeTypeHint(mod:TModule, a:Null<HaxeTypeAnnotation>, p:Int):Null<TType> {
+		return if (a == null) null else resolveHaxeType(mod, a.parseTypeHint(), p);
+	}
+
 	function resolveHaxeSignature(mod:TModule, a:Null<HaxeTypeAnnotation>, p:Int):Null<{args:Map<String,TType>, ret:Null<TType>}> {
 		if (a == null) {
 			return null;
@@ -226,7 +425,7 @@ class Typer {
 									equalsToken: a.init.equalsToken,
 									expr: null
 								};
-								// exprTypings.push(() -> init.expr = typeExpr(a.init.expr));
+								exprTypings.push(() -> init.expr = new ExprTyper(context).typeExpr(a.init.expr, type));
 							}
 							{syntax: {name: a.name}, name: a.name.text, type: type, kind: TArgNormal(a.type, init), v: null, comma: comma};
 

@@ -28,7 +28,7 @@ class Main {
 
 		var files = [];
 		walk(config.src, files);
-		Typer.process(tree, files);
+		Typer.process(ctx, tree, files);
 
 		sys.io.File.saveContent("structure.txt", tree.dump());
 
