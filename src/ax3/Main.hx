@@ -32,9 +32,26 @@ class Main {
 
 		sys.io.File.saveContent("structure.txt", tree.dump());
 
+		var haxeDir = if (config.hxout == null) null else FileSystem.absolutePath(config.hxout);
+		for (packName => pack in tree.packages) {
+
+			var dir = haxe.io.Path.join({
+				var parts = packName.split(".");
+				parts.unshift(haxeDir);
+				parts;
+			});
+			Utils.createDirectory(dir);
+
+			for (mod in pack) {
+				var gen = new ax3.GenHaxe();
+				gen.writeModule(mod);
+				var out = gen.toString();
+				var path = dir + "/" + mod.name + ".hx";
+				sys.io.File.saveContent(path, out);
+			}
+		}
+
 		// var t = stamp();
-		// var typer = new Typer(tree, structure, ctx);
-		// var modules = typer.process(files);
 		// Timers.typing += (stamp() - t);
 
 		/*

@@ -35,9 +35,11 @@ class Typer {
 	function processFile(file:File) {
 		var pack = getPackageDecl(file);
 		var packName = if (pack.name == null) "" else dotPathToString(pack.name);
+		var tPack = tree.getOrCreatePackage(packName);
 
 		var tModule:TModule = {
 			path: file.path,
+			parentPack: tPack,
 			name: file.name,
 			pack: {
 				syntax: pack,
@@ -57,7 +59,7 @@ class Typer {
 			tModule.privateDecls.push(typeDecl(decl, tModule));
 		}
 
-		tree.getOrCreatePackage(packName).replaceModule(tModule);
+		tPack.replaceModule(tModule);
 	}
 
 	function typeDecl(d:Declaration, mod:TModule):TDecl {

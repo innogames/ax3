@@ -1,6 +1,5 @@
 package ax3;
 
-import ax3.Structure;
 import ax3.ParseTree;
 import ax3.TypedTree;
 import ax3.Token.Trivia;
@@ -8,16 +7,10 @@ using StringTools;
 
 @:nullSafety
 class GenHaxe extends PrinterBase {
-	var currentModule:Null<{s:SModule, t:TModule}>; // TODO: get rid of Structure...
-	final structure:Structure;
-
-	public function new(structure) {
-		super();
-		this.structure = structure;
-	}
+	var currentModule:Null<TModule>;
 
 	public function writeModule(m:TModule) {
-		currentModule = {t: m, s: structure.getPackage(m.pack.name).getModule(m.name)};
+		currentModule = m;
 		printPackage(m.pack);
 		for (d in m.privateDecls) {
 			printDecl(d);
@@ -26,19 +19,19 @@ class GenHaxe extends PrinterBase {
 		currentModule = null;
 	}
 
-	function isImported(c:SClassDecl) {
+	function isImported(c:TClassDecl) {
 		// TODO: optimize this, because this is done A LOT
 		// actually, we might want to store the "local" flag in the TEDeclRef/TTypeHint/etc.
 		if (currentModule != null) {
-			for (i in currentModule.t.pack.imports) {
+			for (i in currentModule.pack.imports) {
 				switch i.kind {
-					case TIDecl({kind: SClass(importedClass)}) if (importedClass == c):
+					case TIDecl({kind: TDClass(importedClass)}) if (importedClass == c):
 						return true;
 
-					case TIAll(_):
-						for (mod in i.pack.modules) {
-							switch mod.mainDecl.kind {
-								case SClass(importedClass) if (importedClass == c):
+					case TIAll(pack, _):
+						for (mod in pack) {
+							switch mod.pack.decl.kind {
+								case TDClass(importedClass) if (importedClass == c):
 									return true;
 
 								case _:
@@ -48,9 +41,9 @@ class GenHaxe extends PrinterBase {
 					case TIDecl(_) | TIAliased(_): // other decls and aliased decls
 				}
 			}
-			for (mod in currentModule.s.pack.modules) {
-				switch mod.mainDecl.kind {
-					case SClass(importedClass) if (importedClass == c):
+			for (mod in currentModule.parentPack) {
+				switch mod.pack.decl.kind {
+					case TDClass(importedClass) if (importedClass == c):
 						return true;
 					case _:
 				}
@@ -85,7 +78,7 @@ class GenHaxe extends PrinterBase {
 
 	function printImport(i:TImport) {
 		if (i.syntax.condCompBegin != null) printCondCompBegin(i.syntax.condCompBegin);
-		if (!i.kind.match(TIDecl({kind: SNamespace}))) { // TODO: still print trivia from namespace imports?
+		if (!i.kind.match(TIDecl({kind: TDNamespace(_)}))) { // TODO: still print trivia from namespace imports?
 			printTextWithTrivia("import", i.syntax.keyword);
 			printDotPath(i.syntax.path);
 			switch i.kind {
@@ -93,7 +86,7 @@ class GenHaxe extends PrinterBase {
 				case TIAliased(d, as, name):
 					printTextWithTrivia("as", as);
 					printTextWithTrivia(name.text, name);
-				case TIAll(dot, asterisk):
+				case TIAll(_, dot, asterisk):
 					printDot(dot);
 					printTextWithTrivia("*", asterisk);
 			}
@@ -103,7 +96,7 @@ class GenHaxe extends PrinterBase {
 	}
 
 	function printDecl(d:TDecl) {
-		switch (d) {
+		switch (d.kind) {
 			case TDClass(c): printClassDecl(c);
 			case TDInterface(i): printInterfaceDecl(i);
 			case TDVar(v): printModuleVarDecl(v);
@@ -142,7 +135,7 @@ class GenHaxe extends PrinterBase {
 		if (i.extend != null) {
 			printTextWithTrivia("extends", i.extend.syntax.keyword);
 			for (i in i.extend.interfaces) {
-				printDotPath(i.syntax);
+				printDotPath(i.iface.syntax);
 				if (i.comma != null) printComma(i.comma);
 			}
 		}
@@ -197,13 +190,14 @@ class GenHaxe extends PrinterBase {
 	}
 
 	function printClassDecl(c:TClassDecl) {
-		var needsEmptyCtor = // kill me
-			@:nullSafety(Off) switch (currentModule.s.getDecl(c.name).kind) {
-				case SClass(c):
-					c.wasInstantiated && structure.getConstructor(c) == null;
-				case _:
-					throw "assert";
-			}
+		var needsEmptyCtor = // kill me TODO
+			false;
+			// @:nullSafety(Off) switch (currentModule.s.getDecl(c.name).kind) {
+			// 	case SClass(c):
+			// 		c.wasInstantiated && structure.getConstructor(c) == null;
+			// 	case _:
+			// 		throw "assert";
+			// }
 
 		printMetadata(c.metadata);
 		printDeclModifiers(c.modifiers);
@@ -215,14 +209,14 @@ class GenHaxe extends PrinterBase {
 		}
 		if (c.implement != null) {
 			printTextWithTrivia("implements", c.implement.syntax.keyword);
-			printDotPath(c.implement.interfaces[0].syntax);
+			printDotPath(c.implement.interfaces[0].iface.syntax);
 			for (i in 1...c.implement.interfaces.length) {
 				var prevComma = c.implement.interfaces[i - 1].comma;
 				if (prevComma != null) printTextWithTrivia("", prevComma); // don't lose comments around comma, if there are any
 
 				var i = c.implement.interfaces[i];
 				buf.add(" implements ");
-				printDotPath(i.syntax);
+				printDotPath(i.iface.syntax);
 			}
 		}
 		printOpenBrace(c.syntax.openBrace);
@@ -403,7 +397,6 @@ class GenHaxe extends PrinterBase {
 
 	function printTType(t:TType) {
 		switch t {
-			case TTUnresolved(_): throw "assert";
 			case TTVoid: buf.add("Void");
 			case TTAny: buf.add("ASAny");
 			case TTBoolean: buf.add("Bool");
@@ -433,16 +426,19 @@ class GenHaxe extends PrinterBase {
 				}
 				printTType(ret);
 
-			case TTInst(cls):
-				buf.add(getClassLocalPath(cls));
-			case TTStatic(cls):
-				buf.add("Class<" + getClassLocalPath(cls) + ">");
+			case TTInst(IClass({name: name}) | IInterface({name: name})):
+				buf.add(name);
+				// buf.add(getClassLocalPath(cls)); TODO
+			case TTStatic(IClass({name: name}) | IInterface({name: name})):
+				buf.add("Class<" + name + ">");
+				// buf.add("Class<" + getClassLocalPath(cls) + ">"); TODO
 		}
 	}
 
-	inline function getClassLocalPath(cls:SClassDecl):String {
-		return if (cls.publicFQN == null || isImported(cls)) cls.name else cls.publicFQN;
-	}
+	// TODO
+	// inline function getClassLocalPath(cls:TClassDecl):String {
+	// 	return if (cls.publicFQN == null || isImported(cls)) cls.name else cls.publicFQN;
+	// }
 
 	function printSyntaxTypeHint(t:TypeHint) {
 		printColon(t.colon);

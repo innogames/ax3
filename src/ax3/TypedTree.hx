@@ -9,7 +9,7 @@ typedef PackageName = String;
 typedef ModuleName = String;
 
 class TypedTree {
-	final packages = new Map<PackageName,TPackage>();
+	public final packages = new Map<PackageName,TPackage>();
 
 	public function new() {}
 
@@ -65,30 +65,28 @@ class TypedTree {
 	}
 }
 
-abstract TPackage(Map<ModuleName,TModule>) {
-	public inline function new() {
-		this = new Map();
-	}
+class TPackage {
+	final modules = new Map<ModuleName,TModule>();
 
-	public inline function iterator() return this.iterator();
+	public function new() {}
 
-	public inline function asMap() return this;
+	public inline function iterator() return modules.iterator();
 
 	public inline function getModule(moduleName:ModuleName):Null<TModule> {
-		return this[moduleName];
+		return modules[moduleName];
 	}
 
 	public inline function addModule(module:TModule) {
-		if (this.exists(module.name)) throw 'Module ${module.name} is already defined!';
-		this[module.name] = module;
+		if (modules.exists(module.name)) throw 'Module ${module.name} is already defined!';
+		modules[module.name] = module;
 	}
 
 	public inline function replaceModule(module:TModule) {
-		this[module.name] = module;
+		modules[module.name] = module;
 	}
 
 	public function dump(name:String) {
-		return (if (name == "") "<root>" else name) + "\n" + [for (name => module in this) dumpModule(name, module)].join("\n\n");
+		return (if (name == "") "<root>" else name) + "\n" + [for (name => module in modules) dumpModule(name, module)].join("\n\n");
 	}
 
 	static final indent = "  ";
@@ -203,6 +201,7 @@ abstract TPackage(Map<ModuleName,TModule>) {
 
 typedef TModule = {
 	var path:String;
+	var parentPack:TPackage;
 	var pack:TPackageDecl;
 	var name:String;
 	var privateDecls:Array<TDecl>;

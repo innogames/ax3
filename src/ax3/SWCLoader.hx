@@ -65,6 +65,7 @@ class SWCLoader {
 		}
 		tPack.addModule({
 			path: swcPath,
+			parentPack: tPack,
 			pack: {
 				syntax: null,
 				imports: [],
