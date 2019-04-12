@@ -3,6 +3,7 @@ package ax3;
 import ax3.ParseTree;
 import ax3.Structure;
 import ax3.Token;
+import ax3.TypedTreeTools.tUntypedDictionary;
 
 typedef PackageName = String;
 typedef ModuleName = String;
@@ -44,6 +45,7 @@ class TypedTree {
 
 	public static function declToInst(decl:TDecl):TType {
 		return switch decl.kind {
+			case TDClass({name: "Dictionary"}): tUntypedDictionary; // TODO: check package
 			case TDClass(c): TTInst(IClass(c));
 			case TDInterface(i): TTInst(IInterface(i));
 			case _: throw "assert";
@@ -55,114 +57,6 @@ class TypedTree {
 			case TDClass(c): TTStatic(IClass(c));
 			case TDInterface(i): TTStatic(IInterface(i));
 			case _: throw "assert";
-		}
-	}
-
-	public function resolve() {
-		for (packName => pack in packages) {
-			for (modName => mod in pack.asMap()) {
-				function resolvePath(packName:String, name:String):TType {
-					if (packName != "") {
-						// already full path
-						return declToInst(getDecl(packName, name));
-					}
-
-					if (mod.name == name) {
-						return declToInst(mod.pack.decl);
-					}
-
-					var modInPack = pack.getModule(name);
-					if (modInPack != null) {
-						return declToInst(modInPack.pack.decl);
-					}
-
-					var toplevel = packages[""].getModule(name);
-					if (toplevel != null) {
-						return declToInst(toplevel.pack.decl);
-					}
-
-					throw 'Unknown $packName::$name';
-				}
-
-				function resolveType(t:TType):TType {
-					return switch t {
-						case TTVoid
-						   | TTAny
-						   | TTBoolean
-						   | TTNumber
-						   | TTInt
-						   | TTUint
-						   | TTString
-						   | TTFunction
-						   | TTClass
-						   | TTXML
-						   | TTXMLList
-						   | TTRegExp
-						   | TTBuiltin
-						   | TTInst(_)
-						   | TTStatic(_)
-						   : t;
-						case TTArray(t):
-							TTArray(resolveType(t));
-						case TTVector(t):
-							TTVector(resolveType(t));
-						case TTObject(t):
-							TTObject(resolveType(t));
-						case TTDictionary(k, v):
-							TTDictionary(resolveType(k), resolveType(v));
-						case TTFun(args, ret, rest):
-							TTFun([for (t in args) resolveType(t)], resolveType(ret), rest);
-					}
-				}
-
-				function resolveSig(sig:TFunctionSignature) {
-					for (arg in sig.args) {
-						arg.type = resolveType(arg.type);
-					}
-					sig.ret.type = resolveType(sig.ret.type);
-				}
-
-				function resolveVars(vars:Array<TVarFieldDecl>) {
-					for (v in vars) {
-						v.type = resolveType(v.type);
-					}
-				}
-
-				function resolveDecl(d:TDecl) {
-					switch (d.kind) {
-						case TDNamespace(_):
-							// nothing to resolve :)
-
-						case TDClass(c):
-							for (m in c.members) {
-								switch m {
-									case TMField({kind: TFFun({fun: f}) | TFGetter({fun: f}) | TFSetter({fun: f})}):
-										resolveSig(f.sig);
-									case TMField({kind: TFVar(v)}):
-										resolveVars(v.vars);
-									case TMCondCompBegin(_) | TMCondCompEnd(_) | TMUseNamespace(_, _) | TMStaticInit(_):
-								}
-							}
-
-						case TDInterface(c):
-							for (m in c.members) {
-								switch m {
-									case TIMField({kind: TIFFun({sig: sig}) | TIFGetter({sig: sig}) | TIFSetter({sig: sig})}):
-										resolveSig(sig);
-									case TIMCondCompBegin(_) | TIMCondCompEnd(_):
-								}
-							}
-
-						case TDVar(v):
-							resolveVars(v.vars);
-
-						case TDFunction(f):
-							resolveSig(f.fun.sig);
-					}
-				}
-
-				resolveDecl(mod.pack.decl);
-			}
 		}
 	}
 
