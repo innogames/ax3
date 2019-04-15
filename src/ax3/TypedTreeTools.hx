@@ -13,6 +13,26 @@ class TypedTreeTools {
 	public static final tUntypedObject = TTObject(TTAny);
 	public static final tUntypedDictionary = TTDictionary(TTAny, TTAny);
 
+	public static function getConstructor(cls:TClassOrInterfaceDecl):Null<TFunction> {
+		var extend;
+		switch (cls.kind) {
+			case TInterface(_): return null;
+			case TClass(info): extend = info.extend;
+		}
+
+		for (m in cls.members) {
+			switch m {
+				case TMField({kind: TFFun(f)}) if (f.name == cls.name):
+					return f.fun;
+				case _:
+			}
+		}
+		if (extend != null) {
+			return getConstructor(extend.superClass);
+		}
+		return null;
+	}
+
 	public static function concatExprs(a:TExpr, b:TExpr):TExpr {
 		return switch [a.kind, b.kind] {
 			case [TEBlock(aBlock), TEBlock(bBlock)]:

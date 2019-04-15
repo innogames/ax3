@@ -1,13 +1,17 @@
 package ax3.filters;
 
+import ax3.TypedTreeTools.getConstructor;
+
 class HandleNew extends AbstractFilter {
+	final instantiated = new Map<TClassOrInterfaceDecl,Bool>();
+
 	override function processExpr(e:TExpr):TExpr {
 		e = mapExpr(processExpr, e);
 		return switch e.kind {
 			case TENew(keyword, eclass, args):
 				switch eclass.kind {
 					case TEDeclRef(_, {kind: TDClassOrInterface(c)}): // just a class instantiation, nothing to rewrite, but mark the class for constructor injection
-						// c.wasInstantiated = true; TODO
+						instantiated[c] = true;
 						e;
 
 					case TEBuiltin(_) | TEVector(_): // other kinds of typed `new` - nothing to do
@@ -40,6 +44,72 @@ class HandleNew extends AbstractFilter {
 				}
 			case _:
 				e;
+		}
+	}
+
+	override function run(tree:TypedTree) {
+		super.run(tree);
+		processInstatiated();
+	}
+
+	function processInstatiated() {
+		for (cls in instantiated.keys()) {
+
+			// if there is a parent class that was also instantiated, use it instead
+			{
+				var c = cls;
+				while (c != null) {
+					switch c.kind {
+						case TClass(info):
+							if (info.extend != null) {
+								c = info.extend.superClass;
+								if (instantiated.exists(c)) {
+									cls = c;
+								}
+							}
+							break;
+
+						case TInterface(_): throw "assert";
+					}
+				}
+			}
+
+			// if there's no ctor, we gotta add one
+			if (getConstructor(cls) == null) {
+				cls.members.push(TMField({
+					metadata: [],
+					namespace: null,
+					modifiers: [FMPublic(new Token(0, TkIdent, "public", [], [whitespace]))],
+					kind: TFFun({
+						syntax: {
+							keyword: new Token(0, TkIdent, "function", [], [whitespace]),
+							name: new Token(0, TkIdent, cls.name, [], []),
+						},
+						name: cls.name,
+						fun: {
+							sig: {
+								syntax: {
+									openParen: mkOpenParen(),
+									closeParen: mkCloseParen()
+								},
+								args: [],
+								ret: {
+									syntax: null,
+									type: TTVoid
+								}
+							},
+							expr: mk(TEBlock({
+								syntax: {
+									openBrace: mkOpenBrace(),
+									closeBrace: addTrailingNewline(mkCloseBrace())
+								},
+								exprs: []
+							}), TTVoid, TTVoid)
+						},
+						semicolon: null
+					})
+				}));
+			}
 		}
 	}
 }

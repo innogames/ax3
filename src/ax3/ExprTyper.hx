@@ -7,6 +7,7 @@ import ax3.TypedTreeTools.mk;
 import ax3.TypedTreeTools.skipParens;
 import ax3.TypedTreeTools.tUntypedArray;
 import ax3.TypedTreeTools.tUntypedObject;
+import ax3.TypedTreeTools.getConstructor;
 
 typedef Locals = Map<String, TVar>;
 
@@ -753,26 +754,6 @@ class ExprTyper {
 			syntax: {openBrace: openBrace, closeBrace: closeBrace},
 			fields: fields
 		}), tUntypedObject, expectedType);
-	}
-
-	static function getConstructor(cls:TClassOrInterfaceDecl):Null<TFunction> {
-		var extend;
-		switch (cls.kind) {
-			case TInterface(_): return null;
-			case TClass(info): extend = info.extend;
-		}
-
-		for (m in cls.members) {
-			switch m {
-				case TMField({kind: TFFun(f)}) if (f.name == cls.name):
-					return f.fun;
-				case _:
-			}
-		}
-		if (extend != null) {
-			return getConstructor(extend.superClass);
-		}
-		return null;
 	}
 
 	function getConstructorType(cls:TClassOrInterfaceDecl):TType {

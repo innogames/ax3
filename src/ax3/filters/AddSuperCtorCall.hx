@@ -1,5 +1,7 @@
 package ax3.filters;
 
+import ax3.TypedTreeTools.getConstructor;
+
 class AddSuperCtorCall extends AbstractFilter {
 	override function processDecl(c:TDecl) {
 		switch c.kind {
@@ -17,14 +19,16 @@ class AddSuperCtorCall extends AbstractFilter {
 	}
 
 	function processCtorExpr(e:TExpr, superClass:TClassOrInterfaceDecl):TExpr {
-		if (hasSuperCall(e)) {
+		if (getConstructor(superClass) == null || hasSuperCall(e)) {
 			return e;
 		} else {
-			// TODO
-			// superClass.wasInstantiated = true; // generate empty ctor if required (TODO: we should actually skip generating `super()` if there are no ctors in the whole chain)
 			var tSuper = TTInst(superClass);
 			var eSuper = mk(TELiteral(TLSuper(mkIdent("super"))), tSuper, tSuper);
-			var eSuperCall = mkCall(eSuper, [], TTVoid);
+			var eSuperCall = mk(TECall(eSuper, {
+				openParen: mkOpenParen(),
+				args: [],
+				closeParen: addTrailingNewline(mkCloseParen())
+			}), TTVoid, TTVoid);
 			return concatExprs(eSuperCall, e);
 		}
 	}

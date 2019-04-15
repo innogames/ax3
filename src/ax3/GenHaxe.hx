@@ -195,15 +195,6 @@ class GenHaxe extends PrinterBase {
 	}
 
 	function printClassDecl(c:TClassOrInterfaceDecl, info:TClassDeclInfo) {
-		var needsEmptyCtor = // kill me TODO
-			false;
-			// @:nullSafety(Off) switch (currentModule.s.getDecl(c.name).kind) {
-			// 	case SClass(c):
-			// 		c.wasInstantiated && structure.getConstructor(c) == null;
-			// 	case _:
-			// 		throw "assert";
-			// }
-
 		printMetadata(c.metadata);
 		printDeclModifiers(c.modifiers);
 		printTextWithTrivia("class", c.syntax.keyword);
@@ -225,10 +216,6 @@ class GenHaxe extends PrinterBase {
 			}
 		}
 		printOpenBrace(c.syntax.openBrace);
-
-		if (needsEmptyCtor) {
-			buf.add("\tpublic function new() {} // added for Haxe\n");
-		}
 
 		for (m in c.members) {
 			switch (m) {
