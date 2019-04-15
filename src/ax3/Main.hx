@@ -24,17 +24,26 @@ class Main {
 		var total = stamp();
 
 		var tree = new TypedTree();
+
+		var t = stamp();
 		SWCLoader.load(tree, config.swc);
+		Timers.swcs = stamp() - t;
 
 		var files = [];
 		walk(config.src, files);
+
+		t = stamp();
 		Typer.process(ctx, tree, files);
+		Timers.typing = stamp() - t;
 
 		sys.io.File.saveContent("structure.txt", tree.dump());
 
+		t = stamp();
 		Filters.run(ctx, tree);
+		Timers.filters = stamp() - t;
 
-		var haxeDir = if (config.hxout == null) null else FileSystem.absolutePath(config.hxout);
+		var haxeDir = FileSystem.absolutePath(config.hxout);
+		t = stamp();
 		for (packName => pack in tree.packages) {
 
 			var dir = haxe.io.Path.join({
@@ -54,77 +63,16 @@ class Main {
 				sys.io.File.saveContent(path, out);
 			}
 		}
-
-		// var t = stamp();
-		// Timers.typing += (stamp() - t);
-
-		/*
-
-
-		t = stamp();
-		Filters.run(ctx, structure, modules);
-		Timers.filters += (stamp() - t);
-
-		var outDir = if (config.out == null) null else FileSystem.absolutePath(config.out);
-		var dumpDir = if (config.dump == null) null else FileSystem.absolutePath(config.dump);
-		var haxeDir = if (config.hxout == null) null else FileSystem.absolutePath(config.hxout);
-		t = stamp();
-		for (mod in modules) {
-			if (outDir != null) {
-				var gen = new ax3.GenAS3();
-				gen.writeModule(mod);
-				var out = gen.toString();
-
-				var dir = haxe.io.Path.join({
-					var parts = mod.pack.name.split(".");
-					parts.unshift(outDir);
-					parts;
-				});
-				Utils.createDirectory(dir);
-
-				var path = dir + "/" + mod.name + ".as";
-				sys.io.File.saveContent(path, out);
-			}
-
-			if (haxeDir != null) {
-				var gen = new ax3.GenHaxe(structure);
-				gen.writeModule(mod);
-				var out = gen.toString();
-
-				var dir = haxe.io.Path.join({
-					var parts = mod.pack.name.split(".");
-					parts.unshift(haxeDir);
-					parts;
-				});
-				Utils.createDirectory(dir);
-
-				var path = dir + "/" + mod.name + ".hx";
-				sys.io.File.saveContent(path, out);
-			}
-
-			if (dumpDir != null) {
-				var dir = haxe.io.Path.join({
-					var parts = mod.pack.name.split(".");
-					parts.unshift(dumpDir);
-					parts;
-				});
-				Utils.createDirectory(dir);
-				TypedTreeDump.dump(mod, dir + "/" + mod.name + ".dump");
-			}
-		}
-		Timers.output += (stamp() - t);
+		Timers.output = stamp() - t;
 
 		total = (stamp() - total);
 
-
 		print("parsing   " + Timers.parsing);
 		print("swcs      " + Timers.swcs);
-		print("structure " + Timers.structure);
-		print("resolve   " + Timers.resolve);
 		print("typing    " + Timers.typing);
 		print("filters   " + Timers.filters);
 		print("output    " + Timers.output);
-		print("-- TOTAL  " + total);*/
+		print("-- TOTAL  " + total);
 	}
 
 	static function walk(dir:String, files:Array<ParseTree.File>) {
