@@ -183,6 +183,7 @@ class Typer {
 		var tCls:TClassOrInterfaceDecl = {
 			kind: TClass(info),
 			syntax: c,
+			parentModule: mod,
 			name: c.name.text,
 			metadata: c.metadata,
 			modifiers: c.modifiers,
@@ -323,6 +324,7 @@ class Typer {
 				openBrace: i.openBrace,
 				closeBrace: i.closeBrace,
 			},
+			parentModule: mod,
 			name: i.name.text,
 			metadata: i.metadata,
 			modifiers: i.modifiers,

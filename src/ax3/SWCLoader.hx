@@ -57,13 +57,13 @@ class SWCLoader {
 		}
 	}
 
-	static function addModule(swcPath:String, tree:TypedTree, pack:String, name:String, decl:TDeclKind) {
+	static function addModule(swcPath:String, tree:TypedTree, pack:String, name:String, decl:TDeclKind):TModule {
 		var tPack = tree.getOrCreatePackage(pack);
 		if (tPack.getModule(name) != null) {
 			// trace('Duplicate module: ' + pack + "::" + name);
-			return;
+			return null;
 		}
-		tPack.addModule({
+		var mod:TModule = {
 			isExtern: true,
 			path: swcPath,
 			parentPack: tPack,
@@ -77,7 +77,9 @@ class SWCLoader {
 			name: name,
 			privateDecls: [],
 			eof: nullToken
-		});
+		}
+		tPack.addModule(mod);
+		return mod;
 	}
 
 	function processLibrary(swcPath:String, swf:SWF) {
@@ -87,63 +89,76 @@ class SWCLoader {
 				var n = getPublicName(abc, cls.name);
 				if (n == null || shouldSkipClass(n.ns, n.name)) continue;
 
-				var tDecl, addVar, addMethod, addGetter, addSetter;
-				if (cls.isInterface) {
-					var members:Array<TClassMember> = [];
+				var members:Array<TClassMember> = [];
 
-					addVar = function(name:String, type:TType, isStatic:Bool) throw 'Var $name in interface ${n.name}';
-					addMethod = function(name:String, f:TFunctionSignature, isStatic:Bool) {
-						members.push(TMField({
-							metadata: [],
-							modifiers: if (isStatic) [FMStatic(null)] else [],
-							namespace: null,
-							kind: TFFun({
-								syntax: null,
-								name: name,
-								fun: {sig: f, expr: null},
-								semicolon: null,
-							})
-						}));
-					}
-					addGetter = function(name:String, f:TFunctionSignature, isStatic:Bool) {
-						members.push(TMField({
-							metadata: [],
-							modifiers: if (isStatic) [FMStatic(null)] else [],
-							namespace: null,
-							kind: TFGetter({
-								syntax: null,
-								name: name,
-								propertyType: f.ret.type,
-								fun: {sig: f, expr: null},
-								semicolon: null,
-							})
-						}));
-					}
-					addSetter = function(name:String, f:TFunctionSignature, isStatic:Bool) {
-						members.push(TMField({
-							metadata: [],
-							modifiers: if (isStatic) [FMStatic(null)] else [],
-							namespace: null,
-							kind: TFSetter({
-								syntax: null,
-								name: name,
-								propertyType: f.args[0].type,
-								fun: {sig: f, expr: null},
-								semicolon: null
-							})
-						}));
-					}
-
-					var ifaceInfo = {extend: null};
-					tDecl = TDClassOrInterface({
-						syntax: null,
-						kind: TInterface(ifaceInfo),
+				inline function addVar(name:String, type:TType, isStatic:Bool) {
+					members.push(TMField({
 						metadata: [],
-						modifiers: [],
-						haxeProperties: null,
-						name: n.name,
-						members: members
-					});
+						namespace: null,
+						modifiers: if (isStatic) [FMStatic(null)] else [],
+						kind: TFVar({
+							kind: VVar(null),
+							isInline: false,
+							vars: [{
+								syntax: null,
+								name: name,
+								type: type,
+								init: null,
+								comma: null
+							}],
+							semicolon: null
+						})
+					}));
+				}
+
+				inline function addMethod(name:String, f:TFunctionSignature, isStatic:Bool) {
+					members.push(TMField({
+						metadata: [],
+						namespace: null,
+						modifiers: if (isStatic) [FMStatic(null)] else [],
+						kind: TFFun({
+							syntax: null,
+							name: name,
+							fun: {sig: f, expr: null},
+							semicolon: null
+						})
+					}));
+				}
+
+				inline function addGetter(name:String, f:TFunctionSignature, isStatic:Bool) {
+					members.push(TMField({
+						metadata: [],
+						namespace: null,
+						modifiers: if (isStatic) [FMStatic(null)] else [],
+						kind: TFGetter({
+							syntax: null,
+							name: name,
+							propertyType: f.ret.type,
+							fun: {sig: f, expr: null},
+							semicolon: null
+						})
+					}));
+				}
+
+				inline function addSetter(name:String, f:TFunctionSignature, isStatic:Bool) {
+					members.push(TMField({
+						metadata: [],
+						namespace: null,
+						modifiers: if (isStatic) [FMStatic(null)] else [],
+						kind: TFSetter({
+							syntax: null,
+							name: name,
+							propertyType: f.args[0].type,
+							fun: {sig: f, expr: null},
+							semicolon: null
+						})
+					}));
+				}
+
+				var clsKind;
+				if (cls.isInterface) {
+					var ifaceInfo = {extend: null};
+					clsKind = TInterface(ifaceInfo);
 
 					var extensions = [];
 					for (iface in cls.interfaces) {
@@ -169,82 +184,8 @@ class SWCLoader {
 					}
 
 				} else {
-					var members:Array<TClassMember> = [];
-
-					addVar = function(name:String, type:TType, isStatic:Bool) {
-						members.push(TMField({
-							metadata: [],
-							namespace: null,
-							modifiers: if (isStatic) [FMStatic(null)] else [],
-							kind: TFVar({
-								kind: VVar(null),
-								isInline: false,
-								vars: [{
-									syntax: null,
-									name: name,
-									type: type,
-									init: null,
-									comma: null
-								}],
-								semicolon: null
-							})
-						}));
-					}
-					addMethod = function(name:String, f:TFunctionSignature, isStatic:Bool) {
-						members.push(TMField({
-							metadata: [],
-							namespace: null,
-							modifiers: if (isStatic) [FMStatic(null)] else [],
-							kind: TFFun({
-								syntax: null,
-								name: name,
-								fun: {sig: f, expr: null},
-								semicolon: null
-							})
-						}));
-					}
-					addGetter = function(name:String, f:TFunctionSignature, isStatic:Bool) {
-						members.push(TMField({
-							metadata: [],
-							namespace: null,
-							modifiers: if (isStatic) [FMStatic(null)] else [],
-							kind: TFGetter({
-								syntax: null,
-								name: name,
-								propertyType: f.ret.type,
-								fun: {sig: f, expr: null},
-								semicolon: null
-							})
-						}));
-					}
-					addSetter = function(name:String, f:TFunctionSignature, isStatic:Bool) {
-						members.push(TMField({
-							metadata: [],
-							namespace: null,
-							modifiers: if (isStatic) [FMStatic(null)] else [],
-							kind: TFSetter({
-								syntax: null,
-								name: name,
-								propertyType: f.args[0].type,
-								fun: {sig: f, expr: null},
-								semicolon: null
-							})
-						}));
-					}
-
-					var classInfo:TClassDeclInfo = {
-						extend: null,
-						implement: null,
-					};
-					tDecl = TDClassOrInterface({
-						kind: TClass(classInfo),
-						syntax: null,
-						haxeProperties: null,
-						metadata: [],
-						modifiers: [],
-						name: n.name,
-						members: members
-					});
+					var classInfo:TClassDeclInfo = {extend: null, implement: null,};
+					clsKind = TClass(classInfo);
 
 					if (cls.superclass != null) {
 						switch getPublicName(abc, cls.superclass) {
@@ -265,6 +206,18 @@ class SWCLoader {
 						addMethod(n.name, ctor, false);
 					});
 				}
+
+				var tDecl:TClassOrInterfaceDecl = {
+					kind: clsKind,
+					syntax: null,
+					haxeProperties: null,
+					metadata: [],
+					modifiers: [],
+					parentModule: null,
+					name: n.name,
+					members: members
+				};
+				tDecl.parentModule = addModule(swcPath, tree, n.ns, n.name, TDClassOrInterface(tDecl));
 
 				function processField(f:format.abc.Data.Field, isStatic:Bool) {
 					var n = getPublicName(abc, f.name, n.ns + ":" + n.name);
@@ -302,8 +255,6 @@ class SWCLoader {
 				for (f in cls.staticFields) {
 					processField(f, true);
 				}
-
-				addModule(swcPath, tree, n.ns, n.name, tDecl);
 			}
 
 			for (init in abc.inits) {

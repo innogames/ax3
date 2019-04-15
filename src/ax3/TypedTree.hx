@@ -37,7 +37,7 @@ class TypedTree {
 
 	public function getOrCreatePackage(packName:PackageName):TPackage {
 		return switch packages[packName] {
-			case null: packages[packName] = new TPackage();
+			case null: packages[packName] = new TPackage(packName);
 			case pack: pack;
 		};
 	}
@@ -63,9 +63,13 @@ class TypedTree {
 }
 
 class TPackage {
+	public final name:String;
+
 	final modules = new Map<ModuleName,TModule>();
 
-	public function new() {}
+	public function new(name) {
+		this.name = name;
+	}
 
 	public inline function iterator() return modules.iterator();
 
@@ -266,6 +270,7 @@ typedef TClassOrInterfaceDecl = {
 	var kind:TDClassOrInterfaceKind;
 	var metadata:Array<Metadata>;
 	var modifiers:Array<DeclModifier>;
+	var parentModule:TModule;
 	var name:String;
 	var members:Array<TClassMember>;
 	var haxeProperties:Null<Map<String,THaxePropDecl>>;

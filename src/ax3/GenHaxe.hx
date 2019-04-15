@@ -433,18 +433,20 @@ class GenHaxe extends PrinterBase {
 				printTType(ret);
 
 			case TTInst(cls):
-				buf.add(cls.name);
-				// buf.add(getClassLocalPath(cls)); TODO
+				buf.add(getClassLocalPath(cls));
 			case TTStatic(cls):
-				buf.add("Class<" + cls.name + ">");
-				// buf.add("Class<" + getClassLocalPath(cls) + ">"); TODO
+				buf.add("Class<" + getClassLocalPath(cls) + ">");
 		}
 	}
 
-	// TODO
-	// inline function getClassLocalPath(cls:TClassDecl):String {
-	// 	return if (cls.publicFQN == null || isImported(cls)) cls.name else cls.publicFQN;
-	// }
+	inline function getClassLocalPath(cls:TClassOrInterfaceDecl):String {
+		return if (isImported(cls)) cls.name else makeFQN(cls);
+	}
+
+	static function makeFQN(cls:TClassOrInterfaceDecl) {
+		var packName = cls.parentModule.parentPack.name;
+		return if (packName == "") cls.name else packName + "." + cls.name;
+	}
 
 	function printSyntaxTypeHint(t:TypeHint) {
 		printColon(t.colon);
