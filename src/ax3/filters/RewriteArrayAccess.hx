@@ -26,8 +26,13 @@ class RewriteArrayAccess extends AbstractFilter {
 						}));
 
 					case [TTDictionary(expectedKeyType, _), keyType]:
-						if (expectedKeyType != TTAny && keyType != TTAny && !Type.enumEq(expectedKeyType, keyType)) {
-							reportError(exprPos(e), 'Invalid dictionary key type, expected $expectedKeyType, got $keyType');
+						switch [expectedKeyType, keyType] {
+							case [TTAny, _] | [_, TTAny]: // oh well
+							case [TTClass, TTStatic(_)]: //allowed
+							case _:
+								if (!Type.enumEq(expectedKeyType, keyType)) {
+									reportError(exprPos(e), 'Invalid dictionary key type, expected $expectedKeyType, got $keyType');
+								}
 						}
 						e.with(kind = TEArrayAccess(a.with(eobj = eobj, eindex = eindex)));
 
