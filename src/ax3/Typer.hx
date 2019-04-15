@@ -67,9 +67,9 @@ class Typer {
 		return switch (d) {
 			case DPackage(_) | DImport(_) | DUseNamespace(_): throw "assert";
 			case DClass(c):
-				{name: c.name.text, kind: TDClass(typeClass(c, mod))};
+				{name: c.name.text, kind: TDClassOrInterface(typeClass(c, mod))};
 			case DInterface(i):
-				{name: i.name.text, kind: TDInterface(typeInterface(i, mod))};
+				{name: i.name.text, kind: TDClassOrInterface(typeInterface(i, mod))};
 			case DFunction(f):
 				{name: f.name.text, kind: TDFunction(typeModuleFunction(f, mod))};
 			case DVar(v):
@@ -137,10 +137,10 @@ class Typer {
 
 	function typeClassImplement(mod:TModule, i:{keyword:Token, paths:Separated<DotPath>}):TClassImplement {
 		return {
-			syntax: {keyword: i.keyword},
+			keyword: i.keyword,
 			interfaces: separatedToArray(i.paths, function(path, comma) {
 				var ifaceDecl = switch resolveDotPath(mod, dotPathToArray(path)).kind {
-					case TDInterface(i): i;
+					case TDClassOrInterface(i) if (i.kind.match(TInterface(_))): i;
 					case _: throw "Not an interface";
 				}
 				return {iface: {syntax: path, decl: ifaceDecl}, comma: comma}
@@ -148,32 +148,23 @@ class Typer {
 		};
 	}
 
-	function typeClass(c:ClassDecl, mod:TModule):TClassDecl {
+	function typeClass(c:ClassDecl, mod:TModule):TClassOrInterfaceDecl {
 		var tMembers = [];
-		var result:TClassDecl = {
-			syntax: c,
-			name: c.name.text,
-			metadata: c.metadata,
-			extend: null,
-			implement: null,
-			modifiers: c.modifiers,
-			members: tMembers,
-			properties: null,
-		}
+		var info:TClassDeclInfo = {extend: null, implement: null};
 
 		if (c.extend != null) {
 			structureSetups.push(function() {
 				var classDecl = switch resolveDotPath(mod, dotPathToArray(c.extend.path)).kind {
-					case TDClass(i): i;
+					case TDClassOrInterface(i) if (i.kind.match(TClass(_))): i;
 					case _: throw "Not a ccass";
 				}
-				result.extend = {syntax: c.extend, superClass: classDecl};
+				info.extend = {syntax: c.extend, superClass: classDecl};
 			});
 		}
 
 		if (c.implement != null) {
 			structureSetups.push(function() {
-				structureSetups.push(() -> result.implement = typeClassImplement(mod, c.implement));
+				structureSetups.push(() -> info.implement = typeClassImplement(mod, c.implement));
 			});
 		}
 		structureSetups.push(function() {
@@ -199,7 +190,15 @@ class Typer {
 			loop(c.members);
 		});
 
-		return result;
+		return {
+			kind: TClass(info),
+			syntax: c,
+			name: c.name.text,
+			metadata: c.metadata,
+			modifiers: c.modifiers,
+			members: tMembers,
+			haxeProperties: null,
+		};
 	}
 
 	function typeClassField(mod:TModule, f:ClassField):TClassField {
@@ -229,7 +228,8 @@ class Typer {
 						name: name,
 					},
 					name: name.text,
-					fun: typeFunction(fun)
+					fun: typeFunction(fun),
+					semicolon: null
 				});
 			case FGetter(keyword, get, name, fun):
 				TFGetter({
@@ -239,7 +239,8 @@ class Typer {
 						name: name,
 					},
 					name: name.text,
-					fun: typeFunction(fun)
+					fun: typeFunction(fun),
+					semicolon: null
 				});
 			case FSetter(keyword, set, name, fun):
 				TFSetter({
@@ -249,7 +250,8 @@ class Typer {
 						name: name,
 					},
 					name: name.text,
-					fun: typeFunction(fun)
+					fun: typeFunction(fun),
+					semicolon: null
 				});
 		}
 		return {
@@ -286,25 +288,11 @@ class Typer {
 		return {equalsToken: init.equalsToken, expr: new ExprTyper(context, resolveType.bind(mod)).typeExpr(init.expr, expectedType)};
 	}
 
-	function typeInterface(i:InterfaceDecl, mod:TModule):TInterfaceDecl {
-		var tMembers:Array<TInterfaceMember> = [];
-
-		var iface:TInterfaceDecl = {
-			syntax: {
-				keyword: i.keyword,
-				name: i.name,
-				openBrace: i.openBrace,
-				closeBrace: i.closeBrace,
-			},
-			name: i.name.text,
-			extend: null,
-			metadata: i.metadata,
-			modifiers: i.modifiers,
-			members: tMembers,
-		}
-
+	function typeInterface(i:InterfaceDecl, mod:TModule):TClassOrInterfaceDecl {
+		var tMembers:Array<TClassMember> = [];
+		var info:TInterfaceDeclInfo = {extend: null};
 		if (i.extend != null) {
-			structureSetups.push(() -> iface.extend = typeClassImplement(mod, i.extend));
+			structureSetups.push(() -> info.extend = typeClassImplement(mod, i.extend));
 		}
 
 		structureSetups.push(function() {
@@ -312,61 +300,78 @@ class Typer {
 				for (m in members) {
 					switch (m) {
 						case MICondComp(v, openBrace, members, closeBrace):
-							tMembers.push(TIMCondCompBegin({v: ExprTyper.typeCondCompVar(v), openBrace: openBrace}));
+							tMembers.push(TMCondCompBegin({v: ExprTyper.typeCondCompVar(v), openBrace: openBrace}));
 							loop(members);
-							tMembers.push(TIMCondCompEnd({closeBrace: closeBrace}));
+							tMembers.push(TMCondCompEnd({closeBrace: closeBrace}));
 						case MIField(f):
-							tMembers.push(TIMField(typeInterfaceField(mod, f)));
+							tMembers.push(TMField(typeInterfaceField(mod, f)));
 					}
 				}
 			}
 			loop(i.members);
 		});
 
-		return iface;
+		return {
+			kind: TInterface(info),
+			syntax: {
+				keyword: i.keyword,
+				name: i.name,
+				openBrace: i.openBrace,
+				closeBrace: i.closeBrace,
+			},
+			name: i.name.text,
+			metadata: i.metadata,
+			modifiers: i.modifiers,
+			members: tMembers,
+			haxeProperties: null,
+		};
 	}
 
-	function typeInterfaceField(mod:TModule, f:InterfaceField):TInterfaceField {
+	function typeInterfaceField(mod:TModule, f:InterfaceField):TClassField {
 		var haxeType = HaxeTypeAnnotation.extractFromInterfaceField(f);
 
 		var kind = switch (f.kind) {
 			case IFFun(keyword, name, sig):
 				var sig = typeFunctionSignature(mod, sig, haxeType);
-				TIFFun({
+				TFFun({
 					syntax: {
 						keyword: keyword,
 						name: name,
 					},
 					name: name.text,
-					sig: sig
+					fun: {sig: sig, expr: null},
+					semicolon: f.semicolon
 				});
 			case IFGetter(keyword, get, name, sig):
 				var sig = typeFunctionSignature(mod, sig, haxeType);
-				TIFGetter({
+				TFGetter({
 					syntax: {
 						functionKeyword: keyword,
 						accessorKeyword: get,
 						name: name,
 					},
 					name: name.text,
-					sig: sig
+					fun: {sig: sig, expr: null},
+					semicolon: f.semicolon
 				});
 			case IFSetter(keyword, set, name, sig):
 				var sig = typeFunctionSignature(mod, sig, haxeType);
-				TIFSetter({
+				TFSetter({
 					syntax: {
 						functionKeyword: keyword,
 						accessorKeyword: set,
 						name: name,
 					},
 					name: name.text,
-					sig: sig
+					fun: {sig: sig, expr: null},
+					semicolon: f.semicolon
 				});
 		}
 		return {
+			modifiers: [],
+			namespace: null,
 			metadata: f.metadata,
-			kind: kind,
-			semicolon: f.semicolon
+			kind: kind
 		};
 	}
 

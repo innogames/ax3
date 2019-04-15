@@ -29,9 +29,9 @@ class TypedTree {
 		return mod.pack.decl;
 	}
 
-	public function getInterface(packName:String, name:String):TInterfaceDecl {
+	public function getInterface(packName:String, name:String):TClassOrInterfaceDecl {
 		return switch getDecl(packName, name).kind {
-			case TDInterface(iface): iface;
+			case TDClassOrInterface(iface) if (iface.kind.match(TInterface(_))): iface;
 			case _: throw '$packName::$name is not an interface';
 		}
 	}
@@ -45,17 +45,15 @@ class TypedTree {
 
 	public static function declToInst(decl:TDecl):TType {
 		return switch decl.kind {
-			case TDClass({name: "Dictionary"}): tUntypedDictionary; // TODO: check package
-			case TDClass(c): TTInst(IClass(c));
-			case TDInterface(i): TTInst(IInterface(i));
+			case TDClassOrInterface({name: "Dictionary"}): tUntypedDictionary; // TODO: check package
+			case TDClassOrInterface(c): TTInst(c);
 			case _: throw "assert";
 		}
 	}
 
 	public static function declToStatic(decl:TDecl):TType {
 		return switch decl.kind {
-			case TDClass(c): TTStatic(IClass(c));
-			case TDInterface(i): TTStatic(IInterface(i));
+			case TDClassOrInterface(c): TTStatic(c);
 			case _: throw "assert";
 		}
 	}
@@ -115,24 +113,21 @@ class TPackage {
 				return indent + dumpFun(f.name, f.fun.sig);
 			case TDNamespace({name: {text: name}}):
 				return indent + "NS " + name;
-			case TDInterface(i):
-				var r = [indent + "IFACE " + i.name];
-				if (i.extend != null) {
-					r.push(indent + " - EXT: " + [for (i in i.extend.interfaces) i.iface.decl.name].join(", "));
+			case TDClassOrInterface(cls):
+				var r = [];
+				switch cls.kind {
+					case TInterface(info):
+						r.push(indent + "IFACE " + cls.name);
+						if (info.extend != null) {
+							r.push(indent + " - EXT: " + [for (i in info.extend.interfaces) i.iface.decl.name].join(", "));
+						}
+					case TClass(info):
+						r.push(indent + "CLS " + cls.name);
+						if (info.extend != null) {
+							r.push(indent + " - EXT: " + info.extend.superClass.name);
+						}
 				}
-				for (m in i.members) {
-					switch (m) {
-						case TIMField(f): r.push(dumpInterfaceField(f));
-						case TIMCondCompBegin(_) | TIMCondCompEnd(_):
-					}
-				}
-				return r.join("\n");
-			case TDClass(c):
-				var r = [indent + "CLS " + c.name];
-				if (c.extend != null) {
-					r.push(indent + " - EXT: " + c.extend.superClass.name);
-				}
-				for (m in c.members) {
+				for (m in cls.members) {
 					switch (m) {
 						case TMField(f): r.push(dumpClassField(f));
 						case TMCondCompBegin(_) | TMCondCompEnd(_):
@@ -153,15 +148,6 @@ class TPackage {
 			case TArgRest(_): "..." + a.name;
 		}];
 		return "FUN " + name + "(" + args.join(", ") + "):" + dumpType(f.ret.type);
-	}
-
-	static function dumpInterfaceField(f:TInterfaceField):String {
-		var prefix = indent + indent + indent + indent;
-		return prefix + switch (f.kind) {
-			case TIFFun(f): dumpFun(f.name, f.sig);
-			case TIFGetter(f): dumpVar("GET", f.name, f.sig.ret.type);
-			case TIFSetter(f): dumpVar("SET", f.name, f.sig.args[0].type);
-		}
 	}
 
 	static function dumpClassField(f:TClassField):String {
@@ -192,8 +178,8 @@ class TPackage {
 			case TTXMLList: "XMLList";
 			case TTRegExp: "RegExp";
 			case TTVector(t): "Vector.<" + dumpType(t) + ">";
-			case TTInst(IClass({name: name}) | IInterface({name: name})): name;
-			case TTStatic(IClass({name: name}) | IInterface({name: name})): "Class<"+name+">";
+			case TTInst(cls): cls.name;
+			case TTStatic(cls): "Class<"+cls.name+">";
 			case TTBuiltin: "BUILTIN";
 		}
 	}
@@ -252,8 +238,7 @@ typedef TDecl = {
 }
 
 enum TDeclKind {
-	TDClass(c:TClassDecl);
-	TDInterface(c:TInterfaceDecl);
+	TDClassOrInterface(c:TClassOrInterfaceDecl);
 	TDVar(v:TModuleVarDecl);
 	TDFunction(v:TFunctionDecl);
 	TDNamespace(n:NamespaceDecl);
@@ -272,53 +257,33 @@ typedef TModuleVarDecl = TVarField & {
 	var modifiers:Array<DeclModifier>;
 }
 
-typedef TInterfaceDecl = {
+typedef TClassOrInterfaceDecl = {
 	var syntax:{
 		var keyword:Token;
 		var name:Token;
 		var openBrace:Token;
 		var closeBrace:Token;
 	};
+	var kind:TDClassOrInterfaceKind;
 	var metadata:Array<Metadata>;
 	var modifiers:Array<DeclModifier>;
 	var name:String;
-	var extend:Null<TClassImplement>;
-	var members:Array<TInterfaceMember>;
+	var members:Array<TClassMember>;
+	var haxeProperties:Null<Map<String,THaxePropDecl>>;
 }
 
-typedef TClassDecl = {
-	var syntax:{
-		var keyword:Token;
-		var name:Token;
-		var implement:Null<{keyword:Token, paths:Separated<DotPath>}>;
-		var openBrace:Token;
-		var closeBrace:Token;
-	};
-	var properties:Null<Map<String,THaxePropDecl>>;
-	var metadata:Array<Metadata>;
-	var modifiers:Array<DeclModifier>;
-	var name:String;
+enum TDClassOrInterfaceKind {
+	TInterface(info:TInterfaceDeclInfo);
+	TClass(info:TClassDeclInfo);
+}
+
+typedef TInterfaceDeclInfo = {
+	var extend:Null<TClassImplement>;
+}
+
+typedef TClassDeclInfo = {
 	var extend:Null<TClassExtend>;
 	var implement:Null<TClassImplement>;
-	var members:Array<TClassMember>;
-}
-
-enum TInterfaceMember {
-	TIMField(f:TInterfaceField);
-	TIMCondCompBegin(b:TCondCompBegin);
-	TIMCondCompEnd(b:TCondCompEnd);
-}
-
-typedef TInterfaceField = {
-	var metadata:Array<Metadata>;
-	var kind:TInterfaceFieldKind;
-	var semicolon:Token;
-}
-
-enum TInterfaceFieldKind {
-	TIFFun(f:TIFunctionField);
-	TIFGetter(f:TIAccessorField);
-	TIFSetter(f:TIAccessorField);
 }
 
 typedef TIFunctionField = {
@@ -341,21 +306,21 @@ typedef TIAccessorField = {
 }
 
 typedef TClassExtend = {
-	var superClass:TClassDecl;
 	var syntax:{
 		var keyword:Token;
 		var path:DotPath;
 	};
+	var superClass:TClassOrInterfaceDecl;
 }
 
 typedef TClassImplement = {
-	var syntax:{keyword:Token};
+	var keyword:Token;
 	var interfaces:Array<{iface:TInterfaceHeritage, comma:Null<Token>}>;
 }
 
 typedef TInterfaceHeritage = {
 	var syntax:DotPath;
-	var decl:TInterfaceDecl;
+	var decl:TClassOrInterfaceDecl;
 }
 
 enum TClassMember {
@@ -399,6 +364,7 @@ typedef TFunctionField = {
 	};
 	var name:String;
 	var fun:TFunction;
+	var semicolon:Null<Token>;
 }
 
 typedef TAccessorField = {
@@ -409,6 +375,7 @@ typedef TAccessorField = {
 	}
 	var name:String;
 	var fun:TFunction;
+	var semicolon:Null<Token>;
 }
 
 typedef TVarField = {
@@ -840,13 +807,8 @@ enum TType {
 	TTBuiltin; // TODO: temporary
 
 	TTFun(args:Array<TType>, ret:TType, ?rest:Null<TRestKind>); // method and local function refs
-	TTInst(i:TTInstKind); // class instance access (`obj` in `obj.some`)
-	TTStatic(cls:TTInstKind); // class statics access (`Cls` in `Cls.some`)
-}
-
-enum TTInstKind {
-	IClass(cls:TClassDecl);
-	IInterface(cls:TInterfaceDecl);
+	TTInst(i:TClassOrInterfaceDecl); // class instance access (`obj` in `obj.some`)
+	TTStatic(cls:TClassOrInterfaceDecl); // class statics access (`Cls` in `Cls.some`)
 }
 
 enum TRestKind {

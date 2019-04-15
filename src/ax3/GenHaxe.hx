@@ -19,19 +19,19 @@ class GenHaxe extends PrinterBase {
 		currentModule = null;
 	}
 
-	function isImported(c:TClassDecl) {
+	function isImported(c:TClassOrInterfaceDecl) {
 		// TODO: optimize this, because this is done A LOT
 		// actually, we might want to store the "local" flag in the TEDeclRef/TTypeHint/etc.
 		if (currentModule != null) {
 			for (i in currentModule.pack.imports) {
 				switch i.kind {
-					case TIDecl({kind: TDClass(importedClass)}) if (importedClass == c):
+					case TIDecl({kind: TDClassOrInterface(importedClass)}) if (importedClass == c):
 						return true;
 
 					case TIAll(pack, _):
 						for (mod in pack) {
 							switch mod.pack.decl.kind {
-								case TDClass(importedClass) if (importedClass == c):
+								case TDClassOrInterface(importedClass) if (importedClass == c):
 									return true;
 
 								case _:
@@ -43,7 +43,7 @@ class GenHaxe extends PrinterBase {
 			}
 			for (mod in currentModule.parentPack) {
 				switch mod.pack.decl.kind {
-					case TDClass(importedClass) if (importedClass == c):
+					case TDClassOrInterface(importedClass) if (importedClass == c):
 						return true;
 					case _:
 				}
@@ -97,8 +97,8 @@ class GenHaxe extends PrinterBase {
 
 	function printDecl(d:TDecl) {
 		switch (d.kind) {
-			case TDClass(c): printClassDecl(c);
-			case TDInterface(i): printInterfaceDecl(i);
+			case TDClassOrInterface(c = {kind: TClass(info)}): printClassDecl(c, info);
+			case TDClassOrInterface(i = {kind: TInterface(info)}): printInterfaceDecl(i, info);
 			case TDVar(v): printModuleVarDecl(v);
 			case TDFunction(f): printFunctionDecl(f);
 			case TDNamespace(n): printNamespace(n);
@@ -127,14 +127,14 @@ class GenHaxe extends PrinterBase {
 		printVarField(v);
 	}
 
-	function printInterfaceDecl(i:TInterfaceDecl) {
+	function printInterfaceDecl(i:TClassOrInterfaceDecl, info:TInterfaceDeclInfo) {
 		printMetadata(i.metadata);
 		printDeclModifiers(i.modifiers);
 		printTextWithTrivia("interface", i.syntax.keyword);
 		printTextWithTrivia(i.name, i.syntax.name);
-		if (i.extend != null) {
-			printTextWithTrivia("extends", i.extend.syntax.keyword);
-			for (i in i.extend.interfaces) {
+		if (info.extend != null) {
+			printTextWithTrivia("extends", info.extend.keyword);
+			for (i in info.extend.interfaces) {
 				printDotPath(i.iface.syntax);
 				if (i.comma != null) printComma(i.comma);
 			}
@@ -155,23 +155,28 @@ class GenHaxe extends PrinterBase {
 
 		for (m in i.members) {
 			switch (m) {
-				case TIMField(field):
+				case TMField(field):
 					switch field.kind {
-						case TIFFun(f):
+						case TFFun(f):
 							printMetadata(field.metadata);
 							printTextWithTrivia("function", f.syntax.keyword);
 							printTextWithTrivia(f.name, f.syntax.name);
-							printSignature(f.sig);
-							printSemicolon(field.semicolon);
+							printSignature(f.fun.sig);
+							printSemicolon(f.semicolon.sure());
 
-						case TIFGetter(f):
-							prop(f.name, false, field.metadata, f.syntax.functionKeyword.leadTrivia.concat(field.semicolon.trailTrivia), f.sig.ret.type);
+						case TFGetter(f):
+							prop(f.name, false, field.metadata, f.syntax.functionKeyword.leadTrivia.concat(f.semicolon.sure().trailTrivia), f.fun.sig.ret.type);
 
-						case TIFSetter(f):
-							prop(f.name, true, field.metadata, f.syntax.functionKeyword.leadTrivia.concat(field.semicolon.trailTrivia), f.sig.args[0].type);
+						case TFSetter(f):
+							prop(f.name, true, field.metadata, f.syntax.functionKeyword.leadTrivia.concat(f.semicolon.sure().trailTrivia), f.fun.sig.args[0].type);
+
+						case TFVar(_):
+							throw "assert";
 					}
-				case TIMCondCompBegin(b): printCondCompBegin(b);
-				case TIMCondCompEnd(b): printCompCondEnd(b);
+				case TMCondCompBegin(b): printCondCompBegin(b);
+				case TMCondCompEnd(b): printCompCondEnd(b);
+				case TMStaticInit(_) | TMUseNamespace(_):
+					throw "assert";
 			}
 		}
 
@@ -189,7 +194,7 @@ class GenHaxe extends PrinterBase {
 		printCloseBrace(i.syntax.closeBrace);
 	}
 
-	function printClassDecl(c:TClassDecl) {
+	function printClassDecl(c:TClassOrInterfaceDecl, info:TClassDeclInfo) {
 		var needsEmptyCtor = // kill me TODO
 			false;
 			// @:nullSafety(Off) switch (currentModule.s.getDecl(c.name).kind) {
@@ -203,18 +208,18 @@ class GenHaxe extends PrinterBase {
 		printDeclModifiers(c.modifiers);
 		printTextWithTrivia("class", c.syntax.keyword);
 		printTextWithTrivia(c.name, c.syntax.name);
-		if (c.extend != null) {
-			printTextWithTrivia("extends", c.extend.syntax.keyword);
-			printDotPath(c.extend.syntax.path);
+		if (info.extend != null) {
+			printTextWithTrivia("extends", info.extend.syntax.keyword);
+			printDotPath(info.extend.syntax.path);
 		}
-		if (c.implement != null) {
-			printTextWithTrivia("implements", c.implement.syntax.keyword);
-			printDotPath(c.implement.interfaces[0].iface.syntax);
-			for (i in 1...c.implement.interfaces.length) {
-				var prevComma = c.implement.interfaces[i - 1].comma;
+		if (info.implement != null) {
+			printTextWithTrivia("implements", info.implement.keyword);
+			printDotPath(info.implement.interfaces[0].iface.syntax);
+			for (i in 1...info.implement.interfaces.length) {
+				var prevComma = info.implement.interfaces[i - 1].comma;
 				if (prevComma != null) printTextWithTrivia("", prevComma); // don't lose comments around comma, if there are any
 
-				var i = c.implement.interfaces[i];
+				var i = info.implement.interfaces[i];
 				buf.add(" implements ");
 				printDotPath(i.iface.syntax);
 			}
@@ -235,8 +240,8 @@ class GenHaxe extends PrinterBase {
 			}
 		}
 
-		if (c.properties != null) {
-			for (p in c.properties) {
+		if (c.haxeProperties != null) {
+			for (p in c.haxeProperties) {
 				printTrivia(p.syntax.leadTrivia);
 				if (p.isPublic) buf.add("public ");
 				if (p.isStatic) buf.add("static ");
@@ -427,11 +432,11 @@ class GenHaxe extends PrinterBase {
 				}
 				printTType(ret);
 
-			case TTInst(IClass({name: name}) | IInterface({name: name})):
-				buf.add(name);
+			case TTInst(cls):
+				buf.add(cls.name);
 				// buf.add(getClassLocalPath(cls)); TODO
-			case TTStatic(IClass({name: name}) | IInterface({name: name})):
-				buf.add("Class<" + name + ">");
+			case TTStatic(cls):
+				buf.add("Class<" + cls.name + ">");
 				// buf.add("Class<" + getClassLocalPath(cls) + ">"); TODO
 		}
 	}

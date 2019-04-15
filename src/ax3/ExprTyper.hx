@@ -69,76 +69,77 @@ class ExprTyper {
 	}
 
 	public function typeExpr(e:Expr, expectedType:TType):TExpr {
-		return switch (e) {
-			case EIdent(i):
-				typeIdent(i, e, expectedType);
+		return mk(TEBreak(new Token(0, TkIdent, "break", [], [])), TTAny, TTAny);
+		// return switch (e) {
+		// 	case EIdent(i):
+		// 		typeIdent(i, e, expectedType);
 
-			case ELiteral(l):
-				typeLiteral(l, expectedType);
+		// 	case ELiteral(l):
+		// 		typeLiteral(l, expectedType);
 
-			case ECall(e, args):
-				typeCall(e, args, expectedType);
+		// 	case ECall(e, args):
+		// 		typeCall(e, args, expectedType);
 
-			case EParens(openParen, e, closeParen):
-				var e = typeExpr(e, expectedType);
-				mk(TEParens(openParen, e, closeParen), e.type, expectedType);
+		// 	case EParens(openParen, e, closeParen):
+		// 		var e = typeExpr(e, expectedType);
+		// 		mk(TEParens(openParen, e, closeParen), e.type, expectedType);
 
-			case EArrayAccess(e, openBracket, eindex, closeBracket):
-				typeArrayAccess(e, openBracket, eindex, closeBracket, expectedType);
+		// 	case EArrayAccess(e, openBracket, eindex, closeBracket):
+		// 		typeArrayAccess(e, openBracket, eindex, closeBracket, expectedType);
 
-			case EArrayDecl(d):
-				typeArrayDecl(d, expectedType);
+		// 	case EArrayDecl(d):
+		// 		typeArrayDecl(d, expectedType);
 
-			case EVectorDecl(newKeyword, t, d):
-				typeVectorDecl(newKeyword, t, d, expectedType);
+		// 	case EVectorDecl(newKeyword, t, d):
+		// 		typeVectorDecl(newKeyword, t, d, expectedType);
 
-			case EReturn(keyword, eReturned):
-				if (expectedType != TTVoid) throw "assert";
-				mk(TEReturn(keyword, if (eReturned != null) typeExpr(eReturned, currentReturnType) else null), TTVoid, TTVoid);
+		// 	case EReturn(keyword, eReturned):
+		// 		if (expectedType != TTVoid) throw "assert";
+		// 		mk(TEReturn(keyword, if (eReturned != null) typeExpr(eReturned, currentReturnType) else null), TTVoid, TTVoid);
 
-			case EThrow(keyword, e):
-				if (expectedType != TTVoid) throw "assert";
-				mk(TEThrow(keyword, typeExpr(e, TTAny)), TTVoid, TTVoid);
+		// 	case EThrow(keyword, e):
+		// 		if (expectedType != TTVoid) throw "assert";
+		// 		mk(TEThrow(keyword, typeExpr(e, TTAny)), TTVoid, TTVoid);
 
-			case EBreak(keyword):
-				if (expectedType != TTVoid) throw "assert";
-				mk(TEBreak(keyword), TTVoid, TTVoid);
+		// 	case EBreak(keyword):
+		// 		if (expectedType != TTVoid) throw "assert";
+		// 		mk(TEBreak(keyword), TTVoid, TTVoid);
 
-			case EContinue(keyword):
-				if (expectedType != TTVoid) throw "assert";
-				mk(TEContinue(keyword), TTVoid, TTVoid);
+		// 	case EContinue(keyword):
+		// 		if (expectedType != TTVoid) throw "assert";
+		// 		mk(TEContinue(keyword), TTVoid, TTVoid);
 
-			case EDelete(keyword, e):
-				mk(TEDelete(keyword, typeExpr(e, TTAny)), TTBoolean, expectedType);
+		// 	case EDelete(keyword, e):
+		// 		mk(TEDelete(keyword, typeExpr(e, TTAny)), TTBoolean, expectedType);
 
-			case ENew(keyword, e, args): typeNew(keyword, e, args, expectedType);
-			case EField(eobj, dot, fieldName): typeField(eobj, dot, fieldName, expectedType);
-			case EBlock(b): mk(TEBlock(typeBlock(b)), TTVoid, TTVoid);
-			case EObjectDecl(openBrace, fields, closeBrace): typeObjectDecl(openBrace, fields, closeBrace, expectedType);
-			case EIf(keyword, openParen, econd, closeParen, ethen, eelse): typeIf(keyword, openParen, econd, closeParen, ethen, eelse, expectedType);
-			case ETernary(econd, question, ethen, colon, eelse): typeTernary(econd, question, ethen, colon, eelse, expectedType);
-			case EWhile(w): typeWhile(w, expectedType);
-			case EDoWhile(w): typeDoWhile(w, expectedType);
-			case EFor(f): typeFor(f, expectedType);
-			case EForIn(f): typeForIn(f, expectedType);
-			case EForEach(f): typeForEach(f, expectedType);
-			case EBinop(a, op, b): typeBinop(a, op, b, expectedType);
-			case EPreUnop(op, e): typePreUnop(op, e, expectedType);
-			case EPostUnop(e, op): typePostUnop(e, op, expectedType);
-			case EVars(kind, vars): typeVars(kind, vars, expectedType);
-			case EAs(e, keyword, t): typeAs(e, keyword, t, expectedType);
-			case EVector(v): typeVector(v, expectedType);
-			case ESwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace): typeSwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace, expectedType);
-			case ETry(keyword, block, catches, finally_): typeTry(keyword, block, catches, finally_, expectedType);
-			case EFunction(keyword, name, fun): typeLocalFunction(keyword, name, fun, expectedType);
+		// 	case ENew(keyword, e, args): typeNew(keyword, e, args, expectedType);
+		// 	case EField(eobj, dot, fieldName): typeField(eobj, dot, fieldName, expectedType);
+		// 	case EBlock(b): mk(TEBlock(typeBlock(b)), TTVoid, TTVoid);
+		// 	case EObjectDecl(openBrace, fields, closeBrace): typeObjectDecl(openBrace, fields, closeBrace, expectedType);
+		// 	case EIf(keyword, openParen, econd, closeParen, ethen, eelse): typeIf(keyword, openParen, econd, closeParen, ethen, eelse, expectedType);
+		// 	case ETernary(econd, question, ethen, colon, eelse): typeTernary(econd, question, ethen, colon, eelse, expectedType);
+		// 	case EWhile(w): typeWhile(w, expectedType);
+		// 	case EDoWhile(w): typeDoWhile(w, expectedType);
+		// 	case EFor(f): typeFor(f, expectedType);
+		// 	case EForIn(f): typeForIn(f, expectedType);
+		// 	case EForEach(f): typeForEach(f, expectedType);
+		// 	case EBinop(a, op, b): typeBinop(a, op, b, expectedType);
+		// 	case EPreUnop(op, e): typePreUnop(op, e, expectedType);
+		// 	case EPostUnop(e, op): typePostUnop(e, op, expectedType);
+		// 	case EVars(kind, vars): typeVars(kind, vars, expectedType);
+		// 	case EAs(e, keyword, t): typeAs(e, keyword, t, expectedType);
+		// 	case EVector(v): typeVector(v, expectedType);
+		// 	case ESwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace): typeSwitch(keyword, openParen, subj, closeParen, openBrace, cases, closeBrace, expectedType);
+		// 	case ETry(keyword, block, catches, finally_): typeTry(keyword, block, catches, finally_, expectedType);
+		// 	case EFunction(keyword, name, fun): typeLocalFunction(keyword, name, fun, expectedType);
 
-			case EXmlAttr(e, dot, at, attrName): typeXmlAttr(e, dot, at, attrName, expectedType);
-			case EXmlAttrExpr(e, dot, at, openBracket, eattr, closeBracket): typeXmlAttrExpr(e, dot, at, openBracket, eattr, closeBracket, expectedType);
-			case EXmlDescend(e, dotDot, childName): typeXmlDescend(e, dotDot, childName, expectedType);
-			case ECondCompValue(v): mk(TECondCompValue(typeCondCompVar(v)), TTAny, expectedType);
-			case ECondCompBlock(v, b): typeCondCompBlock(v, b, expectedType);
-			case EUseNamespace(ns): mk(TEUseNamespace(ns), TTVoid, expectedType);
-		}
+		// 	case EXmlAttr(e, dot, at, attrName): typeXmlAttr(e, dot, at, attrName, expectedType);
+		// 	case EXmlAttrExpr(e, dot, at, openBracket, eattr, closeBracket): typeXmlAttrExpr(e, dot, at, openBracket, eattr, closeBracket, expectedType);
+		// 	case EXmlDescend(e, dotDot, childName): typeXmlDescend(e, dotDot, childName, expectedType);
+		// 	case ECondCompValue(v): mk(TECondCompValue(typeCondCompVar(v)), TTAny, expectedType);
+		// 	case ECondCompBlock(v, b): typeCondCompBlock(v, b, expectedType);
+		// 	case EUseNamespace(ns): mk(TEUseNamespace(ns), TTVoid, expectedType);
+		// }
 	}
 
 	function typeLiteral(l:Literal, expectedType:TType):TExpr {
@@ -164,7 +165,13 @@ class ExprTyper {
 		}), tUntypedObject, expectedType);
 	}
 
-	static function getConstructor(cls:TClassDecl):Null<TFunction> {
+	static function getConstructor(cls:TClassOrInterfaceDecl):Null<TFunction> {
+		var extend;
+		switch (cls.kind) {
+			case TInterface(_): return null;
+			case TClass(info): extend = info.extend;
+		}
+
 		for (m in cls.members) {
 			switch m {
 				case TMField({kind: TFFun(f)}) if (f.name == cls.name):
@@ -172,13 +179,13 @@ class ExprTyper {
 				case _:
 			}
 		}
-		if (cls.extend != null) {
-			return getConstructor(cls.extend.superClass);
+		if (extend != null) {
+			return getConstructor(extend.superClass);
 		}
 		return null;
 	}
 
-	function getConstructorType(cls:TClassDecl):TType {
+	function getConstructorType(cls:TClassOrInterfaceDecl):TType {
 		var ctor = getConstructor(cls);
 		return if (ctor != null) getFunctionTypeFromSignature(ctor.sig) else TTFun([], TTVoid, null);
 	}
@@ -199,9 +206,9 @@ class ExprTyper {
 
 		var type, ctorType;
 		switch (e.type) {
-			case TTStatic(kind = IClass(cls)):
+			case TTStatic(cls):
 				ctorType = getConstructorType(cls);
-				type = TTInst(kind);
+				type = TTInst(cls);
 			case _:
 				ctorType = TTFunction;
 				type = tUntypedObject; // TODO: is this correct?

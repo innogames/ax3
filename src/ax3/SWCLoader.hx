@@ -89,52 +89,59 @@ class SWCLoader {
 
 				var tDecl, addVar, addMethod, addGetter, addSetter;
 				if (cls.isInterface) {
-					var members:Array<TInterfaceMember> = [];
+					var members:Array<TClassMember> = [];
 
 					addVar = function(name:String, type:TType) throw 'Var $name in interface ${n.name}';
 					addMethod = function(name:String, f:TFunctionSignature) {
-						members.push(TIMField({
+						members.push(TMField({
 							metadata: [],
-							semicolon: null,
-							kind: TIFFun({
+							modifiers: [],
+							namespace: null,
+							kind: TFFun({
 								syntax: null,
 								name: name,
-								sig: f
+								fun: {sig: f, expr: null},
+								semicolon: null,
 							})
 						}));
 					}
 					addGetter = function(name:String, f:TFunctionSignature) {
-						members.push(TIMField({
+						members.push(TMField({
 							metadata: [],
-							semicolon: null,
-							kind: TIFGetter({
+							modifiers: [],
+							namespace: null,
+							kind: TFGetter({
 								syntax: null,
 								name: name,
-								sig: f
+								fun: {sig: f, expr: null},
+								semicolon: null,
 							})
 						}));
 					}
 					addSetter = function(name:String, f:TFunctionSignature) {
-						members.push(TIMField({
+						members.push(TMField({
 							metadata: [],
-							semicolon: null,
-							kind: TIFSetter({
+							modifiers: [],
+							namespace: null,
+							kind: TFSetter({
 								syntax: null,
 								name: name,
-								sig: f
+								fun: {sig: f, expr: null},
+								semicolon: null
 							})
 						}));
 					}
 
-					var iface:TInterfaceDecl = {
+					var ifaceInfo = {extend: null};
+					tDecl = TDClassOrInterface({
 						syntax: null,
+						kind: TInterface(ifaceInfo),
 						metadata: [],
 						modifiers: [],
+						haxeProperties: null,
 						name: n.name,
-						extend: null,
 						members: members
-					};
-					tDecl = TDInterface(iface);
+					});
 
 					var extensions = [];
 					for (iface in cls.interfaces) {
@@ -155,10 +162,7 @@ class SWCLoader {
 								var ifaceDecl = tree.getInterface(n.ns, n.name);
 								interfaces.push({iface: {syntax: null, decl: ifaceDecl}, comma: null});
 							}
-							iface.extend = {
-								syntax: null,
-								interfaces: interfaces
-							}
+							ifaceInfo.extend = {keyword: null, interfaces: interfaces}
 						});
 					}
 
@@ -192,7 +196,8 @@ class SWCLoader {
 							kind: TFFun({
 								syntax: null,
 								name: name,
-								fun: {sig: f, expr: null}
+								fun: {sig: f, expr: null},
+								semicolon: null
 							})
 						}));
 					}
@@ -204,7 +209,8 @@ class SWCLoader {
 							kind: TFGetter({
 								syntax: null,
 								name: name,
-								fun: {sig: f, expr: null}
+								fun: {sig: f, expr: null},
+								semicolon: null
 							})
 						}));
 					}
@@ -216,22 +222,25 @@ class SWCLoader {
 							kind: TFSetter({
 								syntax: null,
 								name: name,
-								fun: {sig: f, expr: null}
+								fun: {sig: f, expr: null},
+								semicolon: null
 							})
 						}));
 					}
 
-					var tCls:TClassDecl = {
+					var classInfo:TClassDeclInfo = {
+						extend: null,
+						implement: null,
+					};
+					tDecl = TDClassOrInterface({
+						kind: TClass(classInfo),
 						syntax: null,
-						properties: null,
+						haxeProperties: null,
 						metadata: [],
 						modifiers: [],
 						name: n.name,
-						extend: null,
-						implement: null,
 						members: members
-					};
-					tDecl = TDClass(tCls);
+					});
 
 					if (cls.superclass != null) {
 						switch getPublicName(abc, cls.superclass) {
@@ -239,10 +248,10 @@ class SWCLoader {
 							case n:
 								structureSetups.push(function() {
 									var classDecl = switch tree.getDecl(n.ns, n.name).kind {
-										case TDClass(c): c;
+										case TDClassOrInterface(c) if (c.kind.match(TClass(_))): c;
 										case _: throw '${n.ns}::${n.name} is not a class';
 									}
-									tCls.extend = {syntax: null, superClass: classDecl};
+									classInfo.extend = {syntax: null, superClass: classDecl};
 								});
 						}
 					}
