@@ -1,15 +1,13 @@
 package ax3.filters;
 
-import ax3.Structure.SClassDecl;
-
 class AddSuperCtorCall extends AbstractFilter {
 	override function processDecl(c:TDecl) {
-		switch c {
-			case TDClass(c) if (c.extend != null): // class with a parent class
+		switch c.kind {
+			case TDClassOrInterface(c = {kind: TClass(info)}) if (info.extend != null): // class with a parent class
 				for (m in c.members) {
 					switch (m) {
 						case TMField({kind: TFFun(f)}) if (f.name == c.name): // constructor \o/
-							f.fun.expr = processCtorExpr(f.fun.expr, c.extend.superClass);
+							f.fun.expr = processCtorExpr(f.fun.expr, info.extend.superClass);
 							break;
 						case _:
 					}
@@ -18,11 +16,12 @@ class AddSuperCtorCall extends AbstractFilter {
 		}
 	}
 
-	function processCtorExpr(e:TExpr, superClass:SClassDecl):TExpr {
+	function processCtorExpr(e:TExpr, superClass:TClassOrInterfaceDecl):TExpr {
 		if (hasSuperCall(e)) {
 			return e;
 		} else {
-			superClass.wasInstantiated = true; // generate empty ctor if required (TODO: we should actually skip generating `super()` if there are no ctors in the whole chain)
+			// TODO
+			// superClass.wasInstantiated = true; // generate empty ctor if required (TODO: we should actually skip generating `super()` if there are no ctors in the whole chain)
 			var tSuper = TTInst(superClass);
 			var eSuper = mk(TELiteral(TLSuper(mkIdent("super"))), tSuper, tSuper);
 			var eSuperCall = mkCall(eSuper, [], TTVoid);

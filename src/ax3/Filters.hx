@@ -1,11 +1,10 @@
 package ax3;
 
 import ax3.TypedTree;
-import ax3.Structure;
 import ax3.filters.*;
 
 class Filters {
-	public static function run(context:Context, structure:Structure, modules:Array<TModule>) {
+	public static function run(context:Context, tree:TypedTree) {
 		var externImports = new ExternModuleLevelImports(context);
 		for (f in [
 			externImports,
@@ -41,7 +40,7 @@ class Filters {
 			new ToString(context),
 			new NamespacedToPublic(context),
 		]) {
-			f.run(modules);
+			f.run(tree);
 		}
 
 		sys.io.File.saveContent("OUT/Globals.hx", externImports.printGlobalsClass());

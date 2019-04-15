@@ -18,21 +18,27 @@ class AbstractFilter {
 		throw "assert"; // TODO do it nicer
 	}
 
-	public function run(modules:Array<TModule>) {
-		for (mod in modules) {
-			currentPath = mod.path;
+	public function run(tree:TypedTree) {
+		for (pack in tree.packages) {
+			for (mod in pack) {
+				if (mod.isExtern) {
+					continue;
+				}
 
-			for (i in mod.pack.imports) {
-				processImport(i);
+				currentPath = mod.path;
+
+				for (i in mod.pack.imports) {
+					processImport(i);
+				}
+
+				processDecl(mod.pack.decl);
+
+				for (decl in mod.privateDecls) {
+					processDecl(decl);
+				}
+
+				currentPath = null;
 			}
-
-			processDecl(mod.pack.decl);
-
-			for (decl in mod.privateDecls) {
-				processDecl(decl);
-			}
-
-			currentPath = null;
 		}
 	}
 
@@ -40,18 +46,17 @@ class AbstractFilter {
 	}
 
 	function processDecl(decl:TDecl) {
-		switch (decl) {
-			case TDClass(c): processClass(c);
+		switch decl.kind {
+			case TDClassOrInterface(c): processClass(c);
 			case TDVar(v): processVarFields(v.vars);
 			case TDFunction(fun): processFunction(fun.fun);
-			case TDInterface(i): processInterface(i);
 			case TDNamespace(_):
 		}
 	}
 
-	function processClass(c:TClassDecl) {
+	function processClass(c:TClassOrInterfaceDecl) {
 		for (m in c.members) {
-			switch (m) {
+			switch m {
 				case TMField(field): processClassField(field);
 				case TMStaticInit(i): i.expr = processExpr(i.expr);
 				case TMUseNamespace(_):
@@ -70,23 +75,9 @@ class AbstractFilter {
 		}
 	}
 
-	function processInterface(i:TInterfaceDecl) {
-		for (m in i.members) {
-			switch (m) {
-				case TIMField(field):
-					switch (field.kind) {
-						case TIFFun(field): processSignature(field.sig);
-						case TIFGetter(_) | TIFSetter(_):
-					}
-				case TIMCondCompBegin(_):
-				case TIMCondCompEnd(_):
-			}
-		}
-	}
-
 	function processFunction(fun:TFunction) {
 		fun.sig = processSignature(fun.sig);
-		fun.expr = processExpr(fun.expr);
+		if (fun.expr != null) fun.expr = processExpr(fun.expr);
 	}
 
 	function processSignature(sig:TFunctionSignature) {

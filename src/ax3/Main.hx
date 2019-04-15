@@ -32,6 +32,8 @@ class Main {
 
 		sys.io.File.saveContent("structure.txt", tree.dump());
 
+		Filters.run(ctx, tree);
+
 		var haxeDir = if (config.hxout == null) null else FileSystem.absolutePath(config.hxout);
 		for (packName => pack in tree.packages) {
 

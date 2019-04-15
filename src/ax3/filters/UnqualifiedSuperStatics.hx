@@ -1,6 +1,5 @@
 package ax3.filters;
 
-import ax3.Structure.SClassDecl;
 import ax3.ParseTree.DotPath;
 
 /**
@@ -9,9 +8,9 @@ import ax3.ParseTree.DotPath;
 	cases into qualified access.
 **/
 class UnqualifiedSuperStatics extends AbstractFilter {
-	var thisClass:Null<SClassDecl>;
-	override function processClass(c:TClassDecl) {
-		thisClass = c.structure;
+	var thisClass:Null<TClassOrInterfaceDecl>;
+	override function processClass(c:TClassOrInterfaceDecl) {
+		thisClass = c;
 		super.processClass(c);
 		thisClass = null;
 	}
@@ -23,14 +22,14 @@ class UnqualifiedSuperStatics extends AbstractFilter {
 				fieldToken.leadTrivia = [];
 
 				var dotPath:DotPath = {
-					var parts = if (c.publicFQN != null) c.publicFQN.split(".") else [c.name];
+					var parts = /* if (c.publicFQN != null) c.publicFQN.split(".") else */ [c.name]; // TODO: FQN
 					{
 						first: new Token(0, TkIdent, parts[0], leadTrivia, []),
 						rest: [for (i in 1...parts.length) {sep: mkDot(), element: mkIdent(parts[i])}]
 					};
 				};
 
-				var eSuperRef = mk(TEDeclRef(dotPath, {name: c.name, kind: SClass(c)}), tSuperRef, tSuperRef);
+				var eSuperRef = mk(TEDeclRef(dotPath, {name: c.name, kind: TDClassOrInterface(c)}), tSuperRef, tSuperRef);
 
 				e.with(kind = TEField({kind: TOExplicit(mkDot(), eSuperRef), type: tSuperRef}, fieldName, fieldToken));
 			case _:

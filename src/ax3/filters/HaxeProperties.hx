@@ -9,9 +9,9 @@ private typedef Modifiers = {
 class HaxeProperties extends AbstractFilter {
 	var currentProperties:Null<Map<String,THaxePropDecl>>;
 
-	override function processClass(c:TClassDecl) {
+	override function processClass(c:TClassOrInterfaceDecl) {
 		super.processClass(c);
-		c.properties = currentProperties;
+		c.haxeProperties = currentProperties;
 		currentProperties = null;
 	}
 
@@ -68,22 +68,25 @@ class HaxeProperties extends AbstractFilter {
 			type: type,
 			syntax: null
 		};
-		var argLocal = {
-			var tok = mkIdent(arg.name);
-			tok.leadTrivia.push(whitespace);
-			mk(TELocal(tok, arg.v), arg.v.type, arg.v.type);
-		}
 
-		function rewriteReturns(e:TExpr):TExpr {
-			return switch e.kind {
-				case TELocalFunction(_): e;
-				case TEReturn(keyword, null): e.with(kind = TEReturn(keyword, argLocal));
-				case _: mapExpr(rewriteReturns, e);
+		if (field.fun.expr != null) {
+			var argLocal = {
+				var tok = mkIdent(arg.name);
+				tok.leadTrivia.push(whitespace);
+				mk(TELocal(tok, arg.v), arg.v.type, arg.v.type);
 			}
-		}
 
-		var finalReturnExpr = mk(TEReturn(mkIdent("return"), argLocal), TTVoid, TTVoid);
-		field.fun.expr = concatExprs(rewriteReturns(field.fun.expr), finalReturnExpr);
+			function rewriteReturns(e:TExpr):TExpr {
+				return switch e.kind {
+					case TELocalFunction(_): e;
+					case TEReturn(keyword, null): e.with(kind = TEReturn(keyword, argLocal));
+					case _: mapExpr(rewriteReturns, e);
+				}
+			}
+
+			var finalReturnExpr = mk(TEReturn(mkIdent("return"), argLocal), TTVoid, TTVoid);
+			field.fun.expr = concatExprs(rewriteReturns(field.fun.expr), finalReturnExpr);
+		}
 
 		if (!mods.isOverride) {
 			addProperty(field.name, true, type, mods);

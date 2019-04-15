@@ -41,7 +41,7 @@ class GenAS3 extends PrinterBase {
 		switch i.kind {
 			case TIDecl(_):
 			case TIAliased(_): throw "assert";
-			case TIAll(dot, asterisk):
+			case TIAll(_, dot, asterisk):
 				printDot(dot);
 				printTextWithTrivia("*", asterisk);
 		}
@@ -50,9 +50,9 @@ class GenAS3 extends PrinterBase {
 	}
 
 	function printDecl(d:TDecl) {
-		switch (d) {
-			case TDClass(c): printClassDecl(c);
-			case TDInterface(i): printInterfaceDecl(i);
+		switch d.kind {
+			case TDClassOrInterface(c = {kind: TClass(info)}): printClassDecl(c, info);
+			case TDClassOrInterface(i = {kind: TInterface(info)}): printInterfaceDecl(i, info);
 			case TDVar(v): printModuleVarDecl(v);
 			case TDFunction(f): printFunctionDecl(f);
 			case TDNamespace(n): printNamespace(n);
@@ -81,65 +81,69 @@ class GenAS3 extends PrinterBase {
 		printVarField(v);
 	}
 
-	function printInterfaceDecl(i:TInterfaceDecl) {
+	function printInterfaceDecl(i:TClassOrInterfaceDecl, info:TInterfaceDeclInfo) {
 		printMetadata(i.metadata);
 		printDeclModifiers(i.modifiers);
 		printTextWithTrivia("interface", i.syntax.keyword);
 		printTextWithTrivia(i.name, i.syntax.name);
-		if (i.extend != null) {
-			printTextWithTrivia("extends", i.extend.syntax.keyword);
-			for (i in i.extend.interfaces) {
-				printDotPath(i.syntax);
+		if (info.extend != null) {
+			printTextWithTrivia("extends", info.extend.keyword);
+			for (i in info.extend.interfaces) {
+				printDotPath(i.iface.syntax);
 				if (i.comma != null) printComma(i.comma);
 			}
 		}
 		printOpenBrace(i.syntax.openBrace);
 		for (m in i.members) {
 			switch (m) {
-				case TIMField(f): printInterfaceField(f);
-				case TIMCondCompBegin(b): printCondCompBegin(b);
-				case TIMCondCompEnd(b): printCompCondEnd(b);
+				case TMField(f): printInterfaceField(f);
+				case TMCondCompBegin(b): printCondCompBegin(b);
+				case TMCondCompEnd(b): printCompCondEnd(b);
+				case TMStaticInit(_) | TMUseNamespace(_):
+					throw "assert";
 			}
 		}
 		printCloseBrace(i.syntax.closeBrace);
 	}
 
-	function printInterfaceField(f:TInterfaceField) {
+	function printInterfaceField(f:TClassField) {
 		printMetadata(f.metadata);
 
 		switch (f.kind) {
-			case TIFFun(f):
+			case TFFun(f):
 				printTextWithTrivia("function", f.syntax.keyword);
 				printTextWithTrivia(f.name, f.syntax.name);
-				printSignature(f.sig);
-			case TIFGetter(f):
+				printSignature(f.fun.sig);
+				printSemicolon(f.semicolon.sure());
+			case TFGetter(f):
 				printTextWithTrivia("function", f.syntax.functionKeyword);
 				printTextWithTrivia("get", f.syntax.accessorKeyword);
 				printTextWithTrivia(f.name, f.syntax.name);
-				printSignature(f.sig);
-			case TIFSetter(f):
+				printSignature(f.fun.sig);
+				printSemicolon(f.semicolon.sure());
+			case TFSetter(f):
 				printTextWithTrivia("function", f.syntax.functionKeyword);
 				printTextWithTrivia("set", f.syntax.accessorKeyword);
 				printTextWithTrivia(f.name, f.syntax.name);
-				printSignature(f.sig);
+				printSignature(f.fun.sig);
+				printSemicolon(f.semicolon.sure());
+			case TFVar(_): throw "assert";
 		}
-
-		printSemicolon(f.semicolon);
 	}
 
-	function printClassDecl(c:TClassDecl) {
+	function printClassDecl(c:TClassOrInterfaceDecl, info:TClassDeclInfo) {
 		printMetadata(c.metadata);
 		printDeclModifiers(c.modifiers);
 		printTextWithTrivia("class", c.syntax.keyword);
 		printTextWithTrivia(c.name, c.syntax.name);
-		if (c.extend != null) {
-			printTextWithTrivia("extends", c.extend.syntax.keyword);
-			printDotPath(c.extend.syntax.path);
+		if (info.extend != null) {
+			printTextWithTrivia("extends", info.extend.syntax.keyword);
+			printDotPath(info.extend.syntax.path);
 		}
-		if (c.implement != null) {
-			printTextWithTrivia("implements", c.implement.syntax.keyword);
-			for (i in c.implement.interfaces) {
-				printDotPath(i.syntax);
+		if (info.implement != null) {
+			printTextWithTrivia("implements", info.implement.keyword);
+			for (i in info.implement.interfaces) {
+				printDotPath(i.iface.syntax);
 				if (i.comma != null) printComma(i.comma);
 			}
 		}
@@ -245,7 +249,7 @@ class GenAS3 extends PrinterBase {
 					if (hint != null) printSyntaxTypeHint(hint);
 					if (init != null) printVarInit(init);
 
-				case TArgRest(dots):
+				case TArgRest(dots, _):
 					printTextWithTrivia("...", dots);
 					printTextWithTrivia(arg.name, arg.syntax.name);
 			}

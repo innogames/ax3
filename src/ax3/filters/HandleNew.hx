@@ -6,8 +6,8 @@ class HandleNew extends AbstractFilter {
 		return switch e.kind {
 			case TENew(keyword, eclass, args):
 				switch eclass.kind {
-					case TEDeclRef(_, {kind: SClass(c)}): // just a class instantiation, nothing to rewrite, but mark the class for constructor injection
-						c.wasInstantiated = true;
+					case TEDeclRef(_, {kind: TDClassOrInterface(c)}): // just a class instantiation, nothing to rewrite, but mark the class for constructor injection
+						// c.wasInstantiated = true; TODO
 						e;
 
 					case TEBuiltin(_) | TEVector(_): // other kinds of typed `new` - nothing to do

@@ -2,6 +2,14 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
+			"type": "java",
+			"name": "Debug (Launch)",
+			"request": "launch",
+			"mainClass": "ax3.Main",
+			"classPaths": ["${workspaceFolder}/java_out/Main-debug.jar"],
+			"args": "config-foe.json",
+		},
+		{
 			"type": "haxe-eval",
 			"name": "Launch Eval",
 			"request": "launch"

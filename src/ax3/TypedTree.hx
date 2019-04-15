@@ -1,7 +1,6 @@
 package ax3;
 
 import ax3.ParseTree;
-import ax3.Structure;
 import ax3.Token;
 import ax3.TypedTreeTools.tUntypedDictionary;
 

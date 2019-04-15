@@ -9,7 +9,7 @@ class RestArgs extends AbstractFilter {
 			switch lastArg.kind {
 				case TArgNormal(_):
 					// nothing to do
-				case TArgRest(dots):
+				case TArgRest(dots, _):
 					var hint:TypeHint = {
 						colon: new Token(0, TkColon, ":", [], []),
 						type: TPath({first: new Token(0, TkIdent, "Array", [], []), rest: []})

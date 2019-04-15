@@ -54,7 +54,8 @@ class ExprTyper {
 	public function typeFunctionExpr(sig:TFunctionSignature, block:BracedExprBlock):TExpr {
 		pushLocals();
 		for (arg in sig.args) {
-			addLocal(arg.name, arg.type);
+			if (arg.v != null) throw "double function typing";
+			arg.v = addLocal(arg.name, arg.type);
 		}
 		var oldReturnType = currentReturnType;
 		currentReturnType = sig.ret.type;
