@@ -260,7 +260,8 @@ typedef TModuleVarDecl = TVarField & {
 	var modifiers:Array<DeclModifier>;
 }
 
-typedef TClassOrInterfaceDecl = {
+@:structInit @:publicFields
+class TClassOrInterfaceDecl {
 	var syntax:{
 		var keyword:Token;
 		var name:Token;
@@ -274,6 +275,10 @@ typedef TClassOrInterfaceDecl = {
 	var name:String;
 	var members:Array<TClassMember>;
 	var haxeProperties:Null<Map<String,THaxePropDecl>>;
+
+	function toString():String {
+		return parentModule.parentPack.name + "::" + name;
+	}
 }
 
 enum TDClassOrInterfaceKind {
