@@ -233,7 +233,7 @@ class ExprTyper {
 
 		var vars = separatedToArray(vars, function(v, comma) {
 			var type = if (overrideType != null) overrideType else if (v.type == null) TTAny else typerContext.resolveType(v.type.type);
-			var init = if (v.init != null) {equalsToken: v.init.equalsToken, expr: typeExpr(v.init.expr, expectedType)} else null;
+			var init = if (v.init != null) {equalsToken: v.init.equalsToken, expr: typeExpr(v.init.expr, type)} else null;
 			var tvar = addLocal(v.name.text, type);
 			return {
 				syntax: v,
