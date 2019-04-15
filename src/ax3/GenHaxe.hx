@@ -372,7 +372,8 @@ class GenHaxe extends PrinterBase {
 					// if (hint != null) printSyntaxTypeHint(hint);
 					if (init != null) printVarInit(init);
 
-				case TArgRest(dots):
+				case TArgRest(dots, _):
+					// TODO: throw, as this should be rewritten
 					printTextWithTrivia("...", dots);
 					printTextWithTrivia(arg.name, arg.syntax.name);
 			}
