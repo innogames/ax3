@@ -1163,7 +1163,7 @@ class ExprTyper {
 			case PreBitNeg(_): inType = TTNumber; outType = TTInt;
 		}
 		var e = typeExpr(e, inType);
-		if (outType == TTNumber && e.type == TTInt || e.type == TTUint) {
+		if (outType == TTNumber && e.type.match(TTInt | TTUint)) {
 			outType = e.type;
 		}
 		return mk(TEPreUnop(op, e), outType, expectedType);
