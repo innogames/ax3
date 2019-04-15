@@ -64,6 +64,7 @@ class Typer {
 	}
 
 	function typeDecl(d:Declaration, mod:TModule):TDecl {
+		var moduleTyperContext = makeTyperContext(mod, null);
 		return switch (d) {
 			case DPackage(_) | DImport(_) | DUseNamespace(_): throw "assert";
 			case DClass(c):
@@ -71,11 +72,11 @@ class Typer {
 			case DInterface(i):
 				{name: i.name.text, kind: TDClassOrInterface(typeInterface(i, mod))};
 			case DFunction(f):
-				{name: f.name.text, kind: TDFunction(typeModuleFunction(f, mod))};
+				{name: f.name.text, kind: TDFunction(typeModuleFunction(f, mod, moduleTyperContext))};
 			case DVar(v):
 				if (v.vars.rest.length > 0) throw "assert"; // TODO
 				var name = v.vars.first.name.text;
-				{name: name, kind: TDVar(typeModuleVars(v, mod))};
+				{name: name, kind: TDVar(typeModuleVars(v, mod, moduleTyperContext))};
 			case DNamespace(ns):
 				{name: null, kind: TDNamespace(ns)};
 			case DCondComp(v, openBrace, decls, closeBrace): throw "TODO";
@@ -83,7 +84,7 @@ class Typer {
 		}
 	}
 
-	function typeModuleVars(v:ModuleVarDecl, mod:TModule):TModuleVarDecl {
+	function typeModuleVars(v:ModuleVarDecl, mod:TModule, typerContext:ExprTyper.TyperContext):TModuleVarDecl {
 		var overrideType = HaxeTypeAnnotation.extractFromModuleVarDecl(v);
 		var moduleVar:TModuleVarDecl = {
 			metadata: v.metadata,
@@ -108,7 +109,7 @@ class Typer {
 				});
 
 				if (v.init != null) {
-					exprTypings.push(() -> tVar.init = typeVarInit(mod, v.init, tVar.type));
+					exprTypings.push(() -> tVar.init = typeVarInit(mod, v.init, tVar.type, typerContext));
 				}
 				return tVar;
 			}),
@@ -118,7 +119,18 @@ class Typer {
 		return moduleVar;
 	}
 
-	function typeModuleFunction(v:FunctionDecl, mod:TModule):TFunctionDecl {
+	function makeTyperContext(mod:TModule, cls:Null<TClassOrInterfaceDecl>):ExprTyper.TyperContext {
+		return {
+			getCurrentClass: () -> cls,
+			getCurrentModule: () -> mod,
+			resolveDotPath: resolveDotPath.bind(mod),
+			resolveType: resolveType.bind(mod),
+			resolveHaxeTypeHint: resolveHaxeTypeHint.bind(mod),
+			resolveHaxeSignature: resolveHaxeSignature.bind(mod)
+		}
+	}
+
+	function typeModuleFunction(v:FunctionDecl, mod:TModule, typerContext:ExprTyper.TyperContext):TFunctionDecl {
 		var typeOverrides = HaxeTypeAnnotation.extractFromModuleFunDecl(v);
 		var d:TFunctionDecl = {
 			metadata: v.metadata,
@@ -130,8 +142,8 @@ class Typer {
 				expr: null
 			}
 		};
-		structureSetups.push(() -> d.fun.sig = typeFunctionSignature(mod, v.fun.signature, typeOverrides));
-		exprTypings.push(() -> d.fun.expr = new ExprTyper(context, resolveType.bind(mod)).typeFunctionExpr(d.fun.sig, v.fun.block));
+		structureSetups.push(() -> d.fun.sig = typeFunctionSignature(v.fun.signature, typeOverrides, typerContext));
+		exprTypings.push(() -> d.fun.expr = new ExprTyper(context, tree, typerContext).typeFunctionExpr(d.fun.sig, v.fun.block));
 		return d;
 	}
 
@@ -167,7 +179,19 @@ class Typer {
 				structureSetups.push(() -> info.implement = typeClassImplement(mod, c.implement));
 			});
 		}
+
+		var tCls:TClassOrInterfaceDecl = {
+			kind: TClass(info),
+			syntax: c,
+			name: c.name.text,
+			metadata: c.metadata,
+			modifiers: c.modifiers,
+			members: tMembers,
+			haxeProperties: null,
+		}
+
 		structureSetups.push(function() {
+			var typerContext = makeTyperContext(mod, tCls);
 			function loop(members:Array<ClassMember>) {
 				for (m in members) {
 					switch (m) {
@@ -178,10 +202,10 @@ class Typer {
 						case MUseNamespace(n, semicolon):
 							tMembers.push(TMUseNamespace(n, semicolon));
 						case MField(f):
-							tMembers.push(TMField(typeClassField(mod, f)));
+							tMembers.push(TMField(typeClassField(mod, f, typerContext)));
 						case MStaticInit(block):
 							exprTypings.push(function() {
-								var expr = mk(TEBlock(new ExprTyper(context, resolveType.bind(mod)).typeBlock(block)), TTVoid, TTVoid);
+								var expr = mk(TEBlock(new ExprTyper(context, tree, typerContext).typeBlock(block)), TTVoid, TTVoid);
 								tMembers.push(TMStaticInit({expr: expr}));
 							});
 					}
@@ -190,26 +214,18 @@ class Typer {
 			loop(c.members);
 		});
 
-		return {
-			kind: TClass(info),
-			syntax: c,
-			name: c.name.text,
-			metadata: c.metadata,
-			modifiers: c.modifiers,
-			members: tMembers,
-			haxeProperties: null,
-		};
+		return tCls;
 	}
 
-	function typeClassField(mod:TModule, f:ClassField):TClassField {
+	function typeClassField(mod:TModule, f:ClassField, typerContext:ExprTyper.TyperContext):TClassField {
 		var haxeType = HaxeTypeAnnotation.extractFromClassField(f);
 
 		inline function typeFunction(fun:Function):TFunction {
 			var tFun:TFunction = {
-				sig: typeFunctionSignature(mod, fun.signature, haxeType),
+				sig: typeFunctionSignature(fun.signature, haxeType, typerContext),
 				expr: null,
 			};
-			exprTypings.push(() -> tFun.expr = new ExprTyper(context, resolveType.bind(mod)).typeFunctionExpr(tFun.sig, fun.block));
+			exprTypings.push(() -> tFun.expr = new ExprTyper(context, tree, typerContext).typeFunctionExpr(tFun.sig, fun.block));
 			return tFun;
 		}
 
@@ -217,7 +233,7 @@ class Typer {
 			case FVar(kind, vars, semicolon):
 				TFVar({
 					kind: kind,
-					vars: typeVarFieldDecls(mod, vars, haxeType),
+					vars: typeVarFieldDecls(mod, vars, haxeType, typerContext),
 					semicolon: semicolon,
 					isInline: false,
 				});
@@ -232,6 +248,7 @@ class Typer {
 					semicolon: null
 				});
 			case FGetter(keyword, get, name, fun):
+				var fun = typeFunction(fun);
 				TFGetter({
 					syntax: {
 						functionKeyword: keyword,
@@ -239,10 +256,12 @@ class Typer {
 						name: name,
 					},
 					name: name.text,
-					fun: typeFunction(fun),
+					propertyType: fun.sig.ret.type,
+					fun: fun,
 					semicolon: null
 				});
 			case FSetter(keyword, set, name, fun):
+				var fun = typeFunction(fun);
 				TFSetter({
 					syntax: {
 						functionKeyword: keyword,
@@ -250,7 +269,8 @@ class Typer {
 						name: name,
 					},
 					name: name.text,
-					fun: typeFunction(fun),
+					propertyType: fun.sig.args[0].type,
+					fun: fun,
 					semicolon: null
 				});
 		}
@@ -262,7 +282,7 @@ class Typer {
 		};
 	}
 
-	function typeVarFieldDecls(mod:TModule, vars:Separated<VarDecl>, haxeType:Null<HaxeTypeAnnotation>):Array<TVarFieldDecl> {
+	function typeVarFieldDecls(mod:TModule, vars:Separated<VarDecl>, haxeType:Null<HaxeTypeAnnotation>, typerContext:ExprTyper.TyperContext):Array<TVarFieldDecl> {
 		var overrideType = resolveHaxeTypeHint(mod, haxeType, vars.first.name.pos);
 
 		return separatedToArray(vars, function(v, comma) {
@@ -278,14 +298,14 @@ class Typer {
 				comma: comma,
 			};
 			if (v.init != null) {
-				exprTypings.push(() -> tVar.init = typeVarInit(mod, v.init, type));
+				exprTypings.push(() -> tVar.init = typeVarInit(mod, v.init, type, typerContext));
 			}
 			return tVar;
 		});
 	}
 
-	function typeVarInit(mod:TModule, init:VarInit, expectedType:TType):TVarInit {
-		return {equalsToken: init.equalsToken, expr: new ExprTyper(context, resolveType.bind(mod)).typeExpr(init.expr, expectedType)};
+	function typeVarInit(mod:TModule, init:VarInit, expectedType:TType, typerContext:ExprTyper.TyperContext):TVarInit {
+		return {equalsToken: init.equalsToken, expr: new ExprTyper(context, tree, typerContext).typeExpr(init.expr, expectedType)};
 	}
 
 	function typeInterface(i:InterfaceDecl, mod:TModule):TClassOrInterfaceDecl {
@@ -295,23 +315,7 @@ class Typer {
 			structureSetups.push(() -> info.extend = typeClassImplement(mod, i.extend));
 		}
 
-		structureSetups.push(function() {
-			function loop(members:Array<InterfaceMember>) {
-				for (m in members) {
-					switch (m) {
-						case MICondComp(v, openBrace, members, closeBrace):
-							tMembers.push(TMCondCompBegin({v: ExprTyper.typeCondCompVar(v), openBrace: openBrace}));
-							loop(members);
-							tMembers.push(TMCondCompEnd({closeBrace: closeBrace}));
-						case MIField(f):
-							tMembers.push(TMField(typeInterfaceField(mod, f)));
-					}
-				}
-			}
-			loop(i.members);
-		});
-
-		return {
+		var tIface:TClassOrInterfaceDecl = {
 			kind: TInterface(info),
 			syntax: {
 				keyword: i.keyword,
@@ -325,14 +329,33 @@ class Typer {
 			members: tMembers,
 			haxeProperties: null,
 		};
+
+		structureSetups.push(function() {
+			var typerContext = makeTyperContext(mod, tIface);
+			function loop(members:Array<InterfaceMember>) {
+				for (m in members) {
+					switch (m) {
+						case MICondComp(v, openBrace, members, closeBrace):
+							tMembers.push(TMCondCompBegin({v: ExprTyper.typeCondCompVar(v), openBrace: openBrace}));
+							loop(members);
+							tMembers.push(TMCondCompEnd({closeBrace: closeBrace}));
+						case MIField(f):
+							tMembers.push(TMField(typeInterfaceField(mod, f, typerContext)));
+					}
+				}
+			}
+			loop(i.members);
+		});
+
+		return tIface;
 	}
 
-	function typeInterfaceField(mod:TModule, f:InterfaceField):TClassField {
+	function typeInterfaceField(mod:TModule, f:InterfaceField, typerContext:ExprTyper.TyperContext):TClassField {
 		var haxeType = HaxeTypeAnnotation.extractFromInterfaceField(f);
 
 		var kind = switch (f.kind) {
 			case IFFun(keyword, name, sig):
-				var sig = typeFunctionSignature(mod, sig, haxeType);
+				var sig = typeFunctionSignature(sig, haxeType, typerContext);
 				TFFun({
 					syntax: {
 						keyword: keyword,
@@ -343,7 +366,7 @@ class Typer {
 					semicolon: f.semicolon
 				});
 			case IFGetter(keyword, get, name, sig):
-				var sig = typeFunctionSignature(mod, sig, haxeType);
+				var sig = typeFunctionSignature(sig, haxeType, typerContext);
 				TFGetter({
 					syntax: {
 						functionKeyword: keyword,
@@ -351,11 +374,12 @@ class Typer {
 						name: name,
 					},
 					name: name.text,
+					propertyType: sig.ret.type,
 					fun: {sig: sig, expr: null},
 					semicolon: f.semicolon
 				});
 			case IFSetter(keyword, set, name, sig):
-				var sig = typeFunctionSignature(mod, sig, haxeType);
+				var sig = typeFunctionSignature(sig, haxeType, typerContext);
 				TFSetter({
 					syntax: {
 						functionKeyword: keyword,
@@ -363,6 +387,7 @@ class Typer {
 						name: name,
 					},
 					name: name.text,
+					propertyType: sig.args[0].type,
 					fun: {sig: sig, expr: null},
 					semicolon: f.semicolon
 				});
@@ -414,8 +439,8 @@ class Typer {
 		};
 	}
 
-	function typeFunctionSignature(mod:TModule, sig:FunctionSignature, haxeType:Null<HaxeTypeAnnotation>):TFunctionSignature {
-		var typeOverrides = resolveHaxeSignature(mod, haxeType, sig.openParen.pos);
+	function typeFunctionSignature(sig:FunctionSignature, haxeType:Null<HaxeTypeAnnotation>, typerContext:ExprTyper.TyperContext):TFunctionSignature {
+		var typeOverrides = typerContext.resolveHaxeSignature(haxeType, sig.openParen.pos);
 
 		var targs =
 			if (sig.args != null) {
@@ -424,7 +449,7 @@ class Typer {
 						case ArgNormal(a):
 							var typeOverride = if (typeOverrides == null) null else typeOverrides.args[a.name.text];
 
-							var type:TType = if (typeOverride != null) typeOverride else if (a.type == null) TTAny else resolveType(mod, a.type.type);
+							var type:TType = if (typeOverride != null) typeOverride else if (a.type == null) TTAny else typerContext.resolveType(a.type.type);
 							var init:Null<TVarInit>;
 							if (a.init == null) {
 								init = null;
@@ -433,7 +458,7 @@ class Typer {
 									equalsToken: a.init.equalsToken,
 									expr: null
 								};
-								exprTypings.push(() -> init.expr = new ExprTyper(context, resolveType.bind(mod)).typeExpr(a.init.expr, type));
+								exprTypings.push(() -> init.expr = new ExprTyper(context, tree, typerContext).typeExpr(a.init.expr, type));
 							}
 							{syntax: {name: a.name}, name: a.name.text, type: type, kind: TArgNormal(a.type, init), v: null, comma: comma};
 
@@ -450,7 +475,7 @@ class Typer {
 		var tret:TTypeHint;
 		if (sig.ret != null) {
 			tret = {
-				type: if (returnTypeOverride != null) returnTypeOverride else resolveType(mod, sig.ret.type),
+				type: if (returnTypeOverride != null) returnTypeOverride else typerContext.resolveType(sig.ret.type),
 				syntax: sig.ret
 			};
 		} else {

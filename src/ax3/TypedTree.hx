@@ -155,8 +155,8 @@ class TPackage {
 		return switch (f.kind) {
 			case TFFun(f): prefix + dumpFun(f.name, f.fun.sig);
 			case TFVar(f): [for (v in f.vars) prefix + dumpVar("VAR", v.name, v.type) ].join("\n");
-			case TFGetter(f): prefix + dumpVar("GET", f.name, f.fun.sig.ret.type);
-			case TFSetter(f): prefix + dumpVar("SET", f.name, f.fun.sig.args[0].type);
+			case TFGetter(f): prefix + dumpVar("GET", f.name, f.propertyType);
+			case TFSetter(f): prefix + dumpVar("SET", f.name, f.propertyType);
 		};
 	}
 
@@ -375,6 +375,7 @@ typedef TAccessorField = {
 	}
 	var name:String;
 	var fun:TFunction;
+	var propertyType:TType;
 	var semicolon:Null<Token>;
 }
 
@@ -409,7 +410,7 @@ enum TExprKind {
 	TELocal(syntax:Token, v:TVar);
 	TEField(obj:TFieldObject, fieldName:String, fieldToken:Token);
 	TEBuiltin(syntax:Token, name:String);
-	TEDeclRef(path:DotPath, c:SDecl);
+	TEDeclRef(path:DotPath, c:TDecl);
 	TECall(eobj:TExpr, args:TCallArgs);
 	TECast(c:TCast);
 	TEArrayDecl(a:TArrayDecl);
@@ -645,8 +646,8 @@ typedef TFieldObject = {
 }
 
 enum TFieldObjectKind {
-	TOImplicitThis(c:SClassDecl);
-	TOImplicitClass(c:SClassDecl);
+	TOImplicitThis(c:TClassOrInterfaceDecl);
+	TOImplicitClass(c:TClassOrInterfaceDecl);
 	TOExplicit(dot:Token, e:TExpr);
 }
 

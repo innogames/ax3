@@ -91,11 +91,11 @@ class SWCLoader {
 				if (cls.isInterface) {
 					var members:Array<TClassMember> = [];
 
-					addVar = function(name:String, type:TType) throw 'Var $name in interface ${n.name}';
-					addMethod = function(name:String, f:TFunctionSignature) {
+					addVar = function(name:String, type:TType, isStatic:Bool) throw 'Var $name in interface ${n.name}';
+					addMethod = function(name:String, f:TFunctionSignature, isStatic:Bool) {
 						members.push(TMField({
 							metadata: [],
-							modifiers: [],
+							modifiers: if (isStatic) [FMStatic(null)] else [],
 							namespace: null,
 							kind: TFFun({
 								syntax: null,
@@ -105,27 +105,29 @@ class SWCLoader {
 							})
 						}));
 					}
-					addGetter = function(name:String, f:TFunctionSignature) {
+					addGetter = function(name:String, f:TFunctionSignature, isStatic:Bool) {
 						members.push(TMField({
 							metadata: [],
-							modifiers: [],
+							modifiers: if (isStatic) [FMStatic(null)] else [],
 							namespace: null,
 							kind: TFGetter({
 								syntax: null,
 								name: name,
+								propertyType: f.ret.type,
 								fun: {sig: f, expr: null},
 								semicolon: null,
 							})
 						}));
 					}
-					addSetter = function(name:String, f:TFunctionSignature) {
+					addSetter = function(name:String, f:TFunctionSignature, isStatic:Bool) {
 						members.push(TMField({
 							metadata: [],
-							modifiers: [],
+							modifiers: if (isStatic) [FMStatic(null)] else [],
 							namespace: null,
 							kind: TFSetter({
 								syntax: null,
 								name: name,
+								propertyType: f.args[0].type,
 								fun: {sig: f, expr: null},
 								semicolon: null
 							})
@@ -169,11 +171,11 @@ class SWCLoader {
 				} else {
 					var members:Array<TClassMember> = [];
 
-					addVar = function(name:String, type:TType) {
+					addVar = function(name:String, type:TType, isStatic:Bool) {
 						members.push(TMField({
 							metadata: [],
 							namespace: null,
-							modifiers: [],
+							modifiers: if (isStatic) [FMStatic(null)] else [],
 							kind: TFVar({
 								kind: VVar(null),
 								isInline: false,
@@ -188,11 +190,11 @@ class SWCLoader {
 							})
 						}));
 					}
-					addMethod = function(name:String, f:TFunctionSignature) {
+					addMethod = function(name:String, f:TFunctionSignature, isStatic:Bool) {
 						members.push(TMField({
 							metadata: [],
 							namespace: null,
-							modifiers: [],
+							modifiers: if (isStatic) [FMStatic(null)] else [],
 							kind: TFFun({
 								syntax: null,
 								name: name,
@@ -201,27 +203,29 @@ class SWCLoader {
 							})
 						}));
 					}
-					addGetter = function(name:String, f:TFunctionSignature) {
+					addGetter = function(name:String, f:TFunctionSignature, isStatic:Bool) {
 						members.push(TMField({
 							metadata: [],
 							namespace: null,
-							modifiers: [],
+							modifiers: if (isStatic) [FMStatic(null)] else [],
 							kind: TFGetter({
 								syntax: null,
 								name: name,
+								propertyType: f.ret.type,
 								fun: {sig: f, expr: null},
 								semicolon: null
 							})
 						}));
 					}
-					addSetter = function(name:String, f:TFunctionSignature) {
+					addSetter = function(name:String, f:TFunctionSignature, isStatic:Bool) {
 						members.push(TMField({
 							metadata: [],
 							namespace: null,
-							modifiers: [],
+							modifiers: if (isStatic) [FMStatic(null)] else [],
 							kind: TFSetter({
 								syntax: null,
 								name: name,
+								propertyType: f.args[0].type,
 								fun: {sig: f, expr: null},
 								semicolon: null
 							})
@@ -258,11 +262,11 @@ class SWCLoader {
 
 					structureSetups.push(function() {
 						var ctor = buildFunDecl(abc, cls.constructor);
-						addMethod(n.name, ctor);
+						addMethod(n.name, ctor, false);
 					});
 				}
 
-				function processField(f:format.abc.Data.Field) {
+				function processField(f:format.abc.Data.Field, isStatic:Bool) {
 					var n = getPublicName(abc, f.name, n.ns + ":" + n.name);
 					if (n == null) return;
 					// TODO: sort out namespaces
@@ -275,16 +279,16 @@ class SWCLoader {
 					structureSetups.push(function() {
 						switch (f.kind) {
 							case FVar(type, _, _):
-								addVar(n.name, if (type != null) buildPublicType(type) else TTAny);
+								addVar(n.name, if (type != null) buildPublicType(type) else TTAny, isStatic);
 
 							case FMethod(type, KNormal, _, _):
-								addMethod(n.name, buildFunDecl(abc, type));
+								addMethod(n.name, buildFunDecl(abc, type), isStatic);
 
 							case FMethod(type, KGetter, _, _):
-								addGetter(n.name, buildFunDecl(abc, type));
+								addGetter(n.name, buildFunDecl(abc, type), isStatic);
 
 							case FMethod(type, KSetter, _, _):
-								addSetter(n.name, buildFunDecl(abc, type));
+								addSetter(n.name, buildFunDecl(abc, type), isStatic);
 
 							case FClass(_) | FFunction(_): throw "should not happen";
 						}
@@ -292,11 +296,11 @@ class SWCLoader {
 				}
 
 				for (f in cls.fields) {
-					processField(f);
+					processField(f, false);
 				}
 
 				for (f in cls.staticFields) {
-					processField(f);
+					processField(f, true);
 				}
 
 				addModule(swcPath, tree, n.ns, n.name, tDecl);

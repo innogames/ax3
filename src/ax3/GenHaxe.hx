@@ -165,10 +165,10 @@ class GenHaxe extends PrinterBase {
 							printSemicolon(f.semicolon.sure());
 
 						case TFGetter(f):
-							prop(f.name, false, field.metadata, f.syntax.functionKeyword.leadTrivia.concat(f.semicolon.sure().trailTrivia), f.fun.sig.ret.type);
+							prop(f.name, false, field.metadata, f.syntax.functionKeyword.leadTrivia.concat(f.semicolon.sure().trailTrivia), f.propertyType);
 
 						case TFSetter(f):
-							prop(f.name, true, field.metadata, f.syntax.functionKeyword.leadTrivia.concat(f.semicolon.sure().trailTrivia), f.fun.sig.args[0].type);
+							prop(f.name, true, field.metadata, f.syntax.functionKeyword.leadTrivia.concat(f.semicolon.sure().trailTrivia), f.propertyType);
 
 						case TFVar(_):
 							throw "assert";
