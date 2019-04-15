@@ -188,7 +188,8 @@ class TPackage {
 	}
 }
 
-typedef TModule = {
+@:structInit @:publicFields
+class TModule {
 	var isExtern:Bool;
 	var path:String;
 	var parentPack:TPackage;
@@ -196,6 +197,37 @@ typedef TModule = {
 	var name:String;
 	var privateDecls:Array<TDecl>;
 	var eof:Token;
+
+	function isImported(c:TClassOrInterfaceDecl) {
+		// TODO: optimize this, because this is done A LOT
+		// actually, we might want to store the "local" flag in the TEDeclRef/TTypeHint/etc.
+		for (i in pack.imports) {
+			switch i.kind {
+				case TIDecl({kind: TDClassOrInterface(importedClass)}) if (importedClass == c):
+					return true;
+
+				case TIAll(pack, _):
+					for (mod in pack) {
+						switch mod.pack.decl.kind {
+							case TDClassOrInterface(importedClass) if (importedClass == c):
+								return true;
+
+							case _:
+						}
+					}
+
+				case TIDecl(_) | TIAliased(_): // other decls and aliased decls
+			}
+		}
+		for (mod in parentPack) {
+			switch mod.pack.decl.kind {
+				case TDClassOrInterface(importedClass) if (importedClass == c):
+					return true;
+				case _:
+			}
+		}
+		return false;
+	}
 }
 
 typedef TPackageDecl = {

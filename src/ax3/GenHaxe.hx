@@ -19,39 +19,6 @@ class GenHaxe extends PrinterBase {
 		currentModule = null;
 	}
 
-	function isImported(c:TClassOrInterfaceDecl) {
-		// TODO: optimize this, because this is done A LOT
-		// actually, we might want to store the "local" flag in the TEDeclRef/TTypeHint/etc.
-		if (currentModule != null) {
-			for (i in currentModule.pack.imports) {
-				switch i.kind {
-					case TIDecl({kind: TDClassOrInterface(importedClass)}) if (importedClass == c):
-						return true;
-
-					case TIAll(pack, _):
-						for (mod in pack) {
-							switch mod.pack.decl.kind {
-								case TDClassOrInterface(importedClass) if (importedClass == c):
-									return true;
-
-								case _:
-							}
-						}
-
-					case TIDecl(_) | TIAliased(_): // other decls and aliased decls
-				}
-			}
-			for (mod in currentModule.parentPack) {
-				switch mod.pack.decl.kind {
-					case TDClassOrInterface(importedClass) if (importedClass == c):
-						return true;
-					case _:
-				}
-			}
-		}
-		return false;
-	}
-
 	function printPackage(p:TPackageDecl) {
 		if (p.syntax.name != null) {
 			printTextWithTrivia("package", p.syntax.keyword);
@@ -427,7 +394,7 @@ class GenHaxe extends PrinterBase {
 	}
 
 	inline function getClassLocalPath(cls:TClassOrInterfaceDecl):String {
-		return if (isImported(cls)) cls.name else makeFQN(cls);
+		return if (currentModule.sure().isImported(cls)) cls.name else makeFQN(cls);
 	}
 
 	static function makeFQN(cls:TClassOrInterfaceDecl) {

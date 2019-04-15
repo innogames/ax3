@@ -310,7 +310,7 @@ class ExprTyper {
 						if (field != null) {
 							// found a field
 							var eobj = {
-								kind: if (isFieldStatic(field)) TOImplicitClass(currentClass) else TOImplicitThis(currentClass),
+								kind: if (isFieldStatic(field)) TOImplicitClass(c) else TOImplicitThis(currentClass),
 								type: TTInst(currentClass)
 							};
 							var type = getFieldType(field);
