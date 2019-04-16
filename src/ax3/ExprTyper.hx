@@ -36,7 +36,12 @@ class ExprTyper {
 		localsStack = [locals];
 	}
 
-	inline function err(msg, pos) context.reportError("TODO", pos, msg);
+	inline function err(msg, pos) context.reportError(typerContext.getCurrentModule().path, pos, msg);
+
+	inline function throwErr(msg, pos):Dynamic {
+		err(msg, pos);
+		throw "assert"; // TODO do it nicer
+	}
 
 	function pushLocals() {
 		locals = locals.copy();
@@ -523,8 +528,7 @@ class ExprTyper {
 			return getFieldType(field);
 		}
 
-		err("here", pos); // TODO: cleanup this mess omg
-		throw 'Unknown instance field $fieldName on class ${cls.name}';
+		throwErr('Unknown instance field $fieldName on class ${cls.name}', pos);
 	}
 
 	function typeXMLFieldAccess(xml:TExpr, dot:Token, field:Token, expectedType:TType):TExpr {
