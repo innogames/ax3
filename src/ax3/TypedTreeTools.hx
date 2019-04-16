@@ -13,6 +13,10 @@ class TypedTreeTools {
 	public static final tUntypedObject = TTObject(TTAny);
 	public static final tUntypedDictionary = TTDictionary(TTAny, TTAny);
 
+	public static function isFieldStatic(field:TClassField):Bool {
+		return Lambda.exists(field.modifiers, m -> m.match(FMStatic(_)));
+	}
+
 	public static function getConstructor(cls:TClassOrInterfaceDecl):Null<TFunction> {
 		var extend;
 		switch (cls.kind) {

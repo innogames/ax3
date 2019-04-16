@@ -8,6 +8,7 @@ import ax3.TypedTreeTools.skipParens;
 import ax3.TypedTreeTools.tUntypedArray;
 import ax3.TypedTreeTools.tUntypedObject;
 import ax3.TypedTreeTools.getConstructor;
+import ax3.TypedTreeTools.isFieldStatic;
 
 typedef Locals = Map<String, TVar>;
 
@@ -311,7 +312,7 @@ class ExprTyper {
 							return mkDeclRef({first: i, rest: []}, {name: c.name, kind: TDClassOrInterface(c)}, expectedType);
 						}
 
-						var field = getFieldFromClassDecl(c, ident, null);
+						var field = c.findField(ident, null);
 						if (field != null) {
 							// found a field
 							var eobj = {
@@ -455,39 +456,8 @@ class ExprTyper {
 		return mkExplicitFieldAccess(obj, dot, fieldToken, type, expectedType);
 	}
 
-	function getFieldFromClassDecl(cls:TClassOrInterfaceDecl, name:String, findStatic:Null<Bool>):TClassField {
-		for (member in cls.members) {
-			switch (member) {
-				case TMField(classField):
-					if (findStatic != null && findStatic != isFieldStatic(classField)) {
-						continue;
-					}
-					switch classField.kind {
-						case TFFun(fun):
-							if (fun.name == name) {
-								return classField;
-							}
-						case TFVar(v):
-							if (v.vars[0].name == name) {
-								return classField;
-							}
-						case TFGetter(a) | TFSetter(a):
-							if (a.name == name) {
-								return classField;
-							}
-					}
-				case TMUseNamespace(_) | TMCondCompBegin(_) | TMCondCompEnd(_) | TMStaticInit(_):
-			}
-		}
-		return null;
-	}
-
-	function isFieldStatic(field:TClassField):Bool {
-		return Lambda.exists(field.modifiers, m -> m.match(FMStatic(_)));
-	}
-
 	function typeStaticField(cls:TClassOrInterfaceDecl, fieldName:String):TType {
-		var field = getFieldFromClassDecl(cls, fieldName, true);
+		var field = cls.findField(fieldName, true);
 		if (field != null) {
 			return getFieldType(field);
 		}
@@ -497,8 +467,8 @@ class ExprTyper {
 
 	function typeInstanceField(cls:TClassOrInterfaceDecl, fieldName:String, pos):TType {
 		function loop(cls:TClassOrInterfaceDecl):Null<TClassField> {
-			var field = getFieldFromClassDecl(cls, fieldName, false);
-			if (field != null && !isFieldStatic(field)) {
+			var field = cls.findField(fieldName, false);
+			if (field != null) {
 				return field;
 			}
 			// TODO: copy-paste from typeIdent, gotta refactor this after i'm done

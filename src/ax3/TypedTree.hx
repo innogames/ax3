@@ -3,6 +3,7 @@ package ax3;
 import ax3.ParseTree;
 import ax3.Token;
 import ax3.TypedTreeTools.tUntypedDictionary;
+import ax3.TypedTreeTools.isFieldStatic;
 
 typedef PackageName = String;
 typedef ModuleName = String;
@@ -310,6 +311,59 @@ class TClassOrInterfaceDecl {
 
 	function toString():String {
 		return parentModule.parentPack.name + "::" + name;
+	}
+
+	function findField(name:String, findStatic:Null<Bool>):Null<TClassField> {
+		for (member in members) {
+			switch (member) {
+				case TMField(classField):
+					if (findStatic != null && findStatic != isFieldStatic(classField)) {
+						continue;
+					}
+					switch classField.kind {
+						case TFFun(fun):
+							if (fun.name == name) {
+								return classField;
+							}
+						case TFVar(v):
+							if (v.vars[0].name == name) {
+								return classField;
+							}
+						case TFGetter(a) | TFSetter(a):
+							if (a.name == name) {
+								return classField;
+							}
+					}
+				case TMUseNamespace(_) | TMCondCompBegin(_) | TMCondCompEnd(_) | TMStaticInit(_):
+			}
+		}
+		return null;
+	}
+
+	function findFieldInHierarchy(name:String, findStatic:Null<Bool>):Null<{field:TClassField, declaringClass:TClassOrInterfaceDecl}> {
+		function loop(cls:TClassOrInterfaceDecl) {
+			var field = cls.findField(name, findStatic);
+			if (field != null) {
+				return {field: field, declaringClass: cls};
+			}
+			switch cls.kind {
+				case TInterface(info):
+					if (info.extend != null) {
+						for (h in info.extend.interfaces) {
+							var field = loop(h.iface.decl);
+							if (field != null) {
+								return field;
+							}
+						}
+					}
+				case TClass(info):
+					if (info.extend != null) {
+						return loop(info.extend.superClass);
+					}
+			}
+			return null;
+		}
+		return loop(this);
 	}
 }
 
