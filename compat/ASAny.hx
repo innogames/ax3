@@ -15,6 +15,10 @@ abstract ASAny(Dynamic) from Dynamic {
 		return this; // TODO
 	}
 
+	@:to function ___toFloat():Float {
+		return this; // TODO
+	}
+
 	@:to function ___toOther():Dynamic {
 		return this;
 	}
@@ -40,6 +44,14 @@ abstract ASAny(Dynamic) from Dynamic {
 	// TODO: same comment as above
 	@:op(a && b) static inline function __and(a:ASAny, b:ASAny):ASAny {
 		return if (a) b else a;
+	}
+
+	@:op(a - b) static function ___minus(a:ASAny, b:Float):Float {
+		return a.___toFloat() - b;
+	}
+
+	@:op(a > b) static function ___gt(a:ASAny, b:Float):Bool {
+		return a.___toFloat() > b;
 	}
 
 	@:op([]) inline function ___arrayGet(name) return ___get(name);
