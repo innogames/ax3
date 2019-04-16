@@ -22,8 +22,13 @@ class UnqualifiedSuperStatics extends AbstractFilter {
 				fieldToken.leadTrivia = [];
 
 				var dotPath:DotPath = {
-					var needsFQN = !thisClass.parentModule.isImported(c);
-					var parts = if (needsFQN) c.parentModule.pack.name.split(".").concat([c.name]) else [c.name];
+					var parts;
+					if (!thisClass.parentModule.isImported(c) && c.parentModule.pack.name != "") {
+						parts = c.parentModule.pack.name.split(".");
+						parts.push(c.name);
+					} else {
+						parts = [c.name];
+					}
 					{
 						first: new Token(0, TkIdent, parts[0], leadTrivia, []),
 						rest: [for (i in 1...parts.length) {sep: mkDot(), element: mkIdent(parts[i])}]
