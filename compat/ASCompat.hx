@@ -64,7 +64,8 @@ class ASCompat {
 		var result = a.splice(startIndex, deleteCount);
 		if (values != null) {
 			for (i in 0...values.length) {
-				a.insert(startIndex + i, values[i]);
+				// TODO:
+				// a.insert(startIndex + i, values[i]);
 			}
 		}
 		return result;
