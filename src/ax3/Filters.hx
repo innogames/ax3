@@ -9,6 +9,7 @@ class Filters {
 		for (f in [
 			externImports,
 			new InlineStaticConsts(context),
+			new InlineStaticConsts.FixInlineStaticConstAccess(context),
 			new RewriteE4X(context),
 			new RewriteSwitch(context),
 			new RestArgs(context),
