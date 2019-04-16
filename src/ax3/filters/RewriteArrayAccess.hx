@@ -13,7 +13,9 @@ class RewriteArrayAccess extends AbstractFilter {
 				var eindex = processExpr(a.eindex);
 
 				switch [eobj.type, eindex.type] {
-					case [TTArray(_) | TTVector(_), TTInt | TTUint]:
+					case [TTArray(_) | TTVector(_), TTInt | TTUint]
+					   | [TTObject(_), _]
+					   :
 						e.with(kind = TEArrayAccess(a.with(eobj = eobj, eindex = eindex)));
 
 					case [TTArray(_) | TTVector(_), _]:

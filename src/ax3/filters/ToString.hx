@@ -16,7 +16,23 @@ class ToString extends AbstractFilter {
 				e.with(kind = TECall(eHex, args.with(args = [{expr: eValue, comma: null}])));
 
 			case _:
-				e;
+				// implicit to string coercions
+				switch [e.type, e.expectedType] {
+					case [TTString, TTString]:
+						e; // ok
+					case [TTInt, TTString]:
+						var eStdString = mkBuiltin("Std.string", tStdString, removeLeadingTrivia(e));
+						e.with(kind = TECall(eStdString, {
+							openParen: mkOpenParen(),
+							args: [{expr: e, comma: null}],
+							closeParen: new Token(0, TkParenClose, ")", [], removeTrailingTrivia(e))
+						}));
+					case [_, TTString]:
+						reportError(exprPos(e), "Unknown to string coercion");
+						e;
+					case _:
+						e;
+				}
 		}
 	}
 }

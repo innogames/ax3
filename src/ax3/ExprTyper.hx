@@ -1079,25 +1079,26 @@ class ExprTyper {
 
 	function typeArrayAccess(e:Expr, openBracket:Token, eindex:Expr, closeBracket:Token, expectedType:TType):TExpr {
 		var e = typeExpr(e, TTAny);
-		var eindex = typeExpr(eindex, TTAny);
-		var type = switch (e.type) {
+		var type, expectedKeyType;
+		switch (e.type) {
 			case TTVector(t):
-				t;
+				type = t;
+				expectedKeyType = TTInt;
 			case TTArray(t):
-				switch (eindex.type) {
-					case TTNumber | TTInt | TTUint:
-					case _:
-						// err("Array access with non-numeric index", openBracket.pos);
-				}
-				t;
+				type = t;
+				expectedKeyType = TTInt;
 			case TTObject(t):
-				t; // TODO: set expectedType for eindex to TTString?
+				type = t;
+				expectedKeyType = TTString;
 			case TTDictionary(k, v):
-				v; // TODO: set expectedType for eindex to k?
+				type = v;
+				expectedKeyType = k;
 			case _:
 				// err("Untyped array access", openBracket.pos);
-				TTAny;
+				type = TTAny;
+				expectedKeyType = TTAny;
 		};
+		var eindex = typeExpr(eindex, expectedKeyType);
 		return mk(TEArrayAccess({
 			syntax: {openBracket: openBracket, closeBracket: closeBracket},
 			eobj: e,
