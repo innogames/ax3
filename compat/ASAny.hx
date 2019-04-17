@@ -1,3 +1,5 @@
+@:callable // TODO it's a bit unsafe because @:callable takes and returns Dynamic, not ASAny
+           // I'm not sure how much can we do about it, maybe wrap the TTAny arguments and the return value in ASAny on the converter level?
 abstract ASAny(Dynamic) from Dynamic {
 	public inline function hasOwnProperty(name:String):Bool {
 		return Reflect.hasField(this, name);
@@ -24,7 +26,11 @@ abstract ASAny(Dynamic) from Dynamic {
 	}
 
 	@:op(a.b) inline function ___get(name:String):ASAny {
-		return Reflect.getProperty(this, name);
+		var value:Dynamic = Reflect.getProperty(this, name);
+		if (Reflect.isFunction(value))
+			return Reflect.makeVarArgs(args -> Reflect.callMethod(this, value, args));
+		else
+			return value;
 	}
 
 	@:op(a.b) inline function ___set(name:String, value:ASAny):ASAny {
