@@ -16,31 +16,50 @@ class RewriteBlockBinops extends AbstractFilter {
 		}
 	}
 
+	// sorry, this code below is (unnecessarily) complex because we want to handle trivia...
+	static function extractExprFromParens(e:TExpr) {
+		return switch e.kind {
+			case TEParens(openParen, e, closeParen):
+				{
+					expr: e,
+					lead: () -> openParen.leadTrivia.concat(openParen.trailTrivia),
+					tail: () -> closeParen.leadTrivia.concat(closeParen.trailTrivia)
+				}
+			case _:
+				{
+					expr: e,
+					lead: () -> removeLeadingTrivia(e),
+					tail: () -> removeTrailingTrivia(e)
+				}
+		};
+	}
+
 	static function modifyBlockExpr(be:TExpr):TExpr {
-		var check = extract(be);
+
+		var e = extractExprFromParens(be);
+		var check = extract(e.expr);
 		if (check == null) {
 			// not `a && b`, nothing to modify
 			return be;
 		}
 
+		var lead = e.lead(), trail = e.tail();
+
 		// remove parens, extract leading/trailing trivia
-		var cond, lead, trail;
-		switch check.check.kind {
-			case TEParens(openParen, e, closeParen):
-				cond = e;
-				lead = openParen.leadTrivia.concat(openParen.trailTrivia);
-				trail = closeParen.leadTrivia.concat(closeParen.trailTrivia);
-			case _:
-				cond = check.check;
-				lead = removeLeadingTrivia(check.check);
-				trail = removeTrailingTrivia(check.check);
-		};
+		var cond;
+		{
+			var e = extractExprFromParens(check.check);
+			cond = e.expr;
+			lead = lead.concat(e.lead());
+			trail = trail.concat(e.tail());
+		}
 
 		// include trivia around `&&` into the trailing trivia of the closing paren
 		trail = trail.concat(check.andToken.leadTrivia).concat(check.andToken.trailTrivia);
 
 		// normalize whitespace after `)`: change any number of whitespace to a single space, otherwise leave unchanged
 		if (trail.length == 0 || containsOnlyWhitespace(trail)) {
+			// TODO: if it's a newline, then we should keep it
 			trail = [new Trivia(TrWhitespace, " ")];
 		}
 
@@ -74,9 +93,9 @@ class RewriteBlockBinops extends AbstractFilter {
 					};
 				} else {
 					{
-						check: mk(TEBinop(more.check, op, toBool(more.action)), TTBoolean, TTBoolean),
+						check: mk(TEBinop(more.check, OpAnd(more.andToken), toBool(more.action)), TTBoolean, TTBoolean),
 						action: b,
-						andToken: more.andToken,
+						andToken: t,
 					};
 				}
 			case _:
