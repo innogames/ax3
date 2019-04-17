@@ -7,6 +7,7 @@ class Filters {
 	public static function run(context:Context, tree:TypedTree) {
 		var externImports = new ExternModuleLevelImports(context);
 		for (f in [
+			new RewriteJSON(context),
 			externImports,
 			new InlineStaticConsts(context),
 			new InlineStaticConsts.FixInlineStaticConstAccess(context),

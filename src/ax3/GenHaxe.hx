@@ -505,6 +505,7 @@ class GenHaxe extends PrinterBase {
 				"Std.is" | "Std.int" | "Std.string" | "String"
 				| "flash.Vector.convert"| "flash.Vector.ofArray"
 				| "Reflect.deleteField" | "Type.createInstance"
+				| "haxe.Json"
 				| "StringTools.replace" | "StringTools.hex" | "Reflect.callMethod":
 					name;
 			case "Number": "Float";
