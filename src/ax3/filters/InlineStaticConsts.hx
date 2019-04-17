@@ -5,7 +5,7 @@ class InlineStaticConsts extends AbstractFilter {
 		switch field.kind {
 			case TFVar(v):
 				var isConstantLiteral = switch v {
-					case {kind: VConst(_), vars: [{init: {expr: {kind: TELiteral(_)}}}]}: true;
+					case {kind: VConst(_), vars: [{init: {expr: {kind: TELiteral(l)}}}]} if (!l.match(TLRegExp(_))): true;
 					case _: false;
 				}
 
