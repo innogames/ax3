@@ -1,6 +1,7 @@
 package ax3.filters;
 
 class ToString extends AbstractFilter {
+	static final tToString = TTFun([], TTString);
 	static final tStdString = TTFun([TTAny], TTString);
 	static final tHex = TTFun([TTInt], TTString);
 
@@ -20,8 +21,10 @@ class ToString extends AbstractFilter {
 				switch [e.type, e.expectedType] {
 					case [TTString, TTString]:
 						e; // ok
+
 					case [TTAny, TTString]:
 						e; // handled at run-time
+
 					case [TTInt | TTNumber, TTString]:
 						var eStdString = mkBuiltin("Std.string", tStdString, removeLeadingTrivia(e));
 						e.with(kind = TECall(eStdString, {
@@ -29,9 +32,15 @@ class ToString extends AbstractFilter {
 							args: [{expr: e, comma: null}],
 							closeParen: new Token(0, TkParenClose, ")", [], removeTrailingTrivia(e))
 						}));
+
+					case [TTXML | TTXMLList, TTString]:
+						var eToString = mk(TEField({kind: TOExplicit(mkDot(), e), type: e.type}, "toString", mkIdent("toString")), tToString, tToString);
+						mkCall(eToString, [], TTString, removeTrailingTrivia(e));
+
 					case [_, TTString]:
 						reportError(exprPos(e), "Unknown to string coercion (actual type is " + e.type + ")");
 						e;
+
 					case _:
 						e;
 				}
