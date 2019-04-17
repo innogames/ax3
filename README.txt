@@ -27,7 +27,6 @@ TODO:
  - fix priority for `new something()[expr]`
  - move non-inline argument default values into the function body
  - implement class-wrapping for module-level vars/functions
- - rewrite `new Date()` to `Date.now()`, rewrite some getters to function calls
  - handle Null<T> to T conversion in some cases (e.g. for var x:int = dict[inexistant])
  - rewrite `as` calls (Std.intance for classes, try cast or untyped cast for other stuff)
  - finish compat abstracts

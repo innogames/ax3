@@ -35,6 +35,7 @@ class Filters {
 			// new AddParens(context),
 			new AddRequiredParens(context),
 			// new CheckExpectedTypes(context)
+			new DateApi(context),
 			new ArrayApi(context),
 			new StringApi(context),
 			new NumberApi(context),
