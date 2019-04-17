@@ -513,8 +513,8 @@ class GenHaxe extends PrinterBase {
 			case "uint": "UInt";
 			case "Boolean": "Bool";
 			case "Object": "ASObject";
-			case "XML": "flash.utils.XML";
-			case "XMLList": "flash.utils.XMLList";
+			case "XML": "flash.xml.XML";
+			case "XMLList": "flash.xml.XMLList";
 			case "Array": "Array";
 			case "RegExp": "flash.utils.RegExp";
 			case "parseInt": "Std.parseInt";
