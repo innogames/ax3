@@ -87,7 +87,7 @@ class Typer {
 	function typeModuleVars(v:ModuleVarDecl, mod:TModule, typerContext:ExprTyper.TyperContext):TModuleVarDecl {
 		var overrideType = HaxeTypeAnnotation.extractFromModuleVarDecl(v);
 		var moduleVar:TModuleVarDecl = {
-			metadata: v.metadata,
+			metadata: typeMetadata(v.metadata),
 			modifiers: v.modifiers,
 			kind: v.kind,
 			isInline: false,
@@ -130,10 +130,14 @@ class Typer {
 		}
 	}
 
+	function typeMetadata(metadata:Array<Metadata>):Array<TMetadata> {
+		return metadata.map(MetaFlash);
+	}
+
 	function typeModuleFunction(v:FunctionDecl, mod:TModule, typerContext:ExprTyper.TyperContext):TFunctionDecl {
 		var typeOverrides = HaxeTypeAnnotation.extractFromModuleFunDecl(v);
 		var d:TFunctionDecl = {
-			metadata: v.metadata,
+			metadata: typeMetadata(v.metadata),
 			modifiers: v.modifiers,
 			syntax: {keyword: v.keyword, name: v.name},
 			name: v.name.text,
@@ -185,7 +189,7 @@ class Typer {
 			syntax: c,
 			parentModule: mod,
 			name: c.name.text,
-			metadata: c.metadata,
+			metadata: typeMetadata(c.metadata),
 			modifiers: c.modifiers,
 			members: tMembers,
 			haxeProperties: null,
@@ -276,7 +280,7 @@ class Typer {
 				});
 		}
 		return {
-			metadata: f.metadata,
+			metadata: typeMetadata(f.metadata),
 			namespace: f.namespace,
 			modifiers: f.modifiers,
 			kind: kind
@@ -326,7 +330,7 @@ class Typer {
 			},
 			parentModule: mod,
 			name: i.name.text,
-			metadata: i.metadata,
+			metadata: typeMetadata(i.metadata),
 			modifiers: i.modifiers,
 			members: tMembers,
 			haxeProperties: null,
@@ -397,7 +401,7 @@ class Typer {
 		return {
 			modifiers: [],
 			namespace: null,
-			metadata: f.metadata,
+			metadata: typeMetadata(f.metadata),
 			kind: kind
 		};
 	}

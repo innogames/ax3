@@ -110,7 +110,7 @@ class GenHaxe extends PrinterBase {
 
 		// TODO: not generate properties that are already present in parent classes... we might have to do this properly in a separate pass....
 		var properties = new Map();
-		function prop(name:String, set:Bool, meta:Array<Metadata>, trivia:Array<Trivia>, type:TType) {
+		function prop(name:String, set:Bool, meta:Array<TMetadata>, trivia:Array<Trivia>, type:TType) {
 			var p = switch properties[name] {
 				case null: properties[name] = {trivia: [], meta: [], get: false, set: false, type: type};
 				case existing: existing;
@@ -304,20 +304,26 @@ class GenHaxe extends PrinterBase {
 		}
 	}
 
-	function printMetadata(metas:Array<Metadata>) {
+	function printMetadata(metas:Array<TMetadata>) {
 		for (m in metas) {
-			printTokenTrivia(m.openBracket);
-			buf.add("@:meta(");
-			printTextWithTrivia(m.name.text, m.name);
-			if (m.args == null) {
-				buf.add("()");
-			} else {
-				var p = new Printer();
-				p.printCallArgs(m.args);
-				buf.add(p.toString());
+			switch m {
+				case MetaFlash(m):
+					printTokenTrivia(m.openBracket);
+					buf.add("@:meta(");
+					printTextWithTrivia(m.name.text, m.name);
+					if (m.args == null) {
+						buf.add("()");
+					} else {
+						var p = new Printer();
+						p.printCallArgs(m.args);
+						buf.add(p.toString());
+					}
+					buf.add(")");
+					printTokenTrivia(m.closeBracket);
+				case MetaHaxe(s):
+					buf.add(s);
+					buf.add(" ");
 			}
-			buf.add(")");
-			printTokenTrivia(m.closeBracket);
 		}
 	}
 

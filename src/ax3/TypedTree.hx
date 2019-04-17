@@ -281,7 +281,7 @@ enum TDeclKind {
 }
 
 typedef TFunctionDecl = {
-	var metadata:Array<Metadata>;
+	var metadata:Array<TMetadata>;
 	var modifiers:Array<DeclModifier>;
 	var syntax:{keyword:Token, name:Token};
 	var name:String;
@@ -289,7 +289,7 @@ typedef TFunctionDecl = {
 }
 
 typedef TModuleVarDecl = TVarField & {
-	var metadata:Array<Metadata>;
+	var metadata:Array<TMetadata>;
 	var modifiers:Array<DeclModifier>;
 }
 
@@ -302,7 +302,7 @@ class TClassOrInterfaceDecl {
 		var closeBrace:Token;
 	};
 	var kind:TDClassOrInterfaceKind;
-	var metadata:Array<Metadata>;
+	var metadata:Array<TMetadata>;
 	var modifiers:Array<DeclModifier>;
 	var parentModule:TModule;
 	var name:String;
@@ -427,10 +427,15 @@ enum TClassMember {
 }
 
 typedef TClassField = {
-	var metadata:Array<Metadata>;
+	var metadata:Array<TMetadata>;
 	var namespace:Null<Token>;
 	var modifiers:Array<ClassFieldModifier>;
 	var kind:TClassFieldKind;
+}
+
+enum TMetadata {
+	MetaFlash(m:Metadata);
+	MetaHaxe(s:String);
 }
 
 enum TClassFieldKind {

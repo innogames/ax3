@@ -219,11 +219,15 @@ class Printer extends PrinterBase {
 
 	public function printMetadata(metadata:Array<Metadata>) {
 		for (m in metadata) {
-			printTextWithTrivia("[", m.openBracket);
-			printIdent(m.name);
-			if (m.args != null) printCallArgs(m.args);
-			printTextWithTrivia("]", m.closeBracket);
+			printMetadataInstance(m);
 		}
+	}
+
+	public inline function printMetadataInstance(m:Metadata) {
+		printTextWithTrivia("[", m.openBracket);
+		printIdent(m.name);
+		if (m.args != null) printCallArgs(m.args);
+		printTextWithTrivia("]", m.closeBracket);
 	}
 
 	function printFunction(f:Function) {

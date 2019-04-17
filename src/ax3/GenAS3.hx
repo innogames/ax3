@@ -233,10 +233,15 @@ class GenAS3 extends PrinterBase {
 		printSemicolon(v.semicolon);
 	}
 
-	function printMetadata(m:Array<Metadata>) {
-		if (m.length == 0) return;
+	function printMetadata(metadata:Array<TMetadata>) {
+		if (metadata.length == 0) return;
 		var p = new Printer();
-		p.printMetadata(m);
+		for (m in metadata) {
+			switch m {
+				case MetaFlash(m): p.printMetadataInstance(m);
+				case MetaHaxe(s): throw "assert";
+			}
+		}
 		buf.add(p.toString());
 	}
 
