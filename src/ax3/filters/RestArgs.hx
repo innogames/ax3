@@ -3,9 +3,11 @@ package ax3.filters;
 import ax3.ParseTree.TypeHint;
 
 class RestArgs extends AbstractFilter {
-	override function processSignature(sig:TFunctionSignature):TFunctionSignature {
-		if (sig.args.length > 0) {
-			var lastArg = sig.args[sig.args.length - 1];
+	override function processFunction(fun:TFunction) {
+		if (fun.expr != null) fun.expr = processExpr(fun.expr);
+
+		if (fun.sig.args.length > 0) {
+			var lastArg = fun.sig.args[fun.sig.args.length - 1];
 			switch lastArg.kind {
 				case TArgNormal(_):
 					// nothing to do
@@ -20,16 +22,42 @@ class RestArgs extends AbstractFilter {
 					});
 					var dotsTrivia = dots.leadTrivia.concat(dots.trailTrivia);
 					lastArg.syntax.name.leadTrivia = dotsTrivia.concat(lastArg.syntax.name.leadTrivia);
+
+					var argLocal = mk(TELocal(mkIdent(lastArg.name), lastArg.v), lastArg.type, lastArg.type);
+
+					// TODO: indentation
+					var eArrayInit = mk(TEIf({
+						syntax: {
+							keyword: addTrailingWhitespace(mkIdent("if")),
+							openParen: mkOpenParen(),
+							closeParen: addTrailingWhitespace(mkCloseParen())
+						},
+						econd: mk(TEBinop(
+							argLocal,
+							OpEquals(mkEqualsEqualsToken()),
+							argLocal
+						), TTBoolean, TTBoolean),
+						ethen: mk(TEBinop(
+							argLocal,
+							OpAssign(new Token(0, TkEquals, "=", [whitespace], [whitespace])),
+							mk(TEArrayDecl({
+								syntax: {openBracket: mkOpenBracket(), closeBracket: mkCloseBracket()},
+								elements: []
+							}), tUntypedArray, tUntypedArray)
+						), argLocal.type, argLocal.type),
+						eelse: null
+					}), TTVoid, TTVoid);
+					fun.expr = concatExprs(eArrayInit, fun.expr);
+
 			}
 		}
-		return sig;
 	}
 
 	override function processExpr(e:TExpr):TExpr {
 		mapExpr(processExpr, e);
 		switch e.kind {
 			case TELocalFunction(f):
-				f.fun.sig = processSignature(f.fun.sig);
+				processFunction(f.fun);
 			case TECall(eobj = {type: TTFun(argTypes, _, TRestAs3)}, args) if (args.args.length > argTypes.length):
 				var normalArgs = args.args.slice(0, argTypes.length);
 				var restArgs = args.args.slice(argTypes.length);
