@@ -81,6 +81,15 @@ class AbstractFilter {
 	}
 
 	function processSignature(sig:TFunctionSignature) {
+		for (arg in sig.args) {
+			switch arg.kind {
+				case TArgNormal(_, init):
+					if (init != null) {
+						init.expr = processExpr(init.expr);
+					}
+				case TArgRest(_):
+			}
+		}
 		return sig;
 	}
 
