@@ -261,7 +261,12 @@ class GenHaxe extends PrinterBase {
 				var isCtor = f.name == className;
 				printTextWithTrivia(if (isCtor) "new" else f.name, f.syntax.name);
 				printSignature(f.fun.sig, !isCtor);
+
+				var trailTrivia = TypedTreeTools.removeTrailingTrivia(f.fun.expr);
 				printExpr(f.fun.expr);
+				if (needsSemicolon(f.fun.expr)) buf.add(";");
+				printTrivia(trailTrivia);
+
 			case TFGetter(f):
 				printTextWithTrivia("function", f.syntax.functionKeyword);
 				printTokenTrivia(f.syntax.accessorKeyword);
