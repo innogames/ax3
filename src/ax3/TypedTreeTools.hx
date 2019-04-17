@@ -171,17 +171,19 @@ class TypedTreeTools {
 		return mk(TEBuiltin(new Token(0, TkIdent, n, leadTrivia, trailTrivia), n), t, t);
 	}
 
-	public static function mkCall(obj:TExpr, args:Array<TExpr>, ?t:TType):TExpr {
+	public static function mkCall(obj:TExpr, args:Array<TExpr>, ?t:TType, ?trail:Array<Trivia>):TExpr {
 		if (t == null) {
 			t = switch obj.type {
 				case TTFun(_, ret): ret;
 				case _: TTAny;
 			}
 		}
+		var closeParen = mkCloseParen();
+		if (trail != null) closeParen.trailTrivia = trail;
 		return mk(TECall(obj, {
 			openParen: mkOpenParen(),
 			args: [for (i in 0...args.length) {expr: args[i], comma: if (i == args.length - 1) null else commaWithSpace}],
-			closeParen: mkCloseParen(),
+			closeParen: closeParen,
 		}), t, t);
 	}
 

@@ -12,7 +12,7 @@ class TokenTools {
 		return true;
 	}
 
-	public static inline function mkIdent(n) return new Token(0, TkIdent, n, [], []);
+	public static inline function mkIdent(n, ?lead, ?trail) return new Token(0, TkIdent, n, if (lead == null) [] else lead, if (trail == null) [] else trail);
 	public static inline function mkOpenParen() return new Token(0, TkParenOpen, "(", [], []);
 	public static inline function mkCloseParen() return new Token(0, TkParenClose, ")", [], []);
 	public static inline function mkOpenBracket() return new Token(0, TkBracketOpen, "[", [], []);
@@ -22,6 +22,11 @@ class TokenTools {
 	public static inline function mkComma() return new Token(0, TkComma, ",", [], []);
 	public static inline function mkDot() return new Token(0, TkDot, ".", [], []);
 	public static inline function mkSemicolon() return new Token(0, TkSemicolon, ";", [], []);
+
+	public static inline function addTrailingWhitespace(t:Token):Token {
+		t.trailTrivia.push(whitespace);
+		return t;
+	}
 
 	public static inline function addTrailingNewline(t:Token):Token {
 		t.trailTrivia.push(newline);
