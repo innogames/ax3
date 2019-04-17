@@ -20,6 +20,8 @@ class ToString extends AbstractFilter {
 				switch [e.type, e.expectedType] {
 					case [TTString, TTString]:
 						e; // ok
+					case [TTAny, TTString]:
+						e; // handled at run-time
 					case [TTInt, TTString]:
 						var eStdString = mkBuiltin("Std.string", tStdString, removeLeadingTrivia(e));
 						e.with(kind = TECall(eStdString, {
@@ -28,7 +30,7 @@ class ToString extends AbstractFilter {
 							closeParen: new Token(0, TkParenClose, ")", [], removeTrailingTrivia(e))
 						}));
 					case [_, TTString]:
-						reportError(exprPos(e), "Unknown to string coercion");
+						reportError(exprPos(e), "Unknown to string coercion (actual type is " + e.type + ")");
 						e;
 					case _:
 						e;
