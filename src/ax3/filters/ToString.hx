@@ -22,7 +22,7 @@ class ToString extends AbstractFilter {
 						e; // ok
 					case [TTAny, TTString]:
 						e; // handled at run-time
-					case [TTInt, TTString]:
+					case [TTInt | TTNumber, TTString]:
 						var eStdString = mkBuiltin("Std.string", tStdString, removeLeadingTrivia(e));
 						e.with(kind = TECall(eStdString, {
 							openParen: mkOpenParen(),
