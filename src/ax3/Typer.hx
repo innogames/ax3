@@ -424,6 +424,7 @@ class Typer {
 			case HTPath("Class", [HTPath("Dynamic", [])]): TTClass;
 			case HTPath("Class", [HTPath(path, [])]): TypedTree.declToStatic(resolveDotPath(mod, path.split(".")));
 			case HTPath("Null", [t]): resolveHaxeType(mod, t, pos); // TODO: keep nullability?
+			case HTPath("Function" | "haxe.Constraints.Function", []): TTFunction;
 			case HTPath(path, []): TypedTree.declToInst(resolveDotPath(mod, path.split(".")));
 			case HTPath(path, _): trace("TODO: " + path); TTAny;
 			case HTFun(args, ret): TTFun([for (a in args) resolveHaxeType(mod, a, pos)], resolveHaxeType(mod, ret, pos));
