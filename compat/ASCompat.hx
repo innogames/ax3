@@ -88,3 +88,10 @@ class ASArray {
 
 	public static macro function pushMultiple<T>(a:ExprOf<Array<T>>, first:ExprOf<T>, rest:Array<ExprOf<T>>):ExprOf<Int>;
 }
+
+
+class ASVector {
+	public static function sort<T>(a:flash.Vector<T>, options:Int):flash.Vector<T> {
+		return a; // TODO
+	}
+}

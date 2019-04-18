@@ -15,8 +15,6 @@ class ArrayApi extends AbstractFilter {
 
 			// sortOn
 			case TECall({kind: TEField({kind: TOExplicit(dot, eArray = {type: TTArray(_)})}, "sortOn", fieldToken)}, args):
-				eArray = processExpr(eArray);
-				args = mapCallArgs(processExpr, args);
 				switch args.args {
 					case [eFieldName = {expr: {type: TTString}}, eOptions = {expr: {type: TTInt | TTUint}}]:
 						var eCompatArray = mkBuiltin("ASCompat.ASArray", TTBuiltin, removeLeadingTrivia(eArray));
@@ -29,9 +27,25 @@ class ArrayApi extends AbstractFilter {
 						throwError(exprPos(e), "Unsupported Array.sortOn arguments");
 				}
 
+			// Vector.sort
+			case TECall({kind: TEField({kind: TOExplicit(dot, eVector = {type: TTVector(_)})}, "sort", fieldToken)}, args):
+				switch args.args {
+					case [{expr: {type: TTFunction | TTFun(_)}}]:
+						e; // supported by Haxe
+					case [eOptions = {expr: {type: TTInt | TTUint}}]:
+						var eCompatVector = mkBuiltin("ASCompat.ASVector", TTBuiltin, removeLeadingTrivia(eVector));
+						var fieldObj = {kind: TOExplicit(dot, eCompatVector), type: eCompatVector.type};
+						var eMethod = mk(TEField(fieldObj, "sort", fieldToken), tSortOn, tSortOn);
+						e.with(kind = TECall(eMethod, args.with(args = [
+							{expr: eVector, comma: commaWithSpace}, eOptions
+						])));
+					case _:
+						throwError(exprPos(e), "Unsupported Vector.sort arguments");
+				}
+
 			// concat with no args
 			case TECall({kind: TEField({kind: TOExplicit(dot, eArray = {type: TTArray(_)})}, "concat", fieldToken)}, args = {args: []}):
-				var fieldObj = {kind: TOExplicit(dot, processExpr(eArray)), type: eArray.type};
+				var fieldObj = {kind: TOExplicit(dot, eArray), type: eArray.type};
 				var eMethod = mk(TEField(fieldObj, "copy", mkIdent("copy", fieldToken.leadTrivia, fieldToken.trailTrivia)), eArray.type, eArray.type);
 				e.with(kind = TECall(eMethod, args));
 
@@ -42,10 +56,7 @@ class ArrayApi extends AbstractFilter {
 				])));
 
 			// push with multiple arguments
-			case TECall(ePush = {kind: TEField({kind: TOExplicit(dot, eArray = {type: TTArray(_)})}, "push", fieldToken)}, args) if (args.args.length > 1):
-				eArray = processExpr(eArray);
-				args = mapCallArgs(processExpr, args);
-
+			case TECall({kind: TEField({kind: TOExplicit(dot, eArray = {type: TTArray(_)})}, "push", fieldToken)}, args) if (args.args.length > 1):
 				var eCompatArray = mkBuiltin("ASCompat.ASArray", TTBuiltin, removeLeadingTrivia(eArray));
 				var fieldObj = {kind: TOExplicit(dot, eCompatArray), type: eCompatArray.type};
 				var eMethod = mk(TEField(fieldObj, "pushMultiple", fieldToken), TTFunction, TTFunction);
