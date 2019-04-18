@@ -35,6 +35,12 @@ class ArrayApi extends AbstractFilter {
 				var eMethod = mk(TEField(fieldObj, "copy", mkIdent("copy", fieldToken.leadTrivia, fieldToken.trailTrivia)), eArray.type, eArray.type);
 				e.with(kind = TECall(eMethod, args));
 
+			// join with no args
+			case TECall(eMethod = {kind: TEField({type: TTArray(_)}, "join", fieldToken)}, args = {args: []}):
+				e.with(kind = TECall(eMethod, args.with(args = [
+					{expr: mk(TELiteral(TLString(new Token(0, TkStringDouble, '","', [], []))), TTString, TTString), comma: null}
+				])));
+
 			// push with multiple arguments
 			case TECall(ePush = {kind: TEField({kind: TOExplicit(dot, eArray = {type: TTArray(_)})}, "push", fieldToken)}, args) if (args.args.length > 1):
 				eArray = processExpr(eArray);
