@@ -22,8 +22,9 @@ class DateApi extends AbstractFilter {
 
 			case TEField(to = {type: TTInst({name: "Date", parentModule: {parentPack: {name: ""}}})}, fieldName, fieldToken):
 				switch fieldName {
-					case "fullYear": // TODO other getters
-						var eMethod = mk(TEField(to, "getFullYear", mkIdent("getFullYear", fieldToken.leadTrivia)), TTFunction, TTFunction);
+					case "fullYear" | "time": // TODO other getters
+						var methodName = "get" + fieldName.charAt(0).toUpperCase() + fieldName.substring(1);
+						var eMethod = mk(TEField(to, methodName, mkIdent(methodName, fieldToken.leadTrivia)), TTFunction, TTFunction);
 						e.with(kind = TECall(eMethod, {
 							openParen: mkOpenParen(),
 							args: [],
