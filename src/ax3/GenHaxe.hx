@@ -427,7 +427,7 @@ class GenHaxe extends PrinterBase {
 
 				case [TTArray(TTAny), TTArray(TTAny)]: false; // untyped arrays
 				case [TTArray(elemType), TTArray(TTAny)]: true; // typed array to untyped array
-				case [TTArray(TTAny), TTArray(elemType)]: true; // untyped array to typed array
+				case [TTArray(TTAny), TTArray(elemType)]: !e.kind.match(TEArrayDecl(_)); // untyped array to typed array (array decls are fine tho)
 
 				case [TTDictionary(TTAny, TTAny), TTDictionary(TTAny, TTAny)]: false; // untyped dicts
 				case [TTDictionary(k, v), TTDictionary(TTAny, TTAny)]: true; // typed dicts into untyped dict
