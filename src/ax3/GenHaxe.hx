@@ -686,11 +686,13 @@ class GenHaxe extends PrinterBase {
 	function printVectorDecl(d:TVectorDecl) {
 		// printTextWithTrivia("new", d.syntax.newKeyword);
 		// printTypeParam(d.syntax.typeParam);
-		printTextWithTrivia("flash.Vector.ofArray(", d.syntax.newKeyword);
+		printTextWithTrivia("flash.Vector.ofArray((", d.syntax.newKeyword);
 		var t = d.elements.syntax.closeBracket.trailTrivia;
 		d.elements.syntax.closeBracket.trailTrivia = [];
 		printArrayDecl(d.elements);
-		buf.add(")");
+		buf.add(": Array<");
+		printTType(d.type);
+		buf.add(">))");
 		printTrivia(t);
 	}
 
