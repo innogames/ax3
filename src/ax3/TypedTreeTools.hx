@@ -164,6 +164,28 @@ class TypedTreeTools {
 		return {kind: kind, type: type, expectedType: expectedType};
 	}
 
+	public static function getFunctionTypeFromSignature(f:TFunctionSignature):TType {
+		var args = [], rest:Null<TRestKind> = null;
+		for (a in f.args) {
+			switch a.kind {
+				case TArgNormal(_): args.push(a.type);
+				case TArgRest(_, kind): rest = kind;
+			}
+		}
+		return TTFun(args, f.ret.type, rest);
+	}
+
+	public static function mkDeclRef(path:DotPath, decl:TDecl, expectedType:Null<TType>):TExpr {
+		var type = switch (decl.kind) {
+			case TDVar(v): v.vars[0].type; // TODO: it shouldn't be an array in the typed AST actually
+			case TDFunction(f): getFunctionTypeFromSignature(f.fun.sig);
+			case TDClassOrInterface(c): TTStatic(c);
+			case TDNamespace(_): throw "assert"; // should NOT happen :)
+		};
+		if (expectedType == null) expectedType = type;
+		return mk(TEDeclRef(path, decl), type, expectedType);
+	}
+
 	public static inline function mkNullExpr(t = TTAny, ?lead, ?trail):TExpr {
 		return mk(TELiteral(TLNull(new Token(0, TkIdent, "null", if (lead != null) lead else [], if (trail != null) trail else []))), t, t);
 	}

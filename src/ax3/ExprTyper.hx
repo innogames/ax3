@@ -4,6 +4,8 @@ import ax3.ParseTree;
 import ax3.ParseTree.*;
 import ax3.TypedTree;
 import ax3.TypedTreeTools.mk;
+import ax3.TypedTreeTools.mkDeclRef;
+import ax3.TypedTreeTools.getFunctionTypeFromSignature;
 import ax3.TypedTreeTools.skipParens;
 import ax3.TypedTreeTools.tUntypedArray;
 import ax3.TypedTreeTools.tUntypedObject;
@@ -734,27 +736,6 @@ class ExprTyper {
 	function getConstructorType(cls:TClassOrInterfaceDecl):TType {
 		var ctor = getConstructor(cls);
 		return if (ctor != null) getFunctionTypeFromSignature(ctor.sig) else TTFun([], TTVoid, null);
-	}
-
-	function getFunctionTypeFromSignature(f:TFunctionSignature):TType {
-		var args = [], rest:Null<TRestKind> = null;
-		for (a in f.args) {
-			switch a.kind {
-				case TArgNormal(_): args.push(a.type);
-				case TArgRest(_, kind): rest = kind;
-			}
-		}
-		return TTFun(args, f.ret.type, rest);
-	}
-
-	function mkDeclRef(path:DotPath, decl:TDecl, expectedType:TType):TExpr {
-		var type = switch (decl.kind) {
-			case TDVar(v): v.vars[0].type; // TODO: it shouldn't be an array in the typed AST actually
-			case TDFunction(f): getFunctionTypeFromSignature(f.fun.sig);
-			case TDClassOrInterface(c): TTStatic(c);
-			case TDNamespace(_): throw "assert"; // should NOT happen :)
-		};
-		return mk(TEDeclRef(path, decl), type, expectedType);
 	}
 
 	function typeNew(keyword:Token, e:Expr, args:Null<CallArgs>, expectedType:TType):TExpr {

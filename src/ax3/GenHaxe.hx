@@ -474,11 +474,11 @@ class GenHaxe extends PrinterBase {
 			case TEBinop(a, op, b): printBinop(a, op, b);
 			case TEPreUnop(op, e): printPreUnop(op, e);
 			case TEPostUnop(e, op): printPostUnop(e, op);
-			case TEAs(e, keyword, type): printAs(e, keyword, type);
 			case TESwitch(s): printSwitch(s);
 			case TENew(keyword, eclass, args): printNew(keyword, eclass, args);
 			case TECondCompValue(v): printCondCompVar(v);
 			case TECondCompBlock(v, expr): printCondCompBlock(v, expr);
+			case TEAs(_): throw "unprocessed `as` expression";
 			case TEXmlChild(_) | TEXmlAttr(_) | TEXmlAttrExpr(_) | TEXmlDescend(_): throw 'unprocessed E4X';
 			case TEUseNamespace(ns): printUseNamespace(ns);
 			case TEHaxeRetype(einner):
@@ -502,7 +502,7 @@ class GenHaxe extends PrinterBase {
 		// TODO: this is hacky (builtins in general are hacky...)
 		name = switch name {
 			case
-				"Std.is" | "Std.int" | "Std.string" | "String"
+				"Std.is" | "Std.int" | "Std.string" | "String" | "Std.instance"
 				| "flash.Vector.convert"| "flash.Vector.ofArray"
 				| "Reflect.deleteField" | "Type.createInstance"
 				| "haxe.Json"
@@ -515,6 +515,7 @@ class GenHaxe extends PrinterBase {
 			case "Object": "ASObject";
 			case "XML": "flash.xml.XML";
 			case "XMLList": "flash.xml.XMLList";
+			case "Vector": "flash.Vector";
 			case "Array": "Array";
 			case "RegExp": "flash.utils.RegExp";
 			case "parseInt": "Std.parseInt";
@@ -529,25 +530,6 @@ class GenHaxe extends PrinterBase {
 				throw "unknown builtin: " + name;
 		}
 		printTextWithTrivia(name, token);
-	}
-
-	function printAs(e:TExpr, keyword:Token, type:TTypeRef) {
-		printTrivia(TypedTreeTools.removeLeadingTrivia(e));
-		buf.add("Std.instance("); // TODO: this is actually incorrect, as Std.instance doesn't support interfaces on e.g. js, we should have a filter that rewrites this
-		printExpr(e);
-		printTextWithTrivia(",", keyword);
-
-		// TODO: This is all wrong, but I want to quickly get something compileable
-		switch (type.type) {
-			case TTArray(t): buf.add("Array");
-			case TTDictionary(k, v): buf.add("flash.utils.Dictionary");
-			case TTObject(t): buf.add("Object");
-			case TTClass: buf.add("Class");
-			case TTVector(_): buf.add("flash.Vector"); // This might not work at all actually
-			case _: printTType(type.type);
-		}
-		// printSyntaxType(type.syntax);
-		buf.add(")");
 	}
 
 	function printCast(c:TCast) {

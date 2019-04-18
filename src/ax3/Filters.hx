@@ -21,6 +21,7 @@ class Filters {
 			new RewriteNewArray(context),
 			new RewriteDelete(context),
 			new RewriteArrayAccess(context),
+			new RewriteAs(context),
 			new RewriteIs(context),
 			new RewriteCFor(context),
 			new RewriteForEach(context),
