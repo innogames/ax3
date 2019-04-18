@@ -28,3 +28,6 @@ TODO:
  - handle Null<T> to T conversion in some cases (e.g. for var x:int = dict[inexistant])
  - finish compat abstracts
  - go through TODOs in the code
+ - optionally don't generate var type hints if the init expr type is exaclty the same
+ - optionally don't generate `private` keywords
+
