@@ -202,10 +202,17 @@ class TModule {
 	function isImported(c:TClassOrInterfaceDecl) {
 		// TODO: optimize this, because this is done A LOT
 		// actually, we might want to store the "local" flag in the TEDeclRef/TTypeHint/etc.
-		for (i in pack.imports) {
-			switch i.kind {
-				case TIDecl({kind: TDClassOrInterface(importedClass)}) if (importedClass == c):
-					return true;
+		var i = pack.imports.length;
+		while (i-- > 0) {
+			var imp = pack.imports[i];
+			switch imp.kind {
+				case TIDecl({kind: TDClassOrInterface(importedClass)}):
+					if (importedClass == c) {
+						return true;
+					} else if (importedClass.name == c.name) {
+						// the imported class name overshadows this class, so we can't refer this class by unqialified name
+						return false;
+					}
 
 				case TIAll(pack, _):
 					for (mod in pack) {
