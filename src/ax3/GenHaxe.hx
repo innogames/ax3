@@ -424,10 +424,15 @@ class GenHaxe extends PrinterBase {
 		var needsCast =
 			switch [e.type, e.expectedType] {
 				case [TTFunction, TTFun(_)]: true; // Function from AS3 code unified with proper function type
+
 				case [TTArray(TTAny), TTArray(TTAny)]: false; // untyped arrays
 				case [TTArray(elemType), TTArray(TTAny)]: true; // typed array to untyped array
+				case [TTArray(TTAny), TTArray(elemType)]: true; // untyped array to typed array
+
 				case [TTDictionary(TTAny, TTAny), TTDictionary(TTAny, TTAny)]: false; // untyped dicts
 				case [TTDictionary(k, v), TTDictionary(TTAny, TTAny)]: true; // typed dicts into untyped dict
+				case [TTDictionary(TTAny, TTAny), TTDictionary(k, v)]: true; // untyped dicts into typed dict
+
 				case _: false;
 			};
 
