@@ -26,8 +26,8 @@ class Token {
 abstract PeekToken(Token) from Token {}
 
 class Trivia {
-	public var kind:TriviaKind;
-	public var text:String;
+	public final kind:TriviaKind;
+	public final text:String;
 
 	public function new(kind, text) {
 		this.kind = kind;
