@@ -56,9 +56,10 @@ abstract ASAny(Dynamic) from Dynamic {
 		return a.___toFloat() - b;
 	}
 
-	@:op(a > b) static function ___gt(a:ASAny, b:Float):Bool {
-		return a.___toFloat() > b;
-	}
+	@:op(a > b) static function ___gt(a:ASAny, b:Float):Bool return a.___toFloat() > b;
+	@:op(a < b) static function ___lt(a:ASAny, b:Float):Bool return a.___toFloat() < b;
+	@:op(a >= b) static function ___gte(a:ASAny, b:Float):Bool return a.___toFloat() >= b;
+	@:op(a <= b) static function ___lte(a:ASAny, b:Float):Bool return a.___toFloat() <= b;
 
 	@:op([]) inline function ___arrayGet(name:ASAny):ASAny return ___get(name);
 	@:op([]) inline function ___arraySet(name:ASAny, value:ASAny):ASAny return ___set(name, value);
