@@ -425,6 +425,8 @@ class GenHaxe extends PrinterBase {
 			switch [e.type, e.expectedType] {
 				case [TTFunction, TTFun(_)]: true; // Function from AS3 code unified with proper function type
 
+				case [TTFun([argType], _, _), TTFun([TTAny], _)] if (argType != TTAny): true; // add/remove event listener
+
 				case [TTArray(TTAny), TTArray(TTAny)]: false; // untyped arrays
 				case [TTArray(elemType), TTArray(TTAny)]: true; // typed array to untyped array
 				case [TTArray(TTAny), TTArray(elemType)]: !e.kind.match(TEArrayDecl(_)); // untyped array to typed array (array decls are fine tho)
