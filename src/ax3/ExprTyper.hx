@@ -431,6 +431,7 @@ class ExprTyper {
 			switch [fieldName, skipParens(obj)] {
 				case [_, {type: TTInt | TTUint | TTNumber}]: getNumericInstanceFieldType(fieldToken, obj.type);
 				case ["toString", _]: TTFun([], TTString);
+				case ["hasOwnProperty", {type: TTDictionary(keyType, _)}]: TTFun([keyType], TTBoolean);
 				case ["hasOwnProperty", _]: TTFun([TTString], TTBoolean);
 				case ["prototype", _]: tUntypedObject;
 				case [_, {kind: TEBuiltin(_, "Array")}]: getArrayStaticFieldType(fieldToken);

@@ -22,7 +22,6 @@
 
 
 TODO:
- - fix expected type for Dictionary.hasOwnPropety (should not be String, but the key type)
  - fix generation of type paths when imported type is ambigous (e.g. flash.display.Sprite + starling.display.Sprite)
  - work-around Stage.quality getter bug (add toLowerCase() to the field access)
  - fix priority for `new something()[expr]`
