@@ -59,7 +59,7 @@ class HaxeProperties extends AbstractFilter {
 			}
 		}
 		return {
-			isPublic: isPublic,
+			isPublic: isPublic || f.namespace != null, // TODO: generate @:access instead
 			isStatic: isStatic,
 			isOverride: isOverride
 		};
