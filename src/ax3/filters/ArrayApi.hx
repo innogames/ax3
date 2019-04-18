@@ -29,6 +29,12 @@ class ArrayApi extends AbstractFilter {
 						throwError(exprPos(e), "Unsupported Array.sortOn arguments");
 				}
 
+			// concat with no args
+			case TECall({kind: TEField({kind: TOExplicit(dot, eArray = {type: TTArray(_)})}, "concat", fieldToken)}, args = {args: []}):
+				var fieldObj = {kind: TOExplicit(dot, processExpr(eArray)), type: eArray.type};
+				var eMethod = mk(TEField(fieldObj, "copy", mkIdent("copy", fieldToken.leadTrivia, fieldToken.trailTrivia)), eArray.type, eArray.type);
+				e.with(kind = TECall(eMethod, args));
+
 			// push with multiple arguments
 			case TECall(ePush = {kind: TEField({kind: TOExplicit(dot, eArray = {type: TTArray(_)})}, "push", fieldToken)}, args) if (args.args.length > 1):
 				eArray = processExpr(eArray);
