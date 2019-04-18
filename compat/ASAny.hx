@@ -60,6 +60,6 @@ abstract ASAny(Dynamic) from Dynamic {
 		return a.___toFloat() > b;
 	}
 
-	@:op([]) inline function ___arrayGet(name) return ___get(name);
-	@:op([]) inline function ___arraySet(name, value) return ___set(name, value);
+	@:op([]) inline function ___arrayGet(name:ASAny):ASAny return ___get(name);
+	@:op([]) inline function ___arraySet(name:ASAny, value:ASAny):ASAny return ___set(name, value);
 }
