@@ -253,6 +253,8 @@ class GenHaxe extends PrinterBase {
 			}
 		}
 
+		if (!isPublic && f.namespace != null) buf.add("public "); // TODO: generate @:access on `use namespace` instead
+
 		switch (f.kind) {
 			case TFVar(v):
 				printVarField(v);
