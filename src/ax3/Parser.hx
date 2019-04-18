@@ -886,16 +886,22 @@ class Parser {
 				// new Vector.<type>
 				EVector(parseVectorSyntax(scanner.consume()));
 			case TkIdent:
-				// some or some.Field
-				parseFieldsNext(EIdent(scanner.consume()));
+				// some or some.Field or some[expr]
+				parseNewFieldsNext(EIdent(scanner.consume()));
 			case other:
 				throw "unexpected token: " + other;
 		}
 	}
 
-	function parseFieldsNext(first:Expr):Expr {
+	function parseNewFieldsNext(first:Expr):Expr {
 		return switch scanner.advance().kind {
-			case TkDot: parseFieldsNext(EField(first, scanner.consume(), expectKind(TkIdent)));
+			case TkDot:
+				parseNewFieldsNext(EField(first, scanner.consume(), expectKind(TkIdent)));
+			case TkBracketOpen:
+				var openBracket = scanner.consume();
+				var eindex = parseExpr(true);
+				var closeBracket = expectKind(TkBracketClose);
+				return parseNewFieldsNext(EArrayAccess(first, openBracket, eindex, closeBracket));
 			case _: first;
 		}
 	}
