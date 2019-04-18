@@ -7,6 +7,7 @@ class Filters {
 	public static function run(context:Context, tree:TypedTree) {
 		var externImports = new ExternModuleLevelImports(context);
 		for (f in [
+			// new RewriteAndOrAssign(context), // we can fix this in the codebase so no real need for this filter
 			new RewriteJSON(context),
 			externImports,
 			new InlineStaticConsts(context),
