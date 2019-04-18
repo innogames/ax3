@@ -1051,12 +1051,13 @@ class ExprTyper {
 		var econd = typeExpr(econd, TTBoolean);
 		var ethen = typeExpr(ethen, expectedType);
 		var eelse = typeExpr(eelse, expectedType);
+		var resultType = if (ethen.type.match(TTInt | TTUint) && eelse.type == TTNumber) TTNumber else ethen.type;
 		return mk(TETernary({
 			syntax: {question: question, colon: colon},
 			econd: econd,
 			ethen: ethen,
 			eelse: eelse
-		}), ethen.type, expectedType);
+		}), resultType, expectedType);
 	}
 
 	function typeArrayAccess(e:Expr, openBracket:Token, eindex:Expr, closeBracket:Token, expectedType:TType):TExpr {
