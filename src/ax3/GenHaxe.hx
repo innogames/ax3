@@ -7,7 +7,7 @@ using StringTools;
 
 @:nullSafety
 class GenHaxe extends PrinterBase {
-	var currentModule:Null<TModule>;
+	@:nullSafety(Off) var currentModule:TModule;
 
 	public function writeModule(m:TModule) {
 		currentModule = m;
@@ -16,7 +16,7 @@ class GenHaxe extends PrinterBase {
 			printDecl(d);
 		}
 		printTrivia(m.eof.leadTrivia);
-		currentModule = null;
+		@:nullSafety(Off) currentModule = null;
 	}
 
 	function printPackage(p:TPackageDecl) {
@@ -246,7 +246,7 @@ class GenHaxe extends PrinterBase {
 					printTextWithTrivia("public", t);
 				case FMPrivate(t): printTextWithTrivia("private", t);
 				case FMProtected(t): printTextWithTrivia("/*protected*/private", t);
-				case FMInternal(t): printTextWithTrivia("/*internal*/", t);
+				case FMInternal(t): printTextWithTrivia("@:allow(" + currentModule.parentPack.name + ")", t);
 				case FMOverride(t): printTextWithTrivia("override", t);
 				case FMStatic(t): printTextWithTrivia("static", t);
 				case FMFinal(t): printTextWithTrivia("final", t);
@@ -405,7 +405,7 @@ class GenHaxe extends PrinterBase {
 	}
 
 	inline function getClassLocalPath(cls:TClassOrInterfaceDecl):String {
-		return if (currentModule.sure().isImported(cls)) cls.name else makeFQN(cls);
+		return if (currentModule.isImported(cls)) cls.name else makeFQN(cls);
 	}
 
 	static function makeFQN(cls:TClassOrInterfaceDecl) {
