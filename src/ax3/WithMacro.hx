@@ -38,6 +38,16 @@ class WithMacro {
 				case macro $i{fieldName} = $value:
 					objectDecl.push({field: fieldName, expr: value});
 					overriden[fieldName] = true;
+				case {expr: EDisplay(macro null, DKMarked), pos: p}: // toplevel completion
+					var remainingFieldsCT = TAnonymous([
+						for (field in fields) if (!overriden.exists(field.name)) {
+							pos: field.pos,
+							name: field.name,
+							doc: field.doc,
+							kind: FVar(field.type.toComplexType())
+						}
+					]);
+					return {pos: p, expr: EDisplay({pos: p, expr: EField(macro (null : $remainingFieldsCT), "")}, DKDot)};
 				case _:
 					throw new Error("Invalid override expression, should be field=value", expr.pos);
 			}
