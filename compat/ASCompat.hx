@@ -9,6 +9,10 @@ class ASCompat {
 	public static inline final MAX_FLOAT = 1.79e+308;
 	public static inline final MIN_FLOAT = -1.79E+308;
 
+	public static inline function as<T>(v:Dynamic, c:Class<T>):T {
+		return if (Std.is(v, c)) v else null;
+	}
+
 	public static inline function toFixed(n:Float):String {
 		return (cast n).toFixed();
 	}

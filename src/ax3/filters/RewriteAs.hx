@@ -49,7 +49,7 @@ class RewriteAs extends AbstractFilter {
 	}
 
 	static function makeStdInstance(eObj:TExpr, eType:TExpr, leadTrivia, trailTrivia):TExprKind {
-		var eMethod = mkBuiltin("Std.instance", TTFunction, leadTrivia);
+		var eMethod = mkBuiltin("ASCompat.as", TTFunction, leadTrivia);
 		return TECall(eMethod, {
 			openParen: mkOpenParen(),
 			args: [
