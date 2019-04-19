@@ -6,6 +6,7 @@ import ax3.TypedTree;
 import ax3.TypedTreeTools.tUntypedArray;
 import ax3.TypedTreeTools.tUntypedObject;
 import ax3.TypedTreeTools.tUntypedDictionary;
+import ax3.TypedTreeTools.getFunctionTypeFromSignature;
 import ax3.TypedTreeTools.mk;
 import ax3.HaxeTypeAnnotation;
 
@@ -243,13 +244,15 @@ class Typer {
 					isInline: false,
 				});
 			case FFun(keyword, name, fun):
+				var fun = typeFunction(fun);
 				TFFun({
 					syntax: {
 						keyword: keyword,
 						name: name,
 					},
 					name: name.text,
-					fun: typeFunction(fun),
+					fun: fun,
+					type: getFunctionTypeFromSignature(fun.sig),
 					semicolon: null
 				});
 			case FGetter(keyword, get, name, fun):
@@ -369,6 +372,7 @@ class Typer {
 					},
 					name: name.text,
 					fun: {sig: sig, expr: null},
+					type: getFunctionTypeFromSignature(sig),
 					semicolon: f.semicolon
 				});
 			case IFGetter(keyword, get, name, sig):

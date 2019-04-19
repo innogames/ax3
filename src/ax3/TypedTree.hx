@@ -471,6 +471,7 @@ typedef TFunctionField = {
 	};
 	var name:String;
 	var fun:TFunction;
+	var type:TType;
 	var semicolon:Null<Token>;
 }
 

@@ -20,7 +20,7 @@ class TypedTreeTools {
 		return false;
 	}
 
-	public static function getConstructor(cls:TClassOrInterfaceDecl):Null<TFunction> {
+	public static function getConstructor(cls:TClassOrInterfaceDecl):Null<TFunctionField> {
 		var extend;
 		switch (cls.kind) {
 			case TInterface(_): return null;
@@ -30,7 +30,7 @@ class TypedTreeTools {
 		for (m in cls.members) {
 			switch m {
 				case TMField({kind: TFFun(f)}) if (f.name == cls.name):
-					return f.fun;
+					return f;
 				case _:
 			}
 		}

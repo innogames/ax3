@@ -120,6 +120,7 @@ class SWCLoader {
 							syntax: null,
 							name: name,
 							fun: {sig: f, expr: null},
+							type: TypedTreeTools.getFunctionTypeFromSignature(f),
 							semicolon: null
 						})
 					}));

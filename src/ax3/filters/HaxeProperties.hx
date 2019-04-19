@@ -145,6 +145,7 @@ class HaxeProperties extends AbstractFilter {
 						sig: accessor.fun.sig,
 						expr: mk(TEReturn(mkTokenWithSpaces(TkIdent, "return"), eMethodCall), TTVoid, TTVoid)
 					},
+					type: getFunctionTypeFromSignature(accessor.fun.sig),
 					semicolon: null
 				})
 			});
@@ -194,6 +195,7 @@ class HaxeProperties extends AbstractFilter {
 			var eMethod = mk(TEField({kind: TOImplicitThis(currentClass), type: TTInst(currentClass)}, haxeMethodName, mkIdent(haxeMethodName, [whitespace])), tMethod, tMethod);
 			var eMethodCall = mkCall(eMethod, [argLocal], accessor.propertyType, [newline]);
 
+			var sig = accessor.fun.sig.with(ret = {syntax: null, type: TTVoid});
 			addFlashPropertyOverride({
 				metadata: [MetaHaxe('@:setter(${accessor.name})')],
 				namespace: null,
@@ -205,9 +207,10 @@ class HaxeProperties extends AbstractFilter {
 					},
 					name: specialMethodName,
 					fun: {
-						sig: accessor.fun.sig.with(ret = {syntax: null, type: TTVoid}),
+						sig: sig,
 						expr: eMethodCall
 					},
+					type: getFunctionTypeFromSignature(sig),
 					semicolon: null
 				})
 			});

@@ -362,7 +362,7 @@ class ExprTyper {
 	function getFieldType(field:TClassField):TType {
 		var t = switch field.kind {
 			case TFVar(v): v.vars[0].type;
-			case TFFun(f): getFunctionTypeFromSignature(f.fun.sig);
+			case TFFun(f): f.type;
 			case TFGetter(a) | TFSetter(a): a.propertyType;
 		};
 		if (t == TTVoid) throw "assert";
@@ -735,7 +735,7 @@ class ExprTyper {
 
 	function getConstructorType(cls:TClassOrInterfaceDecl):TType {
 		var ctor = getConstructor(cls);
-		return if (ctor != null) getFunctionTypeFromSignature(ctor.sig) else TTFun([], TTVoid, null);
+		return if (ctor != null) ctor.type else TTFun([], TTVoid, null);
 	}
 
 	function typeNew(keyword:Token, e:Expr, args:Null<CallArgs>, expectedType:TType):TExpr {

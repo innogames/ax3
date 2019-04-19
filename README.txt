@@ -31,4 +31,3 @@ TODO:
  - optionally don't generate var type hints if the init expr type is exaclty the same
  - optionally don't generate `private` keywords
  - `escape`, `string.split(regexp)`, `string.concat`
- - rest for constructors \o/
