@@ -23,7 +23,7 @@ class AddSuperCtorCall extends AbstractFilter {
 			return e;
 		} else {
 			var tSuper = TTInst(superClass);
-			var eSuper = mk(TELiteral(TLSuper(mkIdent("super"))), tSuper, tSuper);
+			var eSuper = mk(TELiteral(TLSuper(mkIdent("super", getInnerIndent(e)))), tSuper, tSuper);
 			var eSuperCall = mk(TECall(eSuper, {openParen: mkOpenParen(), args: [], closeParen: mkCloseParen()}), TTVoid, TTVoid);
 			return concatExprs(eSuperCall, e);
 		}

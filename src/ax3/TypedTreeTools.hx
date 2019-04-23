@@ -20,32 +20,37 @@ class TypedTreeTools {
 		return false;
 	}
 
+	static final singleTabIndent = [new Trivia(TrWhitespace, "\t")];
+
 	public static function getInnerIndent(expr:TExpr):Array<Trivia> {
 		return switch expr.kind {
-			case TEBlock(block) if (block.exprs.length > 0):
-				getIndent(block.exprs[0].expr);
+			case TEBlock(block):
+				if (block.exprs.length > 0) getIndent(block.exprs[0].expr)
+				else getTokenIndent(block.syntax.closeBrace).concat(singleTabIndent); // assume closing brace on a separate line
 			case _:
 				[];
 		}
 	}
 
 	static function getIndent(expr:TExpr):Array<Trivia> {
-		return processLeadingToken(function(token) {
-			var result = [], hadOnlyWhitespace = true;
-			for (trivia in token.leadTrivia) {
-				switch trivia.kind {
-					case TrBlockComment | TrLineComment:
-						result = [];
-						hadOnlyWhitespace = false;
-					case TrNewline:
-						result = [];
-						hadOnlyWhitespace = true;
-					case TrWhitespace:
-						result.push(trivia);
-				}
+		return processLeadingToken(getTokenIndent, expr);
+	}
+
+	static function getTokenIndent(token:Token):Array<Trivia> {
+		var result = [], hadOnlyWhitespace = true;
+		for (trivia in token.leadTrivia) {
+			switch trivia.kind {
+				case TrBlockComment | TrLineComment:
+					result = [];
+					hadOnlyWhitespace = false;
+				case TrNewline:
+					result = [];
+					hadOnlyWhitespace = true;
+				case TrWhitespace:
+					result.push(trivia);
 			}
-			return if (hadOnlyWhitespace) result else [];
-		}, expr);
+		}
+		return if (hadOnlyWhitespace) result else [];
 	}
 
 	public static function getConstructor(cls:TClassOrInterfaceDecl):Null<TFunctionField> {
