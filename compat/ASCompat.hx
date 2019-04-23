@@ -25,6 +25,10 @@ class ASCompat {
 		return (cast s).match(r);
 	}
 
+	public static inline function regExpSplit(s:String, r:RegExp):Array<String> {
+		return (cast s).split(r);
+	}
+
 	// TODO: this is temporary
 	public static inline function thisOrDefault<T>(value:T, def:T):T {
 		return if ((value : ASAny)) value else def;

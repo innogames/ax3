@@ -30,6 +30,7 @@ class RewriteArrayAccess extends AbstractFilter {
 					case [TTDictionary(expectedKeyType, _), keyType]:
 						switch [expectedKeyType, keyType] {
 							case [TTAny, _] | [_, TTAny]: // oh well
+							case [TTObject(TTAny), _]:
 							case [TTClass, TTStatic(_)]: //allowed
 							case _:
 								if (!Type.enumEq(expectedKeyType, keyType)) {

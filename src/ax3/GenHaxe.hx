@@ -47,7 +47,34 @@ class GenHaxe extends PrinterBase {
 		if (i.syntax.condCompBegin != null) printCondCompBegin(i.syntax.condCompBegin);
 		if (!i.kind.match(TIDecl({kind: TDNamespace(_)}))) { // TODO: still print trivia from namespace imports?
 			printTextWithTrivia("import", i.syntax.keyword);
-			printDotPath(i.syntax.path);
+
+			{
+				// lowercase package first letter for Haxe
+				// TODO: don't use syntax at all, and get rid of the hacks
+				var p = i.syntax.path;
+				if (p.rest.length == 0) {
+					printTextWithTrivia(p.first.text, p.first);
+				} else {
+					inline function lowerFirst(t:Token) {
+						if (t.text == "Globals") { // hacky hack
+							printTextWithTrivia(t.text, t);
+						} else {
+							printTextWithTrivia(t.text.charAt(0).toLowerCase() + t.text.substring(1), t);
+						}
+					}
+					lowerFirst(p.first);
+					for (i in 0...p.rest.length) {
+						var part = p.rest[i];
+						printDot(part.sep);
+						if (i == p.rest.length - 1) {
+							printTextWithTrivia(part.element.text, part.element);
+						} else {
+							lowerFirst(part.element);
+						}
+					}
+				}
+			}
+
 			switch i.kind {
 				case TIDecl(_):
 				case TIAliased(d, as, name):

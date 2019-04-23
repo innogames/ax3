@@ -16,6 +16,12 @@ class DateApi extends AbstractFilter {
 						}
 						var eNowField = mk(TEField({kind: TOExplicit(mkDot(), eDate), type: eDate.type}, "now", mkIdent("now")), TTFunction, TTFunction);
 						e.with(kind = TECall(eNowField, args));
+
+					case {args: [_]}: // single-arg - rewrite to Date.fromTime(arg)
+						processLeadingToken(t -> t.leadTrivia = t.leadTrivia.concat(keyword.leadTrivia), eDate);
+						var eNowField = mk(TEField({kind: TOExplicit(mkDot(), eDate), type: eDate.type}, "fromTime", mkIdent("fromTime")), TTFunction, TTFunction);
+						e.with(kind = TECall(eNowField, args));
+
 					case _:
 						e;
 				}

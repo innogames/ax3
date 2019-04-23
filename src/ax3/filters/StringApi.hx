@@ -40,6 +40,23 @@ class StringApi extends AbstractFilter {
 						throwError(exprPos(e), "Unsupported String.match arguments");
 				}
 
+			case TECall(eMethod = {kind: TEField({kind: TOExplicit(_, eString = {type: TTString})}, "split", _)}, args):
+				args = mapCallArgs(processExpr, args);
+				switch args.args {
+					case [ePattern = {expr: {type: TTRegExp}}]:
+						eString = processExpr(eString);
+						var eCompatReplace = mkBuiltin("ASCompat.regExpSplit", tCompatReplace, removeLeadingTrivia(eString));
+						e.with(kind = TECall(eCompatReplace, args.with(args = [
+							{expr: eString, comma: commaWithSpace}, ePattern
+						])));
+
+					case [{expr: {type: TTString}}]:
+						e.with(kind = TECall(eMethod, args));
+
+					case _:
+						throwError(exprPos(e), "Unsupported String.split arguments");
+				}
+
 			case TEField(fobj = {type: TTString}, "slice", fieldToken):
 				mapExpr(processExpr, e).with(kind = TEField(fobj, "substring", new Token(fieldToken.pos, TkIdent, "substring", fieldToken.leadTrivia, fieldToken.trailTrivia)));
 
@@ -49,7 +66,7 @@ class StringApi extends AbstractFilter {
 			case TEField(fobj = {type: TTString}, "toLocaleUpperCase", fieldToken):
 				mapExpr(processExpr, e).with(kind = TEField(fobj, "toUpperCase", new Token(fieldToken.pos, TkIdent, "toUpperCase", fieldToken.leadTrivia, fieldToken.trailTrivia)));
 
-			case TEField({type: TTString}, name = "replace" | "match", _):
+			case TEField({type: TTString}, name = "replace" | "match" | "split", _):
 				throwError(exprPos(e), "closure on String." + name);
 
 			case _:
