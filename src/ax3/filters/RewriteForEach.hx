@@ -2,30 +2,71 @@ package ax3.filters;
 
 class RewriteForEach extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
-		return e;
 		return switch (e.kind) {
 			case TEForEach(f):
-				// var body = processExpr(f.body);
+				var eobj = f.iter.eobj;
+				var body = processExpr(f.body);
 
-				// var itName, vit, eobj;
+				switch eobj.type {
+					case TTArray(_) | TTVector(_) | TTDictionary(_) | TTObject(_) | TTAny:
+					case TTXMLList: // TODO: rewrite this
+					case _:
+						throwError(exprPos(eobj), "Unknown `for each` iteratee");
+				}
+
+				var itName, vit;
 				switch (f.iter.eit.kind) {
-					// for each (var x in obj)
-					case TEVars(kind, [varDecl]):
+					// for each (var x in obj) - use the var directly
+					case TEVars(_, [varDecl]):
+						itName = addTrailingWhitespace(varDecl.syntax.name);
+						vit = varDecl.v;
 
-					// for each (x in obj)
-					case TELocal(_, v):
+					// for each (x in obj) - use tempvar and assign to var, because it might be used outside
+					case TELocal(token, v):
+						var tmpName = "_tmp_";
+						itName = mkIdent(tmpName, [], [whitespace]);
+						vit = {name: tmpName, type: v.type};
+						var eAssign = mk(TEBinop(
+							f.iter.eit,
+							OpAssign(new Token(0, TkEquals, "=", [whitespace], [whitespace])),
+							mk(TELocal(mkIdent(tmpName), vit), v.type, v.type)
+						), v.type, v.type);
+						body = concatExprs(eAssign, body);
 
 					case _:
-						reportError(exprPos(f.iter.eit), "Unsupported `for each in` iterator");
-						throw "assert";
-				};
+						throwError(exprPos(f.iter.eit), "Unsupported `for each in` iterator");
+				}
 
-				// mapExpr(processExpr, e);
-				e;
+				var eFor = mk(TEHaxeFor({
+					syntax: {
+						forKeyword: f.syntax.forKeyword,
+						openParen: f.syntax.openParen,
+						itName: itName,
+						inKeyword: f.iter.inKeyword,
+						closeParen: f.syntax.closeParen
+					},
+					vit: vit,
+					iter: eobj,
+					body: body
+				}), TTVoid, TTVoid);
+
+				mk(TEIf({
+					syntax: {
+						keyword: mkIdent("if", removeLeadingTrivia(eFor), [whitespace]),
+						openParen: mkOpenParen(),
+						closeParen: addTrailingWhitespace(mkCloseParen()),
+					},
+					econd: mk(TEBinop(
+						eobj, // TODO: tempvar?
+						OpEquals(mkEqualsEqualsToken()),
+						mkNullExpr()
+					), TTBoolean, TTBoolean),
+					ethen: eFor,
+					eelse: null
+				}), TTVoid, TTVoid);
 
 			case _:
-				e;
-				// mapExpr(processExpr, e);
+				mapExpr(processExpr, e);
 		}
 	}
 }
