@@ -30,6 +30,5 @@ TODO:
  - optionally don't generate var type hints if the init expr type is exaclty the same
  - optionally don't generate `private` keywords
  - `escape`, `string.split(regexp)`, `string.concat`, `string.search`
- - lowercase first letter of package
  - generate properties next to first accessor (so they end up within cond.compilation)
  - remove @haxe-type trivia
