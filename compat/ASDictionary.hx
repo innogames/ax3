@@ -8,7 +8,11 @@ abstract ASDictionary<K,V>(flash.utils.Dictionary) from flash.utils.Dictionary {
 		return this[cast key] = v;
 	}
 
-	public inline function iterator():Iterator<K> {
+	public inline function keys():Iterator<K> {
+		return null;
+	}
+
+	public inline function iterator():Iterator<V> {
 		return null;
 	}
 
