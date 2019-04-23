@@ -13,10 +13,10 @@ class RewriteForIn extends AbstractFilter {
 				var eobj = f.iter.eobj;
 				var body = processExpr(f.body);
 
-				// TODO: for...in on Dictionaries actually iterate over any keys
-
+				var actualKeyType;
 				switch eobj.type {
-					case TTDictionary(_):
+					case TTDictionary(keyType, _):
+						actualKeyType = keyType;
 						var obj = {
 							kind: TOExplicit(mkDot(), eobj),
 							type: eobj.type
@@ -24,6 +24,7 @@ class RewriteForIn extends AbstractFilter {
 						var eKeys = mk(TEField(obj, "keys", mkIdent("keys")), tIteratorMethod, tIteratorMethod);
 						eobj = mkCall(eKeys, []);
 					case _:
+						actualKeyType = TTString;
 				}
 
 
@@ -32,22 +33,23 @@ class RewriteForIn extends AbstractFilter {
 					// for (var x in obj)
 					case TEVars(kind, [varDecl]):
 
-						if (varDecl.v.type == TTString) { // TODO: dictionary keys can be anything
-							// easy - iterate over string keys
+						if (Type.enumEq(varDecl.v.type, actualKeyType)) {
+							// easy - iterate over keys
 							itName = varDecl.syntax.name;
 							if (itName.trailTrivia.length == 0) {
 								itName.trailTrivia.push(whitespace);
 							}
 							vit = varDecl.v;
 						} else {
-							// harder - have to cast the string to whatever type
+							// TODO: warn here?
+							// harder - have to cast key to whatever type
 							itName = mkTempIterName();
-							vit = {name: itName.text, type: TTString};
+							vit = {name: itName.text, type: actualKeyType};
 
 							var varInit = mk(TEVars(kind, [
 								varDecl.with(init = {
 									equalsToken: mkTokenWithSpaces(TkEquals, "="),
-									expr: mk(TELocal(new Token(0, TkIdent, vit.name, [], []), vit), vit.type, varDecl.v.type)
+									expr: mk(TELocal(new Token(0, TkIdent, vit.name, [], []), vit), actualKeyType, varDecl.v.type)
 								})
 							]), TTVoid, TTVoid);
 
@@ -57,12 +59,12 @@ class RewriteForIn extends AbstractFilter {
 					// for (x in obj)
 					case TELocal(_, v):
 						itName = mkTempIterName();
-						vit = {name: itName.text, type: TTString};
+						vit = {name: itName.text, type: actualKeyType};
 
 						var varInit = mk(TEBinop(
 							f.iter.eit,
 							OpAssign(mkTokenWithSpaces(TkEquals, "=")),
-							mk(TELocal(new Token(0, TkIdent, vit.name, [], []), vit), vit.type, v.type)
+							mk(TELocal(new Token(0, TkIdent, vit.name, [], []), vit), actualKeyType, v.type)
 						), TTVoid, TTVoid);
 
 						body = concatExprs(varInit, body);
