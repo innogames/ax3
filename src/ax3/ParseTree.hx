@@ -1,5 +1,7 @@
 package ax3;
 
+import ax3.Token.Trivia;
+
 class ParseTree {
 	public static function dotPathToString(d:DotPath):String {
 		return dotPathToArray(d).join(".");
@@ -14,6 +16,31 @@ class ParseTree {
 			case TAny(star): star.pos;
 			case TPath(path): path.first.pos;
 			case TVector(v): v.name.pos;
+		}
+	}
+
+	public static function getDotPathLeadingTrivia(path:DotPath):Array<Trivia> {
+		return path.first.leadTrivia;
+	}
+
+	public static function getDotPathTrailingTrivia(path:DotPath):Array<Trivia> {
+		return if (path.rest.length == 0) path.first.trailTrivia
+		       else path.rest[path.rest.length - 1].element.trailTrivia;
+	}
+
+	public static function getSyntaxTypeLeadingTrivia(t:SyntaxType):Array<Trivia> {
+		return switch t {
+			case TAny(star): star.leadTrivia;
+			case TPath(path): getDotPathLeadingTrivia(path);
+			case TVector(v): v.name.leadTrivia;
+		}
+	}
+
+	public static function getSyntaxTypeTrailingTrivia(t:SyntaxType):Array<Trivia> {
+		return switch t {
+			case TAny(star): star.trailTrivia;
+			case TPath(path): getDotPathTrailingTrivia(path);
+			case TVector(v): v.t.gt.trailTrivia;
 		}
 	}
 

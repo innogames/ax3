@@ -317,13 +317,7 @@ class GenHaxe extends PrinterBase {
 				if (vf.isInline) buf.add("inline ");
 				printVarKind(vf.kind);
 				printTextWithTrivia(v.name, v.syntax.name);
-				if (v.syntax.type != null) {
-					// printSyntaxTypeHint(v.syntax.type);
-					printColon(v.syntax.type.colon);
-				} else {
-					buf.add(":");
-				}
-				printTType(v.type);
+				printTypeHint({type: v.type, syntax: v.syntax.type});
 				if (v.init != null) printVarInit(v.init);
 				if (v.comma != null) throw "assert";
 				printSemicolon(vf.semicolon);
@@ -362,13 +356,7 @@ class GenHaxe extends PrinterBase {
 			switch (arg.kind) {
 				case TArgNormal(hint, init):
 					printTextWithTrivia(arg.name, arg.syntax.name);
-					if (hint != null) {
-						printColon(hint.colon);
-					} else {
-						buf.add(":");
-					}
-					printTType(arg.type);
-					// if (hint != null) printSyntaxTypeHint(hint);
+					printTypeHint({type: arg.type, syntax: hint});
 					if (init != null) printVarInit(init);
 
 				case TArgRest(dots, _):
@@ -382,17 +370,6 @@ class GenHaxe extends PrinterBase {
 		if (printReturnType) {
 			printTypeHint(sig.ret);
 		}
-	}
-
-	function printTypeHint(hint:TTypeHint) {
-		if (hint.syntax != null) {
-			// printSyntaxTypeHint(hint.syntax);
-			printColon(hint.syntax.colon);
-		} else {
-			buf.add(":");
-		}
-		// TODO don't forget trivia
-		printTType(hint.type);
 	}
 
 	function printTType(t:TType) {
@@ -442,9 +419,17 @@ class GenHaxe extends PrinterBase {
 		return if (packName == "") cls.name else packName + "." + cls.name;
 	}
 
-	function printSyntaxTypeHint(t:TypeHint) {
-		printColon(t.colon);
-		printSyntaxType(t.type);
+	function printTypeHint(hint:TTypeHint) {
+		if (hint.syntax != null) {
+			printColon(hint.syntax.colon);
+			printTrivia(ParseTree.getSyntaxTypeLeadingTrivia(hint.syntax.type));
+		} else {
+			buf.add(":");
+		}
+		printTType(hint.type);
+		if (hint.syntax != null) {
+			printTrivia(ParseTree.getSyntaxTypeTrailingTrivia(hint.syntax.type));
+		}
 	}
 
 	function printExpr(e:TExpr) {
@@ -495,10 +480,14 @@ class GenHaxe extends PrinterBase {
 			case TEBlock(block): printBlock(block);
 			case TETry(t): printTry(t);
 			case TEVector(syntax, type):
-				buf.add("flash.Vector<");
+				printTextWithTrivia("flash.Vector", syntax.name);
+				printTrivia(syntax.dot.leadTrivia);
+				printTrivia(syntax.dot.trailTrivia);
+				printTextWithTrivia("<", syntax.t.lt);
+				printTrivia(ParseTree.getSyntaxTypeLeadingTrivia(syntax.t.type));
 				printTType(type);
-				buf.add(">");
-				// printVectorSyntax(syntax);
+				printTrivia(ParseTree.getSyntaxTypeTrailingTrivia(syntax.t.type));
+				printTextWithTrivia(">", syntax.t.gt);
 
 			case TETernary(t): printTernary(t);
 			case TEIf(i): printIf(i);
@@ -569,14 +558,13 @@ class GenHaxe extends PrinterBase {
 	}
 
 	function printCast(c:TCast) {
-		printTrivia(c.syntax.path.first.leadTrivia);
-		c.syntax.path.first.leadTrivia = [];
+		printTrivia(ParseTree.getDotPathLeadingTrivia(c.syntax.path));
 		buf.add("cast");
 		printOpenParen(c.syntax.openParen);
 		printExpr(c.expr);
-		buf.add(",");
-		// printDotPath(c.syntax.path);
+		buf.add(", ");
 		printTType(c.type);
+		printTrivia(ParseTree.getDotPathTrailingTrivia(c.syntax.path));
 		printCloseParen(c.syntax.closeParen);
 	}
 
@@ -620,26 +608,6 @@ class GenHaxe extends PrinterBase {
 		printCloseBrace(s.syntax.closeBrace);
 	}
 
-	function printVectorSyntax(syntax:VectorSyntax) {
-		printTextWithTrivia("Vector", syntax.name);
-		printDot(syntax.dot);
-		printTypeParam(syntax.t);
-	}
-
-	function printTypeParam(t:TypeParam) {
-		printTextWithTrivia("<", t.lt);
-		printSyntaxType(t.type);
-		printTextWithTrivia(">", t.gt);
-	}
-
-	function printSyntaxType(t:SyntaxType) {
-		switch (t) {
-			case TAny(star): printTextWithTrivia("*", star);
-			case TPath(path): printDotPath(path);
-			case TVector(v): printVectorSyntax(v);
-		}
-	}
-
 	function printCondCompBlock(v:TCondCompVar, expr:TExpr) {
 		printTokenTrivia(v.syntax.ns);
 		printTokenTrivia(v.syntax.sep);
@@ -668,9 +636,7 @@ class GenHaxe extends PrinterBase {
 			printTextWithTrivia("catch", c.syntax.keyword);
 			printOpenParen(c.syntax.openParen);
 			printTextWithTrivia(c.v.name, c.syntax.name);
-			printColon(c.syntax.type.colon);
-			// printSyntaxType(c.syntax.type.type);
-			printTType(c.v.type);
+			printTypeHint({type: c.v.type, syntax: c.syntax.type});
 			printCloseParen(c.syntax.closeParen);
 			printExpr(c.expr);
 		}
@@ -713,16 +679,15 @@ class GenHaxe extends PrinterBase {
 	}
 
 	function printVectorDecl(d:TVectorDecl) {
-		// printTextWithTrivia("new", d.syntax.newKeyword);
-		// printTypeParam(d.syntax.typeParam);
-		printTextWithTrivia("flash.Vector.ofArray((", d.syntax.newKeyword);
-		var t = d.elements.syntax.closeBracket.trailTrivia;
+		printTrivia(d.syntax.newKeyword.leadTrivia);
+		buf.add("flash.Vector.ofArray((");
+		var trailTrivia = d.elements.syntax.closeBracket.trailTrivia;
 		d.elements.syntax.closeBracket.trailTrivia = [];
 		printArrayDecl(d.elements);
-		buf.add(": Array<");
+		buf.add(":Array<");
 		printTType(d.type);
 		buf.add(">))");
-		printTrivia(t);
+		printTrivia(trailTrivia);
 	}
 
 	function printArrayDecl(d:TArrayDecl) {
@@ -859,13 +824,7 @@ class GenHaxe extends PrinterBase {
 
 			// TODO: skip type hint if there's an initializer with exactly the same type
 			// if (v.init == null || !Type.enumEq(v.v.type, v.init.expr.type)) {
-				if (v.syntax.type != null) {
-					printColon(v.syntax.type.colon);
-					// printSyntaxTypeHint(v.syntax.type);
-				} else {
-					buf.add(":");
-				}
-				printTType(v.v.type);
+				printTypeHint({type: v.v.type, syntax: v.syntax.type});
 			// }
 
 			if (v.init != null) printVarInit(v.init);
