@@ -856,13 +856,18 @@ class GenHaxe extends PrinterBase {
 		printVarKind(kind);
 		for (v in vars) {
 			printTextWithTrivia(v.v.name, v.syntax.name);
-			if (v.syntax.type != null) {
-				printColon(v.syntax.type.colon);
-				// printSyntaxTypeHint(v.syntax.type);
-			} else {
-				buf.add(":");
-			}
-			printTType(v.v.type);
+
+			// TODO: skip type hint if there's an initializer with exactly the same type
+			// if (v.init == null || !Type.enumEq(v.v.type, v.init.expr.type)) {
+				if (v.syntax.type != null) {
+					printColon(v.syntax.type.colon);
+					// printSyntaxTypeHint(v.syntax.type);
+				} else {
+					buf.add(":");
+				}
+				printTType(v.v.type);
+			// }
+
 			if (v.init != null) printVarInit(v.init);
 			if (v.comma != null) printComma(v.comma);
 		}
