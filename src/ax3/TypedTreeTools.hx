@@ -20,6 +20,34 @@ class TypedTreeTools {
 		return false;
 	}
 
+	public static function getInnerIndent(expr:TExpr):Array<Trivia> {
+		return switch expr.kind {
+			case TEBlock(block) if (block.exprs.length > 0):
+				getIndent(block.exprs[0].expr);
+			case _:
+				[];
+		}
+	}
+
+	static function getIndent(expr:TExpr):Array<Trivia> {
+		return processLeadingToken(function(token) {
+			var result = [], hadOnlyWhitespace = true;
+			for (trivia in token.leadTrivia) {
+				switch trivia.kind {
+					case TrBlockComment | TrLineComment:
+						result = [];
+						hadOnlyWhitespace = false;
+					case TrNewline:
+						result = [];
+						hadOnlyWhitespace = true;
+					case TrWhitespace:
+						result.push(trivia);
+				}
+			}
+			return if (hadOnlyWhitespace) result else [];
+		}, expr);
+	}
+
 	public static function getConstructor(cls:TClassOrInterfaceDecl):Null<TFunctionField> {
 		var extend;
 		switch (cls.kind) {

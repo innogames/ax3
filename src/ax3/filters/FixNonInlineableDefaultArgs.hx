@@ -4,17 +4,17 @@ class FixNonInlineableDefaultArgs extends AbstractFilter {
 	override function processFunction(fun:TFunction) {
 		if (fun.expr == null) return;
 		var initExprs = [];
+		var indent = getInnerIndent(fun.expr);
 		for (arg in fun.sig.args) {
 			switch arg.kind {
 				case TArgNormal(type, init = {expr: {kind: TEField({type: TTStatic(cls)}, fieldName, fieldToken)}}):
 					switch cls.findField(fieldName, true) {
 						case {kind: TFVar(f)}:
 							if (!f.isInline) {
-								// TODO: handle trivias
 								var eLocal = mk(TELocal(mkIdent(arg.name), arg.v), arg.v.type, arg.v.type);
 								var check = mk(TEIf({
 									syntax: {
-										keyword: addTrailingWhitespace(mkIdent("if")),
+										keyword: mkIdent("if", indent, [whitespace]),
 										openParen: mkOpenParen(),
 										closeParen: addTrailingWhitespace(mkCloseParen())
 									},
@@ -38,7 +38,7 @@ class FixNonInlineableDefaultArgs extends AbstractFilter {
 		if (initExprs.length > 0) {
 			var initBlock = mk(TEBlock({
 				syntax: {
-					openBrace: mkOpenBrace(),
+					openBrace: addTrailingNewline(mkOpenBrace()),
 					closeBrace: mkCloseBrace()
 				},
 				exprs: initExprs,
