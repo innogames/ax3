@@ -34,6 +34,7 @@ class Filters {
 			new InvertNegatedEquality(context),
 			new HaxeProperties(context),
 			new UnqualifiedSuperStatics(context),
+			new FixNonInlineableDefaultArgs(context),
 			// new AddParens(context),
 			new AddRequiredParens(context),
 			// new CheckExpectedTypes(context)

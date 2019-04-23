@@ -23,7 +23,6 @@
 
 TODO:
  - work-around Stage.quality getter bug (add toLowerCase() to the field access)
- - move non-inline argument default values into the function body
  - implement class-wrapping for module-level vars/functions
  - handle Null<T> to T conversion in some cases (e.g. for var x:int = dict[inexistant])
  - finish compat abstracts
