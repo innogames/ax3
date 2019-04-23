@@ -595,7 +595,7 @@ class TypedTreeTools {
 		return if (r == null) decls else r;
 	}
 
-	static function mapBlockExprs(f:TExpr->TExpr, exprs:Array<TBlockExpr>):Array<TBlockExpr> {
+	public static function mapBlockExprs(f:TExpr->TExpr, exprs:Array<TBlockExpr>):Array<TBlockExpr> {
 		var r:Null<Array<TBlockExpr>> = null;
 		for (i in 0...exprs.length) {
 			var e = exprs[i];

@@ -11,6 +11,16 @@ class RewriteBlockBinops extends AbstractFilter {
 				var mapped = mapBlock(modifyBlockExpr, b);
 				if (mapped == b) e else e.with(kind = TEBlock(mapped));
 
+			case TESwitch(s):
+				// we modify the expr in-place here, but oh well
+				for (c in s.cases) {
+					c.body = mapBlockExprs(modifyBlockExpr, c.body);
+				}
+				if (s.def != null) {
+					s.def.body = mapBlockExprs(modifyBlockExpr, s.def.body);
+				}
+				e;
+
 			case _:
 				e;
 		}
