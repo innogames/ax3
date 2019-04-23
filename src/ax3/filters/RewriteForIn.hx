@@ -2,17 +2,18 @@ package ax3.filters;
 
 class RewriteForIn extends AbstractFilter {
 	static inline function mkTempIterName() {
-		return new Token(0, TkIdent, "__tmp", [], [whitespace]);
+		return new Token(0, TkIdent, "_tmp_", [], [whitespace]);
 	}
 
 	override function processExpr(e:TExpr):TExpr {
 		return switch (e.kind) {
 			case TEForIn(f):
+				var eobj = f.iter.eobj;
 				var body = processExpr(f.body);
 
 				// TODO: for...in on Dictionaries actually iterate over any keys
 
-				var itName, vit, eobj;
+				var itName, vit;
 				switch (f.iter.eit.kind) {
 					// for (var x in obj)
 					case TEVars(kind, [varDecl]):
@@ -57,9 +58,7 @@ class RewriteForIn extends AbstractFilter {
 						throw "assert";
 				};
 
-				var eobj = f.iter.eobj;
-
-				mk(TEHaxeFor({
+				var eFor = mk(TEHaxeFor({
 					syntax: {
 						forKeyword: f.syntax.forKeyword,
 						openParen: f.syntax.openParen,
@@ -70,6 +69,21 @@ class RewriteForIn extends AbstractFilter {
 					vit: vit,
 					iter: eobj,
 					body: body
+				}), TTVoid, TTVoid);
+
+				mk(TEIf({
+					syntax: {
+						keyword: mkIdent("if", removeLeadingTrivia(eFor), [whitespace]),
+						openParen: mkOpenParen(),
+						closeParen: addTrailingWhitespace(mkCloseParen()),
+					},
+					econd: mk(TEBinop(
+						eobj, // TODO: tempvar?
+						OpEquals(mkEqualsEqualsToken()),
+						mkNullExpr()
+					), TTBoolean, TTBoolean),
+					ethen: eFor,
+					eelse: null
 				}), TTVoid, TTVoid);
 
 			case _:
