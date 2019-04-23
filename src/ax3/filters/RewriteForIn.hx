@@ -1,6 +1,8 @@
 package ax3.filters;
 
 class RewriteForIn extends AbstractFilter {
+	static final tIteratorMethod = TTFun([], TTBuiltin);
+
 	static inline function mkTempIterName() {
 		return new Token(0, TkIdent, "_tmp_", [], [whitespace]);
 	}
@@ -13,12 +15,24 @@ class RewriteForIn extends AbstractFilter {
 
 				// TODO: for...in on Dictionaries actually iterate over any keys
 
+				switch eobj.type {
+					case TTDictionary(_):
+						var obj = {
+							kind: TOExplicit(mkDot(), eobj),
+							type: eobj.type
+						};
+						var eKeys = mk(TEField(obj, "keys", mkIdent("keys")), tIteratorMethod, tIteratorMethod);
+						eobj = mkCall(eKeys, []);
+					case _:
+				}
+
+
 				var itName, vit;
 				switch (f.iter.eit.kind) {
 					// for (var x in obj)
 					case TEVars(kind, [varDecl]):
 
-						if (varDecl.v.type == TTString) {
+						if (varDecl.v.type == TTString) { // TODO: dictionary keys can be anything
 							// easy - iterate over string keys
 							itName = varDecl.syntax.name;
 							if (itName.trailTrivia.length == 0) {
@@ -54,9 +68,8 @@ class RewriteForIn extends AbstractFilter {
 						body = concatExprs(varInit, body);
 
 					case _:
-						reportError(exprPos(f.iter.eit), "Unsupported `for in` iterator");
-						throw "assert";
-				};
+						throwError(exprPos(f.iter.eit), "Unsupported `for in` iterator");
+				}
 
 				var eFor = mk(TEHaxeFor({
 					syntax: {
@@ -78,7 +91,7 @@ class RewriteForIn extends AbstractFilter {
 						closeParen: addTrailingWhitespace(mkCloseParen()),
 					},
 					econd: mk(TEBinop(
-						eobj, // TODO: tempvar?
+						f.iter.eobj, // TODO: tempvar?
 						OpEquals(mkEqualsEqualsToken()),
 						mkNullExpr()
 					), TTBoolean, TTBoolean),
