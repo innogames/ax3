@@ -139,14 +139,17 @@ class ArrayApi extends AbstractFilter {
 						e.with(kind = TECall(eCompatMethod, args.with(args = newArgs)));
 				}
 
-			case TECall({kind: TEVector(_)}, args):
+			case TECall({kind: TEVector(_, elemType)}, args):
 				switch args.args {
 					case [{expr: {type: TTVector(_)}}]:
 						var convertMethod = mkBuiltin("flash.Vector.convert", TTFunction, removeLeadingTrivia(e));
 						e.with(kind = TECall(convertMethod, args));
 
-					case [{expr: {type: TTArray(_) | TTAny}}]:
+					case [eArray = {expr: {type: TTArray(_) | TTAny}}]:
 						var convertMethod = mkBuiltin("flash.Vector.ofArray", TTFunction, removeLeadingTrivia(e));
+						var t = TTArray(elemType);
+						var eRetypedArray = eArray.with(expr = mk(TEHaxeRetype(eArray.expr), t, t));
+						args = args.with(args = [eRetypedArray]);
 						e.with(kind = TECall(convertMethod, args));
 
 					case _:
