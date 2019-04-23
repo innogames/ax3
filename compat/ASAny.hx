@@ -1,6 +1,11 @@
 @:callable // TODO it's a bit unsafe because @:callable takes and returns Dynamic, not ASAny
            // I'm not sure how much can we do about it, maybe wrap the TTAny arguments and the return value in ASAny on the converter level?
-abstract ASAny(Dynamic) from Dynamic from haxe.Constraints.Function from flash.utils.Object to flash.utils.Object {
+abstract ASAny(Dynamic)
+	from Dynamic
+	from haxe.Constraints.Function
+	from flash.utils.Object
+	to flash.utils.Object {
+
 	public inline function new() this = {};
 
 	public inline function hasOwnProperty(name:String):Bool {
@@ -65,4 +70,6 @@ abstract ASAny(Dynamic) from Dynamic from haxe.Constraints.Function from flash.u
 
 	@:op([]) inline function ___arrayGet(name:ASAny):ASAny return ___get(name);
 	@:op([]) inline function ___arraySet(name:ASAny, value:ASAny):ASAny return ___set(name, value);
+
+	@:from extern static inline function ___fromDictionary<K,V>(d:ASDictionary<K,V>):ASAny return d;
 }
