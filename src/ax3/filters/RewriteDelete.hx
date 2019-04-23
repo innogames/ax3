@@ -1,7 +1,7 @@
 package ax3.filters;
 
 class RewriteDelete extends AbstractFilter {
-	static final eDeleteField = mkBuiltin("Reflect.deleteField", TTFun([TTAny, TTString], TTBoolean));
+	static final tDeleteField = TTFun([TTAny, TTString], TTBoolean);
 
 	override function processExpr(e:TExpr):TExpr {
 		e = mapExpr(processExpr, e);
@@ -34,7 +34,12 @@ class RewriteDelete extends AbstractFilter {
 			case [TTObject(_), _] | [_, TTString]:
 				// make sure the expected type is string so further filters add the cast
 				var eindex = if (a.eindex.type != TTString) a.eindex.with(expectedType = TTString) else a.eindex;
-				mkCall(eDeleteField, [a.eobj, eindex]);
+				var eDeleteField = mkBuiltin("Reflect.deleteField", tDeleteField, deleteKeyword.leadTrivia);
+				eDelete.with(kind = TECall(eDeleteField, {
+					openParen: new Token(0, TkParenOpen, "(", a.syntax.openBracket.leadTrivia, a.syntax.openBracket.trailTrivia),
+					closeParen: new Token(0, TkParenClose, ")", a.syntax.openBracket.leadTrivia, a.syntax.openBracket.trailTrivia),
+					args: [{expr: a.eobj, comma: commaWithSpace}, {expr: eindex, comma: null}]
+				}));
 
 			case [TTArray(_), TTInt | TTUint]:
 				reportError(exprPos(a.eindex), 'delete on array?');
@@ -50,8 +55,7 @@ class RewriteDelete extends AbstractFilter {
 				mk(TEBinop(eDeleteObj, OpAssign(new Token(0, TkEquals, "=", [], [])), mkNullExpr()), TTVoid, TTVoid);
 
 			case _:
-				reportError(exprPos(a.eindex), 'Unknown index type: ' + a.eindex.type.getName());
-				throw "assert";
+				throwError(exprPos(a.eindex), 'Unknown index type: ' + a.eindex.type.getName());
 		}
 	}
 }
