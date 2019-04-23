@@ -1,0 +1,8 @@
+tutorial.instructions.ITutorialInstruction.target : ASObject;
+tutorial.instructions.triggers.ITutorialTrigger.completeCallback : haxe.Constraints.Function;
+
+tutorial.parser.ITutorialParser.$parse__p1 : ASObject;
+tutorial.parser.ITutorialParser.$parse__data : ASObject;
+
+de.innogames.common.assets.lib.ISoundAtlasLoader.$loadAtlas__handler : Bool->Void;
+de.innogames.common.assets.lib.ISoundAtlasLoader.$loadAtlas__p2 : Bool->Void;
