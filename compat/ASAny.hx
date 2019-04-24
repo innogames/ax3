@@ -3,7 +3,6 @@
 abstract ASAny(Dynamic)
 	from Dynamic
 	from haxe.Constraints.Function
-	from flash.utils.Object
 	to flash.utils.Object {
 
 	public inline function new() this = {};
