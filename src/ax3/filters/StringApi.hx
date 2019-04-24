@@ -40,6 +40,15 @@ class StringApi extends AbstractFilter {
 						throwError(exprPos(e), "Unsupported String.match arguments");
 				}
 
+			case TECall({kind: TEField({kind: TOExplicit(_, eString = {type: TTString})}, "concat", _)}, args):
+				eString = processExpr(eString);
+				args = mapCallArgs(processExpr, args);
+				var e = eString;
+				for (arg in args.args) {
+					e = mk(TEBinop(e, OpAdd(new Token(0, TkPlus, "+", [whitespace], [whitespace])), arg.expr.with(expectedType = TTString)), TTString, TTString);
+				}
+				e;
+
 			case TECall(eMethod = {kind: TEField({kind: TOExplicit(_, eString = {type: TTString})}, "split", _)}, args):
 				args = mapCallArgs(processExpr, args);
 				switch args.args {
@@ -66,7 +75,7 @@ class StringApi extends AbstractFilter {
 			case TEField(fobj = {type: TTString}, "toLocaleUpperCase", fieldToken):
 				mapExpr(processExpr, e).with(kind = TEField(fobj, "toUpperCase", new Token(fieldToken.pos, TkIdent, "toUpperCase", fieldToken.leadTrivia, fieldToken.trailTrivia)));
 
-			case TEField({type: TTString}, name = "replace" | "match" | "split", _):
+			case TEField({type: TTString}, name = "replace" | "match" | "split" | "concat", _):
 				throwError(exprPos(e), "closure on String." + name);
 
 			case _:

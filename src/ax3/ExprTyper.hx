@@ -626,7 +626,7 @@ class ExprTyper {
 			case "split": TTFun([TTAny, TTNumber], TTArray(TTString));
 			case "charAt": TTFun([TTNumber], TTString);
 			case "charCodeAt": TTFun([TTNumber], TTNumber);
-			case "concat": TTFun([TTAny], TTString);
+			case "concat": TTFun([], TTString, TRestSwc);
 			case "search": TTFun([TTAny], TTInt);
 			case "replace": TTFun([TTAny, tUntypedObject], TTString);
 			case "match": TTFun([TTAny], TTArray(TTString));

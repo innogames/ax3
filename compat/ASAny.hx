@@ -68,8 +68,13 @@ abstract ASAny(Dynamic)
 	@:op(a >= b) static function ___gte(a:ASAny, b:Float):Bool return a.___toFloat() >= b;
 	@:op(a <= b) static function ___lte(a:ASAny, b:Float):Bool return a.___toFloat() <= b;
 
+	@:op(a > b) static function ___gt2(a:Float, b:ASAny):Bool return a > b.___toFloat();
+	@:op(a < b) static function ___lt2(a:Float, b:ASAny):Bool return a < b.___toFloat();
+	@:op(a >= b) static function ___gte2(a:Float, b:ASAny):Bool return a >= b.___toFloat();
+	@:op(a <= b) static function ___lte2(a:Float, b:ASAny):Bool return a <= b.___toFloat();
+
 	@:op([]) inline function ___arrayGet(name:ASAny):ASAny return ___get(name);
 	@:op([]) inline function ___arraySet(name:ASAny, value:ASAny):ASAny return ___set(name, value);
 
-	@:from extern static inline function ___fromDictionary<K,V>(d:ASDictionary<K,V>):ASAny return d;
+	@:from extern static inline function ___fromDictionary<K,V>(d:ASDictionary<K,V>):ASAny return cast d;
 }
