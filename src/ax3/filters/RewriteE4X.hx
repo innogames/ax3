@@ -35,23 +35,23 @@ class RewriteE4X extends AbstractFilter {
 				e.with(kind = TEBinop(eZeroElem, op, eValue.with(expectedType = TTString)));
 
 			case TEXmlAttr(x):
-				var eobj = processExpr(x.eobj);
-				mkAttributeAccess(eobj, x.name, x.syntax.at, x.syntax.dot, x.syntax.name);
+				mkAttributeAccess(processExpr(x.eobj), x.name, x.syntax.at, x.syntax.dot, x.syntax.name);
+
+			case TEBinop({kind: TEXmlAttrExpr(x)}, op = OpAssign(_), eValue):
+				eValue = processExpr(eValue);
+				var eAttr = mkAttributeExprAccess(processExpr(x.eobj), processExpr(x.eattr), x.syntax.at, x.syntax.dot, x.syntax.openBracket, x.syntax.closeBracket);
+				var eZeroElem = mk(TEArrayAccess({
+					syntax: {
+						openBracket: mkOpenBracket(),
+						closeBracket: new Token(0, TkBracketClose, "]", [], removeTrailingTrivia(eAttr))
+					},
+					eobj: eAttr,
+					eindex: mk(TELiteral(TLInt(new Token(0, TkDecimalInteger, "0", [], []))), TTInt, TTInt)
+				}), TTXMLList, TTXMLList);
+				e.with(kind = TEBinop(eZeroElem, op, eValue.with(expectedType = TTString)));
 
 			case TEXmlAttrExpr(x):
-				var eobj = processExpr(x.eobj);
-				var fieldObject = {
-					kind: TOExplicit(new Token(x.syntax.at.pos, TkDot, ".", x.syntax.at.leadTrivia, x.syntax.dot.trailTrivia), eobj),
-					type: eobj.type
-				};
-				var eMethod = mk(TEField(fieldObject, "attribute", mkIdent("attribute")), tMethod, tMethod);
-				e.with(
-					kind = TECall(eMethod, {
-						openParen: new Token(x.syntax.openBracket.pos, TkParenOpen, "(", x.syntax.openBracket.leadTrivia, x.syntax.openBracket.trailTrivia),
-						closeParen: new Token(x.syntax.closeBracket.pos, TkParenClose, ")", x.syntax.closeBracket.leadTrivia, x.syntax.closeBracket.trailTrivia),
-						args: [{expr: processExpr(x.eattr), comma: null}],
-					})
-				);
+				mkAttributeExprAccess(processExpr(x.eobj), processExpr(x.eattr), x.syntax.at, x.syntax.dot, x.syntax.openBracket, x.syntax.closeBracket);
 
 			case TEXmlDescend(x):
 				var eobj = processExpr(x.eobj);
@@ -86,6 +86,23 @@ class RewriteE4X extends AbstractFilter {
 				openParen: mkOpenParen(),
 				closeParen: new Token(0, TkParenClose, ")", [], nameToken.trailTrivia),
 				args: [{expr: mk(TELiteral(TLString(descendantNameToken)), TTString, TTString), comma: null}],
+			}),
+			TTXMLList,
+			TTXMLList
+		);
+	}
+
+	static function mkAttributeExprAccess(eobj:TExpr, eattr:TExpr, at:Token, dot:Token, openBracket:Token, closeBracket:Token):TExpr {
+		var fieldObject = {
+			kind: TOExplicit(new Token(at.pos, TkDot, ".", at.leadTrivia, dot.trailTrivia), eobj),
+			type: eobj.type
+		};
+		var eMethod = mk(TEField(fieldObject, "attribute", mkIdent("attribute")), tMethod, tMethod);
+		return mk(
+			TECall(eMethod, {
+				openParen: new Token(openBracket.pos, TkParenOpen, "(", openBracket.leadTrivia, openBracket.trailTrivia),
+				closeParen: new Token(closeBracket.pos, TkParenClose, ")", closeBracket.leadTrivia, closeBracket.trailTrivia),
+				args: [{expr: eattr, comma: null}],
 			}),
 			TTXMLList,
 			TTXMLList
