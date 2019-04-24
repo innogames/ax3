@@ -45,6 +45,7 @@ class Filters {
 			new FunctionApply(context),
 			new ToString(context),
 			new NamespacedToPublic(context),
+			new VarInits(context),
 		]) {
 			f.run(tree);
 		}
