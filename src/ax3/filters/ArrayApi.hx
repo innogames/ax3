@@ -152,14 +152,15 @@ class ArrayApi extends AbstractFilter {
 
 					case [eArray = {expr: {type: TTArray(_) | TTAny}}]:
 						var convertMethod = mkBuiltin("flash.Vector.ofArray", TTFunction, removeLeadingTrivia(e));
+						var eArrayExpr = eArray.expr;
 
-						switch eArray.expr.type {
+						switch eArrayExpr.type {
 							case TTArray(arrayElemType) if (Type.enumEq(elemType, arrayElemType)):
 								// same type, nothing to do \o/
 							case _:
 								// add type cast
-								var t = TTArray(elemType);
-								var eRetypedArray = eArray.with(expr = mk(TEHaxeRetype(eArray.expr), t, t));
+								var t = TTArray(elemType); // TODO: support inserting `cast` in TEHaxeRetype
+								var eRetypedArray = eArray.with(expr = mk(TEHaxeRetype(eArrayExpr.with(expectedType = t)), t, t));
 								args = args.with(args = [eRetypedArray]);
 						}
 						e.with(kind = TECall(convertMethod, args));
