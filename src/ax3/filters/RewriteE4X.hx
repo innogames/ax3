@@ -69,6 +69,12 @@ class RewriteE4X extends AbstractFilter {
 					})
 				);
 
+			case TECall(eXml = {kind: TEBuiltin(syntax, "XML")}, args):
+				var leadTrivia = syntax.leadTrivia;
+				syntax.leadTrivia = [];
+				var newKeyword = mkIdent("new", leadTrivia, [whitespace]);
+				e.with(kind = TENew(newKeyword, eXml, args));
+
 			case _:
 				mapExpr(processExpr, e);
 		}

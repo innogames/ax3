@@ -5,7 +5,6 @@ import ax3.ParseTree.*;
 import ax3.TypedTree;
 import ax3.TypedTreeTools.mk;
 import ax3.TypedTreeTools.mkDeclRef;
-import ax3.TypedTreeTools.getFunctionTypeFromSignature;
 import ax3.TypedTreeTools.skipParens;
 import ax3.TypedTreeTools.tUntypedArray;
 import ax3.TypedTreeTools.tUntypedObject;
@@ -688,6 +687,9 @@ class ExprTyper {
 			case {type: TTFun(_, ret)}: // known function type call
 				type = ret;
 
+			case {kind: TEBuiltin(syntax, "XML")}:
+				type = TTXML;
+
 			case {kind: TEBuiltin(syntax, "int")}:
 				return mkCast(mkDotPath(syntax), TTInt);
 
@@ -702,9 +704,6 @@ class ExprTyper {
 
 			case {kind: TEBuiltin(syntax, "Number")}:
 				return mkCast(mkDotPath(syntax), TTNumber);
-
-			case {kind: TEBuiltin(syntax, "XML")}:
-				return mkCast(mkDotPath(syntax), TTXML);
 
 			case {kind: TEDeclRef(path, _), type: TTStatic(cls)}: // ClassName(expr) cast
 				return mkCast(path, TTInst(cls));
