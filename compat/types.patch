@@ -8,3 +8,5 @@ de.innogames.common.assets.lib.ISoundAtlasLoader.$loadAtlas__handler : Bool->Voi
 de.innogames.common.assets.lib.ISoundAtlasLoader.$loadAtlas__p2 : Bool->Void;
 
 openfl.display.SpriteTileSet.__reference : ASDictionary<String, Int>;
+
+starling.core.Starling.$new__renderMode : flash.display3D.Context3DRenderMode;
