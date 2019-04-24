@@ -40,6 +40,20 @@ class StringApi extends AbstractFilter {
 						throwError(exprPos(e), "Unsupported String.match arguments");
 				}
 
+			case TECall({kind: TEField({kind: TOExplicit(_, eString = {type: TTString})}, "search", _)}, args):
+				eString = processExpr(eString);
+				args = mapCallArgs(processExpr, args);
+				switch args.args {
+					case [ePattern = {expr: {type: TTRegExp}}]:
+						var eCompatReplace = mkBuiltin("ASCompat.regExpSearch", tCompatReplace, removeLeadingTrivia(eString));
+						e.with(kind = TECall(eCompatReplace, args.with(args = [
+							{expr: eString, comma: commaWithSpace}, ePattern
+						])));
+
+					case _:
+						throwError(exprPos(e), "Unsupported String.search arguments");
+				}
+
 			case TECall({kind: TEField({kind: TOExplicit(_, eString = {type: TTString})}, "concat", _)}, args):
 				eString = processExpr(eString);
 				args = mapCallArgs(processExpr, args);
@@ -75,7 +89,7 @@ class StringApi extends AbstractFilter {
 			case TEField(fobj = {type: TTString}, "toLocaleUpperCase", fieldToken):
 				mapExpr(processExpr, e).with(kind = TEField(fobj, "toUpperCase", new Token(fieldToken.pos, TkIdent, "toUpperCase", fieldToken.leadTrivia, fieldToken.trailTrivia)));
 
-			case TEField({type: TTString}, name = "replace" | "match" | "split" | "concat", _):
+			case TEField({type: TTString}, name = "replace" | "match" | "split" | "concat" | "search", _):
 				throwError(exprPos(e), "closure on String." + name);
 
 			case _:

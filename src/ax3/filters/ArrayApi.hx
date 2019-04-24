@@ -3,6 +3,7 @@ package ax3.filters;
 class ArrayApi extends AbstractFilter {
 	static final tResize = TTFun([TTInt], TTVoid);
 	static final tSortOn = TTFun([TTArray(TTAny), TTString, TTInt], TTArray(TTAny));
+	static final eReflectCompare = mkBuiltin("Reflect.compare", TTFun([TTAny, TTAny], TTInt));
 
 	override function processExpr(e:TExpr):TExpr {
 		e = mapExpr(processExpr, e);
@@ -26,6 +27,10 @@ class ArrayApi extends AbstractFilter {
 					case _:
 						throwError(exprPos(e), "Unsupported Array.sortOn arguments");
 				}
+
+			// array.sort()
+			case TECall(obj = {kind: TEField({kind: TOExplicit(dot, {type: TTArray(_)})}, "sort", fieldToken)}, args = {args: []}):
+				e.with(kind = TECall(obj, args.with(args = [{expr: eReflectCompare, comma: null}])));
 
 			// Vector.sort
 			case TECall({kind: TEField({kind: TOExplicit(dot, eVector = {type: TTVector(_)})}, "sort", fieldToken)}, args):

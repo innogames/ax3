@@ -25,6 +25,10 @@ class ASCompat {
 		return (cast s).match(r);
 	}
 
+	public static inline function regExpSearch(s:String, r:RegExp):Int {
+		return (cast s).search(r);
+	}
+
 	public static inline function regExpSplit(s:String, r:RegExp):Array<String> {
 		return (cast s).split(r);
 	}
