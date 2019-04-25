@@ -1057,7 +1057,13 @@ class ExprTyper {
 		var econd = typeExpr(econd, TTBoolean);
 		var ethen = typeExpr(ethen, expectedType);
 		var eelse = typeExpr(eelse, expectedType);
-		var resultType = if (ethen.type.match(TTInt | TTUint) && eelse.type == TTNumber) TTNumber else ethen.type;
+		var resultType =
+			if (ethen.type.match(TTInt | TTUint) && eelse.type == TTNumber)
+				TTNumber
+			else if (Type.enumEq(ethen.type, eelse.type))
+				ethen.type
+			else
+				TTAny; // TODO: warn here?
 		return mk(TETernary({
 			syntax: {question: question, colon: colon},
 			econd: econd,
