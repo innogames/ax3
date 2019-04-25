@@ -589,7 +589,7 @@ class GenHaxe extends PrinterBase {
 					first = false;
 				} else {
 					printTrivia(TypedTreeTools.removeLeadingTrivia(e));
-					buf.add("| ");
+					buf.add("   | ");
 				}
 				printExpr(e);
 			}
