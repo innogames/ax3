@@ -63,7 +63,7 @@ class StringApi extends AbstractFilter {
 				}
 				e;
 
-			case TECall(eMethod = {kind: TEField({kind: TOExplicit(_, eString = {type: TTString})}, "split", _)}, args):
+			case TECall(eMethod = {kind: TEField({kind: TOExplicit(dot, eString = {type: TTString})}, "split", fieldToken)}, args):
 				args = mapCallArgs(processExpr, args);
 				switch args.args {
 					case [ePattern = {expr: {type: TTRegExp}}]:
@@ -74,6 +74,7 @@ class StringApi extends AbstractFilter {
 						])));
 
 					case [{expr: {type: TTString}}]:
+						eMethod = eMethod.with(kind = TEField({kind: TOExplicit(dot, processExpr(eString)), type: TTString}, "split", fieldToken));
 						e.with(kind = TECall(eMethod, args));
 
 					case _:
