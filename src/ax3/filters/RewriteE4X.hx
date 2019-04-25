@@ -23,7 +23,7 @@ class RewriteE4X extends AbstractFilter {
 
 			case TEBinop({kind: TEXmlAttr(x)}, op = OpAssign(_), eValue):
 				eValue = processExpr(eValue);
-				var eAttr = mkAttributeAccess(processExpr(x.eobj), x.name, x.syntax.at, x.syntax.dot, x.syntax.name);
+				var eAttr = mkAttributeAccess(processExpr(x.eobj), x.name, x.syntax.at, x.syntax.dot, x.syntax.name, TTXMLList);
 				var eZeroElem = mk(TEArrayAccess({
 					syntax: {
 						openBracket: mkOpenBracket(),
@@ -35,11 +35,11 @@ class RewriteE4X extends AbstractFilter {
 				e.with(kind = TEBinop(eZeroElem, op, eValue.with(expectedType = TTXML)));
 
 			case TEXmlAttr(x):
-				mkAttributeAccess(processExpr(x.eobj), x.name, x.syntax.at, x.syntax.dot, x.syntax.name);
+				mkAttributeAccess(processExpr(x.eobj), x.name, x.syntax.at, x.syntax.dot, x.syntax.name, e.expectedType);
 
 			case TEBinop({kind: TEXmlAttrExpr(x)}, op = OpAssign(_), eValue):
 				eValue = processExpr(eValue);
-				var eAttr = mkAttributeExprAccess(processExpr(x.eobj), processExpr(x.eattr), x.syntax.at, x.syntax.dot, x.syntax.openBracket, x.syntax.closeBracket);
+				var eAttr = mkAttributeExprAccess(processExpr(x.eobj), processExpr(x.eattr), x.syntax.at, x.syntax.dot, x.syntax.openBracket, x.syntax.closeBracket, TTXMLList);
 				var eZeroElem = mk(TEArrayAccess({
 					syntax: {
 						openBracket: mkOpenBracket(),
@@ -51,7 +51,7 @@ class RewriteE4X extends AbstractFilter {
 				e.with(kind = TEBinop(eZeroElem, op, eValue.with(expectedType = TTXML)));
 
 			case TEXmlAttrExpr(x):
-				mkAttributeExprAccess(processExpr(x.eobj), processExpr(x.eattr), x.syntax.at, x.syntax.dot, x.syntax.openBracket, x.syntax.closeBracket);
+				mkAttributeExprAccess(processExpr(x.eobj), processExpr(x.eattr), x.syntax.at, x.syntax.dot, x.syntax.openBracket, x.syntax.closeBracket, e.expectedType);
 
 			case TEXmlDescend(x):
 				var eobj = processExpr(x.eobj);
@@ -80,7 +80,7 @@ class RewriteE4X extends AbstractFilter {
 		}
 	}
 
-	static function mkAttributeAccess(eobj:TExpr, name:String, at:Token, dot:Token, nameToken:Token):TExpr {
+	static function mkAttributeAccess(eobj:TExpr, name:String, at:Token, dot:Token, nameToken:Token, expectedType:TType):TExpr {
 		var fieldObject = {
 			kind: TOExplicit(new Token(at.pos, TkDot, ".", at.leadTrivia, dot.trailTrivia), eobj),
 			type: eobj.type
@@ -94,11 +94,11 @@ class RewriteE4X extends AbstractFilter {
 				args: [{expr: mk(TELiteral(TLString(descendantNameToken)), TTString, TTString), comma: null}],
 			}),
 			TTXMLList,
-			TTXMLList
+			expectedType
 		);
 	}
 
-	static function mkAttributeExprAccess(eobj:TExpr, eattr:TExpr, at:Token, dot:Token, openBracket:Token, closeBracket:Token):TExpr {
+	static function mkAttributeExprAccess(eobj:TExpr, eattr:TExpr, at:Token, dot:Token, openBracket:Token, closeBracket:Token, expectedType:TType):TExpr {
 		var fieldObject = {
 			kind: TOExplicit(new Token(at.pos, TkDot, ".", at.leadTrivia, dot.trailTrivia), eobj),
 			type: eobj.type
@@ -111,7 +111,7 @@ class RewriteE4X extends AbstractFilter {
 				args: [{expr: eattr, comma: null}],
 			}),
 			TTXMLList,
-			TTXMLList
+			expectedType
 		);
 	}
 }
