@@ -14,3 +14,5 @@ starling.core.Starling.$new__p5 : flash.display3D.Context3DRenderMode;
 
 com.adobe.utils.AGALMiniAssembler.$assemble__mode : flash.display3D.Context3DProgramType;
 com.adobe.utils.AGALMiniAssembler.$assemble__p1 : flash.display3D.Context3DProgramType;
+
+flash.net.SharedObject.data : ASObject;
