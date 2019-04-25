@@ -1,5 +1,5 @@
 tutorial.instructions.ITutorialInstruction.target : ASObject;
-tutorial.instructions.triggers.ITutorialTrigger.completeCallback : haxe.Constraints.Function;
+tutorial.instructions.triggers.ITutorialTrigger.completeCallback : ASFunction;
 
 tutorial.parser.ITutorialParser.$parse__p1 : ASObject;
 tutorial.parser.ITutorialParser.$parse__data : ASObject;
@@ -16,3 +16,5 @@ com.adobe.utils.AGALMiniAssembler.$assemble__mode : flash.display3D.Context3DPro
 com.adobe.utils.AGALMiniAssembler.$assemble__p1 : flash.display3D.Context3DProgramType;
 
 flash.net.SharedObject.data : ASObject;
+
+flash.display.Stage3D.$requestContext3D__context3DRenderMode : flash.display3D.Context3DRenderMode;
