@@ -420,7 +420,7 @@ class Typer {
 			case HTPath("String", []): TTString;
 			case HTPath("Dynamic", []): TTAny;
 			case HTPath("Void", []): TTVoid;
-			case HTPath("FastXML", []): TTXML;
+			case HTPath("FastXML", []): TTXMLList;
 			case HTPath("haxe.DynamicAccess", [elemT]): TTObject(resolveHaxeType(mod, elemT, pos));
 			case HTPath("flash.utils.Object", []): tUntypedObject;
 			case HTPath("Vector" | "flash.Vector", [t]): TTVector(resolveHaxeType(mod, t, pos));
