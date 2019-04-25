@@ -32,7 +32,7 @@ class RewriteE4X extends AbstractFilter {
 					eobj: eAttr,
 					eindex: mk(TELiteral(TLInt(new Token(0, TkDecimalInteger, "0", [], []))), TTInt, TTInt)
 				}), TTXMLList, TTXMLList);
-				e.with(kind = TEBinop(eZeroElem, op, eValue.with(expectedType = TTString)));
+				e.with(kind = TEBinop(eZeroElem, op, eValue.with(expectedType = TTXML)));
 
 			case TEXmlAttr(x):
 				mkAttributeAccess(processExpr(x.eobj), x.name, x.syntax.at, x.syntax.dot, x.syntax.name);
@@ -48,7 +48,7 @@ class RewriteE4X extends AbstractFilter {
 					eobj: eAttr,
 					eindex: mk(TELiteral(TLInt(new Token(0, TkDecimalInteger, "0", [], []))), TTInt, TTInt)
 				}), TTXMLList, TTXMLList);
-				e.with(kind = TEBinop(eZeroElem, op, eValue.with(expectedType = TTString)));
+				e.with(kind = TEBinop(eZeroElem, op, eValue.with(expectedType = TTXML)));
 
 			case TEXmlAttrExpr(x):
 				mkAttributeExprAccess(processExpr(x.eobj), processExpr(x.eattr), x.syntax.at, x.syntax.dot, x.syntax.openBracket, x.syntax.closeBracket);
