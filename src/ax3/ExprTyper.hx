@@ -1058,12 +1058,11 @@ class ExprTyper {
 		var ethen = typeExpr(ethen, expectedType);
 		var eelse = typeExpr(eelse, expectedType);
 		var resultType =
-			if (ethen.type.match(TTInt | TTUint) && eelse.type == TTNumber)
-				TTNumber
-			else if (Type.enumEq(ethen.type, eelse.type))
-				ethen.type
-			else
-				TTAny; // TODO: warn here?
+			switch [ethen.type, eelse.type] {
+				case [TTInt | TTUint, TTNumber] | [TTNumber, TTInt | TTUint]: TTNumber;
+				case _ if (Type.enumEq(ethen.type, eelse.type)): ethen.type;
+				case _: TTAny; // TODO: warn here?
+			}
 		return mk(TETernary({
 			syntax: {question: question, colon: colon},
 			econd: econd,
