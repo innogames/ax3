@@ -22,13 +22,21 @@ class RewriteHasOwnProperty extends AbstractFilter {
 
 							case TTObject(_) | TTAny:
 								reportError(exprPos(e), "untyped hasOwnProperty detected");
-								// TODO: ASAny.___hasOwnProperty?
-								e;
+								e.with(kind = TECall(
+									eField.with(kind = TEField(obj.with(kind = TOExplicit(dot, eobj)), "hasOwnProperty", fieldToken)),
+									args
+								));
 
 							case TTInst(_):
 								reportError(exprPos(e), "hasOwnProperty on class instance detected");
-								// TODO: (obj : ASAny).___hasOwnProperty?
-								e;
+								e.with(kind = TECall(
+									eField.with(kind = TEField(
+										obj.with(kind = TOExplicit(dot, eobj.with(kind = TEHaxeRetype(eobj), type = TTAny))),
+										"hasOwnProperty",
+										fieldToken
+									)),
+									args
+								));
 
 							case _:
 								throwError(exprPos(e), "Unsupported hasOwnProperty call");
