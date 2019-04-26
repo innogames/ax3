@@ -32,7 +32,7 @@ class RewriteE4X extends AbstractFilter {
 					eobj: eAttr,
 					eindex: mk(TELiteral(TLInt(new Token(0, TkDecimalInteger, "0", [], []))), TTInt, TTInt)
 				}), TTXMLList, TTXMLList);
-				e.with(kind = TEBinop(eZeroElem, op, eValue.with(expectedType = TTXML)));
+				e.with(kind = TEBinop(eZeroElem, op, coerceToXML(eValue)));
 
 			case TEXmlAttr(x):
 				mkAttributeAccess(processExpr(x.eobj), x.name, x.syntax.at, x.syntax.dot, x.syntax.name, e.expectedType);
@@ -48,7 +48,7 @@ class RewriteE4X extends AbstractFilter {
 					eobj: eAttr,
 					eindex: mk(TELiteral(TLInt(new Token(0, TkDecimalInteger, "0", [], []))), TTInt, TTInt)
 				}), TTXMLList, TTXMLList);
-				e.with(kind = TEBinop(eZeroElem, op, eValue.with(expectedType = TTXML)));
+				e.with(kind = TEBinop(eZeroElem, op, coerceToXML(eValue)));
 
 			case TEXmlAttrExpr(x):
 				mkAttributeExprAccess(processExpr(x.eobj), processExpr(x.eattr), x.syntax.at, x.syntax.dot, x.syntax.openBracket, x.syntax.closeBracket, e.expectedType);
@@ -77,6 +77,20 @@ class RewriteE4X extends AbstractFilter {
 
 			case _:
 				mapExpr(processExpr, e);
+		}
+	}
+
+	static function coerceToXML(e:TExpr):TExpr {
+		return switch e.type {
+			case TTXML:
+				e;
+			case _:
+				var newKeyword = mkIdent("new", removeTrailingTrivia(e), [whitespace]);
+				mk(TENew(newKeyword, mkBuiltin("XML", TTBuiltin), {
+					openParen: mkOpenParen(),
+					args: [{expr: e, comma: null}],
+					closeParen: new Token(0, TkParenClose, ")", [], removeTrailingTrivia(e))
+				}), TTXML, TTXML);
 		}
 	}
 
