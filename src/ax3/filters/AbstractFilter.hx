@@ -18,25 +18,26 @@ class AbstractFilter {
 		throw "assert"; // TODO do it nicer
 	}
 
+	function processModule(mod:TModule) {
+		for (i in mod.pack.imports) {
+			processImport(i);
+		}
+
+		processDecl(mod.pack.decl);
+
+		for (decl in mod.privateDecls) {
+			processDecl(decl);
+		}
+	}
+
 	public function run(tree:TypedTree) {
 		for (pack in tree.packages) {
 			for (mod in pack) {
 				if (mod.isExtern) {
 					continue;
 				}
-
 				currentPath = mod.path;
-
-				for (i in mod.pack.imports) {
-					processImport(i);
-				}
-
-				processDecl(mod.pack.decl);
-
-				for (decl in mod.privateDecls) {
-					processDecl(decl);
-				}
-
+				processModule(mod);
 				currentPath = null;
 			}
 		}

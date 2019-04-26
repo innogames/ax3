@@ -87,6 +87,13 @@ class TPackage {
 		modules[module.name] = module;
 	}
 
+	public inline function renameModule(module:TModule, newName:String) {
+		if (modules.exists(newName)) throw 'Module $newName already exists!';
+		modules.remove(module.name);
+		modules[newName] = module;
+		module.name = newName;
+	}
+
 	public function dump(name:String) {
 		return (if (name == "") "<root>" else name) + "\n" + [for (name => module in modules) dumpModule(name, module)].join("\n\n");
 	}

@@ -8,6 +8,7 @@ class Filters {
 		var externImports = new ExternModuleLevelImports(context);
 		for (f in [
 			// new RewriteAndOrAssign(context), // we can fix this in the codebase so no real need for this filter
+			// new WrapModuleLevelDecls(context), // WIP
 			new RewriteJSON(context),
 			externImports,
 			new InlineStaticConsts(context),

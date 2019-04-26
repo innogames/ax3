@@ -3,6 +3,10 @@ package ax3;
 import sys.FileSystem;
 
 class Utils {
+	public static inline function capitalize(s:String):String {
+		return s.charAt(0).toUpperCase() + s.substring(1);
+	}
+
 	public static inline function print(s:String) {
 		#if hxnodejs js.Node.console.log(s) #else Sys.println(s) #end;
 	}
