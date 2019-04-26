@@ -51,11 +51,10 @@ class Main {
 				parts.unshift(haxeDir);
 				parts;
 			});
-			Utils.createDirectory(dir);
 
 			for (mod in pack) {
 				if (mod.isExtern) continue;
-
+				Utils.createDirectory(dir);
 				var gen = new ax3.GenHaxe();
 				gen.writeModule(mod);
 				var out = gen.toString();
