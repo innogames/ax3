@@ -16,7 +16,6 @@ class HaxeProperties extends AbstractFilter {
 		super.processClass(c);
 		currentClass = null;
 
-		c.haxeProperties = currentProperties;
 		currentProperties = null;
 
 		if (flashPropertyOverrides != null) {
@@ -27,16 +26,19 @@ class HaxeProperties extends AbstractFilter {
 		}
 	}
 
-	function addProperty(name:String, set:Bool, type:TType, mods:Modifiers) {
+	function addProperty(name:String, set:Bool, type:TType, mods:Modifiers):Null<THaxePropDecl> {
 		if (currentProperties == null) currentProperties = new Map();
 
 		var prop = currentProperties[name];
-		if (prop == null) {
+		var isNewProperty = (prop == null);
+		if (isNewProperty) {
 			prop = {syntax: {leadTrivia: []}, name: name, get: false, set: false, type: type, isPublic: mods.isPublic, isStatic: mods.isStatic};
 			currentProperties.set(name, prop);
 		}
 
 		if (set) prop.set = true else prop.get = true;
+
+		return if (isNewProperty) prop else null;
 	}
 
 	override function processClassField(f:TClassField) {
@@ -116,7 +118,10 @@ class HaxeProperties extends AbstractFilter {
 		removePublicModifier(field);
 
 		if (!mods.isOverride) {
-			addProperty(accessor.name, false, accessor.fun.sig.ret.type, mods);
+			var prop = addProperty(accessor.name, false, accessor.fun.sig.ret.type, mods);
+			if (prop != null) {
+				accessor.haxeProperty = prop;
+			}
 		} else if (overridingExternProperty(currentClass, accessor.name, true)) {
 			// if we're overriding an accessor from swc, we gotta introduce an extra method with special meta,
 			// so haxe generates an accessor field in the ABC bytecode.
@@ -178,7 +183,10 @@ class HaxeProperties extends AbstractFilter {
 		}
 
 		if (!mods.isOverride) {
-			addProperty(accessor.name, true, type, mods);
+			var prop = addProperty(accessor.name, true, type, mods);
+			if (prop != null) {
+				accessor.haxeProperty = prop;
+			}
 		} else if (overridingExternProperty(currentClass, accessor.name, false)) {
 			// if we're overriding an accessor from swc, we gotta introduce an extra method with special meta,
 			// so haxe generates an accessor field in the ABC bytecode.

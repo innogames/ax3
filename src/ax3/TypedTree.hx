@@ -314,7 +314,6 @@ class TClassOrInterfaceDecl {
 	var parentModule:TModule;
 	var name:String;
 	var members:Array<TClassMember>;
-	var haxeProperties:Null<Map<String,THaxePropDecl>>;
 
 	function toString():String {
 		return parentModule.parentPack.name + "::" + name;
@@ -386,25 +385,6 @@ typedef TInterfaceDeclInfo = {
 typedef TClassDeclInfo = {
 	var extend:Null<TClassExtend>;
 	var implement:Null<TClassImplement>;
-}
-
-typedef TIFunctionField = {
-	var syntax:{
-		var keyword:Token;
-		var name:Token;
-	};
-	var name:String;
-	var sig:TFunctionSignature;
-}
-
-typedef TIAccessorField = {
-	var syntax:{
-		var functionKeyword:Token;
-		var accessorKeyword:Token;
-		var name:Token;
-	}
-	var name:String;
-	var sig:TFunctionSignature;
 }
 
 typedef TClassExtend = {
@@ -484,6 +464,7 @@ typedef TAccessorField = {
 	var name:String;
 	var fun:TFunction;
 	var propertyType:TType;
+	var haxeProperty:Null<THaxePropDecl>;
 	var semicolon:Null<Token>;
 }
 

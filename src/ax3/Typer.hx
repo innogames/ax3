@@ -192,8 +192,7 @@ class Typer {
 			name: c.name.text,
 			metadata: typeMetadata(c.metadata),
 			modifiers: c.modifiers,
-			members: tMembers,
-			haxeProperties: null,
+			members: tMembers
 		}
 
 		structureSetups.push(function() {
@@ -265,6 +264,7 @@ class Typer {
 					},
 					name: name.text,
 					propertyType: fun.sig.ret.type,
+					haxeProperty: null,
 					fun: fun,
 					semicolon: null
 				});
@@ -278,6 +278,7 @@ class Typer {
 					},
 					name: name.text,
 					propertyType: fun.sig.args[0].type,
+					haxeProperty: null,
 					fun: fun,
 					semicolon: null
 				});
@@ -335,8 +336,7 @@ class Typer {
 			name: i.name.text,
 			metadata: typeMetadata(i.metadata),
 			modifiers: i.modifiers,
-			members: tMembers,
-			haxeProperties: null,
+			members: tMembers
 		};
 
 		structureSetups.push(function() {
@@ -385,6 +385,7 @@ class Typer {
 					},
 					name: name.text,
 					propertyType: sig.ret.type,
+					haxeProperty: null,
 					fun: {sig: sig, expr: null},
 					semicolon: f.semicolon
 				});
@@ -398,6 +399,7 @@ class Typer {
 					},
 					name: name.text,
 					propertyType: sig.args[0].type,
+					haxeProperty: null,
 					fun: {sig: sig, expr: null},
 					semicolon: f.semicolon
 				});

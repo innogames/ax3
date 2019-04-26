@@ -135,9 +135,10 @@ class SWCLoader {
 							syntax: null,
 							name: name,
 							propertyType: f.ret.type,
+							haxeProperty: null,
 							fun: {sig: f, expr: null},
 							semicolon: null
-						})
+						}),
 					}));
 				}
 
@@ -150,6 +151,7 @@ class SWCLoader {
 							syntax: null,
 							name: name,
 							propertyType: f.args[0].type,
+							haxeProperty: null,
 							fun: {sig: f, expr: null},
 							semicolon: null
 						})
@@ -211,7 +213,6 @@ class SWCLoader {
 				var tDecl:TClassOrInterfaceDecl = {
 					kind: clsKind,
 					syntax: null,
-					haxeProperties: null,
 					metadata: [],
 					modifiers: [],
 					parentModule: null,

@@ -135,18 +135,6 @@ class GenHaxe extends PrinterBase {
 		}
 		printOpenBrace(i.syntax.openBrace);
 
-		// TODO: not generate properties that are already present in parent classes... we might have to do this properly in a separate pass....
-		var properties = new Map();
-		function prop(name:String, set:Bool, meta:Array<TMetadata>, trivia:Array<Trivia>, type:TType) {
-			var p = switch properties[name] {
-				case null: properties[name] = {trivia: [], meta: [], get: false, set: false, type: type};
-				case existing: existing;
-			};
-			p.meta = p.meta.concat(meta);
-			p.trivia = p.trivia.concat(trivia);
-			if (set) p.set = true else p.get = true;
-		}
-
 		for (m in i.members) {
 			switch (m) {
 				case TMField(field):
@@ -158,11 +146,8 @@ class GenHaxe extends PrinterBase {
 							printSignature(f.fun.sig);
 							printSemicolon(f.semicolon.sure());
 
-						case TFGetter(f):
-							prop(f.name, false, field.metadata, f.syntax.functionKeyword.leadTrivia.concat(f.semicolon.sure().trailTrivia), f.propertyType);
-
-						case TFSetter(f):
-							prop(f.name, true, field.metadata, f.syntax.functionKeyword.leadTrivia.concat(f.semicolon.sure().trailTrivia), f.propertyType);
+						case TFGetter(_) | TFSetter(_):
+							printHaxeProperty(field);
 
 						case TFVar(_):
 							throw "assert";
@@ -172,17 +157,6 @@ class GenHaxe extends PrinterBase {
 				case TMStaticInit(_) | TMUseNamespace(_):
 					throw "assert";
 			}
-		}
-
-		for (name => desc in properties) {
-			printTrivia(desc.trivia);
-			printMetadata(desc.meta);
-			buf.add("var ");
-			buf.add(name);
-			buf.add(if (desc.get) "(get," else "(never,");
-			buf.add(if (desc.set) "set):" else "never):");
-			printTType(desc.type);
-			buf.add(";\n");
 		}
 
 		printCloseBrace(i.syntax.closeBrace);
@@ -221,20 +195,6 @@ class GenHaxe extends PrinterBase {
 			}
 		}
 
-		if (c.haxeProperties != null) {
-			for (p in c.haxeProperties) {
-				printTrivia(p.syntax.leadTrivia);
-				if (p.isPublic) buf.add("public ");
-				if (p.isStatic) buf.add("static ");
-				buf.add("var ");
-				buf.add(p.name);
-				buf.add(if (p.get) "(get," else "(never,");
-				buf.add(if (p.set) "set):" else "never):");
-				printTType(p.type);
-				buf.add(";\n");
-			}
-		}
-
 		printCloseBrace(c.syntax.closeBrace);
 	}
 
@@ -260,7 +220,26 @@ class GenHaxe extends PrinterBase {
 		}
 	}
 
+	function printHaxeProperty(f:TClassField) {
+		switch f.kind {
+			case TFGetter(a) | TFSetter(a) if (a.haxeProperty != null):
+				var p = a.haxeProperty;
+				printTrivia(p.syntax.leadTrivia);
+				if (p.isPublic) buf.add("public ");
+				if (p.isStatic) buf.add("static ");
+				buf.add("var ");
+				buf.add(p.name);
+				buf.add(if (p.get) "(get," else "(never,");
+				buf.add(if (p.set) "set):" else "never):");
+				printTType(p.type);
+				buf.add(";\n");
+			case _:
+		}
+	}
+
 	function printClassField(className:String, f:TClassField) {
+		printHaxeProperty(f);
+
 		printMetadata(f.metadata);
 
 		if (f.namespace != null) printTextWithTrivia("/*"+f.namespace.text+"*/", f.namespace);
