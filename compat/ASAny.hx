@@ -7,11 +7,11 @@ abstract ASAny(Dynamic)
 
 	public inline function new() this = {};
 
-	public inline function iterator():Iterator<String> {
-		return Reflect.fields(this).iterator();
+	@:to public inline function iterator():NativePropertyIterator {
+		return new NativePropertyIterator(this);
 	}
 
-	public inline function hasOwnProperty(name:String):Bool {
+	public function hasOwnProperty(name:String):Bool {
 		if (Reflect.hasField(this, name)) {
 			return true;
 		}
@@ -43,7 +43,7 @@ abstract ASAny(Dynamic)
 		return this;
 	}
 
-	@:op(a.b) inline function ___get(name:String):ASAny {
+	@:op(a.b) function ___get(name:String):ASAny {
 		var value:Dynamic = Reflect.getProperty(this, name);
 		if (Reflect.isFunction(value))
 			return Reflect.makeVarArgs(args -> Reflect.callMethod(this, value, args));
@@ -92,4 +92,30 @@ abstract ASAny(Dynamic)
 	@:op([]) inline function ___arraySet(name:ASAny, value:ASAny):ASAny return ___set(name, value);
 
 	@:from extern static inline function ___fromDictionary<K,V>(d:ASDictionary<K,V>):ASAny return cast d;
+}
+
+
+private class NativePropertyIterator {
+	var collection:Dynamic;
+	var index = 0;
+
+	public inline function new(collection:Dynamic) {
+		this.collection = collection;
+	}
+
+	public inline function hasNext():Bool {
+		var c = collection;
+		var i = index;
+		var result = untyped __has_next__(c, i);
+		collection = c;
+		index = i;
+		return result;
+	}
+
+	public inline function next():ASAny {
+		var i = index;
+		var result = untyped __forin__(collection, i);
+		index = i;
+		return result;
+	}
 }
