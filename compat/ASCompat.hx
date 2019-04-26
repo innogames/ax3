@@ -9,6 +9,22 @@ class ASCompat {
 	public static inline final MAX_FLOAT = 1.79e+308;
 	public static inline final MIN_FLOAT = -1.79E+308;
 
+	public static inline function toInt(d:Dynamic):Int {
+		return d;
+	}
+
+	public static inline function toNumber(d:Dynamic):Float {
+		return d;
+	}
+
+	public static inline function toString(d:Dynamic):String {
+		return d;
+	}
+
+	public static inline function toBool(d:Dynamic):Bool {
+		return d;
+	}
+
 	public static inline function as<T>(v:Dynamic, c:Class<T>):T {
 		return if (Std.is(v, c)) v else null;
 	}

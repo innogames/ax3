@@ -7,8 +7,20 @@ abstract ASAny(Dynamic)
 
 	public inline function new() this = {};
 
+	public inline function iterator():Iterator<String> {
+		return Reflect.fields(this).iterator();
+	}
+
 	public inline function hasOwnProperty(name:String):Bool {
-		return Reflect.hasField(this, name);
+		if (Reflect.hasField(this, name)) {
+			return true;
+		}
+        var clazz = Type.getClass(this);
+        if (clazz != null) {
+            var fields = Type.getInstanceFields(clazz);
+            return fields.indexOf(name) > -1 || fields.indexOf("get_"+name) > -1 || fields.indexOf("set_"+name) > -1;
+		}
+		return false;
 	}
 
 	@:to function ___toString():String {
