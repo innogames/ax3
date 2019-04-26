@@ -58,7 +58,7 @@ class RewriteForEach extends AbstractFilter {
 					},
 					econd: mk(TEBinop(
 						eobj, // TODO: tempvar?
-						OpEquals(mkEqualsEqualsToken()),
+						OpNotEquals(mkNotEqualsToken()),
 						mkNullExpr()
 					), TTBoolean, TTBoolean),
 					ethen: eFor,
