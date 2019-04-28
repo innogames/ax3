@@ -585,7 +585,7 @@ class ExprTyper {
 
 	function getArrayInstanceFieldType(field:Token, t:TType):TType {
 		return switch field.text {
-			case "length": TTUint;
+			case "length": TTInt; // it's `uint` in Flash, but Haxe defines it as `Int`
 			case "join": TTFun([TTAny], TTString);
 			case "push" | "unshift": TTFun([t], TTUint, TRestSwc);
 			case "pop" | "shift": TTFun([], t);
@@ -601,7 +601,7 @@ class ExprTyper {
 
 	function getVectorInstanceFieldType(field:Token, t:TType):TType {
 		return switch field.text {
-			case "length": TTUint;
+			case "length": TTInt; // it's `uint` in Flash, but Haxe defines it as `Int`
 			case "push" | "unshift": TTFun([t], TTUint, TRestSwc);
 			case "pop" | "shift": TTFun([], t);
 			case "indexOf" | "lastIndexOf": TTFun([t, TTInt], TTInt);

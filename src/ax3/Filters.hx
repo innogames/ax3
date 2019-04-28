@@ -48,6 +48,7 @@ class Filters {
 			new ToString(context),
 			new NamespacedToPublic(context),
 			new VarInits(context),
+			new UintComparison(context),
 		]) {
 			f.run(tree);
 		}
