@@ -157,6 +157,7 @@ class TypedTreeTools {
 			case TEXmlDescend(x): x.syntax.dotDot.pos;
 			case TEUseNamespace(ns): ns.useKeyword.pos;
 			case TEHaxeRetype(e): exprPos(e);
+			case TEHaxeIntIter(start, _): exprPos(start);
 		}
 	}
 
@@ -304,6 +305,7 @@ class TypedTreeTools {
 			case TEXmlDescend(x): processLeadingToken(r, x.eobj);
 			case TEUseNamespace(ns): r(ns.useKeyword);
 			case TEHaxeRetype(e): processLeadingToken(r, e);
+			case TEHaxeIntIter(start, _): processLeadingToken(r, start);
 		}
 	}
 
@@ -379,6 +381,7 @@ class TypedTreeTools {
 			case TEXmlDescend(x): r(x.syntax.name);
 			case TEUseNamespace(ns): r(ns.name);
 			case TEHaxeRetype(e): processTrailingToken(r, e);
+			case TEHaxeIntIter(_, end): processTrailingToken(r, end);
 		}
 	}
 
@@ -576,6 +579,11 @@ class TypedTreeTools {
 			case TEHaxeRetype(e):
 				var mapped = f(e);
 				if (mapped == e) e1 else e1.with(kind = TEHaxeRetype(mapped));
+
+			case TEHaxeIntIter(start, end):
+				var mappedStart = f(start);
+				var mappedEnd = f(end);
+				if (mappedStart == start && mappedEnd == end) e1 else e1.with(kind = TEHaxeIntIter(mappedStart, mappedEnd));
 		}
 	}
 

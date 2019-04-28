@@ -15,7 +15,7 @@ class AddRequiredParens extends AbstractFilter {
 		}
 
 		return switch e.kind {
-			case TEHaxeRetype(_) | TEParens(_) | TEObjectDecl(_) | TEArrayAccess(_) | TEXmlAttrExpr(_) | TEXmlChild(_) | TEXmlAttr(_) | TEXmlDescend(_) | TEArrayDecl(_) | TEVectorDecl(_) | TEField(_) | TECall(_) | TECast(_) | TELocalFunction(_) | TELiteral(_) | TELocal(_) | TEBuiltin(_) | TEDeclRef(_) | TENew(_) | TECondCompValue(_):
+			case TEHaxeIntIter(_) | TEHaxeRetype(_) | TEParens(_) | TEObjectDecl(_) | TEArrayAccess(_) | TEXmlAttrExpr(_) | TEXmlChild(_) | TEXmlAttr(_) | TEXmlDescend(_) | TEArrayDecl(_) | TEVectorDecl(_) | TEField(_) | TECall(_) | TECast(_) | TELocalFunction(_) | TELiteral(_) | TELocal(_) | TEBuiltin(_) | TEDeclRef(_) | TENew(_) | TECondCompValue(_):
 				mapExpr(loop.bind(_, 100), e);
 
 			case TEPostUnop(e2, op):

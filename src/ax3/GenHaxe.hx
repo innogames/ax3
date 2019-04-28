@@ -485,6 +485,10 @@ class GenHaxe extends PrinterBase {
 			case TEAs(_): throw "unprocessed `as` expression";
 			case TEXmlChild(_) | TEXmlAttr(_) | TEXmlAttrExpr(_) | TEXmlDescend(_): throw 'unprocessed E4X';
 			case TEUseNamespace(ns): printUseNamespace(ns);
+			case TEHaxeIntIter(start, end):
+				printExpr(start);
+				buf.add("...");
+				printExpr(end);
 			case TEHaxeRetype(einner):
 				printTrivia(TypedTreeTools.removeLeadingTrivia(einner));
 				buf.add("(");
