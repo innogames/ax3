@@ -32,7 +32,7 @@ class RewriteCFor extends AbstractFilter {
 		}
 
 		switch f.econd {
-			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpLt(_), b)} if (checkedVar == initVarDecl.v): endValue = b;
+			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpLt(_), b = {type: TTInt | TTUint})} if (checkedVar == initVarDecl.v): endValue = b;
 			case _: return null;
 		}
 
