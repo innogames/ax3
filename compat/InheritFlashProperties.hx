@@ -8,6 +8,9 @@ class InheritFlashProperties {
 	static function build() {
 		if (!Context.defined("flash")) return null;
 
+		var thisClass = Context.getLocalClass().get();
+		if (thisClass.isExtern) return null;
+
 		var properties = new Map();
 		function loop(cl:ClassType) {
 			for (iface in cl.interfaces) {
@@ -31,7 +34,7 @@ class InheritFlashProperties {
 				}
 			}
 		}
-		loop(Context.getLocalClass().get());
+		loop(thisClass);
 
 		var fields = Context.getBuildFields();
 		var addedFields = new Array<Field>();
