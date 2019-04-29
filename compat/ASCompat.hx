@@ -26,7 +26,7 @@ class ASCompat {
 	}
 
 	public static inline function as<T>(v:Dynamic, c:Class<T>):T {
-		return if (Std.is(v, c)) v else null;
+		return flash.Lib.as(v, c);
 	}
 
 	public static inline function toFixed(n:Float):String {
