@@ -30,23 +30,23 @@ abstract ASAnyBase<T>(T)
 		return false;
 	}
 
-	@:to function ___toString():String {
+	@:to inline function ___toString():String {
 		return cast this; // TODO
 	}
 
-	@:to function ___toBool():Bool {
+	@:to inline function ___toBool():Bool {
 		return cast this; // TODO
 	}
 
-	@:to function ___toInt():Int {
+	@:to inline function ___toInt():Int {
 		return cast this; // TODO
 	}
 
-	@:to function ___toFloat():Float {
+	@:to inline function ___toFloat():Float {
 		return cast this; // TODO
 	}
 
-	@:to function ___toOther():Dynamic {
+	@:to inline function ___toOther():Dynamic {
 		return this;
 	}
 
@@ -72,7 +72,7 @@ abstract ASAnyBase<T>(T)
 	}
 
 	@:op(a || b) static inline function __or(a:ASAny, b:ASAny):ASAny {
-		return if (a) a else b;
+		return if (a.__toBool()) a else b;
 	}
 
 	@:op(a && b) static inline function __andBool(a:Bool, b:ASAny):ASAny {
@@ -80,7 +80,7 @@ abstract ASAnyBase<T>(T)
 	}
 
 	@:op(a && b) static inline function __and(a:ASAny, b:ASAny):ASAny {
-		return if (a) b else a;
+		return if (a.__toBool()) b else a;
 	}
 
 	@:op(a - b) static function ___minusInt(a:ASAny, b:Int):Int return a.___toInt() - b;
