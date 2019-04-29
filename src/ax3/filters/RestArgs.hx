@@ -35,7 +35,7 @@ class RestArgs extends AbstractFilter {
 						econd: mk(TEBinop(
 							argLocal,
 							OpEquals(mkEqualsEqualsToken()),
-							argLocal
+							mkNullExpr()
 						), TTBoolean, TTBoolean),
 						ethen: mk(TEBinop(
 							argLocal,
