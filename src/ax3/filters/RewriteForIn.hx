@@ -24,6 +24,24 @@ class RewriteForIn extends AbstractFilter {
 						var eKeys = mk(TEField(obj, "keys", mkIdent("keys")), tIteratorMethod, tIteratorMethod);
 						eobj = mkCall(eKeys, []);
 
+					case TTObject(_):
+						actualKeyType = TTString;
+						var obj = {
+							kind: TOExplicit(mkDot(), eobj),
+							type: eobj.type
+						};
+						var eKeys = mk(TEField(obj, "___keys", mkIdent("___keys")), tIteratorMethod, tIteratorMethod);
+						eobj = mkCall(eKeys, []);
+
+					case TTAny:
+						actualKeyType = TTAny;
+						var obj = {
+							kind: TOExplicit(mkDot(), eobj),
+							type: eobj.type
+						};
+						var eKeys = mk(TEField(obj, "___keys", mkIdent("___keys")), tIteratorMethod, tIteratorMethod);
+						eobj = mkCall(eKeys, []);
+
 					case TTXMLList:
 						var obj = {
 							kind: TOExplicit(mkDot(), eobj),

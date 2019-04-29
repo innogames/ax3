@@ -7,8 +7,13 @@ abstract ASAny(Dynamic)
 
 	public inline function new() this = {};
 
-	@:to public inline function iterator():NativePropertyIterator<ASAny> {
+	@:noCompletion
+	public inline function ___keys():NativePropertyIterator<ASAny> {
 		return new NativePropertyIterator(this);
+	}
+
+	@:to public inline function iterator():NativeValueIterator<ASAny> {
+		return new NativeValueIterator(this);
 	}
 
 	public function hasOwnProperty(name:String):Bool {
