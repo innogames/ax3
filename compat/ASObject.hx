@@ -1,1 +1,1 @@
-typedef ASObject = ASAny;
+typedef ASObject = ASAny.ASAnyBase<flash.utils.Object>;

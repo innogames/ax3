@@ -1,11 +1,13 @@
+typedef ASAny = ASAnyBase<Dynamic>;
+
 @:callable // TODO it's a bit unsafe because @:callable takes and returns Dynamic, not ASAny
            // I'm not sure how much can we do about it, maybe wrap the TTAny arguments and the return value in ASAny on the converter level?
-abstract ASAny(Dynamic)
-	from Dynamic
+abstract ASAnyBase<T>(T)
+	from T
 	from haxe.Constraints.Function
 {
 
-	public inline function new() this = {};
+	public inline function new() this = cast {};
 
 	@:noCompletion
 	public inline function ___keys():NativePropertyIterator<ASAny> {
@@ -29,19 +31,19 @@ abstract ASAny(Dynamic)
 	}
 
 	@:to function ___toString():String {
-		return this; // TODO
+		return cast this; // TODO
 	}
 
 	@:to function ___toBool():Bool {
-		return this; // TODO
+		return cast this; // TODO
 	}
 
 	@:to function ___toInt():Int {
-		return this; // TODO
+		return cast this; // TODO
 	}
 
 	@:to function ___toFloat():Float {
-		return this; // TODO
+		return cast this; // TODO
 	}
 
 	@:to function ___toOther():Dynamic {
