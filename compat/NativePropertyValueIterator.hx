@@ -17,9 +17,7 @@ class NativePropertyValueIterator<K,V> {
 	}
 
 	public inline function next():{key:K, value:V} {
-		var i = index;
-		var result = untyped __forin__(collection, i);
-		index = i;
+		var result = untyped __forin__(collection, index);
 		return {key: result, value: untyped collection[result]};
 	}
 }

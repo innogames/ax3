@@ -17,9 +17,6 @@ class NativePropertyIterator<K> {
 	}
 
 	public inline function next():K {
-		var i = index;
-		var result = untyped __forin__(collection, i);
-		index = i;
-		return result;
+		return untyped __forin__(collection, index);
 	}
 }

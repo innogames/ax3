@@ -17,9 +17,6 @@ class NativeValueIterator<V> {
 	}
 
 	public inline function next():V {
-		var i = index;
-		var result = untyped __foreach__(collection, i);
-		index = i;
-		return result;
+		return untyped __foreach__(collection, index);
 	}
 }
