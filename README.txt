@@ -31,4 +31,5 @@ TODO:
  - optionally don't generate `private` keywords
  - remove @haxe-type trivia
  - unify RewriteForIn and RewriteForEach because they are very similar and there's a lot of duplicate logic
+ - C for rewriting should be very careful about rewriting conditions
 
