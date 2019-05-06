@@ -95,8 +95,7 @@ class ASCompat {
 		var result = a.splice(startIndex, deleteCount);
 		if (values != null) {
 			for (i in 0...values.length) {
-				// TODO:
-				// a.insert(startIndex + i, values[i]);
+				a.insertAt(startIndex + i, values[i]);
 			}
 		}
 		return result;
@@ -110,8 +109,8 @@ class ASArray {
 	public static inline final RETURNINDEXEDARRAY = 8;
 	public static inline final UNIQUESORT = 4;
 
-	public static function sortOn<T>(a:Array<T>, fieldName:String, options:Int):Array<T> {
-		return a; // TODO
+	public static inline function sortOn<T>(a:Array<T>, fieldName:String, options:Int):Array<T> {
+		return (cast a).sortOn(fieldName, options);
 	}
 
 	public static macro function pushMultiple<T>(a:ExprOf<Array<T>>, first:ExprOf<T>, rest:Array<ExprOf<T>>):ExprOf<Int>;
@@ -119,7 +118,7 @@ class ASArray {
 
 
 class ASVector {
-	public static function sort<T>(a:flash.Vector<T>, options:Int):flash.Vector<T> {
-		return a; // TODO
+	public static inline function sort<T>(a:flash.Vector<T>, options:Int):flash.Vector<T> {
+		return (cast a).sort(options);
 	}
 }
