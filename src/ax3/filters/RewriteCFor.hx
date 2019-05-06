@@ -22,6 +22,8 @@ class RewriteCFor extends AbstractFilter {
 	}
 
 	static function getSimpleSequence(f:TFor):Null<IntIterInfo> {
+		return null; // TODO: disabled for now because of length-mutating loops over the index doesn't play well with this, gotta check if `endValue` is immutable
+
 		// TODO: check for modifications of the loop var and cancel
 		// TODO: maybe check whether `endValue` is really immutable, because Haxe will store it in a temp var
 		var initVarDecl, endValue;
