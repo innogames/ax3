@@ -3,6 +3,7 @@ package ax3.filters;
 class ArrayApi extends AbstractFilter {
 	static final tResize = TTFun([TTInt], TTVoid);
 	static final tSortOn = TTFun([TTArray(TTAny), TTString, TTInt], TTArray(TTAny));
+	static final tInsert = TTFun([TTInt, TTAny], TTVoid);
 	static final eReflectCompare = mkBuiltin("Reflect.compare", TTFun([TTAny, TTAny], TTInt));
 
 	override function processExpr(e:TExpr):TExpr {
@@ -95,16 +96,21 @@ class ArrayApi extends AbstractFilter {
 				}
 
 			// splice
-			case TECall({kind: TEField({kind: TOExplicit(_, eArray), type: t = TTArray(_) | TTVector(_)}, "splice", _)}, args):
+			case TECall({kind: TEField(fieldObj = {kind: TOExplicit(dot, eArray), type: t = TTArray(_) | TTVector(_)}, "splice", _)}, args):
 				var isVector = t.match(TTVector(_));
 				var methodNamePrefix = if (isVector) "vector" else "array";
 
 				switch args.args {
-					// case [eIndex, {expr: {kind: TELiteral(TLInt({text: "0"}))}}, eInserted]:
+					case [eIndex, {expr: {kind: TELiteral(TLInt({text: "0"}))}}, eInserted]:
 						// this is a special case that we want to rewrite to a nice `array.insert(pos, elem)`
 						// but only if the value is not used (because `insert` returns Void, while splice returns `Array`)
-						// TODO: enable this (needs making sure that the value is unused)
-						// e;
+						if (e.expectedType == TTVoid) {
+							var methodName = if (isVector) "insertAt" else "insert";
+							var eMethod = mk(TEField(fieldObj, methodName, mkIdent(methodName)), tInsert, tInsert);
+							mk(TECall(eMethod, args.with(args = [eIndex, eInserted])), TTVoid, TTVoid);
+						} else {
+							e;
+						}
 
 					case [_, _]:
 						// just two arguments - no inserted values, so it's a splice just like in Haxe, leave as is
