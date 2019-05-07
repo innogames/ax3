@@ -494,7 +494,7 @@ class GenHaxe extends PrinterBase {
 				buf.add("(");
 				var trail = TypedTreeTools.removeTrailingTrivia(einner);
 				printExpr(einner);
-				buf.add(":");
+				buf.add(" : ");
 				printTType(e.type);
 				buf.add(")");
 				printTrivia(trail);

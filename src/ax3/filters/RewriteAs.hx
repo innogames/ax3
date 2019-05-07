@@ -25,12 +25,33 @@ class RewriteAs extends AbstractFilter {
 						}));
 
 					case TTVector(t):
-						var eType = mkBuiltin("Vector", TTBuiltin);
-						e.with(kind = makeStdInstance(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e)));
+						// generate `try (<expr> : Vector<Type>) catch (pokemon:Any) null`
+						// beause that's the only way to mimic `expr as Vector<Type>` with Haxe
+
+						// TODO: ideally we should retype the whole try/catch, but it doesn't currently work,
+						// because of https://github.com/HaxeFoundation/haxe/issues/8257
+						mk(TETry({
+							keyword: mkIdent("try", removeLeadingTrivia(e), [whitespace]),
+							expr: eobj.with(kind = TEHaxeRetype(eobj), type = typeRef.type),
+							catches: [{
+								syntax: {
+									keyword: mkIdent("catch", [], [whitespace]),
+									openParen: mkOpenParen(),
+									name: mkIdent("pokemon"),
+									type: {
+										colon: new Token(0, TkColon, ":", [], []),
+										type: TAny(new Token(0, TkAsterisk, "*", [], []))
+									},
+									closeParen: addTrailingWhitespace(mkCloseParen())
+								},
+								v:{name: "pokemon", type: TTAny},
+								expr: mkNullExpr(typeRef.type, [], removeTrailingTrivia(e))
+							}]
+						}), typeRef.type, e.expectedType);
 
 					case TTArray(_):
 						var eType = mkBuiltin("Array", TTBuiltin);
-						e.with(kind = makeStdInstance(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e)));
+						e.with(kind = makeAs(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e)));
 
 					case TTInst(cls):
 						var path = switch (typeRef.syntax) {
@@ -38,7 +59,7 @@ class RewriteAs extends AbstractFilter {
 							case _: throw "asset";
 						};
 						var eType = mkDeclRef(path, {name: cls.name, kind: TDClassOrInterface(cls)}, null);
-						e.with(kind = makeStdInstance(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e)));
+						e.with(kind = makeAs(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e)));
 
 					case _:
 						throwError(keyword.pos, "Unsupported `as` expression");
@@ -48,7 +69,7 @@ class RewriteAs extends AbstractFilter {
 		}
 	}
 
-	static function makeStdInstance(eObj:TExpr, eType:TExpr, leadTrivia, trailTrivia):TExprKind {
+	static function makeAs(eObj:TExpr, eType:TExpr, leadTrivia, trailTrivia):TExprKind {
 		var eMethod = mkBuiltin("ASCompat.as", TTFunction, leadTrivia);
 		return TECall(eMethod, {
 			openParen: mkOpenParen(),
