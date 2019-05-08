@@ -31,7 +31,7 @@ class HaxeProperties extends AbstractFilter {
 		var prop = currentProperties[name];
 		var isNewProperty = (prop == null);
 		if (isNewProperty) {
-			prop = {syntax: {leadTrivia: []}, name: name, get: false, set: false, type: type, isPublic: mods.isPublic, isStatic: mods.isStatic};
+			prop = {syntax: {leadTrivia: []}, name: name, get: false, set: false, type: type, isPublic: mods.isPublic, isStatic: mods.isStatic, isFlashProperty: false};
 			currentProperties.set(name, prop);
 		}
 
@@ -57,6 +57,46 @@ class HaxeProperties extends AbstractFilter {
 		};
 	}
 
+	function isImplementingExternProperty(cls:TClassOrInterfaceDecl, name:String, getter:Bool):Bool {
+		switch cls.kind {
+			case TInterface(_):
+				return false;
+
+			case TClass(info):
+				function loop(i:Null<TClassImplement>) {
+					if (i == null) {
+						return false;
+					}
+					for (entry in i.interfaces) {
+						if (!entry.iface.decl.parentModule.isExtern) {
+							continue;
+						}
+
+						for (m in entry.iface.decl.members) {
+							switch m {
+								case TMField(f) if (!isFieldStatic(f)):
+									switch f.kind {
+										case TFGetter(a) if (getter && a.name == name):
+											return true;
+										case TFSetter(a) if (!getter && a.name == name):
+											return true;
+										case _:
+									}
+								case _:
+							}
+						}
+
+						var info = switch entry.iface.decl.kind { case TInterface(info): info; case TClass(_): throw "assert"; };
+						if (loop(info.extend)) {
+							return true;
+						}
+					}
+					return false;
+				}
+				return loop(info.implement);
+		}
+	}
+
 	function removePublicModifier(field:TClassField) {
 		// TODO: handle trivia (if `public` or namespace is the first modifier we probably have an indent whitespace before it)
 		field.modifiers = [for (m in field.modifiers) if (!m.match(FMPublic(_))) m];
@@ -69,6 +109,11 @@ class HaxeProperties extends AbstractFilter {
 			var prop = addProperty(accessor.name, false, accessor.fun.sig.ret.type, mods);
 			if (prop != null) {
 				accessor.haxeProperty = prop;
+				if (isImplementingExternProperty(currentClass, accessor.name, true)) {
+					// if we implement a property from an swc, we gotta mark with with @:flash.property metadata
+					// so actual Flash accessor is generated for it by Haxe
+					prop.isFlashProperty = true;
+				}
 			}
 		}
 	}
@@ -102,6 +147,11 @@ class HaxeProperties extends AbstractFilter {
 			var prop = addProperty(accessor.name, true, type, mods);
 			if (prop != null) {
 				accessor.haxeProperty = prop;
+				if (isImplementingExternProperty(currentClass, accessor.name, false)) {
+					// if we implement a property from an swc, we gotta mark with with @:flash.property metadata
+					// so actual Flash accessor is generated for it by Haxe
+					prop.isFlashProperty = true;
+				}
 			}
 		}
 	}

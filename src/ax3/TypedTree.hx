@@ -445,6 +445,7 @@ typedef THaxePropDecl = {
 	}
 	var isPublic:Bool;
 	var isStatic:Bool;
+	var isFlashProperty:Bool;
 	var name:String;
 	var get:Bool;
 	var set:Bool;

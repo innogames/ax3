@@ -225,6 +225,7 @@ class GenHaxe extends PrinterBase {
 			case TFGetter(a) | TFSetter(a) if (a.haxeProperty != null):
 				var p = a.haxeProperty;
 				printTrivia(p.syntax.leadTrivia);
+				if (p.isFlashProperty) buf.add("@:flash.property ");
 				if (p.isPublic) buf.add("public ");
 				if (p.isStatic) buf.add("static ");
 				buf.add("var ");
