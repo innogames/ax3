@@ -32,3 +32,5 @@
 # -cmd node main.js config-local.json
 # -cmd cpp_out\Main.exe config-foe.json
 # -cmd cpp_out\Main.exe config-local.json
+
+# -cmd cp java_out/Main.jar ../foe/Frontend/client/haxe2/converter/converter.jar
