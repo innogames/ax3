@@ -22,14 +22,10 @@
 
 
 TODO:
- - work-around Stage.quality getter bug (add toLowerCase() to the field access)
  - implement class-wrapping for module-level vars/functions
  - handle Null<T> to T conversion in some cases (e.g. for var x:int = dict[inexistant])
- - finish compat abstracts
  - go through TODOs in the code
  - optionally don't generate var type hints if the init expr type is exaclty the same
  - optionally don't generate `private` keywords
  - remove @haxe-type trivia
  - unify RewriteForIn and RewriteForEach because they are very similar and there's a lot of duplicate logic
- - C for rewriting should be very careful about rewriting conditions
-
