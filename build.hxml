@@ -8,29 +8,9 @@
 # --macro nullSafety("ax3")
 
 -main ax3.Main
-# --run ax3.Main
-# -D HXCPP_STACK_TRACE
-# -D HXCPP_CHECK_POINTER
-# -debug
-
-# -cpp cpp_out
-# -D hxcpp_smart_strings
-# -D HXCPP_GC_GENERATIONAL
-
-# -lib hxnodejs
-# -cp src-nodejs-zip
-# -js main.js
 
 -java java_out
 -D jvm
 
-# -cpp cpp_out
-
+-cmd cp java_out/Main.jar ../foe/Frontend/client/haxe2/converter/converter.jar
 # -cmd java -jar java_out/Main.jar config-local.json
--cmd java -jar java_out/Main.jar config-foe.json
-# -cmd node main.js config-foe.json
-# -cmd node main.js config-local.json
-# -cmd cpp_out\Main.exe config-foe.json
-# -cmd cpp_out\Main.exe config-local.json
-
-# -cmd cp java_out/Main.jar ../foe/Frontend/client/haxe2/converter/converter.jar
