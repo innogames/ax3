@@ -68,6 +68,7 @@ class RewriteAs extends AbstractFilter {
 						var eType = mkDeclRef(path, {name: cls.name, kind: TDClassOrInterface(cls)}, null);
 
 						// TODO: apply the same logic to casts?
+						// TODO: remove parenthesis around `as`
 						switch determineCastKind(eobj.type, cls) {
 							case CKSameClass:
 								processTrailingToken(t -> t.trailTrivia = t.trailTrivia.concat(removeTrailingTrivia(e)), eobj);
