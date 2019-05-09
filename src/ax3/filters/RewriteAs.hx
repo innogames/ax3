@@ -1,5 +1,12 @@
 package ax3.filters;
 
+private enum CastKind {
+	CKSameClass;
+	CKDowncast;
+	CKUpcast;
+	CKUnknown;
+}
+
 class RewriteAs extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
 		e = mapExpr(processExpr, e);
@@ -60,14 +67,27 @@ class RewriteAs extends AbstractFilter {
 						};
 						var eType = mkDeclRef(path, {name: cls.name, kind: TDClassOrInterface(cls)}, null);
 
-						var eDowncast =
-							// TODO: also check for useless upcasts, print warning, generate haxe typecheck
-							if (isDowncast(eobj.type, cls))
-								makeStdInstance(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e))
-							else
-								makeAs(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e));
-
-						e.with(kind = eDowncast);
+						// TODO: apply the same logic to casts?
+						switch determineCastKind(eobj.type, cls) {
+							case CKSameClass:
+								processTrailingToken(t -> t.trailTrivia = t.trailTrivia.concat(removeTrailingTrivia(e)), eobj);
+								eobj;
+							case CKUpcast:
+								processTrailingToken(t -> t.trailTrivia = t.trailTrivia.concat(removeTrailingTrivia(e)), eobj);
+								switch e.expectedType {
+									case TTVoid:
+										eobj;
+									case TTInst(expectedClass) if (expectedClass == cls):
+										// TODO: also allow upcasting here (I really need a generic unification check function)
+										eobj;
+									case _:
+										e.with(kind = TEHaxeRetype(eobj));
+								}
+							case CKDowncast:
+								e.with(kind = makeStdInstance(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e)));
+							case CKUnknown:
+								e.with(kind = makeAs(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e)));
+						}
 
 					case _:
 						throwError(keyword.pos, "Unsupported `as` expression");
@@ -77,25 +97,38 @@ class RewriteAs extends AbstractFilter {
 		}
 	}
 
-	static function isDowncast(valueType:TType, downcastClass:TClassOrInterfaceDecl):Bool {
-		switch valueType {
+	static function determineCastKind(valueType:TType, asClass:TClassOrInterfaceDecl):CastKind {
+		return switch valueType {
+			// TODO: support sameclass/upcast for interfaces since we don't need to generate Std.instance here
 			case TTInst(valueClass = {kind: TClass(_)}):
-				while (downcastClass != null) {
-					if (downcastClass == valueClass) {
-						return true;
-					}
-					switch downcastClass.kind {
-						case TInterface(_):
-							return false;
-						case TClass(cls):
-							if (cls.extend == null) {
-								return false;
-							} else {
-								downcastClass = cls.extend.superClass;
-							}
-					}
-				}
+				if (valueClass == asClass)
+					CKSameClass
+				else if (isChildClass(valueClass, asClass))
+					CKUpcast
+				else if (isChildClass(asClass, valueClass))
+					CKDowncast
+				else
+					CKUnknown;
 			case _:
+				CKUnknown;
+		}
+	}
+
+	static function isChildClass(cls:TClassOrInterfaceDecl, base:TClassOrInterfaceDecl):Bool {
+		while (true) {
+			if (cls == base) {
+				return true;
+			}
+			switch cls.kind {
+				case TInterface(_):
+					return false;
+				case TClass(classInfo):
+					if (classInfo.extend == null) {
+						return false;
+					} else {
+						cls = classInfo.extend.superClass;
+					}
+			}
 		}
 		return false;
 	}
