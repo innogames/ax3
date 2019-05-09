@@ -535,6 +535,7 @@ class GenHaxe extends PrinterBase {
 			case "escape": "escape";
 			case "arguments": "/*TODO*/arguments";
 			case "trace": "trace";
+			case "untyped __global__": "untyped __global__";
 			case _ if (name.startsWith("ASCompat.")): name;
 			case _:
 				throw "unknown builtin: " + name;

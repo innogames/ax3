@@ -53,7 +53,6 @@ class Filters {
 			f.run(tree);
 		}
 
-		// TODO: this should generate a proper module ffs
-		// sys.io.File.saveContent("OUT/Globals.hx", externImports.printGlobalsClass());
+		externImports.addGlobalsModule(tree);
 	}
 }
