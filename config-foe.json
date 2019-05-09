@@ -22,6 +22,6 @@
 		"../foe/Frontend/client/libs/tutorial-1.1.2.swc",
 		"../foe/Frontend/client/libs-test/AS3Communicator-lib.swc",
 		"../foe/Frontend/client/libs/previewui.swc",
-		"../foe/Frontend/client/libs/DConsole-2.3.swc"
+		"../foe/Frontend/client/libs/dconsole.swc"
 	]
 }
