@@ -36,7 +36,7 @@ class Main {
 		Typer.process(ctx, tree, files);
 		Timers.typing = stamp() - t;
 
-		sys.io.File.saveContent("structure.txt", tree.dump());
+		// sys.io.File.saveContent("structure.txt", tree.dump());
 
 		t = stamp();
 		Filters.run(ctx, tree);
