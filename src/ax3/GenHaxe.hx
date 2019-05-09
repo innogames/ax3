@@ -512,7 +512,7 @@ class GenHaxe extends PrinterBase {
 		// TODO: this is hacky (builtins in general are hacky...)
 		name = switch name {
 			case
-				"Std.is" | "Std.int" | "Std.string" | "String"
+				"Std.is" | "Std.instance" | "Std.int" | "Std.string" | "String"
 				| "flash.Vector.convert"| "flash.Vector.ofArray"
 				| "Reflect.deleteField" | "Type.createInstance"
 				| "haxe.Json" | "Reflect.compare"

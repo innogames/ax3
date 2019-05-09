@@ -59,7 +59,15 @@ class RewriteAs extends AbstractFilter {
 							case _: throw "asset";
 						};
 						var eType = mkDeclRef(path, {name: cls.name, kind: TDClassOrInterface(cls)}, null);
-						e.with(kind = makeAs(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e)));
+
+						var eDowncast =
+							// TODO: also check for useless upcasts, print warning, generate haxe typecheck
+							if (isDowncast(eobj.type, cls))
+								makeStdInstance(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e))
+							else
+								makeAs(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e));
+
+						e.with(kind = eDowncast);
 
 					case _:
 						throwError(keyword.pos, "Unsupported `as` expression");
@@ -69,8 +77,43 @@ class RewriteAs extends AbstractFilter {
 		}
 	}
 
+	static function isDowncast(valueType:TType, downcastClass:TClassOrInterfaceDecl):Bool {
+		switch valueType {
+			case TTInst(valueClass = {kind: TClass(_)}):
+				while (downcastClass != null) {
+					if (downcastClass == valueClass) {
+						return true;
+					}
+					switch downcastClass.kind {
+						case TInterface(_):
+							return false;
+						case TClass(cls):
+							if (cls.extend == null) {
+								return false;
+							} else {
+								downcastClass = cls.extend.superClass;
+							}
+					}
+				}
+			case _:
+		}
+		return false;
+	}
+
 	static function makeAs(eObj:TExpr, eType:TExpr, leadTrivia, trailTrivia):TExprKind {
 		var eMethod = mkBuiltin("ASCompat.as", TTFunction, leadTrivia);
+		return TECall(eMethod, {
+			openParen: mkOpenParen(),
+			args: [
+				{expr: eObj, comma: commaWithSpace},
+				{expr: eType, comma: null},
+			],
+			closeParen: new Token(0, TkParenClose, ")", [], trailTrivia)
+		});
+	}
+
+	static function makeStdInstance(eObj:TExpr, eType:TExpr, leadTrivia, trailTrivia):TExprKind {
+		var eMethod = mkBuiltin("Std.instance", TTFunction, leadTrivia);
 		return TECall(eMethod, {
 			openParen: mkOpenParen(),
 			args: [
