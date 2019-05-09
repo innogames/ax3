@@ -17,22 +17,56 @@ class HaxeProperties extends AbstractFilter {
 		currentProperties = null;
 	}
 
+	function getFieldLeadingToken(field:TClassField):Token {
+		for (m in field.metadata) {
+			switch m {
+				case MetaFlash(m):
+					return m.openBracket;
+				case MetaHaxe(s):
+			}
+		}
+
+		if (field.namespace != null) {
+			return field.namespace;
+		}
+
+		if (field.modifiers.length > 0) {
+			switch (field.modifiers[0]) {
+				case FMPublic(t) | FMPrivate(t) | FMProtected(t) | FMInternal(t) | FMOverride(t) | FMStatic(t) | FMFinal(t):
+					return t;
+			}
+		}
+
+		switch field.kind {
+			case TFGetter(a) | TFSetter(a):
+				return a.syntax.functionKeyword;
+			case _:
+				throw "assert";
+		}
+	}
+
 	override function processClassField(f:TClassField) {
 		switch f.kind {
-			case TFGetter(field): processGetter(f, field, getMods(f));
-			case TFSetter(field): processSetter(f, field, getMods(f));
+			case TFGetter(field): processGetter(f, field, getMods(f), getFieldLeadingToken(f));
+			case TFSetter(field): processSetter(f, field, getMods(f), getFieldLeadingToken(f));
 			case TFVar(_) | TFFun(_):
 		}
 	}
 
-	function addProperty(name:String, set:Bool, type:TType, mods:Modifiers):Null<THaxePropDecl> {
+	function addProperty(name:String, set:Bool, type:TType, mods:Modifiers, leadToken:Token):Null<THaxePropDecl> {
+		// TODO: determine indentation and add it to the accessor method
+		var leadTrivia = leadToken.leadTrivia;
+		leadToken.leadTrivia = [];
+
 		if (currentProperties == null) currentProperties = new Map();
 
 		var prop = currentProperties[name];
 		var isNewProperty = (prop == null);
 		if (isNewProperty) {
-			prop = {syntax: {leadTrivia: []}, name: name, get: false, set: false, type: type, isPublic: mods.isPublic, isStatic: mods.isStatic, isFlashProperty: false};
+			prop = {syntax: {leadTrivia: leadTrivia}, name: name, get: false, set: false, type: type, isPublic: mods.isPublic, isStatic: mods.isStatic, isFlashProperty: false};
 			currentProperties.set(name, prop);
+		} else {
+			prop.syntax.leadTrivia = prop.syntax.leadTrivia.concat(leadTrivia);
 		}
 
 		if (set) prop.set = true else prop.get = true;
@@ -103,10 +137,10 @@ class HaxeProperties extends AbstractFilter {
 		field.namespace = null;
 	}
 
-	function processGetter(field:TClassField, accessor:TAccessorField, mods:Modifiers) {
+	function processGetter(field:TClassField, accessor:TAccessorField, mods:Modifiers, leadToken:Token) {
 		removePublicModifier(field);
 		if (!mods.isOverride) {
-			var prop = addProperty(accessor.name, false, accessor.fun.sig.ret.type, mods);
+			var prop = addProperty(accessor.name, false, accessor.fun.sig.ret.type, mods, leadToken);
 			if (prop != null) {
 				accessor.haxeProperty = prop;
 				if (isImplementingExternProperty(currentClass, accessor.name, true)) {
@@ -118,7 +152,7 @@ class HaxeProperties extends AbstractFilter {
 		}
 	}
 
-	function processSetter(field:TClassField, accessor:TAccessorField, mods:Modifiers) {
+	function processSetter(field:TClassField, accessor:TAccessorField, mods:Modifiers, leadToken:Token) {
 		var sig = accessor.fun.sig;
 		var arg = sig.args[0];
 		var type = arg.type;
@@ -144,7 +178,7 @@ class HaxeProperties extends AbstractFilter {
 		}
 
 		if (!mods.isOverride) {
-			var prop = addProperty(accessor.name, true, type, mods);
+			var prop = addProperty(accessor.name, true, type, mods, leadToken);
 			if (prop != null) {
 				accessor.haxeProperty = prop;
 				if (isImplementingExternProperty(currentClass, accessor.name, false)) {
