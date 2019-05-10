@@ -598,11 +598,17 @@ class GenHaxe extends PrinterBase {
 	}
 
 	function printCondCompBlock(v:TCondCompVar, expr:TExpr) {
-		printTokenTrivia(v.syntax.ns);
-		printTokenTrivia(v.syntax.sep);
-		printTextWithTrivia("#if " + v.ns + "_" + v.name, v.syntax.name);
-		printExpr(expr);
-		buf.add("#end ");
+		switch expr.kind {
+			case TEBlock(block):
+				printTokenTrivia(v.syntax.ns);
+				printTokenTrivia(v.syntax.sep);
+				printTextWithTrivia("#if " + v.ns + "_" + v.name, v.syntax.name);
+				printOpenBrace(block.syntax.openBrace);
+				for (e in block.exprs) printBlockExpr(e);
+				printTextWithTrivia("} #end", block.syntax.closeBrace);
+			case _:
+				throw "assert";
+		}
 	}
 
 	function printCondCompVar(v:TCondCompVar) {
