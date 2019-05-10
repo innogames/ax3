@@ -427,6 +427,12 @@ class Typer {
 			case HTPath("flash.utils.Object", []): tUntypedObject;
 			case HTPath("Vector" | "flash.Vector", [t]): TTVector(resolveHaxeType(mod, t, pos));
 			case HTPath("GenericDictionary", [k, v]): TTDictionary(resolveHaxeType(mod, k, pos), resolveHaxeType(mod, v, pos));
+
+			// TODO: hacks begin
+			case HTPath("StateDescription" | "TransitionDescription", []): TTObject(TTAny);
+			case HTPath("Class", [HTPath("org.robotlegs.core.ICommand", [])]): TTClass;
+			// hacks end
+
 			case HTPath("Class", [HTPath("Dynamic", [])]): TTClass;
 			case HTPath("Class", [HTPath(path, [])]): TypedTree.declToStatic(resolveDotPath(mod, path.split(".")));
 			case HTPath("Null", [t]): resolveHaxeType(mod, t, pos); // TODO: keep nullability?
