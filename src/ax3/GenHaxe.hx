@@ -254,8 +254,7 @@ class GenHaxe extends PrinterBase {
 					printTextWithTrivia("public", t);
 				case FMPrivate(t) | FMProtected(t):
 					t.trimTrailingWhitespace();
-					printTrivia(t.leadTrivia);
-					printTrivia(t.trailTrivia);
+					printTokenTrivia(t);
 				// case FMPrivate(t): printTextWithTrivia("private", t);
 				// case FMProtected(t): printTextWithTrivia("/*protected*/private", t);
 				case FMInternal(t): printTextWithTrivia("@:allow(" + currentModule.parentPack.name + ")", t);
