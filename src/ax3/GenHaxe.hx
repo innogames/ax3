@@ -817,13 +817,29 @@ class GenHaxe extends PrinterBase {
 		for (v in vars) {
 			printTextWithTrivia(v.v.name, v.syntax.name);
 
-			// TODO: skip type hint if there's an initializer with exactly the same type
-			// if (v.init == null || !Type.enumEq(v.v.type, v.init.expr.type)) {
+			// TODO: don't lose the typehint's trivia
+			if (v.init == null || !canSkipTypeHint(v.v.type, v.init.expr)) {
 				printTypeHint({type: v.v.type, syntax: v.syntax.type});
-			// }
+			}
 
 			if (v.init != null) printVarInit(v.init);
 			if (v.comma != null) printComma(v.comma);
+		}
+	}
+
+	function canSkipTypeHint(expectedType:TType, expr:TExpr):Bool {
+		// we can skip explicit type hint for vars where the type is exactly the same
+		// and let the type inference do the job. this makes code easier to read and refactor
+		if (expectedType.match(TTAny | TTObject(TTAny)))
+			return false;
+
+		switch expr.kind {
+			case TELiteral(TLNull(_)) | TEArrayDecl(_) | TEObjectDecl(_):
+				return false;
+			case TELiteral(TLInt(_)) if (expectedType.match(TTNumber | TTUint)):
+				return false;
+			case _:
+				return Type.enumEq(expectedType, expr.type);
 		}
 	}
 

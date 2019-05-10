@@ -56,9 +56,13 @@ class RewriteAs extends AbstractFilter {
 							}]
 						}), typeRef.type, e.expectedType);
 
-					case TTArray(_):
+					case TTArray(tElem):
 						var eType = mkBuiltin("Array", TTBuiltin);
-						e.with(kind = makeAs(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e)));
+						e = e.with(kind = makeAs(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e)));
+						if (e.expectedType != e.type || tElem == TTAny)
+							e.with(kind = TEHaxeRetype(e))
+						else
+							e;
 
 					case TTInst(cls):
 						var path = switch (typeRef.syntax) {

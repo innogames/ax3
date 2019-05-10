@@ -849,7 +849,8 @@ class ExprTyper {
 
 				var type =
 					if (a.type == TTNumber || b.type == TTNumber) TTNumber // always number
-					else a.type; // probably int/uint
+					else if (a.type == TTUint || b.type == TTUint) TTUint // uint ops yield uint in Haxe
+					else a.type; // probably int
 
 				return mk(TEBinop(a, op, b), type, expectedType);
 
