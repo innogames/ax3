@@ -252,8 +252,12 @@ class GenHaxe extends PrinterBase {
 				case FMPublic(t):
 					isPublic = true;
 					printTextWithTrivia("public", t);
-				case FMPrivate(t): printTextWithTrivia("private", t);
-				case FMProtected(t): printTextWithTrivia("/*protected*/private", t);
+				case FMPrivate(t) | FMProtected(t):
+					t.trimTrailingWhitespace();
+					printTrivia(t.leadTrivia);
+					printTrivia(t.trailTrivia);
+				// case FMPrivate(t): printTextWithTrivia("private", t);
+				// case FMProtected(t): printTextWithTrivia("/*protected*/private", t);
 				case FMInternal(t): printTextWithTrivia("@:allow(" + currentModule.parentPack.name + ")", t);
 				case FMOverride(t): printTextWithTrivia("override", t);
 				case FMStatic(t): printTextWithTrivia("static", t);

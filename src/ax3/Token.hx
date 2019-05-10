@@ -20,6 +20,16 @@ class Token {
 	public function toString() {
 		return '${kind.getName()}(${haxe.Json.stringify(text)})';
 	}
+
+	public function trimTrailingWhitespace() {
+		var i = trailTrivia.length - 1;
+		if (trailTrivia[i].kind == TrNewline) {
+			i--;
+		}
+		if (trailTrivia[i].kind == TrWhitespace) {
+			trailTrivia.splice(i, 1);
+		}
+	}
 }
 
 @:forward(kind, text, leadTrivia, trailTrivia)
