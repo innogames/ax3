@@ -12,5 +12,5 @@
 -java java_out
 -D jvm
 
--cmd cp java_out/Main.jar ../foe/Frontend/client/haxe2/converter/converter.jar
+-cmd cp java_out/Main.jar converter.jar
 # -cmd java -jar java_out/Main.jar config-local.json
