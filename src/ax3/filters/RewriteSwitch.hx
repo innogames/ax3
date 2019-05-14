@@ -7,7 +7,6 @@ class RewriteSwitch extends AbstractFilter {
 			case TESwitch(s):
 				var newCases:Array<TSwitchCase> = [];
 				var valueAcc = [];
-				var nullCase = null; // workaround for https://github.com/HaxeFoundation/haxe/issues/8213
 
 				function processCaseBody(block:Array<TBlockExpr>, allowNonTerminalLast:Bool) {
 					switch block {
@@ -32,11 +31,7 @@ class RewriteSwitch extends AbstractFilter {
 				for (i in 0...s.cases.length) {
 					var c = s.cases[i];
 					var value = switch c.values {
-						case [value]:
-							if (value.kind.match(TELiteral(TLNull(_)))) {
-								nullCase = c;
-							}
-							value;
+						case [value]: value;
 						case _: throw "assert";
 					};
 					valueAcc.push({syntax: c.syntax, value: value});
@@ -70,19 +65,6 @@ class RewriteSwitch extends AbstractFilter {
 
 				if (s.def != null) {
 					processCaseBody(s.def.body, true);
-				} else if (nullCase != null) {
-					// have to add a default case if `case null` is there to workaround https://github.com/HaxeFoundation/haxe/issues/8213
-					s.def = {
-						syntax: {
-							keyword: mkIdent("default", nullCase.syntax.keyword.leadTrivia.copy()),
-							colon: new Token(0, TkColon, ":", [], [
-								whitespace,
-								new Trivia(TrLineComment, "// workaround for https://github.com/HaxeFoundation/haxe/issues/8213"),
-								newline,
-							]),
-						},
-						body: []
-					}
 				}
 
 				e.with(kind = TESwitch({
