@@ -1,5 +1,5 @@
-#if macro
 package ax3;
+#if macro
 
 import haxe.macro.Context;
 import haxe.macro.Expr;
