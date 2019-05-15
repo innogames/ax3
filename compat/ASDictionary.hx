@@ -1,6 +1,12 @@
-abstract ASDictionary<K,V>(flash.utils.Dictionary) from flash.utils.Dictionary { //TODO: remove implicit cast?
+#if openfl
+private typedef Dictionary<K,V> = openfl.utils.Dictionary<K,V>;
+#else
+private typedef Dictionary<K,V> = flash.utils.Dictionary;
+#end
+
+abstract ASDictionary<K,V>(Dictionary<K,V>) from Dictionary<K,V> { //TODO: remove implicit cast?
 	public inline function new() {
-		this = new flash.utils.Dictionary();
+		this = new Dictionary<K,V>();
 	}
 
 	@:op([]) public inline function get(key:K):Null<V> {
