@@ -22,34 +22,69 @@ abstract ASAnyBase<T>(T)
 		if (Reflect.hasField(this, name)) {
 			return true;
 		}
-        var clazz = Type.getClass(this);
-        if (clazz != null) {
-            var fields = Type.getInstanceFields(clazz);
-            return fields.indexOf(name) > -1 || fields.indexOf("get_"+name) > -1 || fields.indexOf("set_"+name) > -1;
+		var clazz = Type.getClass(this);
+		if (clazz != null) {
+			var fields = Type.getInstanceFields(clazz);
+			return fields.indexOf(name) > -1 || fields.indexOf("get_" + name) > -1 || fields.indexOf("set_" + name) > -1;
 		}
 		return false;
 	}
 
-	@:to inline function ___toString():String {
-		return cast this; // TODO
+	#if flash
+	@:to public inline function ___toString():String return cast this;
+	@:to inline function ___toBool():Bool return cast this;
+	@:to inline function ___toFloat():Float return cast this;
+	@:to inline function ___toInt():Int return cast this;
+	#elseif js
+	@:to public inline function ___toString():String return if (this == null) null else "" + this;
+	@:to inline function ___toBool():Bool return js.Syntax.code("Boolean")(this);
+	@:to inline function ___toFloat():Float return js.Syntax.code("Number")(this);
+	@:to inline function ___toInt():Int return Std.int(___toFloat());
+	#else
+	@:to function ___toBool():Bool {
+		if (this == null) {
+			return false;
+		}
+		if (Std.is(this, Float)) {
+			var v:Float = cast this;
+			return v != 0 && !Math.isNaN(v);
+		}
+		return cast this;
 	}
 
-	@:to inline function ___toBool():Bool {
-		return cast this; // TODO
+	@:to function ___toFloat():Float {
+		throw "TODO";
 	}
 
-	@:to inline function ___toInt():Int {
-		return cast this; // TODO
+	@:to function ___toInt():Int {
+		if (this == null) {
+			return 0;
+		}
+		if (Std.is(this, Int)) {
+			return cast this;
+		}
+		if (Std.is(this, Float)) {
+			var v:Float = cast this;
+			return if (Math.isNaN(v)) 0 else Std.int(v);
+		}
+		if (Std.is(this, String)) {
+			var i = Std.parseInt(cast this);
+			return if (i == null) 0 else i;
+		}
+		if (Std.is(this, Bool)) {
+			return if (cast this) 1 else 0;
+		}
+		return 0;
 	}
-
-	@:to inline function ___toFloat():Float {
-		return cast this; // TODO
-	}
+	#end
 
 	@:to inline function ___toOther():Dynamic {
 		return this;
 	}
 
+	#if flash
+	@:op(a.b) inline function ___get(name:String):ASAny return Reflect.getProperty(this, name);
+	#else
 	@:op(a.b) function ___get(name:String):ASAny {
 		var value:Dynamic = Reflect.getProperty(this, name);
 		if (Reflect.isFunction(value))
@@ -57,6 +92,7 @@ abstract ASAnyBase<T>(T)
 		else
 			return value;
 	}
+	#end
 
 	@:op(a.b) inline function ___set(name:String, value:ASAny):ASAny {
 		Reflect.setProperty(this, name, value);

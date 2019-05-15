@@ -1,0 +1,20 @@
+-cp compat
+-cp compat-test
+-lib utest
+-lib openfl
+-main Main
+-js test.js
+-D analyzer-optimize
+
+-cmd node test.js
+
+--next
+
+-cp compat
+-cp compat-test
+-lib utest
+-lib openfl
+-main Main
+-swf test.swf
+
+-cmd test.swf
