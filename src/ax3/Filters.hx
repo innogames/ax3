@@ -50,6 +50,7 @@ class Filters {
 			new NamespacedToPublic(context),
 			new VarInits(context),
 			new UintComparison(context),
+			new HandleProtectedOverrides(context),
 		]) {
 			f.run(tree);
 		}
