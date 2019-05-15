@@ -152,9 +152,16 @@ class ArrayApi extends AbstractFilter {
 
 			case TECall({kind: TEVector(_, elemType)}, args):
 				switch args.args {
-					case [{expr: {type: TTVector(_)}}]:
-						var convertMethod = mkBuiltin("flash.Vector.convert", TTFunction, removeLeadingTrivia(e));
-						e.with(kind = TECall(convertMethod, args));
+					case [{expr: eOtherVector = {type: TTVector(actualElemType)}}]:
+						if (Type.enumEq(elemType, actualElemType)) {
+							reportError(exprPos(e), "Useless vector casting");
+							processLeadingToken(t -> t.leadTrivia = removeLeadingTrivia(e).concat(t.leadTrivia), eOtherVector);
+							processTrailingToken(t -> t.trailTrivia = t.trailTrivia.concat(removeTrailingTrivia(e)), eOtherVector);
+							eOtherVector.with(expectedType = e.expectedType);
+						} else {
+							var convertMethod = mkBuiltin("flash.Vector.convert", TTFunction, removeLeadingTrivia(e));
+							e.with(kind = TECall(convertMethod, args));
+						}
 
 					case [eArray = {expr: {type: TTArray(_) | TTAny}}]:
 						var convertMethod = mkBuiltin("flash.Vector.ofArray", TTFunction, removeLeadingTrivia(e));
