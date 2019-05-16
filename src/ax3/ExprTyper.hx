@@ -14,7 +14,8 @@ import ax3.TypedTreeTools.isFieldStatic;
 typedef Locals = Map<String, TVar>;
 
 typedef TyperContext = {
-	function getCurrentModule():TModule;
+	function reportError(msg:String, pos:Int):Void;
+	function throwError(msg:String, pos:Int):Dynamic;
 	function getCurrentClass():Null<TClassOrInterfaceDecl>;
 	function resolveDotPath(path:Array<String>):TDecl;
 	function resolveType(t:SyntaxType):TType;
@@ -38,12 +39,8 @@ class ExprTyper {
 		localsStack = [locals];
 	}
 
-	inline function err(msg, pos) context.reportError(typerContext.getCurrentModule().path, pos, msg);
-
-	inline function throwErr(msg, pos):Dynamic {
-		err(msg, pos);
-		throw "assert"; // TODO do it nicer
-	}
+	inline function err(msg, pos) typerContext.reportError(msg, pos);
+	inline function throwErr(msg, pos):Dynamic return typerContext.throwError(msg, pos);
 
 	function pushLocals() {
 		locals = locals.copy();
@@ -507,7 +504,7 @@ class ExprTyper {
 			return getFieldType(field);
 		}
 
-		throwErr('Unknown instance field $fieldName on class ${cls.name}', pos);
+		return throwErr('Unknown instance field $fieldName on class ${cls.name}', pos);
 	}
 
 	function typeXMLFieldAccess(xml:TExpr, dot:Token, field:Token, expectedType:TType):TExpr {

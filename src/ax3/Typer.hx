@@ -123,7 +123,8 @@ class Typer {
 	function makeTyperContext(mod:TModule, cls:Null<TClassOrInterfaceDecl>):ExprTyper.TyperContext {
 		return {
 			getCurrentClass: () -> cls,
-			getCurrentModule: () -> mod,
+			reportError: err.bind(mod),
+			throwError: throwErr.bind(mod),
 			resolveDotPath: resolveDotPath.bind(mod),
 			resolveType: resolveType.bind(mod),
 			resolveHaxeTypeHint: resolveHaxeTypeHint.bind(mod),
@@ -443,8 +444,17 @@ class Typer {
 		};
 	}
 
+	inline function err(mod:TModule, msg:String, pos:Int) context.reportError(mod.path, pos, msg);
+
+	inline function throwErr(mod:TModule, msg:String, pos:Int):Dynamic {
+		err(mod, msg, pos);
+		throw "assert"; // TODO do it nicer
+	}
+
 	function resolveHaxeTypeHint(mod:TModule, a:Null<HaxeTypeAnnotation>, p:Int):Null<TType> {
-		return if (a == null) null else resolveHaxeType(mod, a.parseTypeHint(), p);
+		if (a == null) return null;
+		var hint = try a.parseTypeHint() catch (e:Any) throwErr(mod, Std.string(e), p);
+		return resolveHaxeType(mod, hint, p);
 	}
 
 	function resolveHaxeSignature(mod:TModule, a:Null<HaxeTypeAnnotation>, p:Int):Null<{args:Map<String,TType>, ret:Null<TType>}> {
