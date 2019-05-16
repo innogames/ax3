@@ -1,20 +1,20 @@
-typedef ASAny = ASAnyBase<Dynamic>;
-
 @:callable // TODO it's a bit unsafe because @:callable takes and returns Dynamic, not ASAny
            // I'm not sure how much can we do about it, maybe wrap the TTAny arguments and the return value in ASAny on the converter level?
-abstract ASAnyBase<T>(T)
-	from T
+abstract ASAny(Dynamic)
+	from Dynamic
 	from haxe.Constraints.Function
+	from ASObject
+	to ASObject
 {
 
 	public inline function new() this = cast {};
 
 	@:noCompletion
-	public inline function ___keys():NativePropertyIterator<ASAny> {
+	public function ___keys():NativePropertyIterator<ASAny> {
 		return new NativePropertyIterator(this);
 	}
 
-	@:to public inline function iterator():NativeValueIterator<ASAny> {
+	@:to public function iterator():NativeValueIterator<ASAny> {
 		return new NativeValueIterator(this);
 	}
 
@@ -31,10 +31,10 @@ abstract ASAnyBase<T>(T)
 	}
 
 	#if flash
-	@:to public inline function ___toString():String return cast this;
-	@:to inline function ___toBool():Bool return cast this;
-	@:to inline function ___toFloat():Float return cast this;
-	@:to inline function ___toInt():Int return cast this;
+	@:to public function ___toString():String return cast this;
+	@:to function ___toBool():Bool return cast this;
+	@:to function ___toFloat():Float return cast this;
+	@:to function ___toInt():Int return cast this;
 	#elseif js
 	@:to public inline function ___toString():String return if (this == null) null else "" + this;
 	@:to inline function ___toBool():Bool return js.Syntax.code("Boolean")(this);
@@ -78,12 +78,12 @@ abstract ASAnyBase<T>(T)
 	}
 	#end
 
-	@:to inline function ___toOther():Dynamic {
+	@:to function ___toOther():Dynamic {
 		return this;
 	}
 
 	#if flash
-	@:op(a.b) inline function ___get(name:String):ASAny return Reflect.getProperty(this, name);
+	@:op(a.b) function ___get(name:String):ASAny return Reflect.getProperty(this, name);
 	#else
 	@:op(a.b) function ___get(name:String):ASAny {
 		var value:Dynamic = Reflect.getProperty(this, name);
@@ -94,12 +94,12 @@ abstract ASAnyBase<T>(T)
 	}
 	#end
 
-	@:op(a.b) inline function ___set(name:String, value:ASAny):ASAny {
+	@:op(a.b) function ___set(name:String, value:ASAny):ASAny {
 		Reflect.setProperty(this, name, value);
 		return value;
 	}
 
-	@:op(!a) inline function __not():Bool {
+	@:op(!a) function __not():Bool {
 		return !___toBool();
 	}
 
