@@ -426,7 +426,7 @@ class Typer {
 			case HTPath("FastXML", []): TTXMLList;
 			case HTPath("haxe.DynamicAccess", [elemT]): TTObject(resolveHaxeType(mod, elemT, pos));
 			case HTPath("flash.utils.Object", []): tUntypedObject;
-			case HTPath("Vector" | "flash.Vector", [t]): TTVector(resolveHaxeType(mod, t, pos));
+			case HTPath("Vector" | "flash.Vector" | "openfl.Vector", [t]): TTVector(resolveHaxeType(mod, t, pos));
 			case HTPath("GenericDictionary", [k, v]): TTDictionary(resolveHaxeType(mod, k, pos), resolveHaxeType(mod, v, pos));
 
 			// TODO: hacks begin
