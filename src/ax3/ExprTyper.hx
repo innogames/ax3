@@ -747,7 +747,7 @@ class ExprTyper {
 		var type, ctorType;
 		switch (e.type) {
 			case TTStatic(cls):
-				ctorType = getConstructorType(cls);
+				ctorType = if (cls.kind.match(TInterface(_))) TTFunction else getConstructorType(cls);
 				type = TTInst(cls);
 			case _:
 				ctorType = TTFunction;
