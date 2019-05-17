@@ -461,7 +461,7 @@ class Typer {
 		if (a == null) {
 			return null;
 		}
-		var sig = a.parseSignature();
+		var sig = try a.parseSignature() catch (e:Any) throwErr(mod, Std.string(e), p);
 		return {
 			args: [for (name => type in sig.args) name => resolveHaxeType(mod, type, p)],
 			ret: if (sig.ret == null) null else resolveHaxeType(mod, sig.ret, p)
