@@ -1,12 +1,5 @@
 package ax3.filters;
 
-private enum CastKind {
-	CKSameClass;
-	CKDowncast;
-	CKUpcast;
-	CKUnknown;
-}
-
 class RewriteAs extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
 		e = mapExpr(processExpr, e);
@@ -102,42 +95,6 @@ class RewriteAs extends AbstractFilter {
 			case _:
 				e;
 		}
-	}
-
-	static function determineCastKind(valueType:TType, asClass:TClassOrInterfaceDecl):CastKind {
-		return switch valueType {
-			// TODO: support sameclass/upcast for interfaces since we don't need to generate Std.instance here
-			case TTInst(valueClass = {kind: TClass(_)}):
-				if (valueClass == asClass)
-					CKSameClass
-				else if (isChildClass(valueClass, asClass))
-					CKUpcast
-				else if (isChildClass(asClass, valueClass))
-					CKDowncast
-				else
-					CKUnknown;
-			case _:
-				CKUnknown;
-		}
-	}
-
-	static function isChildClass(cls:TClassOrInterfaceDecl, base:TClassOrInterfaceDecl):Bool {
-		while (true) {
-			if (cls == base) {
-				return true;
-			}
-			switch cls.kind {
-				case TInterface(_):
-					return false;
-				case TClass(classInfo):
-					if (classInfo.extend == null) {
-						return false;
-					} else {
-						cls = classInfo.extend.superClass;
-					}
-			}
-		}
-		return false;
 	}
 
 	static function makeAs(eObj:TExpr, eType:TExpr, leadTrivia, trailTrivia):TExprKind {
