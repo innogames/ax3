@@ -8,6 +8,8 @@ class RewriteCFor extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
 		return switch e.kind {
 			case TEFor(f):
+				// TODO: also detect `for (var i = 0; i < array.length; i++) { var elem = array[i]; ... }`
+				// we can safely rewrite it to `for (elem in array)` if no mutating methods are called and array itself is not passed over
 				switch getSimpleSequence(f) {
 					case null:
 						rewriteToWhile(f);
@@ -22,20 +24,25 @@ class RewriteCFor extends AbstractFilter {
 	}
 
 	static function getSimpleSequence(f:TFor):Null<IntIterInfo> {
-		return null; // TODO: disabled for now because of length-mutating loops over the index doesn't play well with this, gotta check if `endValue` is immutable
-
-		// TODO: check for modifications of the loop var and cancel
-		// TODO: maybe check whether `endValue` is really immutable, because Haxe will store it in a temp var
+		// TODO: check for modifications of the loop var and cancel (although Haxe compiler will check for that)
 		var initVarDecl, endValue;
 		switch f.einit {
 			// TODO: also check for TELocal, but introduce temp var similar to what we do on `for( each)` type mismatches
-			case {kind: TEVars(_, [varDecl = {v: {type: TTInt | TTUint}}])} if (varDecl.init != null): initVarDecl = varDecl;
-			case _: return null;
+			case {kind: TEVars(_, [varDecl = {v: {type: TTInt | TTUint}}])} if (varDecl.init != null):
+				initVarDecl = varDecl;
+			case _:
+				return null;
 		}
 
 		switch f.econd {
-			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpLt(_), b = {type: TTInt | TTUint})} if (checkedVar == initVarDecl.v): endValue = b;
-			case _: return null;
+			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpLt(_), b = {kind: TELocal(_, endValueVar), type: TTInt | TTUint})} if (checkedVar == initVarDecl.v):
+				// TODO maybe also allow constant fields, although I'm not sure how many instance of that we have :)
+				if (isEndValueModified(endValueVar, f.body)) {
+					return null;
+				}
+				endValue = b;
+			case _:
+				return null;
 		}
 
 		switch f.eincr {
@@ -43,7 +50,8 @@ class RewriteCFor extends AbstractFilter {
 			case {kind: TEPreUnop(PreIncr(_), {kind: TELocal(_, checkedVar)})} if (checkedVar == initVarDecl.v):
 			case {kind: TEPostUnop({kind: TELocal(_, checkedVar)}, PostIncr(_))} if (checkedVar == initVarDecl.v):
 			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpAssignOp(AOpAdd(_)), {kind: TELiteral(TLInt({text: "1"}))})} if (checkedVar == initVarDecl.v):
-			case _: return null;
+			case _:
+				return null;
 		}
 
 		return {
@@ -51,6 +59,24 @@ class RewriteCFor extends AbstractFilter {
 			vit: initVarDecl.v,
 			iter: mk(TEHaxeIntIter(initVarDecl.init.expr, endValue), TTBuiltin, TTBuiltin)
 		};
+	}
+
+	static function isEndValueModified(v:TVar, e:TExpr) {
+		var result = false;
+		function loop(e:TExpr):TExpr {
+			return switch e.kind {
+				case TEBinop({kind: TELocal(_, modifiedVar)}, OpAssign(_) | OpAssignOp(_), _)
+				   | TEPreUnop(PreIncr(_) | PreDecr(_), {kind: TELocal(_, modifiedVar)})
+				   | TEPostUnop({kind: TELocal(_, modifiedVar)}, PostIncr(_) | PostDecr(_))
+				   if (modifiedVar == v):
+					result = true;
+					e;
+				case _:
+					mapExpr(loop, e); // TODO: i really need an iterExpr function with a way to exit early
+			}
+		}
+		loop(e);
+		return result;
 	}
 
 	function rewriteToIntIter(f:TFor, s:IntIterInfo):TExpr {
