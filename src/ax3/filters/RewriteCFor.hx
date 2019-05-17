@@ -10,6 +10,7 @@ class RewriteCFor extends AbstractFilter {
 			case TEFor(f):
 				// TODO: also detect `for (var i = 0; i < array.length; i++) { var elem = array[i]; ... }`
 				// we can safely rewrite it to `for (elem in array)` if no mutating methods are called and array itself is not passed over
+				// TODO: rewrite backward iterations to something
 				switch getSimpleSequence(f) {
 					case null:
 						rewriteToWhile(f);
@@ -37,6 +38,7 @@ class RewriteCFor extends AbstractFilter {
 		switch f.econd {
 			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpLt(_), b = {kind: TELocal(_, endValueVar), type: TTInt | TTUint})} if (checkedVar == initVarDecl.v):
 				// TODO maybe also allow constant fields, although I'm not sure how many instance of that we have :)
+				// TODO: check for literal end value
 				if (isEndValueModified(endValueVar, f.body)) {
 					return null;
 				}
