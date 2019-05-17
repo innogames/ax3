@@ -57,12 +57,14 @@ class RewriteAs extends AbstractFilter {
 						}), typeRef.type, e.expectedType);
 
 					case TTArray(tElem):
-						var eType = mkBuiltin("Array", TTBuiltin);
-						e = e.with(kind = makeAs(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e)));
-						if (e.expectedType != e.type || tElem == TTAny)
-							e.with(kind = TEHaxeRetype(e))
-						else
-							e;
+						if (tElem != TTAny) throwError(exprPos(e), "assert"); // only TTArray(TTAny) can come from AS3 `as` cast
+						var needsTypeCheck = false;
+						var type = switch e.expectedType {
+							case TTArray(_): needsTypeCheck = true; e.expectedType;
+							case _: tUntypedArray;
+						};
+						var e = mk(makeAs(eobj, mkBuiltin("Array", TTBuiltin), removeLeadingTrivia(e), removeTrailingTrivia(e)), type, e.expectedType);
+						e.with(kind = TEHaxeRetype(e));
 
 					case TTInst(cls):
 						var path = switch (typeRef.syntax) {

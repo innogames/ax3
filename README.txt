@@ -24,6 +24,6 @@
 TODO:
  - implement class-wrapping for module-level vars/functions
  - handle Null<T> to T conversion in some cases (e.g. for var x:int = dict[inexistant])
- - go through TODOs in the code
- - optionally don't generate var type hints if the init expr type is exaclty the same
  - unify RewriteForIn and RewriteForEach because they are very similar and there's a lot of duplicate logic
+ - patch some types loaded from SWC (e.g. DisplayObject.filters is Array<BitmapFilter>)
+ - go through TODOs in the code
