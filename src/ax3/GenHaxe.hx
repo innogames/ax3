@@ -377,14 +377,19 @@ class GenHaxe extends PrinterBase {
 			case TTDictionary(k, v): buf.add("ASDictionary<"); printTType(k); buf.add(","); printTType(v); buf.add(">");
 			case TTBuiltin: buf.add("TODO");
 			case TTFun(args, ret, rest):
-				if (args.length == 0) {
-					buf.add("Void->");
+				// TODO: handle nested function types
+				if (args.length == 1) {
+					printTType(args[0]);
 				} else {
-					for (arg in args) {
-						printTType(arg);
-						buf.add("->");
+					buf.add("(");
+					for (i in 0...args.length) {
+						printTType(args[i]);
+						if (i < args.length - 1)
+							buf.add(", ");
 					}
+					buf.add(")");
 				}
+				buf.add("->");
 				printTType(ret);
 
 			case TTInst(cls):
