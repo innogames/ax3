@@ -60,7 +60,7 @@ class RestArgs extends AbstractFilter {
 			case TELocalFunction(f):
 				processFunction(f.fun);
 
-			case TENew(token, eclass = {type: TTStatic(cls)}, args) if (args != null && args.args.length > 0):
+			case TENew(_, TNType({type: TTInst(cls)}), args) if (args != null && args.args.length > 0):
 				switch getConstructor(cls) {
 					case {type: TTFun(argTypes, _, TRestAs3)}:
 						args.args = transformArgs(args.args, argTypes.length);

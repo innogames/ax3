@@ -24,13 +24,12 @@ class RewriteRegexLiterals extends AbstractFilter {
 				}
 
 				var newToken = new Token(token.pos, TkIdent, "new", token.leadTrivia, [whitespace]);
-				var eRegExp = mk(TEBuiltin(mkIdent("RegExp"), "RegExp"), TTBuiltin, TTBuiltin);
 				var args:TCallArgs = {
 					openParen: mkOpenParen(),
 					args: args,
 					closeParen: new Token(0, TkParenClose, ")", [], token.trailTrivia)
 				}
-				e.with(kind = TENew(newToken, eRegExp, args));
+				e.with(kind = TENew(newToken, TNType({syntax: TPath({first: mkIdent("RegExp"), rest: []}), type: TTRegExp}), args));
 			case _:
 				e;
 		}

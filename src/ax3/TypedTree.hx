@@ -536,7 +536,7 @@ enum TExprKind {
 	TEPostUnop(e:TExpr, op:PostUnop);
 	TEAs(e:TExpr, keyword:Token, type:TTypeRef);
 	TESwitch(s:TSwitch);
-	TENew(keyword:Token, eclass:TExpr, args:Null<TCallArgs>);
+	TENew(keyword:Token, cls:TNewObject, args:Null<TCallArgs>);
 	TECondCompValue(v:TCondCompVar);
 	TECondCompBlock(v:TCondCompVar, expr:TExpr);
 	TEXmlChild(x:TXmlChild);
@@ -546,6 +546,11 @@ enum TExprKind {
 	TEUseNamespace(ns:UseNamespace);
 	TEHaxeRetype(e:TExpr);
 	TEHaxeIntIter(start:TExpr, end:TExpr);
+}
+
+enum TNewObject {
+	TNType(t:TTypeRef);
+	TNExpr(e:TExpr);
 }
 
 typedef TCast = {

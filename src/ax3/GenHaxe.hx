@@ -408,6 +408,12 @@ class GenHaxe extends PrinterBase {
 		return if (packName == "") cls.name else packName + "." + cls.name;
 	}
 
+	function printTypeRef(t:TTypeRef) {
+		printTrivia(ParseTree.getSyntaxTypeLeadingTrivia(t.syntax));
+		printTType(t.type);
+		printTrivia(ParseTree.getSyntaxTypeTrailingTrivia(t.syntax));
+	}
+
 	function printTypeHint(hint:TTypeHint) {
 		if (hint.syntax != null) {
 			printColon(hint.syntax.colon);
@@ -489,7 +495,7 @@ class GenHaxe extends PrinterBase {
 			case TEPreUnop(op, e): printPreUnop(op, e);
 			case TEPostUnop(e, op): printPostUnop(e, op);
 			case TESwitch(s): printSwitch(s);
-			case TENew(keyword, eclass, args): printNew(keyword, eclass, args);
+			case TENew(keyword, obj, args): printNew(keyword, obj, args);
 			case TECondCompValue(v): printCondCompVar(v);
 			case TECondCompBlock(v, expr): printCondCompBlock(v, expr);
 			case TEAs(_): throw "unprocessed `as` expression";
@@ -669,11 +675,11 @@ class GenHaxe extends PrinterBase {
 		printExpr(f.body);
 	}
 
-	function printNew(keyword:Token, eclass:TExpr, args:Null<TCallArgs>) {
+	function printNew(keyword:Token, newObject:TNewObject, args:Null<TCallArgs>) {
 		printTextWithTrivia("new", keyword);
-		switch (eclass.kind) {
-			case TEDeclRef(_) | TEVector(_) | TEBuiltin(_): printExpr(eclass);
-			case other: throw "unprocessed expr for `new`: " + other;
+		switch newObject {
+			case TNType(t): printTypeRef(t);
+			case TNExpr(e): throw "unprocessed expr for `new`: " + e;
 		}
 		if (args != null) printCallArgs(args) else buf.add("()");
 	}

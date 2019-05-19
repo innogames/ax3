@@ -8,6 +8,7 @@ import ax3.TypedTreeTools.mkDeclRef;
 import ax3.TypedTreeTools.skipParens;
 import ax3.TypedTreeTools.tUntypedArray;
 import ax3.TypedTreeTools.tUntypedObject;
+import ax3.TypedTreeTools.tUntypedDictionary;
 import ax3.TypedTreeTools.getConstructor;
 import ax3.TypedTreeTools.isFieldStatic;
 
@@ -744,18 +745,73 @@ class ExprTyper {
 	function typeNew(keyword:Token, e:Expr, args:Null<CallArgs>, expectedType:TType):TExpr {
 		var e = typeExpr(e, TTAny);
 
-		var type, ctorType;
-		switch (e.type) {
-			case TTStatic(cls):
-				ctorType = if (cls.kind.match(TInterface(_))) TTFunction else getConstructorType(cls);
+		var obj, type, ctorType;
+		switch e.kind {
+			case TEDeclRef(path, {kind: TDClassOrInterface({name: "Dictionary"})}):
+				type = switch expectedType { case TTDictionary(_): expectedType; case _: tUntypedDictionary; };
+				ctorType = TTFun([TTBoolean], TTVoid);
+				obj = TNType({
+					type: type,
+					syntax: TPath(path)
+				});
+			case TEDeclRef(path, {kind: TDClassOrInterface(cls)}):
 				type = TTInst(cls);
-			case _:
+				ctorType = getConstructorType(cls);
+				obj = TNType({
+					type: type,
+					syntax: TPath(path)
+				});
+			case TEVector(syntax, elemType):
+				type = switch expectedType { case TTVector(_): expectedType; case _: TTVector(elemType); };
+				ctorType = TTFun([TTUint, TTBoolean], TTVoid);
+				obj = TNType({
+					type: type,
+					syntax: TVector(syntax)
+				});
+			case TEBuiltin(syntax, "Array"):
+				type = switch expectedType { case TTArray(_): expectedType; case _: tUntypedArray; };
 				ctorType = TTFunction;
-				type = tUntypedObject; // TODO: is this correct?
-		};
+				obj = TNType({
+					type: type,
+					syntax: TPath({first: syntax, rest: []})
+				});
+			case TEBuiltin(syntax, "RegExp"):
+				type = TTRegExp;
+				ctorType = TTFun([TTString, TTString], TTVoid);
+				obj = TNType({
+					type: type,
+					syntax: TPath({first: syntax, rest: []})
+				});
+			case TEBuiltin(syntax, "XML"):
+				type = TTXML;
+				ctorType = TTFun([TTString], TTVoid);
+				obj = TNType({
+					type: type,
+					syntax: TPath({first: syntax, rest: []})
+				});
+			case TEBuiltin(syntax, "Object"):
+				type = tUntypedObject;
+				ctorType = TTFun([], TTVoid);
+				obj = TNType({
+					type: type,
+					syntax: TPath({first: syntax, rest: []})
+				});
+			case TEBuiltin(_, _):
+				return throwErr("Unprocessed `new builtin`", keyword.pos);
+			case _:
+				obj = TNExpr(e);
+				switch (e.type) {
+					case TTStatic(cls):
+						type = TTInst(cls);
+						ctorType = if (cls.kind.match(TInterface(_))) TTFunction else getConstructorType(cls);
+					case _:
+						type = tUntypedObject;
+						ctorType = TTFunction;
+				}
+		}
 
 		var args = if (args != null) typeCallArgs(args, ctorType) else null;
-		return mk(TENew(keyword, e, args), type, expectedType);
+		return mk(TENew(keyword, obj, args), type, expectedType);
 	}
 
 	function typeCallArgs(args:CallArgs, callableType:TType):TCallArgs {

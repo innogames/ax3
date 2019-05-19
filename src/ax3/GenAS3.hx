@@ -489,9 +489,12 @@ class GenAS3 extends PrinterBase {
 		printExpr(i.eobj);
 	}
 
-	function printNew(keyword:Token, eclass:TExpr, args:Null<TCallArgs>) {
+	function printNew(keyword:Token, newObject:TNewObject, args:Null<TCallArgs>) {
 		printTextWithTrivia("new", keyword);
-		printExpr(eclass);
+		switch newObject {
+			case TNExpr(e): printExpr(e);
+			case TNType(t): printSyntaxType(t.syntax);
+		}
 		if (args != null) printCallArgs(args);
 	}
 

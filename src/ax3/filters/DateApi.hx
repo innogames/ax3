@@ -4,9 +4,12 @@ class DateApi extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
 		e = mapExpr(processExpr, e);
 		return switch e.kind {
-			case TENew(keyword, eDate = {kind: TEDeclRef(_, {kind: TDClassOrInterface({name: "Date", parentModule: {parentPack: {name: ""}}})})}, args):
+			case TENew(keyword, TNType(ref = {type: TTInst(dateCls = {name: "Date", parentModule: {parentPack: {name: ""}}})}), args):
 				switch args {
 					case null | {args: []}: // no arg ctor: rewrite to Date.now()
+						var tDate = TTStatic(dateCls);
+						var eDate = mk(TEDeclRef(switch ref.syntax { case TPath(p): p; case _: throw "assert";}, {name: "Date", kind: TDClassOrInterface(dateCls)}), tDate, tDate);
+
 						processLeadingToken(t -> t.leadTrivia = t.leadTrivia.concat(keyword.leadTrivia), eDate);
 
 						if (args == null) args = {
@@ -14,12 +17,15 @@ class DateApi extends AbstractFilter {
 							args: [],
 							closeParen: new Token(0, TkParenClose, ")", [], removeTrailingTrivia(e))
 						}
-						var eNowField = mk(TEField({kind: TOExplicit(mkDot(), eDate), type: eDate.type}, "now", mkIdent("now")), TTFunction, TTFunction);
+						var eNowField = mk(TEField({kind: TOExplicit(mkDot(), eDate), type: tDate}, "now", mkIdent("now")), TTFunction, TTFunction);
 						e.with(kind = TECall(eNowField, args));
 
 					case {args: [_]}: // single-arg - rewrite to Date.fromTime(arg)
+						var tDate = TTStatic(dateCls);
+						var eDate = mk(TEDeclRef(switch ref.syntax { case TPath(p): p; case _: throw "assert";}, {name: "Date", kind: TDClassOrInterface(dateCls)}), tDate, tDate);
+
 						processLeadingToken(t -> t.leadTrivia = t.leadTrivia.concat(keyword.leadTrivia), eDate);
-						var eNowField = mk(TEField({kind: TOExplicit(mkDot(), eDate), type: eDate.type}, "fromTime", mkIdent("fromTime")), TTFunction, TTFunction);
+						var eNowField = mk(TEField({kind: TOExplicit(mkDot(), eDate), type: tDate}, "fromTime", mkIdent("fromTime")), TTFunction, TTFunction);
 						e.with(kind = TECall(eNowField, args));
 
 					case _:

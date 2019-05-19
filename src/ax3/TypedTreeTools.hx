@@ -370,9 +370,14 @@ class TypedTreeTools {
 			case TEPostUnop(_, PostIncr(t) | PostDecr(t)): r(t);
 			case TEAs(_, _, type): fromSyntaxType(type.syntax);
 			case TESwitch(s): r(s.syntax.closeBrace);
-			case TENew(_, eclass, args):
-				if (args == null) processTrailingToken(r, eclass)
-				else r(args.closeParen);
+			case TENew(_, obj, args):
+				if (args == null)
+					switch obj {
+						case TNExpr(e): processTrailingToken(r, e);
+						case TNType(t): fromSyntaxType(t.syntax);
+					}
+				else
+					r(args.closeParen);
 			case TECondCompValue(v): r(v.syntax.name);
 			case TECondCompBlock(_, expr): processTrailingToken(r, expr);
 			case TEXmlChild(x): r(x.syntax.name);
@@ -553,10 +558,16 @@ class TypedTreeTools {
 					def = if (s.def == null) null else s.def.with(body = mapBlockExprs(f, s.def.body))
 				)));
 
-			case TENew(keyword, eclass, args):
-				var mappedClass = f(eclass);
+			case TENew(keyword, obj, args):
+				var mappedObj = switch obj {
+					case TNExpr(e):
+						var mappedExpr = f(e);
+						if (mappedExpr != e) TNExpr(mappedExpr) else obj;
+					case TNType(_):
+						obj;
+				}
 				var mappedArgs = if (args == null) null else mapCallArgs(f, args);
-				if (mappedClass == eclass && mappedArgs == args) e1 else e1.with(kind = TENew(keyword, mappedClass, mappedArgs));
+				if (mappedObj == obj && mappedArgs == args) e1 else e1.with(kind = TENew(keyword, mappedObj, mappedArgs));
 
 			case TECondCompBlock(v, expr):
 				e1.with(kind = TECondCompBlock(v, f(expr)));

@@ -69,11 +69,12 @@ class RewriteE4X extends AbstractFilter {
 					})
 				);
 
-			case TECall(eXml = {kind: TEBuiltin(syntax, "XML")}, args):
+			case TECall({kind: TEBuiltin(syntax, "XML")}, args):
 				var leadTrivia = syntax.leadTrivia;
 				syntax.leadTrivia = [];
 				var newKeyword = mkIdent("new", leadTrivia, [whitespace]);
-				e.with(kind = TENew(newKeyword, eXml, args));
+				var xmlNewObject = TNType({syntax: TPath({first: syntax, rest: []}), type: TTXML});
+				e.with(kind = TENew(newKeyword, xmlNewObject, args));
 
 			case _:
 				mapExpr(processExpr, e);
@@ -86,7 +87,8 @@ class RewriteE4X extends AbstractFilter {
 				e;
 			case _:
 				var newKeyword = mkIdent("new", removeTrailingTrivia(e), [whitespace]);
-				mk(TENew(newKeyword, mkBuiltin("XML", TTBuiltin), {
+				var xmlNewObject = TNType({syntax: TPath({first: mkIdent("XML"), rest: []}), type: TTXML});
+				mk(TENew(newKeyword, xmlNewObject, {
 					openParen: mkOpenParen(),
 					args: [{expr: e, comma: null}],
 					closeParen: new Token(0, TkParenClose, ")", [], removeTrailingTrivia(e))

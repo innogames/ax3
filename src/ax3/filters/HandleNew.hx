@@ -8,16 +8,16 @@ class HandleNew extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
 		e = mapExpr(processExpr, e);
 		return switch e.kind {
-			case TENew(keyword, eclass, args):
-				switch eclass.kind {
-					case TEDeclRef(_, {kind: TDClassOrInterface(c)}): // just a class instantiation, nothing to rewrite, but mark the class for constructor injection
+			case TENew(keyword, obj, args):
+				switch obj {
+					case TNType({type: TTInst(c)}): // just a class instantiation, nothing to rewrite, but mark the class for constructor injection
 						instantiated[c] = true;
 						e;
 
-					case TEBuiltin(_) | TEVector(_): // other kinds of typed `new` - nothing to do
+					case TNType(_): // other kinds of typed `new` - nothing to do
 						e;
 
-					case _: // anything else - rewrite to Type.createInstance
+					case TNExpr(eclass): // anything else - rewrite to Type.createInstance
 						var leadTrivia = keyword.leadTrivia;
 						var trailTrivia = removeTrailingTrivia(e);
 
