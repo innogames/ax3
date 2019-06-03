@@ -299,12 +299,14 @@ typedef TFunctionDecl = {
 	var modifiers:Array<DeclModifier>;
 	var syntax:{keyword:Token, name:Token};
 	var name:String;
+	var parentModule:TModule;
 	var fun:TFunction;
 }
 
 typedef TModuleVarDecl = TVarField & {
 	var metadata:Array<TMetadata>;
 	var modifiers:Array<DeclModifier>;
+	var parentModule:TModule;
 }
 
 @:structInit @:publicFields

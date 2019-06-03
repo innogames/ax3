@@ -92,6 +92,7 @@ class Typer {
 			modifiers: v.modifiers,
 			kind: v.kind,
 			isInline: false,
+			parentModule: mod,
 			vars: separatedToArray(v.vars, function(v, comma) {
 				var tVar:TVarFieldDecl = {
 					syntax:{
@@ -143,6 +144,7 @@ class Typer {
 			modifiers: v.modifiers,
 			syntax: {keyword: v.keyword, name: v.name},
 			name: v.name.text,
+			parentModule: mod,
 			fun: {
 				sig: null,
 				expr: null

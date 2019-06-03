@@ -11,6 +11,7 @@ class Filters {
 			// new WrapModuleLevelDecls(context), // WIP
 			new MathApi(context),
 			new RewriteJSON(context),
+			new UtilFunctions(context),
 			externImports,
 			new InlineStaticConsts(context),
 			new InlineStaticConsts.FixInlineStaticConstAccess(context),

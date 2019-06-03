@@ -19,9 +19,7 @@ class AbstractFilter {
 	}
 
 	function processModule(mod:TModule) {
-		for (i in mod.pack.imports) {
-			processImport(i);
-		}
+		mod.pack.imports = [for (i in mod.pack.imports) if (processImport(i)) i]; // TODO: keep trivia maybe?
 
 		processDecl(mod.pack.decl);
 
@@ -43,7 +41,8 @@ class AbstractFilter {
 		}
 	}
 
-	function processImport(i:TImport) {
+	function processImport(i:TImport):Bool {
+		return true;
 	}
 
 	function processDecl(decl:TDecl) {

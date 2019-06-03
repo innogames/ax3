@@ -11,27 +11,45 @@ class ExternModuleLevelImports extends AbstractFilter {
 
 	static final asToken = new Token(0, TkIdent, "as", [new Trivia(TrWhitespace, " ")], [new Trivia(TrWhitespace, " ")]);
 
-	override function processImport(i:TImport) {
+	override function processImport(i:TImport):Bool {
 		switch i.kind {
 			case TIDecl(decl):
 				switch decl.kind {
 					case TDClassOrInterface(_): // ok
+						return true;
+
 					case TDNamespace(_): // ignored
+						return false;
+
 					case TDVar(_) | TDFunction(_): // need to be replaced
 						var path = dotPathToArray(i.syntax.path);
+
+						var dotPath = path.join(".");
+						if (isIgnoredImport(dotPath)) {
+							return false;
+						}
+
 						var fieldName = path.join("_"); // TODO: possible name clashes;
-						globals[fieldName] = {dotPath: path.join("."), kind: decl.kind};
+
+						globals[fieldName] = {dotPath: dotPath, kind: decl.kind};
 
 						i.syntax.path = {
 							first: mkIdent("Globals"),
 							rest: [{sep: mkDot(), element: mkIdent(fieldName)}]
 						};
 						i.kind = TIAliased(decl, asToken, mkIdent(decl.name));
+						return true;
 
 				}
 
 			case TIAll(_) | TIAliased(_):
+				return true;
 		}
+	}
+
+	static function isIgnoredImport(path:String) return switch path {
+		case "flash.utils.getDefinitionByName": true; // rewritten by UtilFunctions
+		case _: false;
 	}
 
 	static final trTab = new Trivia(TrWhitespace, "\t");

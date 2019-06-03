@@ -264,7 +264,7 @@ class SWCLoader {
 					var n = getPublicName(abc, f.name);
 					if (n == null) continue;
 
-					var decl = switch (f.kind) {
+					switch (f.kind) {
 						case FVar(type, value, const):
 							var v:TVarFieldDecl = {
 								syntax: null,
@@ -278,25 +278,29 @@ class SWCLoader {
 								structureSetups.push(() -> v.type = buildTypeStructure(abc, type));
 							}
 
-							TDVar({
+							var varDecl:TModuleVarDecl = {
 								metadata: [],
 								modifiers: [],
 								kind: if (const) VConst(null) else VVar(null),
 								isInline: false,
 								vars: [v],
+								parentModule: null,
 								semicolon: null
-							});
+							};
+							varDecl.parentModule = addModule(swcPath, tree, n.ns, n.name, TDVar(varDecl));
 
 						case FMethod(type, KNormal, _, _):
 							var fun:TFunction = {sig: null, expr: null};
 							structureSetups.push(() -> fun.sig = buildFunDecl(abc, type));
-							TDFunction({
+							var funDecl:TFunctionDecl = {
 								metadata: [],
 								modifiers: [],
 								syntax: null,
 								name: n.name,
+								parentModule: null,
 								fun: fun
-							});
+							};
+							funDecl.parentModule = addModule(swcPath, tree, n.ns, n.name, TDFunction(funDecl));
 
 						case FMethod(_, _, _, _):
 							throw "assert";
@@ -308,8 +312,6 @@ class SWCLoader {
 						case FFunction(f):
 							throw "assert"; // toplevel funcs are FMethods
 					}
-
-					addModule(swcPath, tree, n.ns, n.name, decl);
 				}
 			}
 
