@@ -7,6 +7,7 @@ abstract ASObject(flash.utils.Object)
 	from ASAny
 	to ASAny
 	#end
+	from Array<Dynamic> // from arrays of mixed types
 {
 
 	public inline function new() this = cast {};
