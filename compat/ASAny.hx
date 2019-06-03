@@ -119,6 +119,9 @@ abstract ASAny(Dynamic)
 		return if (a.__toBool()) b else a;
 	}
 
+	@:op(a -= b) static inline function ___minusEqualsFloat(a:Float, b:ASAny):Float return a -= b.___toFloat();
+	@:op(a += b) static inline function ___plusEqualsFloat(a:Float, b:ASAny):Float return a += b.___toFloat();
+
 	// TODO: this (with Dynamic) will only really work on JS and Flash, but oh well
 	@:op(a - b) static inline function ___minusAny(a:ASAny, b:ASAny):ASAny return (a:Dynamic) - (b:Dynamic);
 	@:op(a + b) static inline function ___plusAny(a:ASAny, b:ASAny):ASAny return (a:Dynamic) + (b:Dynamic);
