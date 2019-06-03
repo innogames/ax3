@@ -78,7 +78,7 @@ abstract ASAny(Dynamic)
 	}
 	#end
 
-	@:to function ___toOther():Dynamic {
+	@:to inline function ___toOther():Dynamic {
 		return this;
 	}
 
@@ -119,13 +119,9 @@ abstract ASAny(Dynamic)
 		return if (a.__toBool()) b else a;
 	}
 
-	@:op(a - b) static function ___minusInt(a:ASAny, b:Int):Int return a.___toInt() - b;
-	@:op(a - b) static function ___minusInt2(a:Int, b:ASAny):Int return a - b.___toInt();
-	@:commutative @:op(a + b) static function ___plusInt(a:ASAny, b:Int):Int return a.___toInt() + b;
-
-	@:op(a - b) static function ___minusFloat(a:ASAny, b:Float):Float return a.___toFloat() - b;
-	@:op(a - b) static function ___minusFloat2(a:Float, b:ASAny):Float return a - b.___toFloat();
-	@:commutative @:op(a + b) static function ___plusFloat(a:ASAny, b:Float):Float return a.___toFloat() + b;
+	// TODO: this (with Dynamic) will only really work on JS and Flash, but oh well
+	@:op(a - b) static inline function ___minusAny(a:ASAny, b:ASAny):ASAny return (a:Dynamic) - (b:Dynamic);
+	@:op(a + b) static inline function ___plusAny(a:ASAny, b:ASAny):ASAny return (a:Dynamic) + (b:Dynamic);
 
 	@:op(a > b) static function ___gt(a:ASAny, b:Float):Bool return a.___toFloat() > b;
 	@:op(a < b) static function ___lt(a:ASAny, b:Float):Bool return a.___toFloat() < b;

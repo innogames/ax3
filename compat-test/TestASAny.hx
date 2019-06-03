@@ -225,6 +225,35 @@ class TestASAny extends utest.Test {
 		isTrue(c.hasOwnProperty("meth"));
 		isFalse(c.hasOwnProperty("wat"));
 	}
+
+	@:analyzer(no_optimize)
+	function testArithmetics() {
+		var a:ASAny = 1;
+		var b:ASAny = 2;
+
+		equals(3, a + b);
+		equals(1, b - a);
+
+		equals(3, a + 2);
+		equals(3, 2 + a);
+		equals(1, 2 - a);
+		equals(1, b - 1);
+
+		a = 0.5;
+		equals(2.5, a + b);
+		equals(2.5, a + 2);
+		equals(2.5, 2 + a);
+		equals(1.5, b - a);
+		equals(1.5, 2 - a);
+		equals(-0.5, a - 1);
+
+		a = "a";
+		b = "b";
+		equals("ab", a + b);
+		equals("ab", a + "b");
+		equals("ba", "b" + a);
+		equals("ba", b + a);
+	}
 }
 
 private class Cls {
