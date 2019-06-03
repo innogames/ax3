@@ -305,10 +305,15 @@ class ExprTyper {
 				var currentClass = typerContext.getCurrentClass();
 				if (currentClass != null) {
 					var currentClass:TClassOrInterfaceDecl = currentClass; // TODO: this is here only to please the null-safety checker
+
+					if (ident == currentClass.name) {
+						// class constructor is never resolved like that, so this is definitely a declaration reference
+						return mkDeclRef({first: i, rest: []}, {name: currentClass.name, kind: TDClassOrInterface(currentClass)}, expectedType);
+					}
+
 					function loop(c:TClassOrInterfaceDecl):Null<TExpr> {
 						if (ident == c.name) {
-							// class constructor is never resolved like that, so this is definitely a declaration reference
-							return mkDeclRef({first: i, rest: []}, {name: c.name, kind: TDClassOrInterface(c)}, expectedType);
+							return null;
 						}
 
 						var field = c.findField(ident, null);
