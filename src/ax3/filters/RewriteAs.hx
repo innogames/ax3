@@ -84,7 +84,7 @@ class RewriteAs extends AbstractFilter {
 										e.with(kind = TEHaxeRetype(eobj));
 								}
 							case CKDowncast:
-								e.with(kind = makeStdInstance(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e)));
+								e.with(kind = makeStdDowncast(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e)));
 							case CKUnknown:
 								e.with(kind = makeAs(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e)));
 						}
@@ -109,8 +109,8 @@ class RewriteAs extends AbstractFilter {
 		});
 	}
 
-	static function makeStdInstance(eObj:TExpr, eType:TExpr, leadTrivia, trailTrivia):TExprKind {
-		var eMethod = mkBuiltin("Std.instance", TTFunction, leadTrivia);
+	static function makeStdDowncast(eObj:TExpr, eType:TExpr, leadTrivia, trailTrivia):TExprKind {
+		var eMethod = mkBuiltin("Std.downcast", TTFunction, leadTrivia);
 		return TECall(eMethod, {
 			openParen: mkOpenParen(),
 			args: [

@@ -653,7 +653,8 @@ class TypedTreeTools {
 
 	public static function determineCastKind(valueType:TType, asClass:TClassOrInterfaceDecl):CastKind {
 		return switch valueType {
-			// TODO: support sameclass/upcast for interfaces since we don't need to generate Std.instance here
+			// TODO: support sameclass/upcast for interfaces since we don't need to generate Std.downcast here
+			// TODO: support downcast for interfaces too, as it's now specified to work with Std.downcast
 			case TTInst(valueClass = {kind: TClass(_)}):
 				if (valueClass == asClass)
 					CKSameClass
