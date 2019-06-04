@@ -48,7 +48,10 @@ class ExternModuleLevelImports extends AbstractFilter {
 	}
 
 	static function isIgnoredImport(path:String) return switch path {
-		case "flash.utils.getDefinitionByName": true; // rewritten by UtilFunctions
+		case "flash.utils.getDefinitionByName" // rewritten by UtilFunctions (TODO maybe the list should be in UtilFunctions)
+		   | "flash.utils.getTimer"
+		   | "flash.net.navigateToURL"
+		   : true;
 		case _: false;
 	}
 
