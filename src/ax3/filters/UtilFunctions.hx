@@ -3,7 +3,7 @@ package ax3.filters;
 class UtilFunctions extends AbstractFilter {
 	static final tResolveClass = TTFun([TTString], TTClass);
 	static final tGetTimer = TTFun([], TTInt);
-	static final tDescribeType = TTFun([TTAny], TTString);
+	static final tDescribeType = TTFun([TTAny], TTXML);
 	static final tGetUrl = TTFun([TTAny/*TODO:URLRequest*/, TTString], TTVoid);
 
 	override function processExpr(e:TExpr):TExpr {
