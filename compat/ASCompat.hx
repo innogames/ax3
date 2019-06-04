@@ -1,3 +1,7 @@
+#if macro
+import haxe.macro.Expr;
+#end
+
 import flash.utils.RegExp;
 import haxe.Constraints.Function;
 import haxe.extern.EitherType;
@@ -99,6 +103,12 @@ class ASCompat {
 			}
 		}
 		return result;
+	}
+
+	public static macro function setTimeout(closure:ExprOf<haxe.Constraints.Function>, delay:ExprOf<Float>, arguments:Array<Expr>):ExprOf<UInt>;
+
+	public static inline function clearTimeout(id:UInt):Void {
+		untyped __global__["flash.utils.clearTimeout"](id);
 	}
 }
 

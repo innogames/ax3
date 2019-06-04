@@ -51,6 +51,8 @@ class ExternModuleLevelImports extends AbstractFilter {
 		case "flash.utils.getDefinitionByName" // rewritten by UtilFunctions (TODO maybe the list should be in UtilFunctions)
 		   | "flash.utils.getTimer"
 		   | "flash.utils.describeType"
+		   | "flash.utils.setTimeout"
+		   | "flash.utils.clearTimeout"
 		   | "flash.net.navigateToURL"
 		   : true;
 		case _: false;
