@@ -527,7 +527,7 @@ class GenHaxe extends PrinterBase {
 		name = switch name {
 			case
 				"Std.is" | "Std.downcast" | "Std.int" | "Std.string" | "String"
-				| "flash.Vector.convert"| "flash.Vector.ofArray" | "flash.Lib.getTimer" | "flash.Lib.getURL"
+				| "flash.Vector.convert"| "flash.Vector.ofArray" | "flash.Lib.getTimer" | "flash.Lib.getURL" | "flash.Lib.describeType"
 				| "Reflect.deleteField" | "Type.createInstance"| "Type.resolveClass"
 				| "haxe.Json" | "Reflect.compare"
 				| "StringTools.replace" | "StringTools.hex" | "Reflect.callMethod":
