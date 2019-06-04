@@ -6,8 +6,9 @@ abstract ASObject(flash.utils.Object)
 	from haxe.Constraints.Function
 	from ASAny
 	to ASAny
-	#end
+	#else
 	from Array<Dynamic> // from arrays of mixed types
+	#end
 {
 
 	public inline function new() this = cast {};
