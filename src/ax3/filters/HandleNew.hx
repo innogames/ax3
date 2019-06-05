@@ -107,6 +107,7 @@ class HandleNew extends AbstractFilter {
 							}), TTVoid, TTVoid)
 						},
 						type: TTFun([], TTVoid),
+						isInline: false,
 						semicolon: null
 					})
 				}));

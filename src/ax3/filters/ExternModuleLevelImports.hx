@@ -171,6 +171,7 @@ class ExternModuleLevelImports extends AbstractFilter {
 								}), TTVoid, TTVoid)
 							},
 							type: TypedTreeTools.getFunctionTypeFromSignature(f.fun.sig),
+							isInline: false,
 							semicolon: null
 						})
 					}));
@@ -220,6 +221,7 @@ class ExternModuleLevelImports extends AbstractFilter {
 								set: vd.kind.match(VVar(_)),
 								type: v.type
 							},
+							isInline: false,
 							semicolon: null
 						})
 					}));
@@ -270,6 +272,7 @@ class ExternModuleLevelImports extends AbstractFilter {
 								},
 								propertyType: v.type,
 								haxeProperty: null,
+								isInline: false,
 								semicolon: null
 							})
 						}));

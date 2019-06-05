@@ -255,6 +255,7 @@ class Typer {
 					name: name.text,
 					fun: fun,
 					type: getFunctionTypeFromSignature(fun.sig),
+					isInline: false,
 					semicolon: null
 				});
 			case FGetter(keyword, get, name, fun):
@@ -269,6 +270,7 @@ class Typer {
 					propertyType: fun.sig.ret.type,
 					haxeProperty: null,
 					fun: fun,
+					isInline: false,
 					semicolon: null
 				});
 			case FSetter(keyword, set, name, fun):
@@ -283,6 +285,7 @@ class Typer {
 					propertyType: fun.sig.args[0].type,
 					haxeProperty: null,
 					fun: fun,
+					isInline: false,
 					semicolon: null
 				});
 		}
@@ -376,6 +379,7 @@ class Typer {
 					name: name.text,
 					fun: {sig: sig, expr: null},
 					type: getFunctionTypeFromSignature(sig),
+					isInline: false,
 					semicolon: f.semicolon
 				});
 			case IFGetter(keyword, get, name, sig):
@@ -390,6 +394,7 @@ class Typer {
 					propertyType: sig.ret.type,
 					haxeProperty: null,
 					fun: {sig: sig, expr: null},
+					isInline: false,
 					semicolon: f.semicolon
 				});
 			case IFSetter(keyword, set, name, sig):
@@ -404,6 +409,7 @@ class Typer {
 					propertyType: sig.args[0].type,
 					haxeProperty: null,
 					fun: {sig: sig, expr: null},
+					isInline: false,
 					semicolon: f.semicolon
 				});
 		}

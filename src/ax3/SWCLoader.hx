@@ -121,6 +121,7 @@ class SWCLoader {
 							name: name,
 							fun: {sig: f, expr: null},
 							type: TypedTreeTools.getFunctionTypeFromSignature(f),
+							isInline: false,
 							semicolon: null
 						})
 					}));
@@ -137,6 +138,7 @@ class SWCLoader {
 							propertyType: f.ret.type,
 							haxeProperty: null,
 							fun: {sig: f, expr: null},
+							isInline: false,
 							semicolon: null
 						}),
 					}));
@@ -153,6 +155,7 @@ class SWCLoader {
 							propertyType: f.args[0].type,
 							haxeProperty: null,
 							fun: {sig: f, expr: null},
+							isInline: false,
 							semicolon: null
 						})
 					}));

@@ -9,6 +9,7 @@ class Filters {
 		for (f in [
 			// new RewriteAndOrAssign(context), // we can fix this in the codebase so no real need for this filter
 			// new WrapModuleLevelDecls(context), // WIP
+			new RewriteMeta(context),
 			new MathApi(context),
 			new RewriteJSON(context),
 			new UtilFunctions(context),

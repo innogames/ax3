@@ -462,6 +462,7 @@ typedef TFunctionField = {
 	var name:String;
 	var fun:TFunction;
 	var type:TType;
+	var isInline:Bool;
 	var semicolon:Null<Token>;
 }
 
@@ -475,6 +476,7 @@ typedef TAccessorField = {
 	var fun:TFunction;
 	var propertyType:TType;
 	var haxeProperty:Null<THaxePropDecl>;
+	var isInline:Bool;
 	var semicolon:Null<Token>;
 }
 

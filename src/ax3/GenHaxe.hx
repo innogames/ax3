@@ -270,7 +270,8 @@ class GenHaxe extends PrinterBase {
 			case TFVar(v):
 				printVarField(v);
 			case TFFun(f):
-				printTextWithTrivia("function", f.syntax.keyword);
+				var kwd = if (f.isInline) "inline function" else "function";
+				printTextWithTrivia(kwd, f.syntax.keyword);
 				var isCtor = f.name == className;
 				printTextWithTrivia(if (isCtor) "new" else f.name, f.syntax.name);
 				printSignature(f.fun.sig, !isCtor);
@@ -281,13 +282,15 @@ class GenHaxe extends PrinterBase {
 				printTrivia(trailTrivia);
 
 			case TFGetter(f):
-				printTextWithTrivia("function", f.syntax.functionKeyword);
+				var kwd = if (f.isInline) "inline function" else "function";
+				printTextWithTrivia(kwd, f.syntax.functionKeyword);
 				printTokenTrivia(f.syntax.accessorKeyword);
 				printTextWithTrivia("get_" + f.name, f.syntax.name);
 				printSignature(f.fun.sig);
 				printExpr(f.fun.expr);
 			case TFSetter(f):
-				printTextWithTrivia("function", f.syntax.functionKeyword);
+				var kwd = if (f.isInline) "inline function" else "function";
+				printTextWithTrivia(kwd, f.syntax.functionKeyword);
 				printTokenTrivia(f.syntax.accessorKeyword);
 				printTextWithTrivia("set_" + f.name, f.syntax.name);
 				printSignature(f.fun.sig);
