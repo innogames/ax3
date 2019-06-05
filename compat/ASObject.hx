@@ -14,12 +14,20 @@ abstract ASObject(flash.utils.Object)
 	public inline function new() this = cast {};
 
 	@:noCompletion
-	public inline function ___keys():NativePropertyIterator<String> {
-		return new NativePropertyIterator(this);
+	public inline function ___keys() {
+		#if flash
+		return new NativePropertyIterator<String>(this);
+		#else
+		return (cast this : haxe.DynamicAccess<ASAny>).keys();
+		#end
 	}
 
-	@:to public inline function iterator():NativeValueIterator<ASAny> {
-		return new NativeValueIterator(this);
+	@:to public inline function iterator() {
+		#if flash
+		return new NativeValueIterator<ASAny>(this);
+		#else
+		return (cast this : haxe.DynamicAccess<ASAny>).iterator();
+		#end
 	}
 
 	public function hasOwnProperty(name:String):Bool {

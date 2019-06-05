@@ -10,30 +10,58 @@ abstract ASDictionary<K,V>(Dictionary<K,V>) from Dictionary<K,V> { //TODO: remov
 	}
 
 	@:op([]) public inline function get(key:K):Null<V> {
+		#if flash
 		return untyped this[key];
+		#else
+		return this.get(key);
+		#end
 	}
 
 	@:op([]) public inline function set(key:K, value:V):Null<V> {
+		#if flash
 		return untyped this[key] = value;
+		#else
+		return this.set(key, value);
+		#end
 	}
 
 	public inline function exists(key:K):Bool {
+		#if flash
 		return untyped __in__(key, this);
+		#else
+		return this.exists(key);
+		#end
 	}
 
 	public inline function remove(key:K):Bool {
+		#if flash
 		return untyped __delete__(this, key);
+		#else
+		return this.remove(key);
+		#end
 	}
 
-	public inline function keys():NativePropertyIterator<K> {
-		return new NativePropertyIterator(this);
+	public inline function keys() {
+		#if flash
+		return new NativePropertyIterator<K>(this);
+		#else
+		return this.iterator();
+		#end
 	}
 
-	public inline function iterator():NativeValueIterator<V> {
-		return new NativeValueIterator(this);
+	public inline function iterator() {
+		#if flash
+		return new NativeValueIterator<V>(this);
+		#else
+		return this.each();
+		#end
 	}
 
-	public inline function keyValueIterator():NativePropertyValueIterator<K, V> {
-		return new NativePropertyValueIterator(this);
+	public inline function keyValueIterator() {
+		#if flash
+		return new NativePropertyValueIterator<K,V>(this);
+		#else
+		return this.keyValueIterator();
+		#end
 	}
 }

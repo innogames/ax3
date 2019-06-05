@@ -1,3 +1,4 @@
+#if flash
 class NativePropertyIterator<K> {
 	var collection:Dynamic;
 	var index:Int;
@@ -20,3 +21,4 @@ class NativePropertyIterator<K> {
 		return untyped __forin__(collection, index);
 	}
 }
+#end

@@ -1,3 +1,4 @@
+#if flash
 class NativePropertyValueIterator<K,V> {
 	var collection:Dynamic;
 	var index:Int;
@@ -21,3 +22,4 @@ class NativePropertyValueIterator<K,V> {
 		return {key: result, value: untyped collection[result]};
 	}
 }
+#end

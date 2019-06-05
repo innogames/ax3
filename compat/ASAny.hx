@@ -10,12 +10,20 @@ abstract ASAny(Dynamic)
 	public inline function new() this = cast {};
 
 	@:noCompletion
-	public function ___keys():NativePropertyIterator<ASAny> {
-		return new NativePropertyIterator(this);
+	public inline function ___keys() {
+		#if flash
+		return new NativePropertyIterator<String>(this);
+		#else
+		return (cast this : haxe.DynamicAccess<ASAny>).keys();
+		#end
 	}
 
-	@:to public function iterator():NativeValueIterator<ASAny> {
-		return new NativeValueIterator(this);
+	@:to public inline function iterator() {
+		#if flash
+		return new NativeValueIterator<ASAny>(this);
+		#else
+		return (cast this : haxe.DynamicAccess<ASAny>).iterator();
+		#end
 	}
 
 	public function hasOwnProperty(name:String):Bool {

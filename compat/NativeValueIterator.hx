@@ -1,3 +1,4 @@
+#if flash
 class NativeValueIterator<V> {
 	var collection:Dynamic;
 	var index:Int;
@@ -20,3 +21,4 @@ class NativeValueIterator<V> {
 		return untyped __foreach__(collection, index);
 	}
 }
+#end
