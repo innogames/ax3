@@ -20,6 +20,24 @@ class UtilFunctions extends AbstractFilter {
 				mkBuiltin("ASCompat.setTimeout", TTFunction, removeLeadingTrivia(e), removeTrailingTrivia(e));
 			case TEDeclRef(_, {kind: TDFunction({parentModule: {name: "navigateToURL", parentPack: {name: "flash.net"}}})}):
 				mkBuiltin("flash.Lib.getURL", tGetUrl, removeLeadingTrivia(e), removeTrailingTrivia(e));
+			case TECall({kind: TEDeclRef(_, {kind: TDFunction({parentModule: {name: "getQualifiedClassName", parentPack: {name: "flash.utils"}}})})}, args):
+				switch args.args {
+					case [{expr: {type: TTClass | TTStatic(_)}}]:
+						var eGetClassName = mkBuiltin("Type.getClassName", TTFunction, removeLeadingTrivia(e));
+						e.with(kind = TECall(eGetClassName, args));
+					case [arg]:
+						// TODO: maybe we should have a compat function here instead, because calling native getQualifiedClassName is faster
+						var eGetClass = mkBuiltin("Type.getClass", TTFunction);
+						var eGetClassCall = mk(TECall(eGetClass, {
+							openParen: mkOpenParen(),
+							args: [arg],
+							closeParen: mkCloseParen()
+						}), TTClass, TTClass);
+						var eGetClassName = mkBuiltin("Type.getClassName", TTFunction, removeLeadingTrivia(e));
+						e.with(kind = TECall(eGetClassName, args.with(args = [{expr: eGetClassCall, comma: null}])));
+					case _:
+						throwError(exprPos(e), "Invalid getQualifiedClassName arguments");
+				}
 			case _:
 				mapExpr(processExpr, e);
 		}
