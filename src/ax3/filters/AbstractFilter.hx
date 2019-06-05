@@ -19,7 +19,7 @@ class AbstractFilter {
 	}
 
 	function processModule(mod:TModule) {
-		mod.pack.imports = [for (i in mod.pack.imports) if (processImport(i)) i]; // TODO: keep trivia maybe?
+		mod.pack.imports = [for (i in mod.pack.imports) if (processImport(i)) i]; // TODO: keep cond.compilation and trivia
 
 		processDecl(mod.pack.decl);
 
