@@ -12,7 +12,7 @@ abstract ASAny(Dynamic)
 	@:noCompletion
 	public inline function ___keys() {
 		#if flash
-		return new NativePropertyIterator<String>(this);
+		return new NativePropertyIterator<ASAny>(this);
 		#else
 		return (cast this : haxe.DynamicAccess<ASAny>).keys();
 		#end
