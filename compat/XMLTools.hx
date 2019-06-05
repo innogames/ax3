@@ -7,6 +7,20 @@ class XMLTools {
 }
 
 class XMLListTools {
-	public static inline function keys(xml:XML) return new NativePropertyIterator<String>(xml);
-	public static inline function iterator(xml:XMLList) return new NativeValueIterator<XML>(xml);
+	public static inline function keys(xml:XML) {
+		#if flash
+		return new NativePropertyIterator<String>(xml);
+		#else
+		return (null : Iterator<String>);
+		#end
+	}
+	
+	public static inline function iterator(xml:XMLList) {
+		#if flash
+		return new NativeValueIterator<XML>(xml);
+		#else
+		return (null : Iterator<XML>);
+		#end
+	}
+	
 }
