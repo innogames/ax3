@@ -2,6 +2,7 @@
            // I'm not sure how much can we do about it, maybe wrap the TTAny arguments and the return value in ASAny on the converter level?
 abstract ASObject(flash.utils.Object)
 	from flash.utils.Object
+	to flash.utils.Object
 	#if !js // TODO: not sure why this is needed, but it is
 	from haxe.Constraints.Function
 	from ASAny
