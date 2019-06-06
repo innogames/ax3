@@ -14,19 +14,35 @@ class ASCompat {
 	public static inline final MIN_FLOAT = -1.79E+308;
 
 	public static inline function toInt(d:Dynamic):Int {
+		#if flash
 		return d;
+		#else
+		return Std.int(toNumber(d));
+		#end
 	}
 
 	public static inline function toNumber(d:Dynamic):Float {
+		#if flash
 		return d;
+		#else
+		return js.Syntax.code("Number")(d);
+		#end
 	}
 
 	public static inline function toString(d:Dynamic):String {
+		#if flash
 		return d;
+		#else
+		return js.Syntax.code("String")(d);
+		#end
 	}
 
 	public static inline function toBool(d:Dynamic):Bool {
+		#if flash
 		return d;
+		#else
+		return js.Syntax.code("Boolean")(d);
+		#end
 	}
 
 	public static inline function as<T>(v:Dynamic, c:Class<T>):T {
