@@ -19,13 +19,42 @@ class AbstractFilter {
 	}
 
 	function processModule(mod:TModule) {
-		mod.pack.imports = [for (i in mod.pack.imports) if (processImport(i)) i]; // TODO: keep cond.compilation and trivia
-
+		processImports(mod);
 		processDecl(mod.pack.decl);
 
 		for (decl in mod.privateDecls) {
 			processDecl(decl);
 		}
+	}
+
+	function processImports(mod:TModule) {
+		var newImports = [];
+		var condCompBegin = null;
+		var prevImport = null;
+		for (i in mod.pack.imports) {
+			var keep = processImport(i);
+			if (keep) {
+				newImports.push(i);
+				if (condCompBegin != null) {
+					if (i.syntax.condCompBegin != null) throw "assert"; // this will be annoying to deal with
+					i.syntax.condCompBegin = condCompBegin;
+					condCompBegin = null;
+				}
+				prevImport = i;
+			} else {
+				if (i.syntax.condCompBegin != null) {
+					if (condCompBegin != null) throw "assert"; // this will be annoying to deal with
+					condCompBegin = i.syntax.condCompBegin;
+				}
+				if (i.syntax.condCompEnd != null) {
+					if (prevImport != null) {
+						if (prevImport.syntax.condCompEnd != null) throw "assert"; // this will be annoying to deal with
+						prevImport.syntax.condCompEnd = i.syntax.condCompEnd;
+					}
+				}
+			}
+		}
+		mod.pack.imports = newImports;
 	}
 
 	public function run(tree:TypedTree) {
