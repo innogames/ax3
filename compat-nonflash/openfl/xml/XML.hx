@@ -4,7 +4,7 @@ import Xml as StdXml;
 
 abstract XML(StdXml) from StdXml to StdXml {
 	public inline function new(x:Any) {
-		this = StdXml.parse(Std.string(x));
+		this = StdXml.parse(Std.string(x)).firstElement();
 	}
 
 	public function appendChild(x:XML):Void {
@@ -29,7 +29,12 @@ abstract XML(StdXml) from StdXml to StdXml {
 		}
 		return new XMLList(r);
 	}
-	
-	public function toString():String return null;
-	public function toXMLString():String return null;
+
+	public inline function toString():String {
+		return this.toString();
+	}
+
+	public inline function toXMLString():String {
+		return toString();
+	}
 }
