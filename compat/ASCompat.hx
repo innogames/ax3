@@ -42,7 +42,12 @@ class ASCompat {
 	}
 
 	public static inline function regExpMatch(s:String, r:RegExp):Array<String> {
+		#if flash
 		return (cast s).match(r);
+		#else
+		var match = (cast s).match(r);
+		return if (match == null) [] else match;
+		#end
 	}
 
 	public static inline function regExpSearch(s:String, r:RegExp):Int {
