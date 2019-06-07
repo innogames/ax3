@@ -1168,7 +1168,11 @@ class ExprTyper {
 	}
 
 	function typeArrayDecl(d:ArrayDecl, expectedType:TType):TExpr {
-		return mk(TEArrayDecl(typeArrayDeclElements(d, TTAny)), tUntypedArray, expectedType);
+		var elemExpectedType = switch expectedType {
+			case TTArray(t): t;
+			case _: TTAny;
+		};
+		return mk(TEArrayDecl(typeArrayDeclElements(d, elemExpectedType)), tUntypedArray, expectedType);
 	}
 
 	function typeVectorDecl(newKeyword:Token, t:TypeParam, d:ArrayDecl, expectedType:TType):TExpr {
