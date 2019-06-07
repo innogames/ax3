@@ -102,14 +102,25 @@ abstract HaxeTypeAnnotation(String) {
 	}
 
 	public static function extract(trivia:Array<Trivia>):Null<HaxeTypeAnnotation> {
+		var start = 0;
 		for (i in 0...trivia.length) {
 			var tr = trivia[i];
-			if (tr.kind == TrLineComment) {
-				var comment = tr.text.substring(2).ltrim(); // strip `//` and trim whitespaces
-				if (comment.startsWith("@haxe-type(")) {
-					trivia.splice(i, 1); // TODO: we actually want to remove the whole line with indentation and newline trivia
-					return cast comment.substring("@haxe-type(".length);
-				}
+			switch tr.kind {
+				case TrWhitespace:
+					// remove whitespace
+				case TrNewline | TrBlockComment:
+					// remove after newline/blockcomment
+					start = i + 1;
+				case TrLineComment:
+					var comment = tr.text.substring(2).ltrim(); // strip `//` and trim whitespaces
+					if (comment.startsWith("@haxe-type(")) {
+						var toDelete = i - start + 1;
+						if (i < trivia.length - 1 && trivia[i + 1].kind == TrNewline) { // this should always be the case, but check just to be safe
+							toDelete++;
+						}
+						trivia.splice(start, toDelete);
+						return cast comment.substring("@haxe-type(".length);
+					}
 			}
 		}
 		return null;
