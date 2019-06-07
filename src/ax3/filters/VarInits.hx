@@ -5,7 +5,7 @@ class VarInits extends AbstractFilter {
 		return switch e.kind {
 			case TEVars(_, vars):
 				for (v in vars) {
-					v.init = processVarInit(v.v.type, v.init);
+					v.init = processVarInit(v.v.type, v.init, true);
 				}
 				e;
 
@@ -16,16 +16,14 @@ class VarInits extends AbstractFilter {
 
 	override function processVarFields(vars:Array<TVarFieldDecl>) {
 		for (v in vars) {
-			v.init = processVarInit(v.type, v.init);
+			v.init = processVarInit(v.type, v.init, false);
 		}
 	}
 
-	static function processVarInit(type:TType, init:Null<TVarInit>):TVarInit {
+	static function processVarInit(type:TType, init:Null<TVarInit>, initNull:Bool):TVarInit {
 		if (init == null) {
-			return init = {
-				equalsToken: equalsToken,
-				expr: getDefaultInitExpr(type)
-			};
+			var expr = getDefaultInitExpr(type, initNull);
+			return if (expr == null) null else { equalsToken: equalsToken, expr: expr };
 		} else {
 			return init;
 		}
@@ -37,13 +35,13 @@ class VarInits extends AbstractFilter {
 	static final eZeroUint = mk(TELiteral(TLInt(new Token(0, TkDecimalInteger, "0", [], []))), TTUint, TTUint);
 	static final eNaN = mkBuiltin("NaN", TTNumber);
 
-	static function getDefaultInitExpr(t:TType):TExpr {
+	static function getDefaultInitExpr(t:TType, initNull:Bool):TExpr {
 		return switch t {
 			case TTBoolean: eFalse;
 			case TTInt: eZeroInt;
 			case TTUint: eZeroUint;
 			case TTNumber: eNaN;
-			case _: mkNullExpr(t);
+			case _: if (initNull) mkNullExpr(t) else null;
 		};
 	}
 }
