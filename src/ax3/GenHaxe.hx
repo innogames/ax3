@@ -688,15 +688,25 @@ class GenHaxe extends PrinterBase {
 	}
 
 	function printVectorDecl(d:TVectorDecl) {
-		printTrivia(d.syntax.newKeyword.leadTrivia);
-		buf.add("flash.Vector.ofArray((");
-		var trailTrivia = d.elements.syntax.closeBracket.trailTrivia;
-		d.elements.syntax.closeBracket.trailTrivia = [];
-		printArrayDecl(d.elements);
-		buf.add(":Array<");
-		printTType(d.type);
-		buf.add(">))");
-		printTrivia(trailTrivia);
+		if (d.elements.elements.length > 0) {
+			printTrivia(d.syntax.newKeyword.leadTrivia);
+			buf.add("flash.Vector.ofArray((");
+			var trailTrivia = d.elements.syntax.closeBracket.trailTrivia;
+			d.elements.syntax.closeBracket.trailTrivia = [];
+			printArrayDecl(d.elements);
+			buf.add(":Array<");
+			printTType(d.type);
+			buf.add(">))");
+			printTrivia(trailTrivia);
+		} else {
+			printTextWithTrivia("new", d.syntax.newKeyword);
+			if (d.syntax.newKeyword.trailTrivia.length == 0) buf.add(" ");
+			buf.add("flash.Vector<");
+			printTType(d.type);
+			buf.add(">");
+			printTextWithTrivia("(", d.elements.syntax.openBracket);
+			printTextWithTrivia(")", d.elements.syntax.closeBracket);
+		}
 	}
 
 	function printArrayDecl(d:TArrayDecl) {
