@@ -56,7 +56,7 @@ class GenHaxe extends PrinterBase {
 					printTextWithTrivia(p.first.text, p.first);
 				} else {
 					inline function lowerFirst(t:Token) {
-						if (t.text == "Globals") { // hacky hack
+						if (t.text == "Globals" || t.text == "ASCompat") { // hacky hack
 							printTextWithTrivia(t.text, t);
 						} else {
 							printTextWithTrivia(t.text.charAt(0).toLowerCase() + t.text.substring(1), t);
@@ -187,11 +187,26 @@ class GenHaxe extends PrinterBase {
 
 		for (m in c.members) {
 			switch (m) {
-				case TMCondCompBegin(b): printCondCompBegin(b);
-				case TMCondCompEnd(b): printCompCondEnd(b);
-				case TMField(f): printClassField(c.name, f);
-				case TMUseNamespace(n, semicolon): printUseNamespace(n); printTextWithTrivia("", semicolon);
-				case TMStaticInit(i): trace("TODO: INIT EXPR FOR " + c.name);//printExpr(i.expr);
+				case TMCondCompBegin(b):
+					printCondCompBegin(b);
+
+				case TMCondCompEnd(b):
+					printCompCondEnd(b);
+
+				case TMField(f):
+					printClassField(c.name, f);
+
+				case TMUseNamespace(n, semicolon):
+					printUseNamespace(n);
+					printTextWithTrivia("", semicolon);
+
+				case TMStaticInit(i):
+					// let's hope that people are sane(ish) and there's only one static init per class :)
+					printTrivia(TypedTreeTools.removeLeadingTrivia(i.expr));
+					var trailTrivia = TypedTreeTools.removeTrailingTrivia(i.expr);
+					buf.add("static function __init__() ");
+					printExpr(i.expr);
+					printTrivia(trailTrivia);
 			}
 		}
 

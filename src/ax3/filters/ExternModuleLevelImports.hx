@@ -29,14 +29,21 @@ class ExternModuleLevelImports extends AbstractFilter {
 							return false;
 						}
 
-						var fieldName = path.join("_"); // TODO: possible name clashes;
+						if (dotPath == "flash.net.registerClassAlias") {
+							i.syntax.path = {
+								first: mkIdent("ASCompat"),
+								rest: [{sep: mkDot(), element: mkIdent("registerClassAlias")}]
+							};
+						} else {
+							var fieldName = path.join("_"); // TODO: possible name clashes;
 
-						globals[fieldName] = {dotPath: dotPath, kind: decl.kind};
+							globals[fieldName] = {dotPath: dotPath, kind: decl.kind};
 
-						i.syntax.path = {
-							first: mkIdent("Globals"),
-							rest: [{sep: mkDot(), element: mkIdent(fieldName)}]
-						};
+							i.syntax.path = {
+								first: mkIdent("Globals"),
+								rest: [{sep: mkDot(), element: mkIdent(fieldName)}]
+							};
+						}
 						i.kind = TIAliased(decl, asToken, mkIdent(decl.name));
 						return true;
 

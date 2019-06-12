@@ -17,6 +17,12 @@ class ASCompat {
 	public static inline function describeType(value:Any):compat.XML {
 		return flash.Lib.describeType(value);
 	}
+
+	// classObject is Any and not Class<Dynamic>, because in Flash we also want to pass Bool to it
+	// this is also the reason this function is not automatically added to Globals.hx
+	public static inline function registerClassAlias(aliasName:String, classObject:Any) {
+		untyped __global__["flash.net.registerClassAlias"](aliasName, classObject);
+	}
 	#end
 
 	public static inline function toInt(d:Dynamic):Int {
