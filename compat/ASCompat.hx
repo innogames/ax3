@@ -84,7 +84,7 @@ class ASCompat {
 	}
 
 	public static inline function floatAsBool(f:Null<Float>):Bool {
-		return f != null && !Math.isNaN(f);
+		return f != null && f != 0 && !Math.isNaN(f);
 	}
 
 	public static inline function allocArray<T>(length:Int):Array<T> {
