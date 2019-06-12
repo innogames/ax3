@@ -13,6 +13,12 @@ class ASCompat {
 	public static inline final MAX_FLOAT = 1.79e+308;
 	public static inline final MIN_FLOAT = -1.79E+308;
 
+	#if flash
+	public static inline function describeType(value:Any):compat.XML {
+		return flash.Lib.describeType(value);
+	}
+	#end
+
 	public static inline function toInt(d:Dynamic):Int {
 		#if flash
 		return d;

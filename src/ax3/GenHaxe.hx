@@ -373,8 +373,8 @@ class GenHaxe extends PrinterBase {
 			case TTClass: buf.add("Class<Dynamic>");
 			case TTObject(TTAny): buf.add("ASObject");
 			case TTObject(t): buf.add("haxe.DynamicAccess<"); printTType(t); buf.add(">");
-			case TTXML: buf.add("flash.xml.XML");
-			case TTXMLList: buf.add("flash.xml.XMLList");
+			case TTXML: buf.add("compat.XML");
+			case TTXMLList: buf.add("compat.XMLList");
 			case TTRegExp: buf.add("flash.utils.RegExp");
 			case TTVector(t): buf.add("flash.Vector<"); printTType(t); buf.add(">");
 			case TTDictionary(k, v): buf.add("ASDictionary<"); printTType(k); buf.add(","); printTType(v); buf.add(">");
@@ -530,7 +530,7 @@ class GenHaxe extends PrinterBase {
 		name = switch name {
 			case
 				"Std.is" | "Std.downcast" | "Std.int" | "Std.string" | "String"
-				| "flash.Vector.convert"| "flash.Vector.ofArray" | "flash.Lib.getTimer" | "flash.Lib.getURL" | "flash.Lib.describeType"
+				| "flash.Vector.convert"| "flash.Vector.ofArray" | "flash.Lib.getTimer" | "flash.Lib.getURL"
 				| "Reflect.deleteField" | "Type.createInstance"| "Type.resolveClass" | "Type.getClassName" | "Type.getClass"
 				| "haxe.Json" | "Reflect.compare"
 				| "StringTools.replace" | "StringTools.hex" | "Reflect.callMethod":
@@ -540,8 +540,8 @@ class GenHaxe extends PrinterBase {
 			case "uint": "UInt";
 			case "Boolean": "Bool";
 			case "Object": "ASObject";
-			case "XML": "flash.xml.XML";
-			case "XMLList": "flash.xml.XMLList";
+			case "XML": "compat.XML";
+			case "XMLList": "compat.XMLList";
 			case "Vector": "flash.Vector";
 			case "Array": "Array";
 			case "RegExp": "flash.utils.RegExp";
