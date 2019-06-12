@@ -80,11 +80,11 @@ class ASCompat {
 	}
 
 	public static inline function stringAsBool(s:Null<String>):Bool {
-		return s != null && s != "";
+		return (s : ASAny);
 	}
 
 	public static inline function floatAsBool(f:Null<Float>):Bool {
-		return f != null && f != 0 && !Math.isNaN(f);
+		return (f : ASAny);
 	}
 
 	public static inline function allocArray<T>(length:Int):Array<T> {
