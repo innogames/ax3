@@ -141,7 +141,11 @@ class ASCompat {
 	public static macro function setTimeout(closure:ExprOf<haxe.Constraints.Function>, delay:ExprOf<Float>, arguments:Array<Expr>):ExprOf<UInt>;
 
 	public static inline function clearTimeout(id:UInt):Void {
+		#if flash
 		untyped __global__["flash.utils.clearTimeout"](id);
+		#else
+		js.Browser.window.clearTimeout(id);
+		#end
 	}
 }
 

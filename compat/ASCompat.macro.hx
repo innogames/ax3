@@ -1,10 +1,16 @@
 #if macro
+import haxe.macro.Context;
 import haxe.macro.Expr;
 
 class ASCompat {
 	static function setTimeout(closure, delay, arguments:Array<Expr>) {
 		var args = [closure,delay].concat(arguments);
-		return macro untyped __global__["flash.utils.setTimeout"]($a{args});
+		var setTimeoutExpr =
+			if (Context.defined("flash"))
+				macro untyped __global__["flash.utils.setTimeout"]
+			else
+				macro js.Browser.window.setTimeout;
+		return macro @:pos(Context.currentPos()) $setTimeoutExpr($a{args});
 	}
 }
 
@@ -14,7 +20,7 @@ class ASArray {
 		for (expr in rest) {
 			exprs.push(macro ___arr.push($expr));
 		}
-		return macro @:pos(haxe.macro.Context.currentPos()) {
+		return macro @:pos(Context.currentPos()) {
 			var ___arr = $a;
 			$b{exprs};
 		};
