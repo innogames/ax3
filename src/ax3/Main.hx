@@ -1,10 +1,11 @@
 package ax3;
 
+import haxe.extern.EitherType;
 import sys.FileSystem;
 import ax3.Utils.*;
 
 private typedef Config = {
-	var src:String;
+	var src:EitherType<String,Array<String>>;
 	var swc:Array<String>;
 	var ?out:String;
 	var ?hxout:String;
@@ -30,7 +31,10 @@ class Main {
 		Timers.swcs = stamp() - t;
 
 		var files = [];
-		walk(config.src, files);
+		var srcs = if (Std.is(config.src, String)) [config.src] else config.src;
+		for (src in srcs) {
+			walk(src, files);
+		}
 
 		t = stamp();
 		Typer.process(ctx, tree, files);
