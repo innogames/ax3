@@ -3,13 +3,9 @@
 abstract ASObject(flash.utils.Object)
 	from flash.utils.Object
 	to flash.utils.Object
-	#if !js // TODO: not sure why this is needed, but it is
-	from haxe.Constraints.Function
-	from ASAny
-	to ASAny
-	#else
+
+	// from haxe.Constraints.Function
 	from Array<Dynamic> // from arrays of mixed types
-	#end
 {
 
 	public inline function new() this = cast {};

@@ -2,11 +2,16 @@
            // I'm not sure how much can we do about it, maybe wrap the TTAny arguments and the return value in ASAny on the converter level?
 abstract ASAny(Dynamic)
 	from Dynamic
+	to ASObject
+
+	// these are here because of https://github.com/HaxeFoundation/haxe/issues/8425
 	from haxe.Constraints.Function
 	from ASObject
-	from compat.XML // not sure why this is needed, but well...
-	to ASObject
+	from compat.XML
 {
+	// this is also here because of https://github.com/HaxeFoundation/haxe/issues/8425
+	@:from extern static inline function ___fromDictionary<K,V>(d:ASDictionary<K,V>):ASAny return cast d;
+
 
 	public inline function new() this = cast {};
 
@@ -128,9 +133,6 @@ abstract ASAny(Dynamic)
 		return if (a.__toBool()) b else a;
 	}
 
-	@:op(a -= b) static inline function ___minusEqualsFloat(a:Float, b:ASAny):Float return a -= b.___toFloat();
-	@:op(a += b) static inline function ___plusEqualsFloat(a:Float, b:ASAny):Float return a += b.___toFloat();
-
 	// TODO: this (with Dynamic) will only really work on JS and Flash, but oh well
 	@:op(a - b) static inline function ___minusAny(a:ASAny, b:ASAny):ASAny return (a:Dynamic) - (b:Dynamic);
 	@:op(a + b) static inline function ___plusAny(a:ASAny, b:ASAny):ASAny return (a:Dynamic) + (b:Dynamic);
@@ -147,6 +149,4 @@ abstract ASAny(Dynamic)
 
 	@:op([]) inline function ___arrayGet(name:ASAny):ASAny return ___get(name);
 	@:op([]) inline function ___arraySet(name:ASAny, value:ASAny):ASAny return ___set(name, value);
-
-	@:from extern static inline function ___fromDictionary<K,V>(d:ASDictionary<K,V>):ASAny return cast d;
 }
