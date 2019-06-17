@@ -585,6 +585,17 @@ class Scanner {
 			case "\\".code:
 			case "\"".code:
 			case "'".code:
+			case "u".code:
+				for (_ in 0...4) {
+					if (pos >= end) {
+						throw "Unterminated unicode character sequence at " + start;
+					}
+					ch = text.fastCodeAt(pos);
+					if (!isHexDigit(ch)) {
+						throw "Invalid unicode character sequence at " + start;
+					}
+					pos++;
+				}
 			default:
 				throw "Invalid escape sequence at " + start;
 		}
