@@ -56,12 +56,16 @@ class Typer {
 
 		importSetups.push(() -> tModule.pack.imports = typeImports(file));
 
-		tModule.pack.decl = typeDecl(getPackageMainDecl(pack), tModule);
+		tModule.pack.decl = typeDecl(getPackageMainDecl(pack, tModule), tModule);
 		for (decl in getPrivateDecls(file)) {
 			tModule.privateDecls.push(typeDecl(decl, tModule));
 		}
 
 		tPack.replaceModule(tModule);
+	}
+
+	function getPackageMainDecl(pack:PackageDecl, mod:TModule):Declaration {
+		return try ParseTree.getPackageMainDecl(pack) catch (e:Any) throwErr(mod, Std.string(e), pack.keyword.pos);
 	}
 
 	function typeDecl(d:Declaration, mod:TModule):TDecl {
