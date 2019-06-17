@@ -4,6 +4,7 @@
 -lib openfl
 -main Main
 -js test.js
+--remap flash:openfl
 -D analyzer-optimize
 
 -cmd node test.js

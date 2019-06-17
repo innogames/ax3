@@ -254,6 +254,14 @@ class TestASAny extends utest.Test {
 		equals("ba", "b" + a);
 		equals("ba", b + a);
 	}
+
+	function testMixedArray() {
+		var x:ASAny = [1, false, "hi"];
+		same([1, false, "hi"], x);
+
+		var x:ASObject = [1, false, "hi"];
+		same([1, false, "hi"], x);
+	}
 }
 
 private class Cls {

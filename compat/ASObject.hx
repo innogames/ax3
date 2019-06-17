@@ -5,7 +5,10 @@ abstract ASObject(flash.utils.Object)
 	to flash.utils.Object
 
 	// from haxe.Constraints.Function
-	from Array<Dynamic> // from arrays of mixed types
+
+	#if !flash // https://github.com/HaxeFoundation/haxe/issues/8203
+	from Array<Dynamic>
+	#end
 {
 
 	public inline function new() this = cast {};
