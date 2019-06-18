@@ -49,6 +49,11 @@ class BasicCasts extends AbstractFilter {
 
 			case TECast({syntax: syntax, expr: expr, type: TTString}):
 				switch expr.type {
+					case TTString:
+						processLeadingToken(t -> t.leadTrivia = removeLeadingTrivia(e).concat(t.leadTrivia), expr);
+						processTrailingToken(t -> t.trailTrivia = t.trailTrivia.concat(removeTrailingTrivia(e)), expr);
+						expr;
+
 					case TTXML | TTXMLList:
 						processLeadingToken(t -> t.leadTrivia = removeLeadingTrivia(e).concat(t.leadTrivia), expr);
 						var eToString = mk(TEField({kind: TOExplicit(mkDot(), expr), type: expr.type}, "toString", mkIdent("toString")), ToString.tToString, ToString.tToString);

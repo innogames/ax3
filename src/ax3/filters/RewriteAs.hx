@@ -10,6 +10,7 @@ class RewriteAs extends AbstractFilter {
 						e.with(kind = TEHaxeRetype(eobj));
 
 					case TTInt | TTUint | TTNumber | TTString | TTBoolean: // omg
+						// TODO: this is not correct: we need to actually check and return null here
 						reportError(keyword.pos, "`as` operator with basic type");
 						e.with(kind = TECast({
 							syntax: {
