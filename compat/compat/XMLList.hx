@@ -31,7 +31,14 @@ abstract XMLList(XMLListImpl) from XMLListImpl to XMLListImpl {
 		#end
 	}
 
-	public inline function toString():String return toXMLString();
+	#if flash inline #end
+	public function toString():String {
+		#if flash
+		return this.toString();
+		#else
+		return if (this.length > 1) toXMLString() else this[0].toString();
+		#end
+	}
 
 	public inline function iterator() {
 		#if flash

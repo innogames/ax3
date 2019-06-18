@@ -65,12 +65,17 @@ class TestXML extends utest.Test {
 	}
 
 	function testXMLListToString() {
-		// apparently it always calls toXMLString for children
+		// if there are more than one element - toXMLString is always used
 		var x = new compat.XML("<x><a>hello</a><a>bye</a></x>");
 		equals("<a>hello</a>\n<a>bye</a>", x.child("a").toString());
 
+		// for a single-element XMLList, toString is called on it
 		x = new compat.XML("<x><a>hello</a></x>");
-		equals("<a>hello</a>", x.child("a").toString());
+		equals("hello", x.child("a").toString());
+
+		// ...but of course not if it has "complex" content
+		x = new compat.XML("<x><a><inner/>hello</a></x>");
+		equals("<a><inner/>hello</a>", x.child("a").toString());
 	}
 
 	function testXMLListIterator() {
