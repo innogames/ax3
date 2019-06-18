@@ -1,7 +1,7 @@
 package ax3.filters;
 
 class ToString extends AbstractFilter {
-	static final tToString = TTFun([], TTString);
+	public static final tToString = TTFun([], TTString);
 	static final tStdString = TTFun([TTAny], TTString);
 	static final tHex = TTFun([TTInt], TTString);
 

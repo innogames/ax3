@@ -21,6 +21,7 @@ class BasicCasts extends AbstractFilter {
 				}));
 
 			case TECast({syntax: syntax, expr: expr, type: TTInt | TTUint}):
+				expr = maybeCoerceToString(expr);
 				var eCastMethod = mkBuiltin("ASCompat.toInt", tToInt, removeLeadingTrivia(e));
 				e.with(kind = TECall(eCastMethod, {
 					openParen: syntax.openParen,
@@ -29,6 +30,7 @@ class BasicCasts extends AbstractFilter {
 				}));
 
 			case TECast({syntax: syntax, expr: expr, type: TTNumber}):
+				expr = maybeCoerceToString(expr);
 				var eCastMethod = mkBuiltin("ASCompat.toNumber", tToNumber, removeLeadingTrivia(e));
 				e.with(kind = TECall(eCastMethod, {
 					openParen: syntax.openParen,
@@ -46,15 +48,31 @@ class BasicCasts extends AbstractFilter {
 				}));
 
 			case TECast({syntax: syntax, expr: expr, type: TTString}):
-				var eCastMethod = mkBuiltin("ASCompat.toString", tToString, removeLeadingTrivia(e));
-				e.with(kind = TECall(eCastMethod, {
-					openParen: syntax.openParen,
-					args: [{expr: expr, comma: null}],
-					closeParen: syntax.closeParen
-				}));
+				switch expr.type {
+					case TTXML | TTXMLList:
+						processLeadingToken(t -> t.leadTrivia = removeLeadingTrivia(e).concat(t.leadTrivia), expr);
+						var eToString = mk(TEField({kind: TOExplicit(mkDot(), expr), type: expr.type}, "toString", mkIdent("toString")), ToString.tToString, ToString.tToString);
+						e.with(kind = TECall(eToString, {openParen: syntax.openParen, args: [], closeParen: syntax.closeParen}), type = TTString);
+
+					case _:
+						var eCastMethod = mkBuiltin("ASCompat.toString", tToString, removeLeadingTrivia(e));
+						e.with(kind = TECall(eCastMethod, {
+							openParen: syntax.openParen,
+							args: [{expr: expr, comma: null}],
+							closeParen: syntax.closeParen
+						}));
+				}
 
 			case _:
 				e;
+		}
+	}
+
+	static function maybeCoerceToString(e:TExpr):TExpr {
+		if (e.type.match(TTXML | TTXMLList)) {
+			return e.with(expectedType = TTString); // this will be handled by a ToString filter
+		} else {
+			return e;
 		}
 	}
 }
