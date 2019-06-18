@@ -11,12 +11,14 @@ class RestArgs extends AbstractFilter {
 			switch lastArg.kind {
 				case TArgNormal(_):
 					// nothing to do
-				case TArgRest(dots, _):
-					var hint:TypeHint = {
-						colon: new Token(0, TkColon, ":", [], []),
-						type: TPath({first: new Token(0, TkIdent, "Array", [], []), rest: []})
-					};
-					lastArg.kind = TArgNormal(hint, {
+				case TArgRest(dots, _, typeHint):
+					if (typeHint == null) {
+						typeHint = {
+							colon: new Token(0, TkColon, ":", [], []),
+							type: TPath({first: new Token(0, TkIdent, "Array", [], []), rest: []})
+						};
+					}
+					lastArg.kind = TArgNormal(typeHint, {
 						equalsToken: new Token(0, TkEquals, "=", [whitespace], [whitespace]),
 						expr: mkNullExpr(TTArray(TTAny))
 					});

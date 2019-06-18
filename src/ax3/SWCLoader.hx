@@ -343,7 +343,7 @@ class SWCLoader {
 				name: "rest",
 				type: tUntypedArray,
 				v: null,
-				kind: TArgRest(null, TRestSwc),
+				kind: TArgRest(null, TRestSwc, null),
 			});
 		}
 		var ret = if (methType.ret != null) buildTypeStructure(abc, methType.ret) else TTAny;

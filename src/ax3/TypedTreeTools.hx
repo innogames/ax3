@@ -203,7 +203,7 @@ class TypedTreeTools {
 		for (a in f.args) {
 			switch a.kind {
 				case TArgNormal(_): args.push(a.type);
-				case TArgRest(_, kind): rest = kind;
+				case TArgRest(_, kind, _): rest = kind;
 			}
 		}
 		return TTFun(args, f.ret.type, rest);

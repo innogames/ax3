@@ -401,7 +401,7 @@ class Parser {
 			case TkIdent:
 				return ArgNormal(parseVarDeclNext(scanner.consume()));
 			case TkDotDotDot:
-				return ArgRest(scanner.consume(), expectKind(TkIdent));
+				return ArgRest(scanner.consume(), expectKind(TkIdent), parseOptionalTypeHint());
 			case _:
 				null;
 		}

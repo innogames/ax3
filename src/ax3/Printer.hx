@@ -241,9 +241,10 @@ class Printer extends PrinterBase {
 			switch (arg) {
 				case ArgNormal(a):
 					printVarDecl(a);
-				case ArgRest(dots, name):
+				case ArgRest(dots, name, typeHint):
 					printTextWithTrivia("...", dots);
 					printIdent(name);
+					if (typeHint != null) printTypeHint(typeHint);
 			}
 		}, printComma);
 		printTextWithTrivia(")", f.closeParen);

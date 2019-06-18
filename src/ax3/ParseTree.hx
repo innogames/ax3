@@ -364,7 +364,7 @@ typedef Function = {
 
 enum FunctionArg {
 	ArgNormal(a:VarDecl);
-	ArgRest(dots:Token, name:Token);
+	ArgRest(dots:Token, name:Token, typeHint:Null<TypeHint>);
 }
 
 enum InterfaceMember {

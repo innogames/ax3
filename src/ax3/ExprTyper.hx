@@ -196,8 +196,8 @@ class ExprTyper {
 							}
 							{syntax: {name: a.name}, name: a.name.text, type: type, kind: TArgNormal(a.type, init), v: null, comma: comma};
 
-						case ArgRest(dots, name):
-							{syntax: {name: name}, name: name.text, type: tUntypedArray, kind: TArgRest(dots, TRestAs3), v: null, comma: comma};
+						case ArgRest(dots, name, typeHint):
+							{syntax: {name: name}, name: name.text, type: tUntypedArray, kind: TArgRest(dots, TRestAs3, typeHint), v: null, comma: comma};
 					}
 				});
 			} else {
