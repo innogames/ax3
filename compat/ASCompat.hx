@@ -2,9 +2,7 @@
 import haxe.macro.Expr;
 #end
 
-import flash.utils.RegExp;
 import haxe.Constraints.Function;
-import haxe.extern.EitherType;
 
 class ASCompat {
 	public static inline final MAX_INT = 2147483647;
@@ -63,27 +61,6 @@ class ASCompat {
 
 	public static inline function toFixed(n:Float):String {
 		return (cast n).toFixed();
-	}
-
-	public static inline function regExpReplace(s:String, r:RegExp, by:EitherType<String,Function>):String {
-		return (cast s).replace(r, by);
-	}
-
-	public static inline function regExpMatch(s:String, r:RegExp):Array<String> {
-		#if flash
-		return (cast s).match(r);
-		#else
-		var match = (cast s).match(r);
-		return if (match == null) [] else match;
-		#end
-	}
-
-	public static inline function regExpSearch(s:String, r:RegExp):Int {
-		return (cast s).search(r);
-	}
-
-	public static inline function regExpSplit(s:String, r:RegExp):Array<String> {
-		return (cast s).split(r);
 	}
 
 	// TODO: this is temporary

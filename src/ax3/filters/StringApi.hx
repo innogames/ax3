@@ -1,19 +1,27 @@
 package ax3.filters;
 
 class StringApi extends AbstractFilter {
-	static final tCompatReplace = TTFun([TTString, TTRegExp, TTString], TTString);
+	static final tReplaceMethod = TTFun([TTString, TTString], TTString);
+	static final tSplitMethod = TTFun([TTString], TTArray(TTString));
+	static final tMatchMethod = TTFun([TTString], TTArray(TTString));
+	static final tSearchMethod = TTFun([TTString], TTInt);
 	static final tStringToolsReplace = TTFun([TTString, TTString, TTString], TTString);
 
 	override function processExpr(e:TExpr):TExpr {
 		return switch e.kind {
-			case TECall({kind: TEField({kind: TOExplicit(_, eString = {type: TTString})}, "replace", _)}, args):
+			case TECall({kind: TEField({kind: TOExplicit(dot, eString = {type: TTString})}, "replace", replaceToken)}, args):
 				eString = processExpr(eString);
 				args = mapCallArgs(processExpr, args);
 				switch args.args {
 					case [ePattern = {expr: {type: TTRegExp}}, eBy = {expr: {type: TTString | TTFunction | TTFun(_) | TTAny /*hmm*/}}]:
-						var eCompatReplace = mkBuiltin("ASCompat.regExpReplace", tCompatReplace, removeLeadingTrivia(eString));
-						e.with(kind = TECall(eCompatReplace, args.with(args = [
-							{expr: eString, comma: commaWithSpace}, ePattern, eBy
+						processLeadingToken(t -> t.leadTrivia = removeLeadingTrivia(eString).concat(t.leadTrivia), ePattern.expr);
+						var obj:TFieldObject = {
+							kind: TOExplicit(dot, ePattern.expr),
+							type: TTRegExp
+						}
+						var eReplaceMethod = mk(TEField(obj, "replace", replaceToken), tReplaceMethod, tReplaceMethod);
+						e.with(kind = TECall(eReplaceMethod, args.with(args = [
+							{expr: eString, comma: ePattern.comma}, eBy
 						])));
 
 					case [ePattern = {expr: {type: TTString}}, eBy = {expr: {type: TTString}}]:
@@ -26,29 +34,35 @@ class StringApi extends AbstractFilter {
 						throwError(exprPos(e), "Unsupported String.replace arguments");
 				}
 
-			case TECall({kind: TEField({kind: TOExplicit(_, eString = {type: TTString})}, "match", _)}, args):
+			case TECall({kind: TEField({kind: TOExplicit(dot, eString = {type: TTString})}, "match", fieldToken)}, args):
 				eString = processExpr(eString);
 				args = mapCallArgs(processExpr, args);
 				switch args.args {
 					case [ePattern = {expr: {type: TTRegExp}}]:
-						var eCompatReplace = mkBuiltin("ASCompat.regExpMatch", tCompatReplace, removeLeadingTrivia(eString));
-						e.with(kind = TECall(eCompatReplace, args.with(args = [
-							{expr: eString, comma: commaWithSpace}, ePattern
-						])));
+						processLeadingToken(t -> t.leadTrivia = removeLeadingTrivia(eString).concat(t.leadTrivia), ePattern.expr);
+						var obj:TFieldObject = {
+							kind: TOExplicit(dot, ePattern.expr),
+							type: TTRegExp
+						}
+						var eMatchMethod = mk(TEField(obj, "match", fieldToken), tMatchMethod, tMatchMethod);
+						e.with(kind = TECall(eMatchMethod, args.with(args = [{expr: eString, comma: null}])));
 
 					case _:
 						throwError(exprPos(e), "Unsupported String.match arguments");
 				}
 
-			case TECall({kind: TEField({kind: TOExplicit(_, eString = {type: TTString})}, "search", _)}, args):
+			case TECall({kind: TEField({kind: TOExplicit(dot, eString = {type: TTString})}, "search", fieldToken)}, args):
 				eString = processExpr(eString);
 				args = mapCallArgs(processExpr, args);
 				switch args.args {
 					case [ePattern = {expr: {type: TTRegExp}}]:
-						var eCompatReplace = mkBuiltin("ASCompat.regExpSearch", tCompatReplace, removeLeadingTrivia(eString));
-						e.with(kind = TECall(eCompatReplace, args.with(args = [
-							{expr: eString, comma: commaWithSpace}, ePattern
-						])));
+						processLeadingToken(t -> t.leadTrivia = removeLeadingTrivia(eString).concat(t.leadTrivia), ePattern.expr);
+						var obj:TFieldObject = {
+							kind: TOExplicit(dot, ePattern.expr),
+							type: TTRegExp
+						}
+						var eSearchMethod = mk(TEField(obj, "search", fieldToken), tSearchMethod, tSearchMethod);
+						e.with(kind = TECall(eSearchMethod, args.with(args = [{expr: eString, comma: null}])));
 
 					case _:
 						throwError(exprPos(e), "Unsupported String.search arguments");
@@ -68,10 +82,14 @@ class StringApi extends AbstractFilter {
 				switch args.args {
 					case [ePattern = {expr: {type: TTRegExp}}]:
 						eString = processExpr(eString);
-						var eCompatReplace = mkBuiltin("ASCompat.regExpSplit", tCompatReplace, removeLeadingTrivia(eString));
-						e.with(kind = TECall(eCompatReplace, args.with(args = [
-							{expr: eString, comma: commaWithSpace}, ePattern
-						])));
+
+						processLeadingToken(t -> t.leadTrivia = removeLeadingTrivia(eString).concat(t.leadTrivia), ePattern.expr);
+						var obj:TFieldObject = {
+							kind: TOExplicit(dot, ePattern.expr),
+							type: TTRegExp
+						}
+						var eSplitMethod = mk(TEField(obj, "split", fieldToken), tSplitMethod, tSplitMethod);
+						e.with(kind = TECall(eSplitMethod, args.with(args = [{expr: eString, comma: null}])));
 
 					case [{expr: {type: TTString}}]:
 						eMethod = eMethod.with(kind = TEField({kind: TOExplicit(dot, processExpr(eString)), type: TTString}, "split", fieldToken));

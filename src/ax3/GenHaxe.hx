@@ -390,7 +390,7 @@ class GenHaxe extends PrinterBase {
 			case TTObject(t): buf.add("haxe.DynamicAccess<"); printTType(t); buf.add(">");
 			case TTXML: buf.add("compat.XML");
 			case TTXMLList: buf.add("compat.XMLList");
-			case TTRegExp: buf.add("flash.utils.RegExp");
+			case TTRegExp: buf.add("compat.RegExp");
 			case TTVector(t): buf.add("flash.Vector<"); printTType(t); buf.add(">");
 			case TTDictionary(k, v): buf.add("ASDictionary<"); printTType(k); buf.add(","); printTType(v); buf.add(">");
 			case TTBuiltin: buf.add("TODO");
@@ -559,7 +559,7 @@ class GenHaxe extends PrinterBase {
 			case "XMLList": "compat.XMLList";
 			case "Vector": "flash.Vector";
 			case "Array": "Array";
-			case "RegExp": "flash.utils.RegExp";
+			case "RegExp": "compat.RegExp";
 			case "parseInt": "Std.parseInt";
 			case "parseFloat": "Std.parseFloat";
 			case "NaN": "Math.NaN";
