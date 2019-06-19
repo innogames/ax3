@@ -36,13 +36,28 @@ class RewriteCFor extends AbstractFilter {
 		}
 
 		switch f.econd {
-			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpLt(_), b = {kind: TELocal(_, endValueVar), type: TTInt | TTUint})} if (checkedVar == initVarDecl.v):
-				// TODO maybe also allow constant fields, although I'm not sure how many instance of that we have :)
-				// TODO: check for literal end value
-				if (isEndValueModified(endValueVar, f.body)) {
-					return null;
+			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpLt(_), b = {type: TTInt | TTUint})} if (checkedVar == initVarDecl.v):
+				switch b.kind {
+					case TELocal(_, endValueVar) if (!isEndValueModified(endValueVar, f.body)):
+						endValue = b;
+
+					case TEField({type: TTStatic(cls)}, fieldName, _):
+						var field = cls.findField(fieldName, true);
+						if (field == null) throw "assert";
+						switch field.kind {
+							case TFVar({kind: VConst(_)}):
+								endValue = b;
+							case _:
+								return null;
+						}
+
+					case TELiteral(_):
+						endValue = b;
+
+					case _:
+						return null;
 				}
-				endValue = b;
+
 			case _:
 				return null;
 		}
