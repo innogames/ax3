@@ -15,6 +15,7 @@ class CoerceToBool extends AbstractFilter {
 
 	static final tStringAsBool = TTFun([TTString], TTBoolean);
 	static final tFloatAsBool = TTFun([TTNumber], TTBoolean);
+	static final tIntAsBool = TTFun([TTInt], TTBoolean);
 
 	public function coerce(e:TExpr):TExpr {
 		if (e.kind.match(TEBinop(_, OpAnd(_) | OpOr(_), _))) {
@@ -31,9 +32,20 @@ class CoerceToBool extends AbstractFilter {
 				mk(TEBinop(e.with(expectedType = e.type), OpNotEquals(mkNotEqualsToken()), mkNullExpr(e.type, [], trail)), TTBoolean, TTBoolean);
 
 			case TTInt | TTUint:
-				var trail = removeTrailingTrivia(e);
-				var zeroExpr = mk(TELiteral(TLInt(new Token(0, TkDecimalInteger, "0", [], trail))), e.type, e.type);
-				mk(TEBinop(e.with(expectedType = e.type), OpNotEquals(mkNotEqualsToken()), zeroExpr), TTBoolean, TTBoolean);
+				if (isNullable(e)) {
+					var lead = removeLeadingTrivia(e);
+					var tail = removeTrailingTrivia(e);
+					var eIntAsBoolMethod = mkBuiltin("ASCompat.intAsBool", tIntAsBool, lead, []);
+					mk(TECall(eIntAsBoolMethod, {
+						openParen: mkOpenParen(),
+						closeParen: new Token(0, TkParenClose, ")", [], tail),
+						args: [{expr: e.with(expectedType = e.type), comma: null}],
+					}), TTBoolean, TTBoolean);
+				} else {
+					var trail = removeTrailingTrivia(e);
+					var zeroExpr = mk(TELiteral(TLInt(new Token(0, TkDecimalInteger, "0", [], trail))), e.type, e.type);
+					mk(TEBinop(e.with(expectedType = e.type), OpNotEquals(mkNotEqualsToken()), zeroExpr), TTBoolean, TTBoolean);
+				}
 
 			// case TTString if (canBeRepeated(e)):
 			// 	var trail = removeTrailingTrivia(e);
@@ -70,5 +82,12 @@ class CoerceToBool extends AbstractFilter {
 				throwError(exprPos(e), "TODO: bool coecion");
 		}
 	}
-}
 
+	static function isNullable(e:TExpr):Bool {
+		// TODO: this should really be done properly using TTNull(t) instead of relying on specific expressions
+		return switch skipParens(e).kind {
+			case TEArrayAccess({eobj: {type: TTArray(_) | TTDictionary(_, _)}}): true;
+			case _: false;
+		}
+	}
+}

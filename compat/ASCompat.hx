@@ -76,6 +76,10 @@ class ASCompat {
 		return (f : ASAny);
 	}
 
+	public static inline function intAsBool(f:Null<Int>):Bool {
+		return (f : ASAny);
+	}
+
 	public static inline function allocArray<T>(length:Int):Array<T> {
 		var a = new Array<T>();
 		a.resize(length);
