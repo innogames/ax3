@@ -6,6 +6,8 @@ import ax3.filters.*;
 class Filters {
 	public static function run(context:Context, tree:TypedTree) {
 		var externImports = new ExternModuleLevelImports(context);
+		var coerceToBool = new CoerceToBool(context);
+
 		for (f in [
 			// new RewriteAndOrAssign(context), // we can fix this in the codebase so no real need for this filter
 			// new WrapModuleLevelDecls(context), // WIP
@@ -34,8 +36,8 @@ class Filters {
 			new RewriteHasOwnProperty(context),
 			new NumberToInt(context),
 			new BasicCasts(context),
-			new CoerceToBool(context),
-			new RewriteNonBoolOr(context),
+			coerceToBool,
+			new RewriteNonBoolOr(context, coerceToBool),
 			new InvertNegatedEquality(context),
 			new HaxeProperties(context),
 			new UnqualifiedSuperStatics(context),

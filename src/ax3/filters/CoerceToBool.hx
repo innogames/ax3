@@ -16,7 +16,7 @@ class CoerceToBool extends AbstractFilter {
 	static final tStringAsBool = TTFun([TTString], TTBoolean);
 	static final tFloatAsBool = TTFun([TTNumber], TTBoolean);
 
-	function coerce(e:TExpr):TExpr {
+	public function coerce(e:TExpr):TExpr {
 		if (e.kind.match(TEBinop(_, OpAnd(_) | OpOr(_), _))) {
 			// inner expressions are already coerced, so we just need to fix the type for the binop
 			return e.with(type = TTBoolean);
