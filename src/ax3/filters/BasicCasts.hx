@@ -20,32 +20,53 @@ class BasicCasts extends AbstractFilter {
 					closeParen: syntax.closeParen
 				}));
 
-			case TECast({syntax: syntax, expr: expr, type: TTInt | TTUint}):
-				expr = maybeCoerceToString(expr);
-				var eCastMethod = mkBuiltin("ASCompat.toInt", tToInt, removeLeadingTrivia(e));
-				e.with(kind = TECall(eCastMethod, {
-					openParen: syntax.openParen,
-					args: [{expr: expr, comma: null}],
-					closeParen: syntax.closeParen
-				}));
+			case TECast({syntax: syntax, expr: expr, type: castType = TTInt | TTUint}):
+				switch expr.type {
+					case TTInt | TTUint:
+						processLeadingToken(t -> t.leadTrivia = removeLeadingTrivia(e).concat(t.leadTrivia), expr);
+						processTrailingToken(t -> t.trailTrivia = t.trailTrivia.concat(removeTrailingTrivia(e)), expr);
+						expr;
+					case _:
+						expr = maybeCoerceToString(expr);
+						var eCastMethod = mkBuiltin("ASCompat.toInt", tToInt, removeLeadingTrivia(e));
+						e.with(kind = TECall(eCastMethod, {
+							openParen: syntax.openParen,
+							args: [{expr: expr, comma: null}],
+							closeParen: syntax.closeParen
+						}));
+				}
 
 			case TECast({syntax: syntax, expr: expr, type: TTNumber}):
-				expr = maybeCoerceToString(expr);
-				var eCastMethod = mkBuiltin("ASCompat.toNumber", tToNumber, removeLeadingTrivia(e));
-				e.with(kind = TECall(eCastMethod, {
-					openParen: syntax.openParen,
-					args: [{expr: expr, comma: null}],
-					closeParen: syntax.closeParen
-				}));
+				switch expr.type {
+					case TTNumber | TTInt | TTUint: // TODO: is it really safe to include Int types here?
+						processLeadingToken(t -> t.leadTrivia = removeLeadingTrivia(e).concat(t.leadTrivia), expr);
+						processTrailingToken(t -> t.trailTrivia = t.trailTrivia.concat(removeTrailingTrivia(e)), expr);
+						expr;
+					case _:
+						expr = maybeCoerceToString(expr);
+						var eCastMethod = mkBuiltin("ASCompat.toNumber", tToNumber, removeLeadingTrivia(e));
+						e.with(kind = TECall(eCastMethod, {
+							openParen: syntax.openParen,
+							args: [{expr: expr, comma: null}],
+							closeParen: syntax.closeParen
+						}));
+				}
 
 			case TECast({syntax: syntax, expr: expr, type: TTBoolean}):
-				// TODO: share some logic with CoerceToBool here
-				var eCastMethod = mkBuiltin("ASCompat.toBool", tToBool, removeLeadingTrivia(e));
-				e.with(kind = TECall(eCastMethod, {
-					openParen: syntax.openParen,
-					args: [{expr: expr, comma: null}],
-					closeParen: syntax.closeParen
-				}));
+				switch expr.type {
+					case TTBoolean:
+						processLeadingToken(t -> t.leadTrivia = removeLeadingTrivia(e).concat(t.leadTrivia), expr);
+						processTrailingToken(t -> t.trailTrivia = t.trailTrivia.concat(removeTrailingTrivia(e)), expr);
+						expr;
+					case _:
+						// TODO: share some logic with CoerceToBool here
+						var eCastMethod = mkBuiltin("ASCompat.toBool", tToBool, removeLeadingTrivia(e));
+						e.with(kind = TECall(eCastMethod, {
+							openParen: syntax.openParen,
+							args: [{expr: expr, comma: null}],
+							closeParen: syntax.closeParen
+						}));
+				}
 
 			case TECast({syntax: syntax, expr: expr, type: TTString}):
 				switch expr.type {
