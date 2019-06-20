@@ -51,6 +51,19 @@ class RewriteForIn extends AbstractFilter {
 						eobj = mkCall(eKeys, []);
 						actualKeyType = TTString;
 
+					case TTArray(_) | TTVector(_):
+						var pos = exprPos(eobj);
+						var eZero = mk(TELiteral(TLInt(new Token(pos, TkDecimalInteger, "0", [], []))), TTInt, TTInt);
+						var eLength = {
+							var obj = {
+								kind: TOExplicit(mkDot(), eobj),
+								type: eobj.type
+							};
+							mk(TEField(obj, "length", mkIdent("length")), TTInt, TTInt);
+						};
+						eobj = mk(TEHaxeIntIter(eZero, eLength), TTBuiltin, TTBuiltin);
+						actualKeyType = TTInt;
+
 					case _:
 						actualKeyType = TTString;
 				}
