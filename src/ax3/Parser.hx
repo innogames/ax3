@@ -437,7 +437,7 @@ class Parser {
 			case TkIdent:
 				return TPath(parseDotPathNext(scanner.consume()));
 			case _:
-				throw "Unexpected token for type hint";
+				throw "Unexpected token for type hint: " + token;
 		}
 	}
 
