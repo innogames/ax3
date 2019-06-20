@@ -94,17 +94,7 @@ abstract ASObject(flash.utils.Object)
 		return this;
 	}
 
-	#if flash
-	@:op(a.b) inline function ___get(name:String):ASAny return Reflect.getProperty(this, name);
-	#else
-	@:op(a.b) function ___get(name:String):ASAny {
-		var value:Dynamic = Reflect.getProperty(this, name);
-		if (Reflect.isFunction(value))
-			return Reflect.makeVarArgs(args -> Reflect.callMethod(this, value, args));
-		else
-			return value;
-	}
-	#end
+	@:op(a.b) inline function ___get(name:String):ASAny return ASAny.getPropertyOrBoundMethod(this, name);
 
 	@:op(a.b) inline function ___set(name:String, value:ASAny):ASAny {
 		Reflect.setProperty(this, name, value);

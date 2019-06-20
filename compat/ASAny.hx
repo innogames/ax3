@@ -96,17 +96,20 @@ abstract ASAny(Dynamic)
 		return this;
 	}
 
-	#if flash
-	@:op(a.b) function ___get(name:String):ASAny return Reflect.getProperty(this, name);
-	#else
-	@:op(a.b) function ___get(name:String):ASAny {
-		var value:Dynamic = Reflect.getProperty(this, name);
+	@:op(a.b) inline function ___get(name:String):ASAny return ASAny.getPropertyOrBoundMethod(this, name);
+
+	#if flash inline #end
+	public static function getPropertyOrBoundMethod(obj:Any, name:String):ASAny {
+		#if flash
+		return Reflect.getProperty(obj, name);
+		#else
+		var value:Dynamic = Reflect.getProperty(obj, name);
 		if (Reflect.isFunction(value))
-			return Reflect.makeVarArgs(args -> Reflect.callMethod(this, value, args));
+			return value.bind(obj); // TODO: maybe we should (ab)use Haxe/JS $bind here for caching the bound methods?
 		else
 			return value;
+		#end
 	}
-	#end
 
 	@:op(a.b) function ___set(name:String, value:ASAny):ASAny {
 		Reflect.setProperty(this, name, value);
