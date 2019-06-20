@@ -110,7 +110,7 @@ abstract ASObject(flash.utils.Object)
 	}
 
 	@:op(a || b) static inline function __or(a:ASObject, b:ASAny):ASAny {
-		return if (a.__toBool()) a else b;
+		return if (a.___toBool()) a else b;
 	}
 
 	@:op(a && b) static inline function __andBool(a:Bool, b:ASObject):ASObject {
@@ -118,7 +118,7 @@ abstract ASObject(flash.utils.Object)
 	}
 
 	@:op(a && b) static inline function __and(a:ASObject, b:ASAny):ASAny {
-		return if (a.__toBool()) b else a;
+		return if (a.___toBool()) b else a;
 	}
 
 	@:op(a - b) static function ___minusInt(a:ASObject, b:Int):Int return a.___toInt() - b;

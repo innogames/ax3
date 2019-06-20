@@ -125,7 +125,7 @@ abstract ASAny(Dynamic)
 	}
 
 	@:op(a || b) static inline function __or(a:ASAny, b:ASAny):ASAny {
-		return if (a.__toBool()) a else b;
+		return if (a.___toBool()) a else b;
 	}
 
 	@:op(a && b) static inline function __andBool(a:Bool, b:ASAny):ASAny {
@@ -133,7 +133,7 @@ abstract ASAny(Dynamic)
 	}
 
 	@:op(a && b) static inline function __and(a:ASAny, b:ASAny):ASAny {
-		return if (a.__toBool()) b else a;
+		return if (a.___toBool()) b else a;
 	}
 
 	// TODO: this (with Dynamic) will only really work on JS and Flash, but oh well
