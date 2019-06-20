@@ -444,6 +444,7 @@ class Typer {
 			// TODO: hacks begin
 			case HTPath("StateDescription" | "TransitionDescription", []): TTObject(TTAny);
 			case HTPath("Class", [HTPath("org.robotlegs.core.ICommand", [])]): TTClass;
+			case HTPath("GenericPool", [_]): resolveHaxeType(mod, HTPath("GenericPool", []), pos);
 			// hacks end
 
 			case HTPath("Class", [HTPath("Dynamic", [])]): TTClass;
