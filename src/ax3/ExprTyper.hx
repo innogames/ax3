@@ -929,7 +929,7 @@ class ExprTyper {
 	function typeTry(keyword:Token, block:BracedExprBlock, catches:Array<Catch>, finally_:Null<Finally>, expectedType:TType):TExpr {
 		if (expectedType != TTVoid) throw "assert";
 
-		if (finally_ != null) throw "finally is unsupported";
+		if (finally_ != null) throwErr("finally is unsupported", finally_.keyword.pos);
 		var body = typeExpr(EBlock(block), TTVoid);
 		var tCatches = new Array<TCatch>();
 		for (c in catches) {
