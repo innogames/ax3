@@ -264,7 +264,9 @@ class ExprTyper {
 
 		inline function getSuperClass() {
 			return switch getCurrentClass("super").kind {
-				case TClass(info): info.extend.superClass;
+				case TClass(info):
+					if (info.extend == null) throwErr("`super` used with no super-class", i.pos);
+					info.extend.superClass;
 				case _: throw "not a class";
 			}
 		}
