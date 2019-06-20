@@ -406,7 +406,7 @@ class ExprTyper {
 					}
 
 					if (decl == null) {
-						throw "unknown declaration";
+						throwErr("unknown declaration: " + dotPathToString(prefixDotPath), prefixDotPath.first.pos);
 					}
 
 					acc.push(declName);
