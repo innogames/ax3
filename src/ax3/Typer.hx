@@ -54,7 +54,7 @@ class Typer {
 			eof: file.eof
 		}
 
-		importSetups.push(() -> tModule.pack.imports = typeImports(file));
+		importSetups.push(() -> tModule.pack.imports = typeImports(file, tModule));
 
 		tModule.pack.decl = typeDecl(getPackageMainDecl(pack, tModule), tModule);
 		for (decl in getPrivateDecls(file)) {
@@ -609,7 +609,10 @@ class Typer {
 		throw 'Unknown type: $name';
 	}
 
-	function typeImports(file:File):Array<TImport> {
+	function typeImports(file:File, mod:TModule):Array<TImport> {
+		inline function getPackage(name, pos) return try tree.getPackage(name) catch (e:Any) throwErr(mod, Std.string(e), pos);
+		inline function getDecl(pack, name, pos) return try tree.getDecl(pack, name) catch (e:Any) throwErr(mod, Std.string(e), pos);
+
 		var result = new Array<TImport>();
 		function loop(decls:Array<Declaration>, condCompBegin:Null<TCondCompBegin>, condCompEnd:Null<TCondCompEnd>) {
 			var len = decls.length;
@@ -625,11 +628,11 @@ class Typer {
 								var parts = dotPathToArray(imp.path);
 								var name:String = @:nullSafety(Off) parts.pop();
 								var packName = parts.join(".");
-								var decl = tree.getDecl(packName, name);
+								var decl = getDecl(packName, name, imp.keyword.pos);
 								importKind = TIDecl(decl);
 
 							case w:
-								var pack = tree.getPackage(dotPathToString(imp.path));
+								var pack = getPackage(dotPathToString(imp.path), imp.keyword.pos);
 								importKind = TIAll(pack, w.dot, w.asterisk);
 						}
 						result.push({
