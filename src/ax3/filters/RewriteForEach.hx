@@ -14,6 +14,7 @@ class RewriteForEach extends AbstractFilter {
 						throwError(exprPos(eobj), "Unknown `for each` iteratee");
 				}
 
+				// TODO: we need to check var types here, because it might be that we're iterating untyped Array with typed var and because of that we'll silently get untyped loop variable!
 				var itName, vit;
 				switch (f.iter.eit.kind) {
 					// for each (var x in obj) - use the var directly
