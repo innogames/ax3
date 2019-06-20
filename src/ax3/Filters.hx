@@ -55,6 +55,7 @@ class Filters {
 			new VarInits(context),
 			new UintComparison(context),
 			new HandleProtectedOverrides(context),
+			new CheckUntypedMethodCalls(context),
 		]) {
 			f.run(tree);
 		}
