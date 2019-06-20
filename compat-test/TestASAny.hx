@@ -173,8 +173,8 @@ class TestASAny extends utest.Test {
 		equals(25, c.prop = 25);
 		equals(25, c.prop);
 
-		equals(25, c.meth());
-		equals(25, getValue(c.meth));
+		equals(28, c.meth(3));
+		equals(28, getValue(c.meth, 3));
 
 		equals(10, c.sub.field);
 		equals(15, c.sub.field = 15);
@@ -184,8 +184,8 @@ class TestASAny extends utest.Test {
 		equals(25, c.sub.prop = 25);
 		equals(25, c.sub.prop);
 
-		equals(25, c.sub.meth());
-		equals(25, getValue(c.sub.meth));
+		equals(28, c.sub.meth(3));
+		equals(28, getValue(c.sub.meth, 3));
 
 		var c:ASAny = new Cls(new Cls(null));
 		equals(10, c["field"]);
@@ -196,8 +196,8 @@ class TestASAny extends utest.Test {
 		equals(25, c["prop"] = 25);
 		equals(25, c["prop"]);
 
-		equals(25, c["meth"]());
-		equals(25, getValue(c["meth"]));
+		equals(28, c["meth"](3));
+		equals(28, getValue(c["meth"], 3));
 
 		equals(10, c["sub"]["field"]);
 		equals(15, c["sub"]["field"] = 15);
@@ -207,11 +207,11 @@ class TestASAny extends utest.Test {
 		equals(25, c["sub"]["prop"] = 25);
 		equals(25, c["sub"]["prop"]);
 
-		equals(25, c["sub"]["meth"]());
-		equals(25, getValue(c["sub"]["meth"]));
+		equals(28, c["sub"]["meth"](3));
+		equals(28, getValue(c["sub"]["meth"], 3));
 	}
 
-	function getValue(f:()->Int):Int return f();
+	function getValue(f:Int->Int, v:Int):Int return f(v);
 
 	function testHasOwnProperty() {
 		var o:ASAny = {a: 10};
@@ -277,5 +277,5 @@ private class Cls {
 		this.sub = sub;
 	}
 
-	public function meth() return _prop;
+	public function meth(x) return _prop + x;
 }
