@@ -252,7 +252,7 @@ class ExprTyper {
 
 	function typeIdent(i:Token, e:Expr, expectedType:TType):TExpr {
 		var e = tryTypeIdent(i, expectedType);
-		if (e == null) throw 'Unknown ident: ${i.text}';
+		if (e == null) throwErr('Unknown ident: ${i.text}', i.pos);
 		return e;
 	}
 
