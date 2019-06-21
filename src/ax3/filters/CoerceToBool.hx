@@ -78,7 +78,10 @@ class CoerceToBool extends AbstractFilter {
 			case TTAny:
 				e.with(expectedType = e.type); // handled at run-time by the ASAny abstract \o/
 
-			case TTVoid | TTBuiltin:
+			case TTVoid:
+				throwError(exprPos(e), "void used as Bool?");
+
+			case TTBuiltin:
 				throwError(exprPos(e), "TODO: bool coecion");
 		}
 	}
