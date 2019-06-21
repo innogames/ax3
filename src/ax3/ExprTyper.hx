@@ -536,7 +536,7 @@ class ExprTyper {
 			case _: null;
 		}
 		if (fieldType != null) {
-			return mkExplicitFieldAccess(xml, dot, field, TTFun([tUntypedObject], TTXML), expectedType);
+			return mkExplicitFieldAccess(xml, dot, field, fieldType, expectedType);
 		} else {
 			// err('TODO XML instance field: ${field.text} assumed to be a child', field.pos);
 			return mk(TEXmlChild({syntax: {dot: dot, name: field}, eobj: xml, name: field.text}), TTXMLList, expectedType);
@@ -551,7 +551,7 @@ class ExprTyper {
 			case _: null;
 		}
 		if (fieldType != null) {
-			return mkExplicitFieldAccess(xml, dot, field, TTFun([tUntypedObject], TTXML), expectedType);
+			return mkExplicitFieldAccess(xml, dot, field, fieldType, expectedType);
 		} else {
 			// err('TODO XMLList instance field: ${field.text} assumed to be a child', field.pos);
 			return mk(TEXmlChild({syntax: {dot: dot, name: field}, eobj: xml, name: field.text}), TTXMLList, expectedType);
