@@ -30,6 +30,12 @@ class RewriteRegexLiterals extends AbstractFilter {
 					closeParen: new Token(0, TkParenClose, ")", [], token.trailTrivia)
 				}
 				e.with(kind = TENew(newToken, TNType({syntax: TPath({first: mkIdent("RegExp"), rest: []}), type: TTRegExp}), args));
+
+			case TENew(newKeyword, TNType({type: TTRegExp}), args = {args: [{expr: eOtherRegExp = {type: TTRegExp}}]}):
+				processLeadingToken(t -> t.leadTrivia = newKeyword.leadTrivia.concat(args.openParen.trailTrivia).concat(t.leadTrivia), eOtherRegExp);
+				processTrailingToken(t -> t.trailTrivia = t.trailTrivia.concat(args.closeParen.trailTrivia), eOtherRegExp);
+				eOtherRegExp.with(expectedType = TTRegExp);
+
 			case _:
 				e;
 		}
