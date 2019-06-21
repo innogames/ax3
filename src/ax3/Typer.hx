@@ -607,7 +607,7 @@ class Typer {
 			}
 		}
 
-		throwErr(mod, 'Unknown type: $name', 0);
+		throw 'Unknown type: $name';
 	}
 
 	function typeImports(file:File, mod:TModule):Array<TImport> {
