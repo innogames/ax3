@@ -51,7 +51,7 @@ class StringApi extends AbstractFilter {
 						throwError(exprPos(e), "Unsupported String.match arguments");
 				}
 
-			case TECall({kind: TEField({kind: TOExplicit(dot, eString = {type: TTString})}, "search", fieldToken)}, args):
+			case TECall({kind: TEField(fieldObject = {kind: TOExplicit(dot, eString = {type: TTString})}, "search", fieldToken)}, args):
 				eString = processExpr(eString);
 				args = mapCallArgs(processExpr, args);
 				switch args.args {
@@ -63,6 +63,11 @@ class StringApi extends AbstractFilter {
 						}
 						var eSearchMethod = mk(TEField(obj, "search", fieldToken), tSearchMethod, tSearchMethod);
 						e.with(kind = TECall(eSearchMethod, args.with(args = [{expr: eString, comma: null}])));
+
+					case [{expr: {type: TTString}}]:
+						var fieldToken = new Token(fieldToken.pos, TkIdent, "indexOf", fieldToken.leadTrivia, fieldToken.trailTrivia);
+						var eSearchMethod = mk(TEField(fieldObject, "indexOf", fieldToken), tSearchMethod, tSearchMethod);
+						e.with(kind = TECall(eSearchMethod, args));
 
 					case _:
 						throwError(exprPos(e), "Unsupported String.search arguments");
