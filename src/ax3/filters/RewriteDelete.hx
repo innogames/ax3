@@ -42,6 +42,10 @@ class RewriteDelete extends AbstractFilter {
 					args: [{expr: a.eobj, comma: commaWithSpace}, {expr: eindex, comma: null}]
 				}));
 
+			case [TTXMLList, TTInt | TTUint]:
+				reportError(deleteKeyword.pos, 'TODO: delete on XMLList');
+				mkNullExpr(eDelete.expectedType);
+
 			case [TTArray(_), TTInt | TTUint]:
 				reportError(exprPos(a.eindex), 'delete on array?');
 
