@@ -600,6 +600,7 @@ class ExprTyper {
 			case "splice": TTFun([TTInt, TTUint, TTAny], TTArray(t));
 			case "sort": TTFun([TTAny], TTArray(t));
 			case "sortOn": TTFun([TTString, tUntypedObject], TTArray(t));
+			case "filter": TTFun([TTFun([t], TTBoolean)], TTArray(t)); // in as3 the `fitler` signature is actually 3-argument, but not in Haxe
 			case other: err('Unknown Array instance field $other', field.pos); TTAny;
 		}
 	}
