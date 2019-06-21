@@ -447,6 +447,8 @@ class ExprTyper {
 				case ["hasOwnProperty", {type: TTDictionary(keyType, _)}]: TTFun([keyType], TTBoolean); // TODO: we should probably also support unqualified "hasOwnProperty" idents
 				case ["hasOwnProperty", _]: TTFun([TTString], TTBoolean);
 				case ["prototype", _]: tUntypedObject;
+				case ["NaN", {kind: TEBuiltin(t, "Number")}]:
+					return mk(TEBuiltin(new Token(fieldToken.pos, TkIdent, "NaN", t.leadTrivia, fieldToken.trailTrivia), "NaN"), TTNumber, expectedType);
 				case [_, {kind: TEBuiltin(_, "Array")}]: getArrayStaticFieldType(fieldToken);
 				case [_, {kind: TEBuiltin(_, "Number")}]: getNumericStaticFieldType(fieldToken, TTNumber);
 				case [_, {kind: TEBuiltin(_, "int")}]: getNumericStaticFieldType(fieldToken, TTInt);
