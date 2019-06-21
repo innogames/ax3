@@ -83,19 +83,21 @@ class RestArgs extends AbstractFilter {
 		var normalArgs = args.slice(0, nonRest);
 		var restArgs = args.slice(nonRest);
 
-		var lead = removeLeadingTrivia(restArgs[0].expr);
-		var trail = removeTrailingTrivia(restArgs[restArgs.length - 1].expr);
+		if (restArgs.length > 0) {
+			var lead = removeLeadingTrivia(restArgs[0].expr);
+			var trail = removeTrailingTrivia(restArgs[restArgs.length - 1].expr);
 
-		normalArgs.push({
-			expr: mk(TEArrayDecl({
-				syntax: {
-					openBracket: new Token(0, TkBracketOpen, "[", lead, []),
-					closeBracket: new Token(0, TkBracketClose, "]", [], trail),
-				},
-				elements: restArgs
-			}), tUntypedArray, tUntypedArray),
-			comma: null
-		});
+			normalArgs.push({
+				expr: mk(TEArrayDecl({
+					syntax: {
+						openBracket: new Token(0, TkBracketOpen, "[", lead, []),
+						closeBracket: new Token(0, TkBracketClose, "]", [], trail),
+					},
+					elements: restArgs
+				}), tUntypedArray, tUntypedArray),
+				comma: null
+			});
+		}
 
 		return normalArgs;
 	}
