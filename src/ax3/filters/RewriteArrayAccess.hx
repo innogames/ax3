@@ -43,7 +43,7 @@ class RewriteArrayAccess extends AbstractFilter {
 					case _:
 						reportError(exprPos(e), "Dynamic array access?");
 						if (!eobj.type.match(TTAny)) {
-							eobj = eobj.with(kind = TEHaxeRetype(eobj), type = tUntypedObject);
+							eobj = eobj.with(kind = TEHaxeRetype(eobj), type = TTAny);
 						}
 						e.with(kind = TEArrayAccess(a.with(eobj = eobj, eindex = eindex)));
 				}
