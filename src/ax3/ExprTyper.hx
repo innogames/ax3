@@ -447,8 +447,21 @@ class ExprTyper {
 				case ["hasOwnProperty", {type: TTDictionary(keyType, _)}]: TTFun([keyType], TTBoolean); // TODO: we should probably also support unqualified "hasOwnProperty" idents
 				case ["hasOwnProperty", _]: TTFun([TTString], TTBoolean);
 				case ["prototype", _]: tUntypedObject;
+
+				// these two really should be processed in a filter, but oh well
 				case ["NaN", {kind: TEBuiltin(t, "Number")}]:
 					return mk(TEBuiltin(new Token(fieldToken.pos, TkIdent, "NaN", t.leadTrivia, fieldToken.trailTrivia), "NaN"), TTNumber, expectedType);
+
+				case [_, {type: TTDictionary(tKey, tValue)}]:
+					return mk(TEArrayAccess({
+						syntax: {
+							openBracket: new Token(dot.pos, TkBracketOpen, "[", dot.leadTrivia, dot.trailTrivia),
+							closeBracket: new Token(dot.pos, TkBracketClose, "]", [], fieldToken.trailTrivia)
+						},
+						eobj: obj,
+						eindex: mk(TELiteral(TLString(new Token(fieldToken.pos, TkStringDouble, '"$fieldName"', fieldToken.leadTrivia, []))), TTString, tKey)
+					}), tValue, expectedType);
+
 				case [_, {kind: TEBuiltin(_, "Array")}]: getArrayStaticFieldType(fieldToken);
 				case [_, {kind: TEBuiltin(_, "Number")}]: getNumericStaticFieldType(fieldToken, TTNumber);
 				case [_, {kind: TEBuiltin(_, "int")}]: getNumericStaticFieldType(fieldToken, TTInt);
@@ -456,7 +469,8 @@ class ExprTyper {
 				case [_, {kind: TEBuiltin(_, "String")}]: getStringStaticFieldType(fieldToken);
 				case [_, {type: TTAny}]: TTAny; // untyped field access
 				case [_, {type: TTObject(valueType)}]: valueType;
-				case [_, {type: TTBuiltin | TTVoid | TTBoolean | TTClass | TTDictionary(_)}]: err('Attempting to get field on type ${obj.type.getName()}', fieldToken.pos); TTAny;
+
+				case [_, {type: TTBuiltin | TTVoid | TTBoolean | TTClass}]: err('Attempting to get field on type ${obj.type.getName()}', fieldToken.pos); TTAny;
 				case [_, {type: TTString}]: getStringInstanceFieldType(fieldToken);
 				case [_, {type: TTArray(t)}]: getArrayInstanceFieldType(fieldToken, t);
 				case [_, {type: TTVector(t)}]: getVectorInstanceFieldType(fieldToken, t);
