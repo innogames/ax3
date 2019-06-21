@@ -5,6 +5,7 @@ import haxe.Constraints.Function;
 
 private typedef RegExpImpl = #if js js.lib.RegExp #else flash.utils.RegExp #end;
 
+@:forward(lastIndex)
 abstract RegExp(RegExpImpl) {
 	public inline function new(pattern, options = "") {
 		this = new RegExpImpl(pattern, options);

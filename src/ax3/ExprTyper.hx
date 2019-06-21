@@ -569,6 +569,7 @@ class ExprTyper {
 		return switch field.text {
 			case "test": TTFun([TTString], TTBoolean);
 			case "exec": TTFun([TTString], tUntypedObject);
+			case "lastIndex": TTInt;
 			case other: err('Unknown RegExp instance field: $other', field.pos); TTAny;
 		}
 	}
