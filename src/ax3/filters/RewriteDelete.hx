@@ -55,7 +55,7 @@ class RewriteDelete extends AbstractFilter {
 				mk(TEBinop(eDeleteObj, OpAssign(new Token(0, TkEquals, "=", [], [])), mkNullExpr()), TTVoid, TTVoid);
 
 			case _:
-				throwError(exprPos(a.eindex), 'Unknown index type: ' + a.eindex.type.getName());
+				throwError(exprPos(a.eindex), 'Unknown `delete` expression: index type = ${a.eindex.type.getName()}, object type = ${a.eobj.type}');
 		}
 	}
 }
