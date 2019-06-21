@@ -425,7 +425,7 @@ class SWCLoader {
 			case NName(name, ns):
 				var ns = abc.get(abc.namespaces, ns);
 				switch (ns) {
-					case NPublic(ns) | NProtected(ns):
+					case NPublic(ns) | NProtected(ns) | NStaticProtected(ns):
 						var ns = abc.get(abc.strings, ns);
 						var name = abc.get(abc.strings, name);
 						return {ns: ns, name: name};
