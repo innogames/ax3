@@ -31,7 +31,8 @@ class RewriteDelete extends AbstractFilter {
 				var eRemoveField = mk(TEField({kind: TOExplicit(mkDot(), a.eobj), type: a.eobj.type}, "remove", mkIdent("remove")), TTFunction, TTFunction);
 				mkCall(eRemoveField, [a.eindex.with(expectedType = keyType)], TTBoolean);
 
-			case [TTObject(_), _] | [_, TTString]:
+			case [TTObject(_) | TTAny, _] | [_, TTString]:
+				// TODO: this should actually generate (expr : ASObject).___delete that handles delection of Dictionary keys too
 				// make sure the expected type is string so further filters add the cast
 				var eindex = if (a.eindex.type != TTString) a.eindex.with(expectedType = TTString) else a.eindex;
 				var eDeleteField = mkBuiltin("Reflect.deleteField", tDeleteField, deleteKeyword.leadTrivia);
