@@ -6,7 +6,11 @@ class RewriteAs extends AbstractFilter {
 		return switch e.kind {
 			case TEAs(eobj, keyword, typeRef):
 				switch typeRef.type {
-					case TTClass:
+					case TTClass | TTFunction:
+						e.with(kind = TEHaxeRetype(eobj));
+
+					case TTObject(tElem):
+						if (tElem != TTAny) throwError(exprPos(e), "assert"); // only TTObject(TTAny) can come from AS3 `as` cast
 						e.with(kind = TEHaxeRetype(eobj));
 
 					case TTInt | TTUint | TTNumber | TTString | TTBoolean: // omg
