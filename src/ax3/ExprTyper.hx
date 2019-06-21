@@ -546,6 +546,7 @@ class ExprTyper {
 	function typeXMLListFieldAccess(xml:TExpr, dot:Token, field:Token, expectedType:TType):TExpr {
 		var fieldType = switch field.text {
 			case "attribute": TTFun([], TTString);
+			case "length": TTFun([], TTInt);
 			case "toXMLString": TTFun([], TTString);
 			case _: null;
 		}
@@ -827,7 +828,7 @@ class ExprTyper {
 	function typeCallArgs(args:CallArgs, callableType:TType):TCallArgs {
 		var getExpectedType = switch (callableType) {
 			case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTString | TTArray(_) | TTObject(_) | TTXML | TTXMLList | TTRegExp | TTVector(_) | TTInst(_) | TTDictionary(_):
-				throw "assert";
+				throwErr("Trying to call an expression of type " + callableType.getName(), args.openParen.pos);
 			case TTClass:
 				throw "assert??";
 			case TTAny | TTFunction:
