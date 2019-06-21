@@ -716,6 +716,9 @@ class ExprTyper {
 			case {kind: TEBuiltin(syntax, "Number")}:
 				return mkCast(mkDotPath(syntax), TTNumber);
 
+			case {kind: TEBuiltin(syntax, "Object")}:
+				return mkCast(mkDotPath(syntax), TTObject(TTAny));
+
 			case {kind: TEDeclRef(path, _), type: TTStatic(cls)}: // ClassName(expr) cast
 				return mkCast(path, TTInst(cls));
 
