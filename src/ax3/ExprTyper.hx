@@ -639,6 +639,7 @@ class ExprTyper {
 			case "search": TTFun([TTAny], TTInt);
 			case "replace": TTFun([TTAny, tUntypedObject], TTString);
 			case "match": TTFun([TTAny], TTArray(TTString));
+			case "localeCompare": TTFun([TTString], TTInt);
 			case other: err('Unknown String instance field $other', field.pos); TTAny;
 		}
 	}

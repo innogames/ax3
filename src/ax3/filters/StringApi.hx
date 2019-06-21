@@ -1,6 +1,7 @@
 package ax3.filters;
 
 class StringApi extends AbstractFilter {
+	static final tCompareMethod = TTFun([TTAny, TTAny], TTInt);
 	static final tReplaceMethod = TTFun([TTString, TTString], TTString);
 	static final tSplitMethod = TTFun([TTString], TTArray(TTString));
 	static final tMatchMethod = TTFun([TTString], TTArray(TTString));
@@ -73,6 +74,20 @@ class StringApi extends AbstractFilter {
 						throwError(exprPos(e), "Unsupported String.search arguments");
 				}
 
+			case TECall({kind: TEField(fieldObject = {kind: TOExplicit(dot, eString = {type: TTString})}, "localeCompare", _)}, args):
+				eString = processExpr(eString);
+				args = mapCallArgs(processExpr, args);
+				switch args.args {
+					case [{expr: eOtherString = {type: TTString}}]:
+						var eCompareMethod = mkBuiltin("Reflect.compare", tCompareMethod, removeLeadingTrivia(eString));
+						e.with(kind = TECall(eCompareMethod, args.with(args = [
+							{expr: eString, comma: commaWithSpace}, {expr: eOtherString, comma: null}
+						])));
+
+					case _:
+						throwError(exprPos(e), "Unsupported String.localeCompare arguments");
+				}
+
 			case TECall({kind: TEField({kind: TOExplicit(_, eString = {type: TTString})}, "concat", _)}, args):
 				eString = processExpr(eString);
 				args = mapCallArgs(processExpr, args);
@@ -113,7 +128,7 @@ class StringApi extends AbstractFilter {
 			case TEField(fobj = {type: TTString}, "toLocaleUpperCase", fieldToken):
 				mapExpr(processExpr, e).with(kind = TEField(fobj, "toUpperCase", new Token(fieldToken.pos, TkIdent, "toUpperCase", fieldToken.leadTrivia, fieldToken.trailTrivia)));
 
-			case TEField({type: TTString}, name = "replace" | "match" | "split" | "concat" | "search", _):
+			case TEField({type: TTString}, name = "replace" | "match" | "split" | "concat" | "search" | "localeCompare", _):
 				throwError(exprPos(e), "closure on String." + name);
 
 			case _:
