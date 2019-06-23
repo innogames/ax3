@@ -26,6 +26,17 @@ where `config.json` is something like:
 }
 ```
 
+## Building
+
+The converter is written in Haxe, using latest Haxe 4 features, so you need Haxe 4 :)
+It also uses the `format` library which contains `SWF/ABC` readers, so before building, make sure to install it (`haxelib install format` or `lix install haxelib:format`).
+
+Then, to build the converter binary, just run `haxe build.hxml`.
+
+It uses the Java target (actually, even the new JVM bytecode target), because JVM has
+great GC and handles unoptimized functional code of this converter very well.
+Originally I used JS target, but node.js worked slower and eventually died on so many allocations. :)
+
 ## TODO
 
 Most of the `TODO`s are actually in the code, so look there too, but still:
