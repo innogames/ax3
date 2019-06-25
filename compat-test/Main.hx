@@ -3,6 +3,7 @@ class Main {
 		utest.UTest.run([
 			new TestASAny(),
 			new TestXML(),
+			new TestASCompat(),
 		]);
 	}
 }

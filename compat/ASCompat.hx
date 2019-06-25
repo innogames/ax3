@@ -128,6 +128,32 @@ class ASCompat {
 		js.Browser.window.clearTimeout(id);
 		#end
 	}
+
+	public static macro function processNull<T>(e:ExprOf<Null<T>>):ExprOf<T>;
+
+	public static inline function processNullInt(v:Null<Int>):Int {
+		#if flash
+		return v;
+		#else
+		return cast v | 0;
+		#end
+	}
+
+	public static inline function processNullFloat(v:Null<Float>):Float {
+		#if flash
+		return v;
+		#else
+		return js.Syntax.code("Number")(v);
+		#end
+	}
+
+	public static inline function processNullBool(v:Null<Bool>):Bool {
+		#if flash
+		return v;
+		#else
+		return !!v;
+		#end
+	}
 }
 
 class ASArray {

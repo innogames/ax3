@@ -89,7 +89,7 @@ class CoerceToBool extends AbstractFilter {
 	static function isNullable(e:TExpr):Bool {
 		// TODO: this should really be done properly using TTNull(t) instead of relying on specific expressions
 		return switch skipParens(e).kind {
-			case TEArrayAccess({eobj: {type: TTArray(_) | TTDictionary(_, _)}}): true;
+			case TEArrayAccess({eobj: {type: TTDictionary(_, _)}}): true;
 			case _: false;
 		}
 	}

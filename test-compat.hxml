@@ -1,7 +1,12 @@
+-D no-deprecation-warnings
 -cp compat
 -cp compat-test
 -lib utest
 -lib openfl
+-lib lime
+-D nocffi
+-D disable-cffi
+-lib hxnodejs
 -main Main
 -js test.js
 --remap flash:openfl
