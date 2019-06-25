@@ -42,6 +42,4 @@ Originally I used JS target, but node.js worked slower and eventually died on so
 Most of the `TODO`s are actually in the code, so look there too, but still:
 
  - implement class-wrapping for module-level vars/functions
- - handle `Null<T>` to `T` conversion in some cases (e.g. for `var x:int = dict[inexistant]`)
- - unify `RewriteForIn` and `RewriteForEach` because they are very similar and there's a lot of duplicate logic
  - patch some types loaded from SWC (e.g. `DisplayObject.filters` is `Array<BitmapFilter>`)

@@ -31,7 +31,6 @@ class Filters {
 			new RewriteAs(context),
 			new RewriteIs(context),
 			new RewriteCFor(context),
-			new RewriteForEach(context),
 			new RewriteForIn(context),
 			new RewriteHasOwnProperty(context),
 			new NumberToInt(context),
