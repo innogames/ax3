@@ -487,7 +487,7 @@ class GenHaxe extends PrinterBase {
 			case TEDeclRef(dotPath, c): printDotPath(dotPath);
 			case TECall(eobj, args): printExpr(eobj); printCallArgs(args);
 			case TEArrayDecl(d): printArrayDecl(d);
-			case TEVectorDecl(v): printVectorDecl(v);
+			case TEVectorDecl(v): throw "assert";
 			case TEReturn(keyword, e): printTextWithTrivia("return", keyword); if (e != null) printExpr(e);
 			case TEThrow(keyword, e): printTextWithTrivia("throw", keyword); printExpr(e);
 			case TEDelete(keyword, e): throw "assert";
@@ -709,28 +709,6 @@ class GenHaxe extends PrinterBase {
 		if (args != null) printCallArgs(args) else buf.add("()");
 	}
 
-	function printVectorDecl(d:TVectorDecl) {
-		if (d.elements.elements.length > 0) {
-			printTrivia(d.syntax.newKeyword.leadTrivia);
-			buf.add("flash.Vector.ofArray((");
-			var trailTrivia = d.elements.syntax.closeBracket.trailTrivia;
-			d.elements.syntax.closeBracket.trailTrivia = [];
-			printArrayDecl(d.elements);
-			buf.add(":Array<");
-			printTType(d.type);
-			buf.add(">))");
-			printTrivia(trailTrivia);
-		} else {
-			printTextWithTrivia("new", d.syntax.newKeyword);
-			if (d.syntax.newKeyword.trailTrivia.length == 0) buf.add(" ");
-			buf.add("flash.Vector<");
-			printTType(d.type);
-			buf.add(">");
-			printTextWithTrivia("(", d.elements.syntax.openBracket);
-			printTextWithTrivia(")", d.elements.syntax.closeBracket);
-		}
-	}
-
 	function printArrayDecl(d:TArrayDecl) {
 		printOpenBracket(d.syntax.openBracket);
 		for (e in d.elements) {
@@ -883,6 +861,8 @@ class GenHaxe extends PrinterBase {
 			case TELiteral(TLNull(_)) | TEArrayDecl(_) | TEObjectDecl(_):
 				return false;
 			case TELiteral(TLInt(_)) if (expectedType.match(TTNumber | TTUint)):
+				return false;
+			case TECall({kind: TEBuiltin(_, "flash.Vector.convert")}, _):
 				return false;
 			case _:
 				return Type.enumEq(expectedType, expr.type);

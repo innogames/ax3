@@ -150,37 +150,6 @@ class ArrayApi extends AbstractFilter {
 						e.with(kind = TECall(eCompatMethod, args.with(args = newArgs)));
 				}
 
-			case TECall({kind: TEVector(_, elemType)}, args):
-				switch args.args {
-					case [{expr: eOtherVector = {type: TTVector(actualElemType)}}]:
-						if (Type.enumEq(elemType, actualElemType)) {
-							reportError(exprPos(e), "Useless vector casting");
-							processLeadingToken(t -> t.leadTrivia = removeLeadingTrivia(e).concat(t.leadTrivia), eOtherVector);
-							processTrailingToken(t -> t.trailTrivia = t.trailTrivia.concat(removeTrailingTrivia(e)), eOtherVector);
-							eOtherVector.with(expectedType = e.expectedType);
-						} else {
-							var convertMethod = mkBuiltin("flash.Vector.convert", TTFunction, removeLeadingTrivia(e));
-							e.with(kind = TECall(convertMethod, args));
-						}
-
-					case [eArray = {expr: {type: TTArray(_) | TTAny}}]:
-						var convertMethod = mkBuiltin("flash.Vector.ofArray", TTFunction, removeLeadingTrivia(e));
-						var eArrayExpr = eArray.expr;
-
-						switch eArrayExpr.type {
-							case TTArray(arrayElemType) if (Type.enumEq(elemType, arrayElemType)):
-								// same type, nothing to do \o/
-							case _:
-								// add type cast
-								var t = TTArray(elemType); // TODO: support inserting `cast` in TEHaxeRetype
-								var eRetypedArray = eArray.with(expr = mk(TEHaxeRetype(eArrayExpr.with(expectedType = t)), t, t));
-								args = args.with(args = [eRetypedArray]);
-						}
-						e.with(kind = TECall(convertMethod, args));
-
-					case _:
-						throwError(exprPos(e), "Unsupported Vector<...> call");
-				}
 			case _:
 				e;
 		}

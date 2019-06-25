@@ -47,6 +47,7 @@ class Filters {
 			// new CheckExpectedTypes(context)
 			new DateApi(context),
 			new ArrayApi(context),
+			new RewriteVectorDecl(context),
 			new StringApi(context),
 			new NumberApi(context),
 			new FunctionApply(context),
