@@ -36,6 +36,7 @@ class Filters {
 			new RewriteHasOwnProperty(context),
 			new NumberToInt(context),
 			new BasicCasts(context),
+			new HandleBasicValueDictionaryLookups(context),
 			coerceToBool,
 			new RewriteNonBoolOr(context, coerceToBool),
 			new InvertNegatedEquality(context),
@@ -55,7 +56,6 @@ class Filters {
 			new VarInits(context),
 			new UintComparison(context),
 			new HandleProtectedOverrides(context),
-			new HandleBasicValueDictionaryLookups(context),
 			new CheckUntypedMethodCalls(context),
 		]) {
 			f.run(tree);
