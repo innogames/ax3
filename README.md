@@ -43,4 +43,3 @@ Most of the `TODO`s are actually in the code, so look there too, but still:
 
  - implement class-wrapping for module-level vars/functions
  - patch some types loaded from SWC (e.g. `DisplayObject.filters` is `Array<BitmapFilter>`)
- - process Vector declarations in a more smart way to avoid generation of array type-checks
