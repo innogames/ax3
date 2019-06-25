@@ -5,7 +5,7 @@ abstract ASAny(Dynamic)
 	to ASObject
 
 	// these are here because of https://github.com/HaxeFoundation/haxe/issues/8425
-	from haxe.Constraints.Function
+	from ASFunction
 	from ASObject
 	from compat.XML
 {
