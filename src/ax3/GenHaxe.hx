@@ -128,9 +128,13 @@ class GenHaxe extends PrinterBase {
 		printTextWithTrivia(i.name, i.syntax.name);
 		if (info.extend != null) {
 			printTextWithTrivia("extends", info.extend.keyword);
-			for (i in info.extend.interfaces) {
+			printDotPath(info.extend.interfaces[0].iface.syntax);
+			for (i in 1...info.extend.interfaces.length) {
+				var prevComma = info.extend.interfaces[i - 1].comma;
+				if (prevComma != null) printTextWithTrivia(" extends ", prevComma); // don't lose comments around comma, if there are any
+				else buf.add(" extends ");
+				var i = info.extend.interfaces[i];
 				printDotPath(i.iface.syntax);
-				if (i.comma != null) printComma(i.comma);
 			}
 		}
 		printOpenBrace(i.syntax.openBrace);
@@ -176,10 +180,9 @@ class GenHaxe extends PrinterBase {
 			printDotPath(info.implement.interfaces[0].iface.syntax);
 			for (i in 1...info.implement.interfaces.length) {
 				var prevComma = info.implement.interfaces[i - 1].comma;
-				if (prevComma != null) printTextWithTrivia("", prevComma); // don't lose comments around comma, if there are any
-
+				if (prevComma != null) printTextWithTrivia(" implements ", prevComma); // don't lose comments around comma, if there are any
+				else buf.add(" implements ");
 				var i = info.implement.interfaces[i];
-				buf.add(" implements ");
 				printDotPath(i.iface.syntax);
 			}
 		}
