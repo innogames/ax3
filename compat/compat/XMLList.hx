@@ -40,6 +40,18 @@ abstract XMLList(XMLListImpl) from XMLListImpl to XMLListImpl {
 		#end
 	}
 
+	@:op([]) inline function get(index:Int):XML {
+		return this[index];
+	}
+
+	public inline function length():Int {
+		#if flash
+		return this.length();
+		#else
+		return this.length;
+		#end
+	}
+
 	public inline function iterator() {
 		#if flash
 		return new std.NativeValueIterator<XML>(this);
