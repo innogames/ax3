@@ -308,6 +308,12 @@ class ExprTyper {
 				if (currentClass != null) {
 					var currentClass:TClassOrInterfaceDecl = currentClass; // TODO: this is here only to please the null-safety checker
 
+					if (ident == "hasOwnProperty") {
+						// unqualified `hasOwnProperty` access inside a class
+						var fieldObject:TFieldObject = {kind: TOImplicitThis(currentClass), type: TTInst(currentClass)};
+						return mk(TEField(fieldObject, ident, i), TTFun([TTString], TTBoolean), expectedType);
+					}
+
 					if (ident == currentClass.name) {
 						// class constructor is never resolved like that, so this is definitely a declaration reference
 						return mkDeclRef({first: i, rest: []}, {name: currentClass.name, kind: TDClassOrInterface(currentClass)}, expectedType);
@@ -444,7 +450,7 @@ class ExprTyper {
 			switch [fieldName, skipParens(obj)] {
 				case [_, {type: TTInt | TTUint | TTNumber}]: getNumericInstanceFieldType(fieldToken, obj.type);
 				case ["toString", _]: TTFun([], TTString);
-				case ["hasOwnProperty", {type: TTDictionary(keyType, _)}]: TTFun([keyType], TTBoolean); // TODO: we should probably also support unqualified "hasOwnProperty" idents
+				case ["hasOwnProperty", {type: TTDictionary(keyType, _)}]: TTFun([keyType], TTBoolean);
 				case ["hasOwnProperty", _]: TTFun([TTString], TTBoolean);
 				case ["prototype", _]: tUntypedObject;
 

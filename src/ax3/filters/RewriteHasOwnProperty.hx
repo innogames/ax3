@@ -41,6 +41,21 @@ class RewriteHasOwnProperty extends AbstractFilter {
 							case _:
 								throwError(exprPos(e), "Unsupported hasOwnProperty call");
 						}
+
+					case TOImplicitThis(cls):
+						reportError(exprPos(e), "hasOwnProperty on class instance detected");
+						var eThis = mk(TELiteral(TLThis(mkIdent("this", fieldToken.leadTrivia, []))), obj.type, obj.type);
+						fieldToken.leadTrivia = [];
+						args = mapCallArgs(processExpr, args);
+						e.with(kind = TECall(
+							eField.with(kind = TEField(
+								obj.with(kind = TOExplicit(mkDot(), eThis.with(kind = TEHaxeRetype(eThis), type = TTAny))),
+								"hasOwnProperty",
+								fieldToken
+							)),
+							args
+						));
+
 					case _:
 						throwError(exprPos(e), "Unsupported hasOwnProperty call");
 				}
