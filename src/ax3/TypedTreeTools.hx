@@ -664,7 +664,7 @@ class TypedTreeTools {
 
 	public static function determineCastKind(valueType:TType, asClass:TClassOrInterfaceDecl):CastKind {
 		return switch valueType {
-			case TTInst(valueClass = {kind: TClass(_)}):
+			case TTInst(valueClass):
 				if (valueClass == asClass)
 					CKSameClass
 				else if (isChildClass(valueClass, asClass))
@@ -673,52 +673,37 @@ class TypedTreeTools {
 					CKDowncast
 				else
 					CKUnknown;
-			case TTInst(valueClass = {kind: TInterface(_)}):
-				if (valueClass == asClass)
-					CKSameClass
-				else if (isChildInterface(valueClass, asClass))
-					CKUpcast
-				else if (isChildInterface(asClass, valueClass))
-					CKDowncast
-				else
-					CKUnknown;
 			case _:
 				CKUnknown;
 		}
 	}
-
 	static function isChildClass(cls:TClassOrInterfaceDecl, base:TClassOrInterfaceDecl):Bool {
-		while (true) {
+		function loop(cls:TClassOrInterfaceDecl):Bool {
 			if (cls == base) {
 				return true;
 			}
 			switch cls.kind {
-				case TInterface(_):
-					return false;
-				case TClass(classInfo):
-					if (classInfo.extend == null) {
-						return false;
-					} else {
-						cls = classInfo.extend.superClass;
+				case TClass(info):
+					if (info.implement != null) {
+						for (h in info.implement.interfaces) {
+							if (loop(h.iface.decl)) {
+								return true;
+							}
+						}
 					}
-			}
-		}
-		return false;
-	}
-
-	static function isChildInterface(cls:TClassOrInterfaceDecl, base:TClassOrInterfaceDecl):Bool {
-		function loop(cls:TClassOrInterfaceDecl) {
-			if (cls == base) {
-				return true;
-			}
-			switch cls.kind {
-				case TClass(_):
+					if (info.extend != null) {
+						if (loop(info.extend.superClass)) {
+							return true;
+						}
+					}
 					return false;
 
 				case TInterface(info):
-					if (info.extend != null) for (h in info.extend.interfaces) {
-						if (loop(h.iface.decl)) {
-							return true;
+					if (info.extend != null) {
+						for (h in info.extend.interfaces) {
+							if (loop(h.iface.decl)) {
+								return true;
+							}
 						}
 					}
 					return false;

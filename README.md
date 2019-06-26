@@ -44,3 +44,4 @@ Most of the `TODO`s are actually in the code, so look there too, but still:
  - implement class-wrapping for module-level vars/functions
  - patch some types loaded from SWC (e.g. `DisplayObject.filters` is `Array<BitmapFilter>`)
  - don't parse `*=` as a single token when parsing signatures (fix `a:*=b` parsing without spaces)
+ - add a filter to remove redundant parenthesis, because they can become redundant due to expression rewriting (e.g. stripping away `as` upcasts)
