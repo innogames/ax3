@@ -761,9 +761,13 @@ class ExprTyper {
 
 	function typeObjectDecl(openBrace:Token, fields:Separated<ObjectField>, closeBrace:Token, expectedType:TType):TExpr {
 		var fields = separatedToArray(fields, function(f, comma) {
+			var fieldName = switch f.nameKind {
+				case FNIdent | FNInteger: f.name.text;
+				case FNStringSingle | FNStringDouble: f.name.text.substring(1, f.name.text.length - 1);
+			}
 			return {
-				syntax: {name: f.name, colon: f.colon, comma: comma},
-				name: f.name.text,
+				syntax: {name: f.name, nameKind: f.nameKind, colon: f.colon, comma: comma},
+				name: fieldName,
 				expr: typeExpr(f.value, TTAny)
 			};
 		});

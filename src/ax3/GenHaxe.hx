@@ -877,7 +877,12 @@ class GenHaxe extends PrinterBase {
 	function printObjectDecl(o:TObjectDecl) {
 		printOpenBrace(o.syntax.openBrace);
 		for (f in o.fields) {
-			printTextWithTrivia(f.name, f.syntax.name); // TODO: quoted fields
+			var fieldText = switch f.syntax.nameKind {
+				case FNIdent: f.name;
+				case FNStringSingle: "'" + f.name + "'";
+				case FNStringDouble | FNInteger: '"' + f.name + '"';
+			};
+			printTextWithTrivia(fieldText, f.syntax.name);
 			printColon(f.syntax.colon);
 			printExpr(f.expr);
 			if (f.syntax.comma != null) printComma(f.syntax.comma);

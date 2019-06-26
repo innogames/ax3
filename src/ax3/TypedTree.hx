@@ -857,7 +857,7 @@ typedef TCatch = {
 }
 
 typedef TObjectField = {
-	var syntax:{name:Token, colon:Token, comma:Null<Token>};
+	var syntax:{name:Token, nameKind:ObjectFieldNameKind, colon:Token, comma:Null<Token>};
 	var name:String;
 	var expr:TExpr;
 }

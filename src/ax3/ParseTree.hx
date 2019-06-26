@@ -495,8 +495,16 @@ typedef ForIter = {
 
 typedef ObjectField = {
 	var name:Token;
+	var nameKind:ObjectFieldNameKind;
 	var colon:Token;
 	var value:Expr;
+}
+
+enum ObjectFieldNameKind {
+	FNIdent;
+	FNStringSingle;
+	FNStringDouble;
+	FNInteger;
 }
 
 enum SwitchCase {

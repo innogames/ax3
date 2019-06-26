@@ -621,15 +621,16 @@ class Parser {
 		switch token.kind {
 			case TkBraceClose:
 				return EBlock({openBrace: openBrace, exprs: [], closeBrace: scanner.consume()});
-			case TkIdent | TkStringSingle | TkStringDouble:
-				var stringOrIdent = scanner.consume();
+			case TkIdent | TkStringSingle | TkStringDouble | TkDecimalInteger:
+				var stringOrIdentOrInt = scanner.consume();
 				switch scanner.advance().kind {
 					case TkColon:
-						return parseObjectNext(openBrace, stringOrIdent, scanner.consume());
+						return parseObjectNext(openBrace, stringOrIdentOrInt, scanner.consume());
 					case _:
-						var firstExpr = switch stringOrIdent.kind {
-							case TkIdent: parseIdent(stringOrIdent, true);
-							case TkStringSingle | TkStringDouble: return parseExprNext(ELiteral(LString(stringOrIdent)), true);
+						var firstExpr = switch stringOrIdentOrInt.kind {
+							case TkIdent: parseIdent(stringOrIdentOrInt, true);
+							case TkStringSingle | TkStringDouble: return parseExprNext(ELiteral(LString(stringOrIdentOrInt)), true);
+							case TkDecimalInteger: return parseExprNext(ELiteral(LDecInt(stringOrIdentOrInt)), true);
 							case _: throw "assert";
 						}
 						var first = parseBlockExprNext(firstExpr);
@@ -649,20 +650,32 @@ class Parser {
 	}
 
 	function parseObjectNext(openBrace:Token, firstIdent:Token, firstColon:Token):Expr {
-		var first = {name: firstIdent, colon: firstColon, value: parseExpr(false)};
+		var first = makeObjectField(firstIdent, firstColon, parseExpr(false));
 		var fields = parseSeparatedNext(first, function() {
 			return switch scanner.advance().kind {
-				case TkIdent | TkStringSingle | TkStringDouble:
-					var name = scanner.consume();
-					var colon = expectKind(TkColon);
-					var expr = parseExpr(false);
-					{name: name, colon: colon, value: expr};
+				case TkIdent | TkStringSingle | TkStringDouble | TkDecimalInteger:
+					makeObjectField(scanner.consume(), expectKind(TkColon), parseExpr(false));
 				case _:
 					throw "Object keys must be identifiers or strings";
 			}
 		}, t -> t.kind == TkComma);
 		var closeBrace = expectKind(TkBraceClose);
 		return EObjectDecl(openBrace, fields, closeBrace);
+	}
+
+	static function makeObjectField(name:Token, colon:Token, expr:Expr):ObjectField {
+		return {
+			name: name,
+			nameKind: switch name.kind {
+				case TkIdent: FNIdent;
+				case TkStringSingle: FNStringSingle;
+				case TkStringDouble: FNStringDouble;
+				case TkDecimalInteger: FNInteger;
+				case _: throw "assert";
+			},
+			colon: colon,
+			value: expr
+		};
 	}
 
 	function parseArrayDecl(openBracket:Token):ArrayDecl {
