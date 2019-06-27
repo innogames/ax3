@@ -343,7 +343,7 @@ class GenHaxe extends PrinterBase {
 		switch vf.vars {
 			case [v]:
 				if (vf.isInline) buf.add("inline ");
-				printVarKind(vf.kind);
+				printVarKind(vf.kind, v.init == null /* `final` must be immediately initialized */);
 				printTextWithTrivia(v.name, v.syntax.name);
 				printTypeHint({type: v.type, syntax: v.syntax.type});
 				if (v.init != null) printVarInit(v.init);
@@ -855,15 +855,15 @@ class GenHaxe extends PrinterBase {
 		printCloseBracket(a.syntax.closeBracket);
 	}
 
-	function printVarKind(kind:VarDeclKind) {
+	function printVarKind(kind:VarDeclKind, forceVar:Bool) {
 		switch (kind) {
 			case VVar(t): printTextWithTrivia("var", t);
-			case VConst(t): printTextWithTrivia("final", t);
+			case VConst(t): printTextWithTrivia(if (forceVar) "var" else "final", t);
 		}
 	}
 
 	function printVars(kind:VarDeclKind, vars:Array<TVarDecl>) {
-		printVarKind(kind);
+		printVarKind(kind, false);
 		for (v in vars) {
 			printTextWithTrivia(v.v.name, v.syntax.name);
 
