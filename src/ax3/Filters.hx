@@ -34,7 +34,7 @@ class Filters {
 			new RewriteForIn(context),
 			new RewriteHasOwnProperty(context),
 			new NumberToInt(context),
-			new BasicCasts(context),
+			new RewriteCasts(context),
 			new HandleBasicValueDictionaryLookups(context),
 			coerceToBool,
 			new RewriteNonBoolOr(context, coerceToBool),

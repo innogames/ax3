@@ -71,23 +71,10 @@ class RewriteAs extends AbstractFilter {
 						};
 						var eType = mkDeclRef(path, {name: cls.name, kind: TDClassOrInterface(cls)}, null);
 
-						// TODO: apply the same logic to casts?
 						switch determineCastKind(eobj.type, cls) {
-							case CKSameClass:
+							case CKSameClass | CKUpcast:
 								processTrailingToken(t -> t.trailTrivia = t.trailTrivia.concat(removeTrailingTrivia(e)), eobj);
-								eobj;
-							case CKUpcast:
-								processTrailingToken(t -> t.trailTrivia = t.trailTrivia.concat(removeTrailingTrivia(e)), eobj);
-								// TODO: review this, maybe CKSameClass and CKUpcast must be merged and the `as` should be eliminated
-								switch e.expectedType {
-									case TTVoid:
-										eobj;
-									case TTInst(expectedClass) if (expectedClass == cls):
-										// TODO: also allow upcasting here (I really need a generic unification check function)
-										eobj;
-									case _:
-										e.with(kind = TEHaxeRetype(eobj));
-								}
+								eobj.with(expectedType = e.expectedType); // it's important to keep the expected type for further filters
 							case CKDowncast:
 								e.with(kind = makeStdDowncast(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e)));
 							case CKUnknown:
