@@ -59,7 +59,7 @@ class Main {
 			for (mod in pack) {
 				if (mod.isExtern) continue;
 				Utils.createDirectory(dir);
-				var gen = new ax3.GenHaxe();
+				var gen = new ax3.GenHaxe(ctx);
 				gen.writeModule(mod);
 				var out = gen.toString();
 				var path = dir + "/" + mod.name + ".hx";

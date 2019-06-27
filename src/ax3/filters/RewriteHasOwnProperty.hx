@@ -3,6 +3,17 @@ package ax3.filters;
 class RewriteHasOwnProperty extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
 		return switch e.kind {
+			case TEBinop(ekey, OpIn(_), edict = {type: TTDictionary(_)}):
+				ekey = processExpr(ekey);
+				edict = processExpr(edict);
+				processLeadingToken(t -> t.leadTrivia = removeLeadingTrivia(ekey).concat(t.leadTrivia), edict);
+				var eExistsMethod = mk(TEField({kind: TOExplicit(mkDot(), edict), type: edict.type}, "exists", mkIdent("exists")), TTFunction, TTFunction);
+				e.with(kind = TECall(eExistsMethod, {
+					openParen: mkOpenParen(),
+					args: [{expr: ekey, comma: null}],
+					closeParen: new Token(0, TkParenClose, ")", [], removeTrailingTrivia(edict))
+				}));
+
 			case TECall(eField = {kind: TEField(obj, "hasOwnProperty", fieldToken)}, args):
 				switch obj.kind {
 					case TOExplicit(dot, eobj):

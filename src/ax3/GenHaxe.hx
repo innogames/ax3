@@ -3,11 +3,24 @@ package ax3;
 import ax3.ParseTree;
 import ax3.TypedTree;
 import ax3.Token.Trivia;
+import ax3.TypedTreeTools.exprPos;
 using StringTools;
 
 @:nullSafety
 class GenHaxe extends PrinterBase {
 	@:nullSafety(Off) var currentModule:TModule;
+
+	final context:Context;
+
+	public function new(context) {
+		super();
+		this.context = context;
+	}
+
+	inline function throwError(pos:Int, msg:String):Dynamic {
+		context.reportError(currentModule.path, pos, msg);
+		throw msg; // TODO do it nicer
+	}
 
 	public function writeModule(m:TModule) {
 		currentModule = m;
@@ -516,7 +529,7 @@ class GenHaxe extends PrinterBase {
 			case TEWhile(w): printWhile(w);
 			case TEDoWhile(w): printDoWhile(w);
 			case TEHaxeFor(f): printFor(f);
-			case TEFor(_) | TEForIn(_) | TEForEach(_): throw "unprocessed `for` expression";
+			case TEFor(_) | TEForIn(_) | TEForEach(_): throwError(exprPos(e), "unprocessed `for` expression");
 			case TEBinop(a, OpComma(t), b): printCommaOperator(a, t, b);
 			case TEBinop(a, op, b): printBinop(a, op, b);
 			case TEPreUnop(op, e): printPreUnop(op, e);
@@ -525,8 +538,8 @@ class GenHaxe extends PrinterBase {
 			case TENew(keyword, obj, args): printNew(keyword, obj, args);
 			case TECondCompValue(v): printCondCompVar(v);
 			case TECondCompBlock(v, expr): printCondCompBlock(v, expr);
-			case TEAs(_): throw "unprocessed `as` expression";
-			case TEXmlChild(_) | TEXmlAttr(_) | TEXmlAttrExpr(_) | TEXmlDescend(_): throw 'unprocessed E4X';
+			case TEAs(_): throwError(exprPos(e), "unprocessed `as` expression");
+			case TEXmlChild(_) | TEXmlAttr(_) | TEXmlAttrExpr(_) | TEXmlDescend(_): throwError(exprPos(e), "unprocessed E4X");
 			case TEUseNamespace(ns): printUseNamespace(ns);
 			case TEHaxeIntIter(start, end):
 				printExpr(start);
@@ -707,7 +720,7 @@ class GenHaxe extends PrinterBase {
 		printTextWithTrivia("new", keyword);
 		switch newObject {
 			case TNType(t): printTypeRef(t);
-			case TNExpr(e): throw "unprocessed expr for `new`: " + e;
+			case TNExpr(e): throwError(exprPos(e), "unprocessed expr for `new`");
 		}
 		if (args != null) printCallArgs(args) else buf.add("()");
 	}
@@ -810,7 +823,7 @@ class GenHaxe extends PrinterBase {
 			case OpGte(t): printTextWithTrivia(">=", t);
 			case OpLt(t): printTextWithTrivia("<", t);
 			case OpLte(t): printTextWithTrivia("<=", t);
-			case OpIn(t): printTextWithTrivia("in", t);
+			case OpIn(t): throwError(t.pos, "unprocessed `in` operator");
 			case OpAnd(t): printTextWithTrivia("&&", t);
 			case OpOr(t): printTextWithTrivia("||", t);
 			case OpShl(t): printTextWithTrivia("<<", t);
@@ -820,7 +833,7 @@ class GenHaxe extends PrinterBase {
 			case OpBitOr(t): printTextWithTrivia("|", t);
 			case OpBitXor(t): printTextWithTrivia("^", t);
 			case OpComma(t): printTextWithTrivia(",", t);
-			case OpIs(t): throw "assert";
+			case OpIs(t): throwError(t.pos, "unprocessed `is` operator");
 		}
 		printExpr(b);
 	}
