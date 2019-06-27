@@ -129,6 +129,16 @@ class ASCompat {
 		#end
 	}
 
+	public static macro function setInterval(closure:ExprOf<haxe.Constraints.Function>, delay:ExprOf<Float>, arguments:Array<Expr>):ExprOf<UInt>;
+
+	public static inline function clearInterval(id:UInt):Void {
+		#if flash
+		untyped __global__["flash.utils.clearInterval"](id);
+		#else
+		js.Browser.window.clearInterval(id);
+		#end
+	}
+
 	public static macro function processNull<T>(e:ExprOf<Null<T>>):ExprOf<T>;
 
 	public static inline function processNullInt(v:Null<Int>):Int {

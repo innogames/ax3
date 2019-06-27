@@ -14,10 +14,8 @@ class UtilFunctions extends AbstractFilter {
 				mkBuiltin("flash.Lib.getTimer", tGetTimer, removeLeadingTrivia(e), removeTrailingTrivia(e));
 			case TEDeclRef(_, {kind: TDFunction({parentModule: {name: "describeType", parentPack: {name: "flash.utils"}}})}):
 				mkBuiltin("ASCompat.describeType", tDescribeType, removeLeadingTrivia(e), removeTrailingTrivia(e));
-			case TEDeclRef(_, {kind: TDFunction({parentModule: {name: "clearTimeout", parentPack: {name: "flash.utils"}}})}):
-				mkBuiltin("ASCompat.clearTimeout", TTFunction, removeLeadingTrivia(e), removeTrailingTrivia(e));
-			case TEDeclRef(_, {kind: TDFunction({parentModule: {name: "setTimeout", parentPack: {name: "flash.utils"}}})}):
-				mkBuiltin("ASCompat.setTimeout", TTFunction, removeLeadingTrivia(e), removeTrailingTrivia(e));
+			case TEDeclRef(_, {kind: TDFunction({parentModule: {name: methodName = "clearTimeout" | "setTimeout" | "clearInterval" | "setInterval", parentPack: {name: "flash.utils"}}})}):
+				mkBuiltin("ASCompat." + methodName, TTFunction, removeLeadingTrivia(e), removeTrailingTrivia(e));
 			case TEDeclRef(_, {kind: TDFunction({parentModule: {name: "navigateToURL", parentPack: {name: "flash.net"}}})}):
 				mkBuiltin("flash.Lib.getURL", tGetUrl, removeLeadingTrivia(e), removeTrailingTrivia(e));
 			// case TECall({kind: TEDeclRef(_, {kind: TDFunction({parentModule: {name: "getQualifiedClassName", parentPack: {name: "flash.utils"}}})})}, args):

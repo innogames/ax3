@@ -14,6 +14,16 @@ class ASCompat {
 		return macro @:pos(Context.currentPos()) $setTimeoutExpr($a{args});
 	}
 
+	static function setInterval(closure, delay, arguments:Array<Expr>) {
+		var args = [closure,delay].concat(arguments);
+		var setIntervalExpr =
+			if (Context.defined("flash"))
+				macro untyped __global__["flash.utils.setInterval"]
+			else
+				macro js.Browser.window.setInterval;
+		return macro @:pos(Context.currentPos()) $setIntervalExpr($a{args});
+	}
+
 	static function processNull(e:Expr):Expr {
 		var e = Context.typeExpr(e);
 		switch e.t {

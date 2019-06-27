@@ -61,6 +61,8 @@ class ExternModuleLevelImports extends AbstractFilter {
 		   | "flash.utils.describeType"
 		   | "flash.utils.setTimeout"
 		   | "flash.utils.clearTimeout"
+		   | "flash.utils.setInterval"
+		   | "flash.utils.clearInterval"
 		   | "flash.net.navigateToURL"
 		   : true;
 		case _: false;
