@@ -176,3 +176,9 @@ class ASVector {
 		return (cast a).sort(options);
 	}
 }
+
+class ASDate {
+	public static function toDateString(d:Date):String {
+		return DateTools.format(Date.fromTime(0), "%a %b %d %Y");
+	}
+}
