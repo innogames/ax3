@@ -43,6 +43,9 @@ class DateApi extends AbstractFilter {
 							closeParen: new Token(0, TkParenClose, ")", [], fieldToken.trailTrivia)
 						}));
 
+					case "valueOf":
+						e.with(kind = TEField(to, "getTime", new Token(fieldToken.pos, TkIdent, "getTime", fieldToken.leadTrivia, fieldToken.trailTrivia)));
+
 					case _:
 						e;
 				}
