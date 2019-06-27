@@ -277,6 +277,16 @@ class GenHaxe extends PrinterBase {
 
 		if (f.namespace != null) printTextWithTrivia("/*"+f.namespace.text+"*/", f.namespace);
 
+		// internal modifier is converted into a metadata, so it should be printed first
+		// TODO: maybe we should handle this in a filter instead of the generator?
+		for (m in f.modifiers) {
+			switch m {
+				case FMInternal(t):
+					printTextWithTrivia("@:allow(" + currentModule.parentPack.name + ")", t);
+				case _:
+			}
+		}
+
 		var isPublic = false;
 		for (m in f.modifiers) {
 			switch (m) {
@@ -288,7 +298,7 @@ class GenHaxe extends PrinterBase {
 					printTokenTrivia(t);
 				// case FMPrivate(t): printTextWithTrivia("private", t);
 				// case FMProtected(t): printTextWithTrivia("/*protected*/private", t);
-				case FMInternal(t): printTextWithTrivia("@:allow(" + currentModule.parentPack.name + ")", t);
+				case FMInternal(_): // handled above
 				case FMOverride(t): printTextWithTrivia("override", t);
 				case FMStatic(t): printTextWithTrivia("static", t);
 				case FMFinal(t): printTextWithTrivia("final", t);
