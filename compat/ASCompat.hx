@@ -188,7 +188,17 @@ class ASVector {
 }
 
 class ASDate {
-	public static function toDateString(d:Date):String {
+	public static inline function toDateString(d:Date):String {
 		return DateTools.format(Date.fromTime(0), "%a %b %d %Y");
 	}
+
+	#if (flash || js) // TODO: implement this for other platforms
+	public static inline function setHours(d:Date, hour:Int, ?minute:Int, ?second:Int, ?millisecond:Int):Float {
+		return (cast d).setHours(hour, minute, second, millisecond);
+	}
+
+	public static inline function getTimezoneOffset(d:Date):Float {
+		return (cast d).getTimezoneOffset();
+	}
+	#end
 }
