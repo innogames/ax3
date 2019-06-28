@@ -18,12 +18,6 @@ class RewriteIs extends AbstractFilter {
 						}));
 
 					case _:
-						if (b.kind.match(TEVector(_))) {
-							// TODO: figure out something "smart" for this, simiar to the pokemon catch in in `RewriteAs`,
-							// because we can't just do `Std.is(expr, Vector)` - that won't work on Flash (because the Vector types are different)
-							reportError(exprPos(e), "TODO: expr is Vector.<T> is not yet rewritten properly");
-						}
-
 						final stdIs = mkBuiltin("Std.is", tStdIs, removeLeadingTrivia(e));
 						e.with(kind = TECall(stdIs, {
 							openParen: mkOpenParen(),

@@ -502,7 +502,7 @@ class GenHaxe extends PrinterBase {
 			buf.add("(cast ");
 		}
 
-		switch (e.kind) {
+		switch e.kind {
 			case TEParens(openParen, e, closeParen): printOpenParen(openParen); printExpr(e); printCloseParen(closeParen);
 			case TECast(c): printCast(c);
 			case TELocalFunction(f): printLocalFunction(f);
@@ -525,14 +525,13 @@ class GenHaxe extends PrinterBase {
 			case TEBlock(block): printBlock(block);
 			case TETry(t): printTry(t);
 			case TEVector(syntax, type):
-				printTextWithTrivia("flash.Vector", syntax.name);
-				printTrivia(syntax.dot.leadTrivia);
-				printTrivia(syntax.dot.trailTrivia);
-				printTextWithTrivia("<", syntax.t.lt);
+				printTextWithTrivia("ASCompat.vectorClass((_:", syntax.name);
+				printTokenTrivia(syntax.dot);
+				printTokenTrivia(syntax.t.lt);
 				printTrivia(ParseTree.getSyntaxTypeLeadingTrivia(syntax.t.type));
 				printTType(type);
 				printTrivia(ParseTree.getSyntaxTypeTrailingTrivia(syntax.t.type));
-				printTextWithTrivia(">", syntax.t.gt);
+				printTextWithTrivia("))", syntax.t.gt);
 
 			case TETernary(t): printTernary(t);
 			case TEIf(i): printIf(i);

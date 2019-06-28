@@ -4,6 +4,16 @@ import haxe.macro.Expr;
 using haxe.macro.Tools;
 
 class ASCompat {
+	static function vectorClass(typecheck) {
+		trace(typecheck);
+		return switch typecheck.expr {
+			case EParenthesis({expr: ECheckType({expr: EConst(CIdent("_"))}, elementType)}):
+				macro @:pos(Context.currentPos()) (flash.Vector.typeReference() : Class<flash.Vector<$elementType>>);
+			case _:
+				throw new Error("The `vectorClass` function expects an `(_:ElementType)` expression", typecheck.pos);
+		};
+	}
+
 	static function setTimeout(closure, delay, arguments:Array<Expr>) {
 		var args = [closure,delay].concat(arguments);
 		var setTimeoutExpr =

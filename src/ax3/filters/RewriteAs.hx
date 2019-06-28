@@ -29,30 +29,13 @@ class RewriteAs extends AbstractFilter {
 							type: typeRef.type
 						}));
 
-					case TTVector(t):
-						// generate `try (<expr> : Vector<Type>) catch (pokemon:Any) null`
-						// beause that's the only way to mimic `expr as Vector<Type>` with Haxe
-
-						// TODO: ideally we should retype the whole try/catch, but it doesn't currently work,
-						// because of https://github.com/HaxeFoundation/haxe/issues/8257
-						mk(TETry({
-							keyword: mkIdent("try", removeLeadingTrivia(e), [whitespace]),
-							expr: eobj.with(kind = TEHaxeRetype(eobj), type = typeRef.type),
-							catches: [{
-								syntax: {
-									keyword: mkIdent("catch", [], [whitespace]),
-									openParen: mkOpenParen(),
-									name: mkIdent("pokemon"),
-									type: {
-										colon: new Token(0, TkColon, ":", [], []),
-										type: TAny(new Token(0, TkAsterisk, "*", [], []))
-									},
-									closeParen: addTrailingWhitespace(mkCloseParen())
-								},
-								v:{name: "pokemon", type: TTAny},
-								expr: mkNullExpr(typeRef.type, [], removeTrailingTrivia(e))
-							}]
-						}), typeRef.type, e.expectedType);
+					case TTVector(elemType):
+						var syntax = switch typeRef.syntax {
+							case TVector(s): s;
+							case _: throw "asset";
+						};
+						var eVectorType = mk(TEVector(syntax, elemType), TTBuiltin, TTBuiltin);
+						e.with(kind = makeAs(eobj, eVectorType, removeLeadingTrivia(e), removeTrailingTrivia(e)));
 
 					case TTArray(tElem):
 						if (tElem != TTAny) throwError(exprPos(e), "assert"); // only TTArray(TTAny) can come from AS3 `as` cast
