@@ -65,29 +65,11 @@ class ArrayApi extends AbstractFilter {
 						throwError(exprPos(e), "Unsupported Vector.sort arguments");
 				}
 
-
-			case TECall(eConcatMethod = {kind: TEField({kind: TOExplicit(dot, eArray = {type: TTArray(_)})}, "concat", fieldToken)}, args):
-				switch args.args {
-					case []: // concat with no args is just a copy
-						var fieldObj = {kind: TOExplicit(dot, eArray), type: eArray.type};
-						var eMethod = mk(TEField(fieldObj, "copy", mkIdent("copy", fieldToken.leadTrivia, fieldToken.trailTrivia)), eArray.type, eArray.type);
-						e.with(kind = TECall(eMethod, args));
-
-					case [{expr: {type: TTArray(_)}}]: // concat with another array - same behaviour as Haxe
-						e;
-
-					case [nonArray]: // concat with non-array is like a push, that creates a new array instead of mutating the old one
-						// Haxe doesn't have this, but we can rewrite it to `a.concat([b])`
-						var eArrayDecl = mk(TEArrayDecl({
-							syntax: {openBracket: mkOpenBracket(), closeBracket: mkCloseBracket()},
-							elements: [nonArray]
-						}), TTArray(nonArray.expr.type), eArray.type);
-						e.with(kind = TECall(eConcatMethod, args.with(args = [{expr: eArrayDecl, comma: null}])));
-
-					case _:
-						reportError(exprPos(e), "Unhandled Array.concat() call");
-						e;
-				}
+			// concat with no args
+			case TECall({kind: TEField({kind: TOExplicit(dot, eArray = {type: TTArray(_)})}, "concat", fieldToken)}, args = {args: []}):
+				var fieldObj = {kind: TOExplicit(dot, eArray), type: eArray.type};
+				var eMethod = mk(TEField(fieldObj, "copy", mkIdent("copy", fieldToken.leadTrivia, fieldToken.trailTrivia)), eArray.type, eArray.type);
+				e.with(kind = TECall(eMethod, args));
 
 			// join with no args
 			case TECall(eMethod = {kind: TEField({type: TTArray(_)}, "join", fieldToken)}, args = {args: []}):
