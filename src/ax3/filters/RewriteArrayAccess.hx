@@ -19,13 +19,20 @@ class RewriteArrayAccess extends AbstractFilter {
 						if (eindex.type == TTNumber) reportError(exprPos(e), "Array access using Number index");
 						e.with(kind = TEArrayAccess(a.with(eobj = eobj, eindex = eindex)));
 
-					case [TTArray(_) | TTVector(_), _]:
-						// reportError(exprPos(e), "Non-int array access for Array");
-
+					case [TTArray(_) | TTVector(_), TTString]:
+						reportError(exprPos(e), "String index used for array access on Array/Vector, assuming this is reflection");
 						e.with(kind = TEArrayAccess({
 							syntax: a.syntax,
 							eobj: eobj.with(kind = TEHaxeRetype(eobj), type = TTAny),
-							eindex: eindex.with(expectedType = TTString)
+							eindex: eindex
+						}));
+
+					case [TTArray(_) | TTVector(_), _]:
+						reportError(exprPos(e), "Non-integer index used for array access on Array/Vector, coercing to Int");
+						e.with(kind = TEArrayAccess({
+							syntax: a.syntax,
+							eobj: eobj,
+							eindex: eindex.with(expectedType = TTInt)
 						}));
 
 					case [TTDictionary(expectedKeyType, _), keyType]:
