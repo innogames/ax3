@@ -579,7 +579,7 @@ class GenHaxe extends PrinterBase {
 				"Std.is" | "Std.downcast" | "Std.int" | "Std.string" | "String"
 				| "flash.Vector.convert"| "flash.Vector.ofArray" | "flash.Lib.getTimer" | "flash.Lib.getURL"
 				| "Reflect.deleteField" | "Type.createInstance"| "Type.resolveClass" | "Type.getClassName" | "Type.getClass"
-				| "haxe.Json" | "Reflect.compare"
+				| "haxe.Json" | "Reflect.compare" | "Reflect.isFunction"
 				| "StringTools.replace" | "StringTools.hex" | "Reflect.callMethod":
 					name;
 			case "Number": "Float";
