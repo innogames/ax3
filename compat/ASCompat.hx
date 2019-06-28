@@ -182,9 +182,16 @@ class ASArray {
 
 
 class ASVector {
-	public static inline function sort<T>(a:flash.Vector<T>, options:Int):flash.Vector<T> {
+	public static inline function sort<T>(a:flash.Vector<T>, f:(T, T) -> Int):flash.Vector<T> {
+		a.sort(f);
+		return a;
+	}
+
+	#if flash // TODO: implement for other targets
+	public static inline function sortWithOptions<T>(a:flash.Vector<T>, options:Int):flash.Vector<T> {
 		return (cast a).sort(options);
 	}
+	#end
 }
 
 class ASDate {

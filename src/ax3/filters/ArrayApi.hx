@@ -30,21 +30,37 @@ class ArrayApi extends AbstractFilter {
 				}
 
 			// array.sort()
-			case TECall(obj = {kind: TEField({kind: TOExplicit(dot, {type: TTArray(_)})}, "sort", fieldToken)}, args = {args: []}):
+			case TECall(obj = {kind: TEField({kind: TOExplicit(_, {type: TTArray(_)})}, "sort", _)}, args = {args: []}):
 				e.with(kind = TECall(obj, args.with(args = [{expr: eReflectCompare, comma: null}])));
 
 			// Vector.sort
 			case TECall({kind: TEField({kind: TOExplicit(dot, eVector = {type: TTVector(_)})}, "sort", fieldToken)}, args):
 				switch args.args {
 					case [{expr: {type: TTFunction | TTFun(_)}}]:
-						e; // supported by Haxe
+						if (e.expectedType != TTVoid) {
+							// method used in a value place. AS3 API modifies the vector inplace, but still returns itself
+							// for Haxe we could generate `{ expr.sort(); expr; }`, but since `expr` can be a complex
+							// expression with possible side-effects, let's just keep it simple and call an ASCompat method
+							var eCompatVector = mkBuiltin("ASCompat.ASVector", TTBuiltin, removeLeadingTrivia(eVector));
+							e.with(kind = TECall(
+								mk(TEField({kind: TOExplicit(dot, eCompatVector), type: eCompatVector.type}, "sort", mkIdent("sort")), TTFunction, TTFunction),
+								args
+							));
+						} else {
+							// supported by Haxe directly
+							e;
+						}
+
 					case [eOptions = {expr: {type: TTInt | TTUint}}]:
 						var eCompatVector = mkBuiltin("ASCompat.ASVector", TTBuiltin, removeLeadingTrivia(eVector));
-						var fieldObj = {kind: TOExplicit(dot, eCompatVector), type: eCompatVector.type};
-						var eMethod = mk(TEField(fieldObj, "sort", fieldToken), tSortOn, tSortOn);
-						e.with(kind = TECall(eMethod, args.with(args = [
-							{expr: eVector, comma: commaWithSpace}, eOptions
-						])));
+						e.with(kind = TECall(
+							mk(TEField({kind: TOExplicit(dot, eCompatVector), type: eCompatVector.type}, "sortWithOptions", mkIdent("sortWithOptions")), TTFunction, TTFunction),
+							args.with(args = [
+								{expr: eVector, comma: commaWithSpace},
+								eOptions
+							])
+						));
+
 					case _:
 						throwError(exprPos(e), "Unsupported Vector.sort arguments");
 				}
