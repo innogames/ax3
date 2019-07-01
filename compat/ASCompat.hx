@@ -59,8 +59,12 @@ class ASCompat {
 		return flash.Lib.as(v, c);
 	}
 
-	public static inline function toFixed(n:Float):String {
-		return (cast n).toFixed();
+	public static inline function toFixed(n:Float, ?digits:Int):String {
+		return (cast n).toFixed(digits);
+	}
+
+	public static inline function toPrecision(n:Float, digits:Int):String {
+		return (cast n).toPrecision(digits);
 	}
 
 	// TODO: this is temporary

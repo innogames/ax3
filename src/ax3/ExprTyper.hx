@@ -668,6 +668,7 @@ class ExprTyper {
 		return switch field.text {
 			case "toString": TTFun([TTUint], TTString);
 			case "toFixed": TTFun([TTUint], TTString);
+			case "toPrecision": TTFun([TTUint], TTString);
 			case other: err('Unknown field $other on type ${type.getName()}', field.pos); TTAny;
 		}
 	}
