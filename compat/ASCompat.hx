@@ -119,8 +119,13 @@ class ASCompat {
 		return result;
 	}
 
-	#if flash
 	public static macro function vectorClass<T>(typecheck:Expr):ExprOf<Class<flash.Vector<T>>>;
+	public static macro function asVector<T>(value:Expr, typecheck:Expr):ExprOf<Null<flash.Vector<T>>>;
+	public static macro function isVector<T>(value:Expr, typecheck:Expr):ExprOf<Bool>;
+
+	#if !flash
+	@:noCompletion public static inline function _asVector<T>(value:Any):Null<flash.Vector<T>> return if (openfl.Vector.isVector(value)) value else null;
+	@:noCompletion public static inline function _isVector(value:Any):Bool return openfl.Vector.isVector(value);
 	#end
 
 	public static macro function setTimeout(closure:ExprOf<haxe.Constraints.Function>, delay:ExprOf<Float>, arguments:Array<Expr>):ExprOf<UInt>;

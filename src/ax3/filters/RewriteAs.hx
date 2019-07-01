@@ -30,12 +30,15 @@ class RewriteAs extends AbstractFilter {
 						}));
 
 					case TTVector(elemType):
-						var syntax = switch typeRef.syntax {
-							case TVector(s): s;
-							case _: throw "asset";
-						};
-						var eVectorType = mk(TEVector(syntax, elemType), TTBuiltin, TTBuiltin);
-						e.with(kind = makeAs(eobj, eVectorType, removeLeadingTrivia(e), removeTrailingTrivia(e)));
+						var eAsVectorMethod = mkBuiltin("ASCompat.asVector", TTFunction, removeLeadingTrivia(e));
+						e.with(kind = TECall(eAsVectorMethod, {
+							openParen: mkOpenParen(),
+							args: [
+								{expr: eobj, comma: commaWithSpace},
+								{expr: mkVectorTypeCheckMacroArg(elemType), comma: null}
+							],
+							closeParen: mkCloseParen(removeTrailingTrivia(e))
+						}));
 
 					case TTArray(tElem):
 						if (tElem != TTAny) throwError(exprPos(e), "assert"); // only TTArray(TTAny) can come from AS3 `as` cast
@@ -70,6 +73,12 @@ class RewriteAs extends AbstractFilter {
 			case _:
 				e;
 		}
+	}
+
+	static final eUnderscore = mkBuiltin("_", TTBuiltin);
+
+	public static function mkVectorTypeCheckMacroArg(elemType:TType):TExpr {
+		return mk(TEHaxeRetype(eUnderscore), elemType, elemType);
 	}
 
 	static function makeAs(eObj:TExpr, eType:TExpr, leadTrivia, trailTrivia):TExprKind {

@@ -17,6 +17,17 @@ class RewriteIs extends AbstractFilter {
 							closeParen: mkCloseParen(removeTrailingTrivia(e)),
 						}));
 
+					case TEVector(_, elemType):
+						var eIsVectorMethod = mkBuiltin("ASCompat.isVector", TTFunction, removeLeadingTrivia(e));
+						e.with(kind = TECall(eIsVectorMethod, {
+							openParen: mkOpenParen(),
+							args: [
+								{expr: a, comma: commaWithSpace},
+								{expr: RewriteAs.mkVectorTypeCheckMacroArg(elemType), comma: null}
+							],
+							closeParen: mkCloseParen(removeTrailingTrivia(e))
+						}));
+
 					case _:
 						final stdIs = mkBuiltin("Std.is", tStdIs, removeLeadingTrivia(e));
 						e.with(kind = TECall(stdIs, {

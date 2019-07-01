@@ -4,13 +4,48 @@ import haxe.macro.Expr;
 using haxe.macro.Tools;
 
 class ASCompat {
-	static function vectorClass(typecheck:Expr) { // somehow this :Expr typehint is required, otherwise this function receives `null`, will have to reduce this one
-		return switch typecheck.expr {
+	static function extractVectorElemType(typecheck:Expr):ComplexType {
+		switch typecheck.expr {
 			case EParenthesis({expr: ECheckType({expr: EConst(CIdent("_"))}, elementType)}):
-				macro @:pos(Context.currentPos()) (flash.Vector.typeReference() : Class<flash.Vector<$elementType>>);
+				return elementType;
 			case _:
-				throw new Error("The `vectorClass` function expects an `(_:ElementType)` expression", typecheck.pos);
-		};
+				throw new Error("This argument must be an `(_:ElementType)` expression", typecheck.pos);
+		}
+	}
+
+	static function makeVectorTypeReference(elementType:ComplexType, pos:Position):Expr {
+		return macro @:pos(pos) (flash.Vector.typeReference() : Class<flash.Vector<$elementType>>);
+	}
+
+	static function vectorClass(typecheck:Expr) { // somehow this :Expr typehint is required, otherwise this function receives `null`, will have to reduce this one
+		var elementType = extractVectorElemType(typecheck);
+		if (Context.defined("flash")) {
+			return makeVectorTypeReference(elementType, Context.currentPos());
+		} else {
+			Context.warning("Getting a value of a specific Class<Vector<T>> is only supported on Flash and will be `null` on other targets", Context.currentPos());
+			return macro null;
+		}
+	}
+
+	static function asVector(value:Expr, typecheck:Expr) {
+		var elementType = extractVectorElemType(typecheck);
+		var ctReturn = macro : Null<flash.Vector<$elementType>>;
+		if (Context.defined("flash")) {
+			var eVectorClass = makeVectorTypeReference(elementType, typecheck.pos);
+			return macro @:pos(Context.currentPos()) (flash.Lib.as($value, $eVectorClass) : $ctReturn);
+		} else {
+			return macro @:pos(Context.currentPos()) (ASCompat._asVector($value) : $ctReturn);
+		}
+
+	}
+
+	static function isVector(value:Expr, typecheck:Expr) {
+		if (Context.defined("flash")) {
+			var eVectorClass = makeVectorTypeReference(extractVectorElemType(typecheck), typecheck.pos);
+			return macro @:pos(Context.currentPos()) Std.is($value, $eVectorClass);
+		} else {
+			return macro @:pos(Context.currentPos()) ASCompat._isVector($value);
+		}
 	}
 
 	static function setTimeout(closure, delay, arguments:Array<Expr>) {
