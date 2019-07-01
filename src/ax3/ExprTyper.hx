@@ -649,12 +649,12 @@ class ExprTyper {
 	function getStringInstanceFieldType(field:Token):TType {
 		return switch field.text {
 			case "length": TTInt;
-			case "substr" | "substring" | "slice": TTFun([TTNumber, TTNumber], TTString);
+			case "substr" | "substring" | "slice": TTFun([TTInt, TTInt], TTString);
 			case "toLowerCase" | "toUpperCase" | "toLocaleLowerCase" | "toLocaleUpperCase": TTFun([], TTString);
-			case "indexOf" | "lastIndexOf": TTFun([TTString, TTNumber], TTInt);
-			case "split": TTFun([TTAny, TTNumber], TTArray(TTString));
-			case "charAt": TTFun([TTNumber], TTString);
-			case "charCodeAt": TTFun([TTNumber], TTNumber);
+			case "indexOf" | "lastIndexOf": TTFun([TTString, TTInt], TTInt);
+			case "split": TTFun([TTAny, TTInt], TTArray(TTString));
+			case "charAt": TTFun([TTInt], TTString);
+			case "charCodeAt": TTFun([TTInt], TTInt);
 			case "concat": TTFun([], TTString, TRestSwc);
 			case "search": TTFun([TTAny], TTInt);
 			case "replace": TTFun([TTAny, tUntypedObject], TTString);
