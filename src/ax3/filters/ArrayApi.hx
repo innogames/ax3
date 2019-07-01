@@ -44,7 +44,7 @@ class ArrayApi extends AbstractFilter {
 							var eCompatVector = mkBuiltin("ASCompat.ASVector", TTBuiltin, removeLeadingTrivia(eVector));
 							e.with(kind = TECall(
 								mk(TEField({kind: TOExplicit(dot, eCompatVector), type: eCompatVector.type}, "sort", mkIdent("sort")), TTFunction, TTFunction),
-								args
+								args.with(args = [{expr: eVector, comma: commaWithSpace}, args.args[0]])
 							));
 						} else {
 							// supported by Haxe directly
@@ -78,7 +78,7 @@ class ArrayApi extends AbstractFilter {
 				])));
 
 			// push with multiple arguments
-			case TECall({kind: TEField({kind: TOExplicit(dot, eArray = {type: TTArray(_)})}, "push", fieldToken)}, args) if (args.args.length > 1):
+			case TECall({kind: TEField({kind: TOExplicit(dot, eArray = {type: TTArray(_) | TTVector(_)})}, "push", fieldToken)}, args) if (args.args.length > 1):
 				var eCompatArray = mkBuiltin("ASCompat.ASArray", TTBuiltin, removeLeadingTrivia(eArray));
 				var fieldObj = {kind: TOExplicit(dot, eCompatArray), type: eCompatArray.type};
 				var eMethod = mk(TEField(fieldObj, "pushMultiple", fieldToken), TTFunction, TTFunction);
