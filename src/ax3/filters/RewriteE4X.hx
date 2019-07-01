@@ -8,6 +8,7 @@ class RewriteE4X extends AbstractFilter {
 		return switch e.kind {
 			case TEXmlChild(x):
 				var eobj = processExpr(x.eobj);
+				assertIsXML(eobj);
 				var fieldObject = {
 					kind: TOExplicit(x.syntax.dot, eobj),
 					type: eobj.type
@@ -25,6 +26,7 @@ class RewriteE4X extends AbstractFilter {
 			case TEBinop({kind: TEXmlAttr(x)}, OpAssign(_), eValue):
 				eValue = processExpr(eValue);
 				var eobj = processExpr(x.eobj);
+				assertIsXML(eobj);
 
 				var fieldObject = {
 					kind: TOExplicit(new Token(x.syntax.at.pos, TkDot, ".", x.syntax.at.leadTrivia, x.syntax.dot.trailTrivia), eobj),
@@ -48,12 +50,15 @@ class RewriteE4X extends AbstractFilter {
 				);
 
 			case TEXmlAttr(x):
-				mkAttributeAccess(processExpr(x.eobj), x.name, x.syntax.at, x.syntax.dot, x.syntax.name, e.expectedType);
+				var eobj = processExpr(x.eobj);
+				assertIsXML(eobj);
+				mkAttributeAccess(eobj, x.name, x.syntax.at, x.syntax.dot, x.syntax.name, e.expectedType);
 
 			case TEBinop({kind: TEXmlAttrExpr(x)}, OpAssign(_), eValue):
 				eValue = processExpr(eValue);
 
 				var eobj = processExpr(x.eobj);
+				assertIsXML(eobj);
 				var eattr = processExpr(x.eattr);
 
 				var fieldObject = {
@@ -76,10 +81,13 @@ class RewriteE4X extends AbstractFilter {
 				);
 
 			case TEXmlAttrExpr(x):
-				mkAttributeExprAccess(processExpr(x.eobj), processExpr(x.eattr), x.syntax.at, x.syntax.dot, x.syntax.openBracket, x.syntax.closeBracket, e.expectedType);
+				var eobj = processExpr(x.eobj);
+				assertIsXML(eobj);
+				mkAttributeExprAccess(eobj, processExpr(x.eattr), x.syntax.at, x.syntax.dot, x.syntax.openBracket, x.syntax.closeBracket, e.expectedType);
 
 			case TEXmlDescend(x):
 				var eobj = processExpr(x.eobj);
+				assertIsXML(eobj);
 				var fieldObject = {
 					kind: TOExplicit(new Token(x.syntax.dotDot.pos, TkDot, ".", x.syntax.dotDot.leadTrivia, x.syntax.dotDot.trailTrivia), eobj),
 					type: eobj.type
@@ -103,6 +111,12 @@ class RewriteE4X extends AbstractFilter {
 
 			case _:
 				mapExpr(processExpr, e);
+		}
+	}
+
+	function assertIsXML(e:TExpr) {
+		if (!e.type.match(TTXML | TTXMLList)) {
+			throwError(exprPos(e), "E4X syntax is used on non-XML expression");
 		}
 	}
 
