@@ -4,8 +4,7 @@ import haxe.macro.Expr;
 using haxe.macro.Tools;
 
 class ASCompat {
-	static function vectorClass(typecheck) {
-		trace(typecheck);
+	static function vectorClass(typecheck:Expr) { // somehow this :Expr typehint is required, otherwise this function receives `null`, will have to reduce this one
 		return switch typecheck.expr {
 			case EParenthesis({expr: ECheckType({expr: EConst(CIdent("_"))}, elementType)}):
 				macro @:pos(Context.currentPos()) (flash.Vector.typeReference() : Class<flash.Vector<$elementType>>);

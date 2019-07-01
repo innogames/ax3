@@ -119,7 +119,9 @@ class ASCompat {
 		return result;
 	}
 
+	#if flash
 	public static macro function vectorClass<T>(typecheck:Expr):ExprOf<Class<flash.Vector<T>>>;
+	#end
 
 	public static macro function setTimeout(closure:ExprOf<haxe.Constraints.Function>, delay:ExprOf<Float>, arguments:Array<Expr>):ExprOf<UInt>;
 
