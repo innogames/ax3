@@ -2,6 +2,7 @@
            // I'm not sure how much can we do about it, maybe wrap the TTAny arguments and the return value in ASAny on the converter level?
 abstract ASObject(flash.utils.Object)
 	from flash.utils.Object
+	from Dynamic<ASObject> // this will make ASObject an expected type for nested object values, so we can have mixed-arrays inside object decls
 	to flash.utils.Object
 
 	// from haxe.Constraints.Function
