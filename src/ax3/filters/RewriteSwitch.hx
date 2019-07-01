@@ -58,12 +58,27 @@ class RewriteSwitch extends AbstractFilter {
 						}
 
 						var isLast = (i == s.cases.length - 1) && s.def == null;
+
 						var breakTrivia = processCaseBody(c.body, isLast);
+
+						var colonTrivia = removeTrailingTrivia(values[values.length - 1]);
+						if (breakTrivia.length > 0) {
+							if (c.body.length == 0) {
+								colonTrivia = colonTrivia.concat(breakTrivia);
+							} else {
+								var lastBlockExpr = c.body[c.body.length - 1];
+								if (lastBlockExpr.semicolon != null) {
+									lastBlockExpr.semicolon.trailTrivia = lastBlockExpr.semicolon.trailTrivia.concat(breakTrivia);
+								} else {
+									processTrailingToken(t -> t.trailTrivia = t.trailTrivia.concat(breakTrivia), lastBlockExpr.expr);
+								}
+							}
+						}
 
 						newCases.push({
 							syntax: {
 								keyword: new Token(0, TkIdent, "case", removeLeadingTrivia(values[0]), [whitespace]),
-								colon: new Token(0, TkColon, ":", [], removeTrailingTrivia(values[values.length - 1]).concat(breakTrivia))
+								colon: new Token(0, TkColon, ":", [], colonTrivia)
 							},
 							values: values,
 							body: c.body // mutated inplace
