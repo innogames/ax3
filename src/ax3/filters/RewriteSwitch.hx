@@ -8,23 +8,32 @@ class RewriteSwitch extends AbstractFilter {
 				var newCases:Array<TSwitchCase> = [];
 				var valueAcc = [];
 
-				function processCaseBody(block:Array<TBlockExpr>, allowNonTerminalLast:Bool) {
+				function processCaseBody(block:Array<TBlockExpr>, allowNonTerminalLast:Bool):Array<Trivia> {
 					switch block {
-						case [{expr: {kind: TEBlock(b)}}]: block = b.exprs; // for cases with "braced" body: `case value: {...}`
+						case [{expr: {kind: TEBlock(b)}}]:  block = b.exprs; // for cases with "braced" body: `case value: {...}`
 						case _:
 					}
 
-					if (block.length == 0) return; // empty block - nothing to do here
+					if (block.length == 0) return []; // empty block - nothing to do here
 
 					var lastExpr = block[block.length - 1].expr;
 					switch lastExpr.kind {
-						case TEBreak(_): block.pop(); // TODO: move trivia to the previous one
+						case TEBreak(breakToken):
+							var blockExpr = block.pop();
+							var trivia = breakToken.leadTrivia.concat(breakToken.trailTrivia);
+							if (blockExpr.semicolon != null) {
+								trivia = trivia.concat(blockExpr.semicolon.leadTrivia).concat(blockExpr.semicolon.trailTrivia);
+							}
+							return trivia;
+
 						case TEReturn(_) | TEContinue(_) | TEThrow(_): // allowed terminators
+							return [];
+
 						case _:
 							if (!allowNonTerminalLast) {
-								reportError(exprPos(lastExpr), "Non-terminal expression inside a switch case, possible fall-through?");
-								throw "assert";
+								throwError(exprPos(lastExpr), "Non-terminal expression inside a switch case, possible fall-through?");
 							}
+							return [];
 					}
 				}
 
@@ -49,12 +58,12 @@ class RewriteSwitch extends AbstractFilter {
 						}
 
 						var isLast = (i == s.cases.length - 1) && s.def == null;
-						processCaseBody(c.body, isLast);
+						var breakTrivia = processCaseBody(c.body, isLast);
 
 						newCases.push({
 							syntax: {
 								keyword: new Token(0, TkIdent, "case", removeLeadingTrivia(values[0]), [whitespace]),
-								colon: new Token(0, TkColon, ":", [], removeTrailingTrivia(values[values.length - 1]))
+								colon: new Token(0, TkColon, ":", [], removeTrailingTrivia(values[values.length - 1]).concat(breakTrivia))
 							},
 							values: values,
 							body: c.body // mutated inplace
