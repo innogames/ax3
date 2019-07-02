@@ -11,6 +11,10 @@ abstract RegExp(RegExpImpl) {
 		this = new RegExpImpl(pattern, options);
 	}
 
+	public inline function exec(s:String) /*infer the type from `return`*/ {
+		return this.exec(s);
+	}
+
 	public inline function test(s:String):Bool {
 		return this.test(s);
 	}
