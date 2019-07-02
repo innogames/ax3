@@ -20,14 +20,28 @@ class DateApi extends AbstractFilter {
 						var eNowField = mk(TEField({kind: TOExplicit(mkDot(), eDate), type: tDate}, "now", mkIdent("now")), TTFunction, TTFunction);
 						e.with(kind = TECall(eNowField, args));
 
-					case {args: [_]}: // single-arg - rewrite to Date.fromTime(arg)
-						// TODO: apparently this can also be `Date` (should just clone it?)
+					case {args: [arg]}: // single-arg - rewrite to Date.fromTime(arg)
 						var tDate = TTStatic(dateCls);
 						var eDate = mk(TEDeclRef(switch ref.syntax { case TPath(p): p; case _: throw "assert";}, {name: "Date", kind: TDClassOrInterface(dateCls)}), tDate, tDate);
 
 						processLeadingToken(t -> t.leadTrivia = t.leadTrivia.concat(keyword.leadTrivia), eDate);
-						var eNowField = mk(TEField({kind: TOExplicit(mkDot(), eDate), type: tDate}, "fromTime", mkIdent("fromTime")), TTFunction, TTFunction);
-						e.with(kind = TECall(eNowField, args));
+						var efromTimeMethod = mk(TEField({kind: TOExplicit(mkDot(), eDate), type: tDate}, "fromTime", mkIdent("fromTime")), TTFunction, TTFunction);
+
+						switch arg.expr.type {
+							case TTInst(cls) if (cls == dateCls):
+								// rewrite `new Date(otherDate)` to `Date.fromTime(otherDate.getTime())`
+								var eGetTimeMethod = mk(TEField({kind: TOExplicit(mkDot(), arg.expr), type: arg.expr.type}, "getTime", mkIdent("getTime")), TTFunction, TTFunction);
+								arg.expr = mk(TECall(eGetTimeMethod, {openParen: mkOpenParen(), args: [], closeParen: mkCloseParen()}), TTNumber, TTNumber);
+
+							case TTInt | TTUint | TTNumber:
+								// exactly what we want
+
+							case other:
+								// other types can break stuff, report, but continue
+								reportError(exprPos(arg.expr), "Unknown parameter type for the Date constructor: " + other);
+						}
+
+						e.with(kind = TECall(efromTimeMethod, args));
 
 					case _:
 						e;
