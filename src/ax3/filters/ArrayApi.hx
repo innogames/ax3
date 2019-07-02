@@ -78,6 +78,7 @@ class ArrayApi extends AbstractFilter {
 				])));
 
 			// push with multiple arguments
+			// TODO: same for unshift
 			case TECall({kind: TEField({kind: TOExplicit(dot, eArray = {type: TTArray(_) | TTVector(_)})}, "push", fieldToken)}, args) if (args.args.length > 1):
 				var eCompatArray = mkBuiltin("ASCompat.ASArray", TTBuiltin, removeLeadingTrivia(eArray));
 				var fieldObj = {kind: TOExplicit(dot, eCompatArray), type: eCompatArray.type};
