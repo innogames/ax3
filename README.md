@@ -46,5 +46,5 @@ Most of the `TODO`s are actually in the code, so look there too, but still:
  - don't parse `*=` as a single token when parsing signatures (fix `a:*=b` parsing without spaces)
  - add a filter to remove redundant parenthesis, because they can become redundant due to expression rewriting (e.g. stripping away `as` upcasts)
  - rewrite `arr[arr.length] = value` to `arr.push(value)`
- - consider class members without explicit visibility `internal` and add according `@:allow` metadata
  - generate "type patch" files for loaded SWCs, replacing `Object` with `ASObject` and `*` with `ASAny`
+ - remove `:Void` type hints for class methods (not sure about that, but it looks clean)

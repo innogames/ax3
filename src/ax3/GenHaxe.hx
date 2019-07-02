@@ -332,6 +332,7 @@ class GenHaxe extends PrinterBase {
 				if (vf.isInline) buf.add("inline ");
 				printVarKind(vf.kind, v.init == null /* `final` must be immediately initialized */);
 				printTextWithTrivia(v.name, v.syntax.name);
+				// TODO: skip type hints when init is there, using the same logic as for locals
 				printTypeHint({type: v.type, syntax: v.syntax.type});
 				if (v.init != null) printVarInit(v.init);
 				if (v.comma != null) throw "assert";
