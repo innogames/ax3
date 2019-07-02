@@ -208,6 +208,17 @@ class ASVector {
 }
 
 class ASVectorTools {
+	public static function filter<T>(v:flash.Vector<T>, callback:(item:T, index:Int, vector:flash.Vector<T>)->Bool):flash.Vector<T> {
+		var result = new flash.Vector<T>();
+		for (i in 0...v.length) {
+			var item = v[i];
+			if (callback(item, i, v)) {
+				result.push(item);
+			}
+		}
+		return result;
+	}
+
 	public static function every<T>(v:flash.Vector<T>, callback:(item:T, index:Int, vector:flash.Vector<T>)->Bool):Bool {
 		for (i in 0...v.length) {
 			if (!callback(v[i], i, v)) {
@@ -215,6 +226,15 @@ class ASVectorTools {
 			}
 		}
 		return true;
+	}
+
+	public static function some<T>(v:flash.Vector<T>, callback:(item:T, index:Int, vector:flash.Vector<T>)->Bool):Bool {
+		for (i in 0...v.length) {
+			if (callback(v[i], i, v)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
 
@@ -230,6 +250,14 @@ class ASDate {
 
 	public static inline function setHours(d:Date, hour:Int, ?minute:Int, ?second:Int, ?millisecond:Int):Float {
 		return (cast d).setHours(hour, minute, second, millisecond);
+	}
+
+	public static inline function setMinutes(d:Date, minute:Float, ?second:Float, ?millisecond:Float):Float {
+		return (cast d).setMinutes(minute, second, millisecond);
+	}
+
+	public static inline function setSeconds(d:Date, second:Float, ?millisecond:Float):Float {
+		return (cast d).setSeconds(second, millisecond);
 	}
 
 	public static inline function getTimezoneOffset(d:Date):Float {
