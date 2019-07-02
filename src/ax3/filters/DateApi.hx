@@ -21,6 +21,7 @@ class DateApi extends AbstractFilter {
 						e.with(kind = TECall(eNowField, args));
 
 					case {args: [_]}: // single-arg - rewrite to Date.fromTime(arg)
+						// TODO: apparently this can also be `Date` (should just clone it?)
 						var tDate = TTStatic(dateCls);
 						var eDate = mk(TEDeclRef(switch ref.syntax { case TPath(p): p; case _: throw "assert";}, {name: "Date", kind: TDClassOrInterface(dateCls)}), tDate, tDate);
 
