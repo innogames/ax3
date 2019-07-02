@@ -76,6 +76,7 @@ class HaxeProperties extends AbstractFilter {
 	}
 
 	function getMods(f:TClassField):Modifiers {
+		// TODO: properly migrate @:allow metadata from the accessor to the property
 		var isPublic = false, isStatic = false, isOverride = false;
 		for (m in f.modifiers) {
 			switch m {
@@ -86,7 +87,7 @@ class HaxeProperties extends AbstractFilter {
 			}
 		}
 		return {
-			isPublic: isPublic || f.namespace != null, // TODO: generate @:access instead
+			isPublic: isPublic || f.namespace != null,
 			isStatic: isStatic,
 			isOverride: isOverride
 		};
