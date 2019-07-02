@@ -2,9 +2,9 @@ package ax3.filters;
 
 class DateApi extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
-		e = mapExpr(processExpr, e);
 		return switch e.kind {
 			case TENew(keyword, TNType(ref = {type: TTInst(dateCls = {name: "Date", parentModule: {parentPack: {name: ""}}})}), args):
+				args = mapCallArgs(processExpr, args);
 				switch args {
 					case null | {args: []}: // no arg ctor: rewrite to Date.now()
 						var tDate = TTStatic(dateCls);
@@ -47,9 +47,51 @@ class DateApi extends AbstractFilter {
 						e;
 				}
 
-			case TEField(to = {type: TTInst({name: "Date", parentModule: {parentPack: {name: ""}}})}, fieldName, fieldToken):
+			case TEBinop({kind: TEField({kind: TOExplicit(dot, eDate = {type: TTInst({name: "Date", parentModule: {parentPack: {name: ""}}})})}, fieldName, fieldToken)}, OpAssign(_), expr):
+				if (e.expectedType != TTVoid) {
+					// this is annoying, because these `set*` methods return a timestamp instead of the passed value,
+					// so we'll have to handle this specifically if we have a codebase that depends on this
+					throwError(exprPos(e), "Using Date property assignments as values are not yet implemented");
+				}
+
+				var to = {kind: TOExplicit(dot, processExpr(eDate)), type: eDate.type};
+				expr = processExpr(expr);
 				switch fieldName {
-					case "fullYear" | "time": // TODO other getters
+					case "date"
+					   | "fullYear"
+					   | "hours"
+					   | "milliseconds"
+					   | "minutes"
+					   | "month"
+					   | "seconds"
+					   | "time"
+					   :
+						var methodName = "set" + fieldName.charAt(0).toUpperCase() + fieldName.substring(1);
+						var eMethod = mk(TEField(to, methodName, mkIdent(methodName, fieldToken.leadTrivia)), TTFunction, TTFunction);
+						e.with(kind = TECall(eMethod, {
+							openParen: mkOpenParen(),
+							args: [{expr: expr, comma: null}],
+							closeParen: new Token(0, TkParenClose, ")", [], fieldToken.trailTrivia)
+						}));
+
+					case _:
+						e;
+				}
+
+			case TEField({kind: TOExplicit(dot, eDate = {type: TTInst({name: "Date", parentModule: {parentPack: {name: ""}}})})}, fieldName, fieldToken):
+				var to = {kind: TOExplicit(dot, processExpr(eDate)), type: eDate.type};
+				switch fieldName {
+					case "date"
+					   | "day"
+					   | "fullYear"
+					   | "hours"
+					   | "milliseconds"
+					   | "minutes"
+					   | "month"
+					   | "seconds"
+					   | "time"
+					   | "timezoneOffset"
+					   :
 						var methodName = "get" + fieldName.charAt(0).toUpperCase() + fieldName.substring(1);
 						var eMethod = mk(TEField(to, methodName, mkIdent(methodName, fieldToken.leadTrivia)), TTFunction, TTFunction);
 						e.with(kind = TECall(eMethod, {
@@ -62,11 +104,11 @@ class DateApi extends AbstractFilter {
 						e.with(kind = TEField(to, "getTime", new Token(fieldToken.pos, TkIdent, "getTime", fieldToken.leadTrivia, fieldToken.trailTrivia)));
 
 					case _:
-						e;
+						mapExpr(processExpr, e);
 				}
 
 			case _:
-				e;
+				mapExpr(processExpr, e);
 		}
 	}
 }
