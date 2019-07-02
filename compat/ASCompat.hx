@@ -293,11 +293,11 @@ class ASDate {
 		return (cast d).setUTCDate(day);
 	}
 
-	public static inline function setUTCFullYear(d:Date, year:Float, month:Float, day:Float):Float {
+	public static inline function setUTCFullYear(d:Date, year:Float, ?month:Float, ?day:Float):Float {
 		return (cast d).setUTCFullYear(year, month, day);
 	}
 
-	public static inline function setUTCHours(d:Date, hour:Float, minute:Float, second:Float, millisecond:Float):Float {
+	public static inline function setUTCHours(d:Date, hour:Float, ?minute:Float, ?second:Float, ?millisecond:Float):Float {
 		return (cast d).setUTCHours(hour, minute, second, millisecond);
 	}
 
@@ -305,15 +305,15 @@ class ASDate {
 		return (cast d).setUTCMilliseconds(millisecond);
 	}
 
-	public static inline function setUTCMinutes(d:Date, minute:Float, second:Float, millisecond:Float):Float {
+	public static inline function setUTCMinutes(d:Date, minute:Float, ?second:Float, ?millisecond:Float):Float {
 		return (cast d).setUTCMinutes(minute, second, millisecond);
 	}
 
-	public static inline function setUTCMonth(d:Date, month:Float, day:Float):Float {
+	public static inline function setUTCMonth(d:Date, month:Float, ?day:Float):Float {
 		return (cast d).setUTCMonth(month, day);
 	}
 
-	public static inline function setUTCSeconds(d:Date, second:Float, millisecond:Float):Float {
+	public static inline function setUTCSeconds(d:Date, second:Float, ?millisecond:Float):Float {
 		return (cast d).setUTCSeconds(second, millisecond);
 	}
 	#end
