@@ -99,13 +99,10 @@ class SWCLoader {
 						kind: TFVar({
 							kind: VVar(null),
 							isInline: false,
-							vars: [{
-								syntax: null,
-								name: name,
-								type: type,
-								init: null,
-								comma: null
-							}],
+							syntax: null,
+							name: name,
+							type: type,
+							init: null,
 							semicolon: null
 						})
 					}));
@@ -269,27 +266,21 @@ class SWCLoader {
 
 					switch (f.kind) {
 						case FVar(type, value, const):
-							var v:TVarFieldDecl = {
-								syntax: null,
-								name: n.name,
-								type: TTAny,
-								init: null,
-								comma: null
-							};
-
-							if (type != null) {
-								structureSetups.push(() -> v.type = buildTypeStructure(abc, type));
-							}
-
 							var varDecl:TModuleVarDecl = {
 								metadata: [],
 								modifiers: [],
 								kind: if (const) VConst(null) else VVar(null),
 								isInline: false,
-								vars: [v],
+								syntax: null,
+								name: n.name,
+								type: TTAny,
+								init: null,
 								parentModule: null,
 								semicolon: null
 							};
+							if (type != null) {
+								structureSetups.push(() -> varDecl.type = buildTypeStructure(abc, type));
+							}
 							varDecl.parentModule = addModule(swcPath, tree, n.ns, n.name, TDVar(varDecl));
 
 						case FMethod(type, KNormal, _, _):

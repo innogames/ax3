@@ -119,7 +119,7 @@ class TPackage {
 		var indent = indent + indent + indent;
 		switch (d.kind) {
 			case TDVar(v):
-				return [for (v in v.vars) indent + dumpVar("VAR", v.name, v.type)].join("\n");
+				return indent + dumpVar("VAR", v.name, v.type);
 			case TDFunction(f):
 				return indent + dumpFun(f.name, f.fun.sig);
 			case TDNamespace({name: {text: name}}):
@@ -165,7 +165,7 @@ class TPackage {
 		var prefix = indent + indent + indent + indent;
 		return switch (f.kind) {
 			case TFFun(f): prefix + dumpFun(f.name, f.fun.sig);
-			case TFVar(f): [for (v in f.vars) prefix + dumpVar("VAR", v.name, v.type) ].join("\n");
+			case TFVar(f): prefix + dumpVar("VAR", f.name, f.type);
 			case TFGetter(f): prefix + dumpVar("GET", f.name, f.propertyType);
 			case TFSetter(f): prefix + dumpVar("SET", f.name, f.propertyType);
 		};
@@ -341,7 +341,7 @@ class TClassOrInterfaceDecl {
 								return classField;
 							}
 						case TFVar(v):
-							if (v.vars[0].name == name) {
+							if (v.name == name) {
 								return classField;
 							}
 						case TFGetter(a) | TFSetter(a):
@@ -482,12 +482,6 @@ typedef TAccessorField = {
 
 typedef TVarField = {
 	var kind:VarDeclKind;
-	var isInline:Bool;
-	var vars:Array<TVarFieldDecl>;
-	var semicolon:Token;
-}
-
-typedef TVarFieldDecl = {
 	var syntax:{
 		var name:Token;
 		var type:Null<TypeHint>;
@@ -495,7 +489,8 @@ typedef TVarFieldDecl = {
 	var name:String;
 	var type:TType;
 	var init:Null<TVarInit>;
-	var comma:Null<Token>;
+	var semicolon:Token;
+	var isInline:Bool;
 }
 
 typedef TExpr = {

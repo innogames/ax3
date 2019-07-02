@@ -77,7 +77,7 @@ class AbstractFilter {
 	function processDecl(decl:TDecl) {
 		switch decl.kind {
 			case TDClassOrInterface(c): processClass(c);
-			case TDVar(v): processVarFields(v.vars);
+			case TDVar(v): processVarField(v);
 			case TDFunction(fun): processFunction(fun.fun);
 			case TDNamespace(_):
 		}
@@ -97,7 +97,7 @@ class AbstractFilter {
 
 	function processClassField(field:TClassField) {
 		switch (field.kind) {
-			case TFVar(v): processVarFields(v.vars);
+			case TFVar(v): processVarField(v);
 			case TFFun(field): processFunction(field.fun);
 			case TFGetter(field): processFunction(field.fun);
 			case TFSetter(field): processFunction(field.fun);
@@ -126,11 +126,9 @@ class AbstractFilter {
 		return e;
 	}
 
-	function processVarFields(vars:Array<TVarFieldDecl>) {
-		for (v in vars) {
-			if (v.init != null) {
-				v.init.expr = processExpr(v.init.expr);
-			}
+	function processVarField(v:TVarField) {
+		if (v.init != null) {
+			v.init.expr = processExpr(v.init.expr);
 		}
 	}
 }

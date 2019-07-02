@@ -222,14 +222,11 @@ class GenAS3 extends PrinterBase {
 
 	function printVarField(v:TVarField) {
 		printVarKind(v.kind);
-		for (v in v.vars) {
-			printTextWithTrivia(v.name, v.syntax.name);
-			if (v.syntax.type != null) {
-				printSyntaxTypeHint(v.syntax.type);
-			}
-			if (v.init != null) printVarInit(v.init);
-			if (v.comma != null) printComma(v.comma);
+		printTextWithTrivia(v.name, v.syntax.name);
+		if (v.syntax.type != null) {
+			printSyntaxTypeHint(v.syntax.type);
 		}
+		if (v.init != null) printVarInit(v.init);
 		printSemicolon(v.semicolon);
 	}
 

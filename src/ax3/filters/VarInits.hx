@@ -14,10 +14,8 @@ class VarInits extends AbstractFilter {
 		}
 	}
 
-	override function processVarFields(vars:Array<TVarFieldDecl>) {
-		for (v in vars) {
-			v.init = processVarInit(v.type, v.init, false);
-		}
+	override function processVarField(v:TVarField) {
+		v.init = processVarInit(v.type, v.init, false);
 	}
 
 	static function processVarInit(type:TType, init:Null<TVarInit>, initNull:Bool):TVarInit {

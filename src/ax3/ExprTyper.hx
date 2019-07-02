@@ -378,7 +378,7 @@ class ExprTyper {
 
 	function getFieldType(field:TClassField):TType {
 		var t = switch field.kind {
-			case TFVar(v): v.vars[0].type;
+			case TFVar(v): v.type;
 			case TFFun(f): f.type;
 			case TFGetter(a) | TFSetter(a): a.propertyType;
 		};

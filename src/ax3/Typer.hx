@@ -79,9 +79,8 @@ class Typer {
 			case DFunction(f):
 				{name: f.name.text, kind: TDFunction(typeModuleFunction(f, mod, moduleTyperContext))};
 			case DVar(v):
-				if (v.vars.rest.length > 0) throw "assert"; // TODO
-				var name = v.vars.first.name.text;
-				{name: name, kind: TDVar(typeModuleVars(v, mod, moduleTyperContext))};
+				var v = typeModuleVar(v, mod, moduleTyperContext);
+				{name: v.name, kind: TDVar(v)};
 			case DNamespace(ns):
 				{name: null, kind: TDNamespace(ns)};
 			case DCondComp(v, openBrace, decls, closeBrace): throw "TODO";
@@ -89,38 +88,38 @@ class Typer {
 		}
 	}
 
-	function typeModuleVars(v:ModuleVarDecl, mod:TModule, typerContext:ExprTyper.TyperContext):TModuleVarDecl {
-		var overrideType = HaxeTypeAnnotation.extractFromModuleVarDecl(v);
+	function typeModuleVar(decl:ModuleVarDecl, mod:TModule, typerContext:ExprTyper.TyperContext):TModuleVarDecl {
+		if (decl.vars.rest.length > 0) {
+			throwErr(mod, "Multiple module var declaration is not supported", decl.vars.rest[0].element.name.pos);
+		}
+
+		var v = decl.vars.first;
+
+		var overrideType = HaxeTypeAnnotation.extractFromModuleVarDecl(decl);
 		var moduleVar:TModuleVarDecl = {
-			metadata: typeMetadata(v.metadata),
-			modifiers: v.modifiers,
-			kind: v.kind,
-			isInline: false,
 			parentModule: mod,
-			vars: separatedToArray(v.vars, function(v, comma) {
-				var tVar:TVarFieldDecl = {
-					syntax:{
-						name: v.name,
-						type: v.type
-					},
-					name: v.name.text,
-					type: null,
-					init: null,
-					comma: comma,
-				};
-
-				structureSetups.push(function() {
-					var overrideType = resolveHaxeTypeHint(mod, overrideType, v.name.pos); // TODO: no need to resolve this more than once
-					tVar.type = if (overrideType != null) overrideType else if (v.type == null) TTAny else resolveType(mod, v.type.type);
-				});
-
-				if (v.init != null) {
-					exprTypings.push(() -> tVar.init = typeVarInit(mod, v.init, tVar.type, typerContext));
-				}
-				return tVar;
-			}),
-			semicolon: v.semicolon
+			metadata: typeMetadata(decl.metadata),
+			modifiers: decl.modifiers,
+			kind: decl.kind,
+			syntax:{
+				name: v.name,
+				type: v.type
+			},
+			name: v.name.text,
+			type: null,
+			init: null,
+			semicolon: decl.semicolon,
+			isInline: false,
 		};
+
+		structureSetups.push(function() {
+			var overrideType = resolveHaxeTypeHint(mod, overrideType, v.name.pos); // TODO: no need to resolve this more than once
+			moduleVar.type = if (overrideType != null) overrideType else if (v.type == null) TTAny else resolveType(mod, v.type.type);
+		});
+
+		if (v.init != null) {
+			exprTypings.push(() -> moduleVar.init = typeVarInit(mod, v.init, moduleVar.type, typerContext));
+		}
 
 		return moduleVar;
 	}
@@ -243,12 +242,7 @@ class Typer {
 
 		var kind = switch (f.kind) {
 			case FVar(kind, vars, semicolon):
-				TFVar({
-					kind: kind,
-					vars: typeVarFieldDecls(mod, vars, haxeType, typerContext),
-					semicolon: semicolon,
-					isInline: false,
-				});
+				TFVar(typeVarField(mod, kind, vars, semicolon, haxeType, typerContext));
 			case FFun(keyword, name, fun):
 				var fun = typeFunction(fun);
 				TFFun({
@@ -301,26 +295,34 @@ class Typer {
 		};
 	}
 
-	function typeVarFieldDecls(mod:TModule, vars:Separated<VarDecl>, haxeType:Null<HaxeTypeAnnotation>, typerContext:ExprTyper.TyperContext):Array<TVarFieldDecl> {
-		var overrideType = resolveHaxeTypeHint(mod, haxeType, vars.first.name.pos);
+	function typeVarField(mod:TModule, kind:VarDeclKind, vars:Separated<VarDecl>, semicolon:Token, haxeType:Null<HaxeTypeAnnotation>, typerContext:ExprTyper.TyperContext):TVarField {
+		if (vars.rest.length > 0) {
+			throwErr(mod, "Multiple var field declaration is not supported", vars.rest[0].element.name.pos);
+		}
 
-		return separatedToArray(vars, function(v, comma) {
-			var type:TType = if (overrideType != null) overrideType else if (v.type == null) TTAny else resolveType(mod, v.type.type);
-			var tVar:TVarFieldDecl = {
-				syntax:{
-					name: v.name,
-					type: v.type
-				},
-				name: v.name.text,
-				type: type,
-				init: null,
-				comma: comma,
-			};
-			if (v.init != null) {
-				exprTypings.push(() -> tVar.init = typeVarInit(mod, v.init, type, typerContext));
-			}
-			return tVar;
-		});
+		var v = vars.first;
+
+		var overrideType = resolveHaxeTypeHint(mod, haxeType, v.name.pos);
+		var type:TType = if (overrideType != null) overrideType else if (v.type == null) TTAny else resolveType(mod, v.type.type);
+
+		var varField:TVarField = {
+			kind: kind,
+			syntax:{
+				name: v.name,
+				type: v.type
+			},
+			name: v.name.text,
+			type: type,
+			init: null,
+			semicolon: semicolon,
+			isInline: false,
+		};
+
+		if (v.init != null) {
+			exprTypings.push(() -> varField.init = typeVarInit(mod, v.init, type, typerContext));
+		}
+
+		return varField;
 	}
 
 	function typeVarInit(mod:TModule, init:VarInit, expectedType:TType, typerContext:ExprTyper.TyperContext):TVarInit {

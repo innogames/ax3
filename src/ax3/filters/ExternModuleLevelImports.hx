@@ -185,9 +185,7 @@ class ExternModuleLevelImports extends AbstractFilter {
 						})
 					}));
 
-				case TDVar(vd):
-					var v = vd.vars[0];
-
+				case TDVar(v):
 					members.push(TMField({
 						metadata: [],
 						namespace: null,
@@ -227,7 +225,7 @@ class ExternModuleLevelImports extends AbstractFilter {
 								isFlashProperty: false,
 								name: fieldName,
 								get: true,
-								set: vd.kind.match(VVar(_)),
+								set: v.kind.match(VVar(_)),
 								type: v.type
 							},
 							isInline: false,
@@ -235,7 +233,7 @@ class ExternModuleLevelImports extends AbstractFilter {
 						})
 					}));
 
-					if (vd.kind.match(VVar(_))) {
+					if (v.kind.match(VVar(_))) {
 						var tvar:TVar = {name: "value", type: v.type};
 						var tArgName = mkIdent("value");
 						var arg:TFunctionArg = {

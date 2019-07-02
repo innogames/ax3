@@ -326,21 +326,14 @@ class GenHaxe extends PrinterBase {
 		}
 	}
 
-	function printVarField(vf:TVarField) {
-		switch vf.vars {
-			case [v]:
-				if (vf.isInline) buf.add("inline ");
-				printVarKind(vf.kind, v.init == null /* `final` must be immediately initialized */);
-				printTextWithTrivia(v.name, v.syntax.name);
-				// TODO: skip type hints when init is there, using the same logic as for locals
-				printTypeHint({type: v.type, syntax: v.syntax.type});
-				if (v.init != null) printVarInit(v.init);
-				if (v.comma != null) throw "assert";
-				printSemicolon(vf.semicolon);
-			case _:
-				// TODO: it should be rewritten into multiple fields
-				throw "multiple var declaration with a single keyword is not supported";
-		}
+	function printVarField(v:TVarField) {
+		if (v.isInline) buf.add("inline ");
+		printVarKind(v.kind, v.init == null /* `final` must be immediately initialized */);
+		printTextWithTrivia(v.name, v.syntax.name);
+		// TODO: skip type hints when init is there, using the same logic as for locals
+		printTypeHint({type: v.type, syntax: v.syntax.type});
+		if (v.init != null) printVarInit(v.init);
+		printSemicolon(v.semicolon);
 	}
 
 	function printMetadata(metas:Array<TMetadata>) {

@@ -211,7 +211,7 @@ class TypedTreeTools {
 
 	public static function mkDeclRef(path:DotPath, decl:TDecl, expectedType:Null<TType>):TExpr {
 		var type = switch (decl.kind) {
-			case TDVar(v): v.vars[0].type; // TODO: it shouldn't be an array in the typed AST actually
+			case TDVar(v): v.type;
 			case TDFunction(f): getFunctionTypeFromSignature(f.fun.sig);
 			case TDClassOrInterface(c): TTStatic(c);
 			case TDNamespace(_): throw "assert"; // should NOT happen :)
