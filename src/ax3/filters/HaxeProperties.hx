@@ -22,7 +22,8 @@ class HaxeProperties extends AbstractFilter {
 			switch m {
 				case MetaFlash(m):
 					return m.openBracket;
-				case MetaHaxe(s):
+				case MetaHaxe(t):
+					return t;
 			}
 		}
 

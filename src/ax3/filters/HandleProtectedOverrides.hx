@@ -40,7 +40,7 @@ class HandleProtectedOverrides extends AbstractFilter {
 			}
 		}
 		if (isProtected && isOverride && isOriginallyDefinedInExtern(info, name)) {
-			field.metadata.push(MetaHaxe("@:protected"));
+			field.metadata.push(MetaHaxe(mkIdent("@:protected", [], [whitespace])));
 		}
 	}
 

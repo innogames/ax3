@@ -275,37 +275,24 @@ class GenHaxe extends PrinterBase {
 
 		printMetadata(f.metadata);
 
-		if (f.namespace != null) printTextWithTrivia("/*"+f.namespace.text+"*/", f.namespace);
+		if (f.namespace != null) throwError(f.namespace.pos, "Unprocessed namespace modifier");
 
-		// internal modifier is converted into a metadata, so it should be printed first
-		// TODO: maybe we should handle this in a filter instead of the generator?
-		for (m in f.modifiers) {
-			switch m {
-				case FMInternal(t):
-					printTextWithTrivia("@:allow(" + currentModule.parentPack.name + ")", t);
-				case _:
-			}
-		}
-
-		var isPublic = false;
 		for (m in f.modifiers) {
 			switch (m) {
 				case FMPublic(t):
-					isPublic = true;
 					printTextWithTrivia("public", t);
 				case FMPrivate(t) | FMProtected(t):
+					// `private` is default in Haxe, so we can skip the modifier
 					t.trimTrailingWhitespace();
 					printTokenTrivia(t);
 				// case FMPrivate(t): printTextWithTrivia("private", t);
 				// case FMProtected(t): printTextWithTrivia("/*protected*/private", t);
-				case FMInternal(_): // handled above
+				case FMInternal(t): throwError(t.pos, "Unprocessed internal modifier");
 				case FMOverride(t): printTextWithTrivia("override", t);
 				case FMStatic(t): printTextWithTrivia("static", t);
 				case FMFinal(t): printTextWithTrivia("final", t);
 			}
 		}
-
-		if (!isPublic && f.namespace != null) buf.add("public "); // TODO: generate @:access on `use namespace` instead
 
 		switch (f.kind) {
 			case TFVar(v):
@@ -371,9 +358,8 @@ class GenHaxe extends PrinterBase {
 					}
 					buf.add(")");
 					printTokenTrivia(m.closeBracket);
-				case MetaHaxe(s):
-					buf.add(s);
-					buf.add(" ");
+				case MetaHaxe(token):
+					printTextWithTrivia(token.text, token);
 			}
 		}
 	}
