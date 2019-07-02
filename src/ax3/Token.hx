@@ -21,6 +21,10 @@ class Token {
 		return '${kind.getName()}(${haxe.Json.stringify(text)})';
 	}
 
+	public inline function clone():Token {
+		return new Token(pos, kind, text, leadTrivia.copy(), trailTrivia.copy());
+	}
+
 	public function trimTrailingWhitespace() {
 		var i = trailTrivia.length - 1;
 		if (trailTrivia[i].kind == TrNewline) {
