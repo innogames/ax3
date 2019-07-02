@@ -10,7 +10,7 @@ class Filters {
 
 		for (f in [
 			// new RewriteAndOrAssign(context), // we can fix this in the codebase so no real need for this filter
-			// new WrapModuleLevelDecls(context), // WIP
+			new WrapModuleLevelDecls(context),
 			new HandleVisibilityModifiers(context),
 			new RewriteMeta(context),
 			new MathApi(context),

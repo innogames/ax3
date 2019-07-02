@@ -1,20 +1,22 @@
 package ax3.filters;
 
 import ax3.ParseTree;
-import ax3.Utils.capitalize;
 
+// TODO: add static import to this package's `import.hx`
+// TODO: rewrite imports to a static field import (have to also change TEDeclRefs)
+// TODO: also collect private module declarations in a class and change access to them
 class WrapModuleLevelDecls extends AbstractFilter {
 	override function processModule(mod:TModule) {
 		var mainDeclField = convertDeclToStaticField(mod.pack.decl);
 		if (mainDeclField != null) {
-			var capitalizedName = capitalize(mod.name);
-			mod.parentPack.renameModule(mod, capitalizedName);
+			var moduleName = makeHaxeModuleName(mod.name);
+			mod.parentPack.renameModule(mod, moduleName);
 			mod.pack.decl = {
-				name: capitalizedName,
+				name: moduleName,
 				kind: TDClassOrInterface({
 					syntax: {
 						keyword: mkIdent("class", [], [whitespace]),
-						name: mkIdent(capitalizedName, [], [whitespace]),
+						name: mkIdent(moduleName, [], [whitespace]),
 						openBrace: addTrailingNewline(mkOpenBrace()),
 						closeBrace: addTrailingNewline(mkCloseBrace())
 					},
@@ -22,11 +24,20 @@ class WrapModuleLevelDecls extends AbstractFilter {
 					metadata: [],
 					modifiers: [DMFinal(mkIdent("final", [], [whitespace]))],
 					parentModule: mod,
-					name: capitalizedName,
+					name: moduleName,
 					members: [TMField(mainDeclField)]
 				})
 			};
 		}
+	}
+
+	static function makeHaxeModuleName(s:String):String {
+		var firstChar = s.charAt(0);
+		return
+			if (firstChar == "_")
+				"Underscore" + s.substring(1)
+			else
+				firstChar.toUpperCase() + s.substring(1);
 	}
 
 	function convertDeclToStaticField(decl:TDecl):Null<TClassField> {
@@ -35,14 +46,18 @@ class WrapModuleLevelDecls extends AbstractFilter {
 				return {
 					metadata: v.metadata,
 					namespace: null,
-					modifiers: convertDeclModifiers(v.vars[0].syntax.name.pos, v.modifiers),
+					modifiers: convertDeclModifiers(v.syntax.name.pos, v.modifiers),
 					kind: TFVar({
 						kind: v.kind,
+						syntax: v.syntax,
+						name: v.name,
+						type: v.type,
+						init: v.init,
 						isInline: v.isInline,
-						vars: v.vars,
 						semicolon: v.semicolon
 					})
 				};
+
 			case TDFunction(f):
 				return {
 					metadata: f.metadata,
@@ -53,9 +68,11 @@ class WrapModuleLevelDecls extends AbstractFilter {
 						name: f.name,
 						fun: f.fun,
 						type: getFunctionTypeFromSignature(f.fun.sig),
+						isInline: false,
 						semicolon: null
 					})
 				};
+
 			case TDClassOrInterface(_) | TDNamespace(_):
 				return null;
 		}
