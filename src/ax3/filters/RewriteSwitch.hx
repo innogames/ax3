@@ -1,6 +1,5 @@
 package ax3.filters;
 
-// TODO: process `case` patterns: if it's not constant (a local, field or some random expression), generate `_ == <expr> => true`. it is ugly, but it'll compile and keep the behaviour
 // TODO: rewrite `default` to `case _`?
 class RewriteSwitch extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {

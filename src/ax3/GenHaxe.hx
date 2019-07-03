@@ -611,17 +611,27 @@ class GenHaxe extends PrinterBase {
 		printExpr(s.subj);
 		printCloseParen(s.syntax.closeParen);
 		printOpenBrace(s.syntax.openBrace);
+		var hasNonConstantPattern = false;
 		for (c in s.cases) {
 			printTextWithTrivia("case", c.syntax.keyword);
 			var first = true;
 			for (e in c.values) {
+				printTrivia(TypedTreeTools.removeLeadingTrivia(e));
 				if (first) {
 					first = false;
 				} else {
-					printTrivia(TypedTreeTools.removeLeadingTrivia(e));
 					buf.add("   | ");
 				}
-				printExpr(e);
+				if (isConstantCaseExpr(e)) {
+					printExpr(e);
+				} else {
+					var trailTrivia = TypedTreeTools.removeTrailingTrivia(e);
+					buf.add("(_ == ");
+					printExpr(e);
+					buf.add(" => true)");
+					printTrivia(trailTrivia);
+					hasNonConstantPattern = true;
+				}
 			}
 			printColon(c.syntax.colon);
 			for (e in c.body) {
@@ -634,8 +644,58 @@ class GenHaxe extends PrinterBase {
 			for (e in s.def.body) {
 				printBlockExpr(e);
 			}
+		} else if (hasNonConstantPattern) {
+			// we gotta generate an empty `default` branch if we generated extractors before
+			buf.add("\ndefault:\n");
 		}
 		printCloseBrace(s.syntax.closeBrace);
+	}
+
+	function isConstantCaseExpr(e:TExpr):Bool {
+		return switch e.kind {
+			case TEParens(_, e, _):
+				// recurse into parenthesis
+				isConstantCaseExpr(e);
+
+			case TEField(obj, fieldName, _):
+				switch obj.type {
+					case TTStatic(cls):
+						// known static const fields are fine, others are not
+						var f = cls.findFieldInHierarchy(fieldName, true);
+						(f != null) && f.field.kind.match(TFVar({kind: VConst(_)}));
+					case _:
+						false;
+				}
+
+			// this should not really happen, I _think_, but if it ever will, we'll see
+			case TEBuiltin(syntax, name):
+				throwError(syntax.pos, "Builtin " + name + " used as a switch case value");
+
+			// reference to a class/interface should be fine
+			case TEDeclRef(_):
+				true;
+
+			// basic literals are fine
+			case TELiteral(TLBool(_) | TLNull(_) | TLUndefined(_) | TLInt(_) | TLNumber(_) | TLString(_)):
+				true;
+
+			// other literals, local vars and basically anything else is NOT a suitable pattern
+			case TELiteral(TLThis(_) | TLSuper(_) | TLRegExp(_))
+			   | TELocal(_)
+
+			   // no way these can even appear here so we could as well throw an assertion failure here
+			   | TEReturn(_) | TEThrow(_) | TEDelete(_) | TEBreak(_) | TEContinue(_)
+			   | TEWhile(_) | TEDoWhile(_) | TEFor(_) | TEForIn(_) | TEForEach(_) | TEHaxeFor(_)
+			   | TELocalFunction(_) | TEVars(_) | TEBlock(_) | TESwitch(_) | TECondCompValue(_) | TECondCompBlock(_) | TETry(_) | TEUseNamespace(_)
+
+			   // these might appear
+			   | TECall(_) | TECast(_) | TEArrayDecl(_) | TEVectorDecl(_) | TEObjectDecl(_)
+			   | TEArrayAccess(_) | TEVector(_) | TETernary(_) | TEIf(_)
+			   | TEBinop(_) | TEPreUnop(_) | TEPostUnop(_) | TEAs(_) | TENew(_)
+			   | TEXmlChild(_) | TEXmlAttr(_) | TEXmlAttrExpr(_) | TEXmlDescend(_)
+			   | TEHaxeRetype(_) | TEHaxeIntIter(_)
+			   : false;
+		}
 	}
 
 	function printCondCompBlock(v:TCondCompVar, expr:TExpr) {
