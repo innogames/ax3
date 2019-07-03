@@ -53,6 +53,44 @@ class TypedTreeTools {
 		return if (hadOnlyWhitespace) result else [];
 	}
 
+	public static function removeFieldLeadingTrivia(field:TClassField):Array<Trivia> {
+		var token = getFieldLeadingToken(field);
+		var result = token.leadTrivia;
+		token.leadTrivia = [];
+		return result;
+	}
+
+	public static function getFieldLeadingToken(field:TClassField):Token {
+		for (m in field.metadata) {
+			switch m {
+				case MetaFlash(m):
+					return m.openBracket;
+				case MetaHaxe(t):
+					return t;
+			}
+		}
+
+		if (field.namespace != null) {
+			return field.namespace;
+		}
+
+		if (field.modifiers.length > 0) {
+			switch (field.modifiers[0]) {
+				case FMPublic(t) | FMPrivate(t) | FMProtected(t) | FMInternal(t) | FMOverride(t) | FMStatic(t) | FMFinal(t):
+					return t;
+			}
+		}
+
+		switch field.kind {
+			case TFGetter(a) | TFSetter(a):
+				return a.syntax.functionKeyword;
+			case TFVar({kind: VVar(t) | VConst(t)}):
+				return t;
+			case TFFun(f):
+				return f.syntax.keyword;
+		}
+	}
+
 	public static function getConstructor(cls:TClassOrInterfaceDecl):Null<TFunctionField> {
 		var extend;
 		switch (cls.kind) {

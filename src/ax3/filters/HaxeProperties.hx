@@ -17,35 +17,6 @@ class HaxeProperties extends AbstractFilter {
 		currentProperties = null;
 	}
 
-	function getFieldLeadingToken(field:TClassField):Token {
-		for (m in field.metadata) {
-			switch m {
-				case MetaFlash(m):
-					return m.openBracket;
-				case MetaHaxe(t):
-					return t;
-			}
-		}
-
-		if (field.namespace != null) {
-			return field.namespace;
-		}
-
-		if (field.modifiers.length > 0) {
-			switch (field.modifiers[0]) {
-				case FMPublic(t) | FMPrivate(t) | FMProtected(t) | FMInternal(t) | FMOverride(t) | FMStatic(t) | FMFinal(t):
-					return t;
-			}
-		}
-
-		switch field.kind {
-			case TFGetter(a) | TFSetter(a):
-				return a.syntax.functionKeyword;
-			case _:
-				throw "assert";
-		}
-	}
-
 	override function processClassField(f:TClassField) {
 		switch f.kind {
 			case TFGetter(field): processGetter(f, field, getMods(f), getFieldLeadingToken(f));

@@ -16,6 +16,24 @@ class HandleVisibilityModifiers extends AbstractFilter {
 	}
 
 	function processFieldModifiers(cls:TClassOrInterfaceDecl, field:TClassField) {
+		var isConstructor = switch field.kind {
+			case TFFun(f): f.name == cls.name;
+			case TFVar(_) | TFGetter(_) | TFSetter(_): false;
+		}
+		if (isConstructor) {
+			// constructors without visibility modifiers are public in AS3, so we gotta add the explicit `public` modifier for Haxe
+			for (mod in field.modifiers) {
+				switch mod {
+					case FMPublic(_):
+						return;
+					case FMPrivate(t) | FMProtected(t) | FMInternal(t) | FMOverride(t) | FMStatic(t) | FMFinal(t):
+						throwError(t.pos, "Unexpected field modifier for a class constructor");
+				}
+			}
+			field.modifiers.push(FMPublic(mkIdent("public", removeFieldLeadingTrivia(field), [whitespace])));
+			return;
+		}
+
 		if (field.namespace != null) {
 			// if it's namespaced, make it public and remove the namespace
 			// TODO: generate @:access on `use namespace` instead
@@ -53,7 +71,7 @@ class HandleVisibilityModifiers extends AbstractFilter {
 
 		switch isInternal {
 			case Some(null): // implicitly `internal`
-				changeInternal([], [whitespace]);
+				changeInternal(removeFieldLeadingTrivia(field), [whitespace]);
 			case Some(token):
 				changeInternal(token.leadTrivia, token.trailTrivia);
 			case None:
