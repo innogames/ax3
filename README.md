@@ -29,7 +29,8 @@ where `config.json` is something like:
 ## Building
 
 The converter is written in Haxe, using latest Haxe 4 features, so you need Haxe 4 :)
-It also uses the `format` library which contains `SWF/ABC` readers, so before building, make sure to install it (`haxelib install format` or `lix install haxelib:format`).
+
+It also uses the `format` library which contains `SWF/ABC` readers, so before building, make sure to install it (`haxelib install format` or `lix install haxelib:format`). Note that you need the version after the commit `88041be7819e1093189e88e50be2d222dddd73a7` (TODO: just use lix and pin the version)
 
 Then, to build the converter binary, just run `haxe build.hxml`.
 

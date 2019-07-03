@@ -91,13 +91,13 @@ class SWCLoader {
 
 				var members:Array<TClassMember> = [];
 
-				inline function addVar(name:String, type:TType, isStatic:Bool) {
+				inline function addVar(name:String, type:TType, isStatic:Bool, isConst:Bool) {
 					members.push(TMField({
 						metadata: [],
 						namespace: null,
 						modifiers: if (isStatic) [FMStatic(null)] else [],
 						kind: TFVar({
-							kind: VVar(null),
+							kind: if (isConst) VConst(null) else VVar(null),
 							isInline: false,
 							syntax: null,
 							name: name,
@@ -233,8 +233,8 @@ class SWCLoader {
 
 					structureSetups.push(function() {
 						switch (f.kind) {
-							case FVar(type, _, _):
-								addVar(n.name, if (type != null) buildPublicType(type) else TTAny, isStatic);
+							case FVar(type, _, isConst):
+								addVar(n.name, if (type != null) buildPublicType(type) else TTAny, isStatic, isConst);
 
 							case FMethod(type, KNormal, _, _):
 								addMethod(n.name, buildFunDecl(abc, type), isStatic);
