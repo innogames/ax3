@@ -47,11 +47,15 @@ class DateApi extends AbstractFilter {
 						e;
 				}
 
-			case TEBinop({kind: TEField({kind: TOExplicit(dot, eDate = {type: TTInst({name: "Date", parentModule: {parentPack: {name: ""}}})})}, fieldName, fieldToken)}, OpAssign(_), expr):
+			case TEBinop({kind: TEField({kind: TOExplicit(dot, eDate = {type: TTInst({name: "Date", parentModule: {parentPack: {name: ""}}})})}, fieldName, fieldToken)}, op = OpAssign(_) | OpAssignOp(_), expr):
 				if (e.expectedType != TTVoid) {
 					// this is annoying, because these `set*` methods return a timestamp instead of the passed value,
 					// so we'll have to handle this specifically if we have a codebase that depends on this
 					throwError(exprPos(e), "Using Date property assignments as values are not yet implemented");
+				}
+
+				if (op.match(OpAssignOp(_))) {
+					reportError(exprPos(e), "TODO: Date property assignment operators (generated incorrectly now!!!)");
 				}
 
 				var to = {kind: TOExplicit(dot, processExpr(eDate)), type: eDate.type};
