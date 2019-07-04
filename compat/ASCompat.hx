@@ -248,6 +248,10 @@ class ASDate {
 		return (cast d).setTime(millisecond);
 	}
 
+	public static inline function setDate(d:Date, day:Float):Float {
+		return (cast d).setDate(day);
+	}
+
 	public static inline function setHours(d:Date, hour:Int, ?minute:Int, ?second:Int, ?millisecond:Int):Float {
 		return (cast d).setHours(hour, minute, second, millisecond);
 	}
