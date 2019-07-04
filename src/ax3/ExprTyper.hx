@@ -918,7 +918,10 @@ class ExprTyper {
 
 			case OpAssign(_) | OpAssignOp(_): // TODO: handle expected types for OpAssignOp
 				var a = typeExpr(a, TTAny);
-				var b = typeExpr(b, a.type);
+
+				var bExpectedType = if (a.type == TTString && op.match(OpAssignOp(AOpAdd(_)))) TTAny else a.type; // we can += anything to a string
+				var b = typeExpr(b, bExpectedType);
+
 				return mk(TEBinop(a, op, b), a.type, expectedType);
 
 			case OpShl(_) | OpShr(_) | OpUshr(_) | OpBitAnd(_) | OpBitOr(_) | OpBitXor(_):
