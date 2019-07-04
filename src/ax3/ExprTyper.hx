@@ -926,25 +926,38 @@ class ExprTyper {
 				var b = typeExpr(b, TTInt);
 				return mk(TEBinop(a, op, b), TTInt, expectedType);
 
-			case OpAdd(_):
+			case OpAdd(plus):
 				var a = typeExpr(a, TTAny);
 				var b = typeExpr(b, TTAny);
 
-				var type =
-					if (a.type == TTString || b.type == TTString) TTString // string concat
-					else if (a.type == TTNumber || b.type == TTNumber) TTNumber // always number
-					else a.type; // probably int/uint
+				var type = switch [a.type, b.type] {
+					case [TTString, _] | [_, TTString]: TTString; // string concat
+					case [TTNumber, (TTNumber | TTInt | TTUint)] | [(TTInt | TTUint), TTNumber]: TTNumber; // always number
+					case [TTInt, TTUint] | [TTUint, TTInt]: TTUint; // always uint
+					case [TTInt, TTInt]: TTInt; // int addition
+					case [TTAny, _] | [_, TTAny]:
+						err("Dynamic + operation!", plus.pos);
+						TTAny;
+					case _:
+						throwErr("Unsupported + operation", plus.pos);
+				};
 
 				return mk(TEBinop(a, op, b), type, expectedType);
 
-			case OpMul(_) | OpSub(_) | OpMod(_):
+			case OpMul(token) | OpSub(token) | OpMod(token):
 				var a = typeExpr(a, TTNumber);
 				var b = typeExpr(b, TTNumber);
 
-				var type =
-					if (a.type == TTNumber || b.type == TTNumber) TTNumber // always number
-					else if (a.type == TTUint || b.type == TTUint) TTUint // uint ops yield uint in Haxe
-					else a.type; // probably int
+				var type = switch [a.type, b.type] {
+					case [TTNumber, (TTNumber | TTInt | TTUint)] | [(TTInt | TTUint), TTNumber]: TTNumber; // always number
+					case [TTInt, TTUint] | [TTUint, TTInt]: TTUint; // always uint
+					case [TTInt, TTInt]: TTInt;
+					case [TTAny, _] | [_, TTAny]:
+						err("Dynamic arithmetic operation!", token.pos);
+						TTAny;
+					case _:
+						throwErr("Unsupported arithmetic operation", token.pos);
+				};
 
 				return mk(TEBinop(a, op, b), type, expectedType);
 
