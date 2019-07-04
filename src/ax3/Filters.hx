@@ -9,7 +9,7 @@ class Filters {
 		var coerceToBool = new CoerceToBool(context);
 
 		for (f in [
-			// new RewriteAndOrAssign(context), // we can fix this in the codebase so no real need for this filter
+			new RewriteAndOrAssign(context),
 			new WrapModuleLevelDecls(context),
 			new HandleVisibilityModifiers(context),
 			new RewriteMeta(context),

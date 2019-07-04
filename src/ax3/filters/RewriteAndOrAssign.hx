@@ -12,11 +12,14 @@ class RewriteAndOrAssign extends AbstractFilter {
 				}
 
 				var op:Binop = switch aop {
-					case AOpAnd(t): OpAnd(new Token(0, TkAmpersandAmpersand, "&&", t.leadTrivia, t.trailTrivia));
-					case AOpOr(t): OpOr(new Token(0, TkPipePipe, "||", t.leadTrivia, t.trailTrivia));
+					case AOpAnd(t): OpAnd(t.clone());
+					case AOpOr(t): OpOr(t.clone());
 					case _: throw "assert";
 				}
-				var eValue = mk(TEBinop(a, op, b), a.type, a.expectedType);
+
+				var clonedLeftSide = cloneExpr(a);
+				removeLeadingTrivia(clonedLeftSide);
+				var eValue = mk(TEBinop(clonedLeftSide, op, b), a.type, a.expectedType);
 
 				e.with(kind = TEBinop(
 					a,

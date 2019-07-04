@@ -428,6 +428,82 @@ class TypedTreeTools {
 		}
 	}
 
+	public static function cloneExpr(e:TExpr):TExpr {
+		return e.with(kind = switch e.kind {
+			case TEParens(openParen, e, closeParen):
+				TEParens(openParen.clone(), cloneExpr(e), closeParen.clone());
+			case TELiteral(l):
+				TELiteral(switch l {
+					case TLThis(syntax): TLThis(syntax.clone());
+					case TLSuper(syntax): TLSuper(syntax.clone());
+					case TLBool(syntax): TLBool(syntax.clone());
+					case TLNull(syntax): TLNull(syntax.clone());
+					case TLUndefined(syntax): TLUndefined(syntax.clone());
+					case TLInt(syntax): TLInt(syntax.clone());
+					case TLNumber(syntax): TLNumber(syntax.clone());
+					case TLString(syntax): TLString(syntax.clone());
+					case TLRegExp(syntax): TLRegExp(syntax.clone());
+				});
+			case TELocal(syntax, v):
+				TELocal(syntax.clone(), v);
+			case TEField(obj, fieldName, fieldToken):
+				var clonedObj = switch obj.kind {
+					case TOImplicitThis(_) | TOImplicitClass(_): obj;
+					case TOExplicit(dot, e): obj.with(kind = TOExplicit(dot.clone(), cloneExpr(e)));
+				};
+				TEField(clonedObj, fieldName, fieldToken.clone());
+			case TEBuiltin(syntax, name):
+				TEBuiltin(syntax.clone(), name);
+			case TEReturn(keyword, e):
+				TEReturn(keyword.clone(), if (e == null) null else cloneExpr(e));
+			case TEThrow(keyword, e):
+				TEThrow(keyword.clone(), cloneExpr(e));
+			case TEDelete(keyword, e):
+				TEDelete(keyword.clone(), cloneExpr(e));
+			case TEBreak(keyword):
+				TEBreak(keyword.clone());
+			case TEContinue(keyword):
+				TEContinue(keyword.clone());
+			case TEHaxeRetype(e):
+				TEHaxeRetype(cloneExpr(e));
+			case TEHaxeIntIter(start, end):
+				TEHaxeIntIter(cloneExpr(start), cloneExpr(end));
+			case TEDeclRef(path, c): throw "TODO";
+			case TELocalFunction(f): throw "TODO";
+			case TECall(eobj, args): throw "TODO";
+			case TECast(c): throw "TODO";
+			case TEArrayDecl(a): throw "TODO";
+			case TEVectorDecl(v): throw "TODO";
+			case TEVars(kind, vars): throw "TODO";
+			case TEObjectDecl(o): throw "TODO";
+			case TEArrayAccess(a): throw "TODO";
+			case TEBlock(block): throw "TODO";
+			case TETry(t): throw "TODO";
+			case TEVector(syntax, type): throw "TODO";
+			case TETernary(t): throw "TODO";
+			case TEIf(i): throw "TODO";
+			case TEWhile(w): throw "TODO";
+			case TEDoWhile(w): throw "TODO";
+			case TEFor(f): throw "TODO";
+			case TEForIn(f): throw "TODO";
+			case TEForEach(f): throw "TODO";
+			case TEHaxeFor(f): throw "TODO";
+			case TEBinop(a, op, b): throw "TODO";
+			case TEPreUnop(op, e): throw "TODO";
+			case TEPostUnop(e, op): throw "TODO";
+			case TEAs(e, keyword, type): throw "TODO";
+			case TESwitch(s): throw "TODO";
+			case TENew(keyword, cls, args): throw "TODO";
+			case TECondCompValue(v): throw "TODO";
+			case TECondCompBlock(v, expr): throw "TODO";
+			case TEXmlChild(x): throw "TODO";
+			case TEXmlAttr(x): throw "TODO";
+			case TEXmlAttrExpr(x): throw "TODO";
+			case TEXmlDescend(x): throw "TODO";
+			case TEUseNamespace(ns): throw "TODO";
+		});
+	}
+
 	public static function mapExpr(f:TExpr->TExpr, e1:TExpr):TExpr {
 		return switch (e1.kind) {
 			case TEVector(_) | TELiteral(_) | TEUseNamespace(_) | TELocal(_) | TEBuiltin(_) | TEDeclRef(_) | TEReturn(_, null) | TEBreak(_) | TEContinue(_) | TECondCompValue(_):
