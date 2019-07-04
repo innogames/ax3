@@ -222,6 +222,7 @@ class ExternModuleLevelImports extends AbstractFilter {
 								syntax: {leadTrivia: [trTab]},
 								isPublic: true,
 								isStatic: true,
+								metadata: [],
 								isFlashProperty: false,
 								name: fieldName,
 								get: true,

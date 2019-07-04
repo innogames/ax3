@@ -256,6 +256,7 @@ class GenHaxe extends PrinterBase {
 			case TFGetter(a) | TFSetter(a) if (a.haxeProperty != null):
 				var p = a.haxeProperty;
 				printTrivia(p.syntax.leadTrivia);
+				printMetadata(p.metadata);
 				// if (p.isFlashProperty) TODO: re-enable the check for the final move to the converted code
 					buf.add("@:flash.property ");
 				if (p.isPublic) buf.add("public ");

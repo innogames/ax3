@@ -6,6 +6,7 @@ private typedef Modifiers = {
 	final isOverride:Bool;
 }
 
+// TODO: cleanup visibility handling because HandleVisibilityModifiers makes it messy for this filter
 class HaxeProperties extends AbstractFilter {
 	var currentClass:TClassOrInterfaceDecl;
 	var currentProperties:Null<Map<String,THaxePropDecl>>;
@@ -25,7 +26,7 @@ class HaxeProperties extends AbstractFilter {
 		}
 	}
 
-	function addProperty(name:String, set:Bool, type:TType, mods:Modifiers, leadToken:Token):Null<THaxePropDecl> {
+	function addProperty(name:String, set:Bool, type:TType, mods:Modifiers, leadToken:Token, metadata:Array<TMetadata>):Null<THaxePropDecl> {
 		// TODO: determine indentation and add it to the accessor method
 		var leadTrivia = leadToken.leadTrivia;
 		leadToken.leadTrivia = [];
@@ -35,10 +36,11 @@ class HaxeProperties extends AbstractFilter {
 		var prop = currentProperties[name];
 		var isNewProperty = (prop == null);
 		if (isNewProperty) {
-			prop = {syntax: {leadTrivia: leadTrivia}, name: name, get: false, set: false, type: type, isPublic: mods.isPublic, isStatic: mods.isStatic, isFlashProperty: false};
+			prop = {syntax: {leadTrivia: leadTrivia}, name: name, get: false, set: false, type: type, isPublic: mods.isPublic, isStatic: mods.isStatic, isFlashProperty: false, metadata: metadata};
 			currentProperties.set(name, prop);
 		} else {
 			prop.syntax.leadTrivia = prop.syntax.leadTrivia.concat(leadTrivia);
+			prop.metadata = prop.metadata.concat(metadata);
 		}
 
 		if (set) prop.set = true else prop.get = true;
@@ -113,7 +115,7 @@ class HaxeProperties extends AbstractFilter {
 	function processGetter(field:TClassField, accessor:TAccessorField, mods:Modifiers, leadToken:Token) {
 		removePublicModifier(field);
 		if (!mods.isOverride) {
-			var prop = addProperty(accessor.name, false, accessor.fun.sig.ret.type, mods, leadToken);
+			var prop = addProperty(accessor.name, false, accessor.fun.sig.ret.type, mods, leadToken, removeMetadata(field));
 			if (prop != null) {
 				accessor.haxeProperty = prop;
 				if (isImplementingExternProperty(currentClass, accessor.name, true)) {
@@ -151,7 +153,7 @@ class HaxeProperties extends AbstractFilter {
 		}
 
 		if (!mods.isOverride) {
-			var prop = addProperty(accessor.name, true, type, mods, leadToken);
+			var prop = addProperty(accessor.name, true, type, mods, leadToken, removeMetadata(field));
 			if (prop != null) {
 				accessor.haxeProperty = prop;
 				if (isImplementingExternProperty(currentClass, accessor.name, false)) {
@@ -161,5 +163,11 @@ class HaxeProperties extends AbstractFilter {
 				}
 			}
 		}
+	}
+
+	static function removeMetadata(field:TClassField):Array<TMetadata> {
+		var result = field.metadata;
+		field.metadata = [];
+		return result;
 	}
 }

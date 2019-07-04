@@ -445,6 +445,7 @@ typedef THaxePropDecl = {
 	var syntax:{
 		var leadTrivia:Array<Trivia>; // for indentation
 	}
+	var metadata:Array<TMetadata>;
 	var isPublic:Bool;
 	var isStatic:Bool;
 	var isFlashProperty:Bool;
