@@ -20,26 +20,28 @@ class UnqualifiedSuperStatics extends AbstractFilter {
 			case TEField({kind: TOImplicitClass(c), type: tSuperRef}, fieldName, fieldToken) if (c != thisClass):
 				var leadTrivia = fieldToken.leadTrivia;
 				fieldToken.leadTrivia = [];
-
-				var dotPath:DotPath = {
-					var parts;
-					if (!thisClass.parentModule.isImported(c) && c.parentModule.pack.name != "") {
-						parts = c.parentModule.pack.name.split(".");
-						parts.push(c.name);
-					} else {
-						parts = [c.name];
-					}
-					{
-						first: new Token(0, TkIdent, parts[0], leadTrivia, []),
-						rest: [for (i in 1...parts.length) {sep: mkDot(), element: mkIdent(parts[i])}]
-					};
-				};
-
-				var eSuperRef = mk(TEDeclRef(dotPath, {name: c.name, kind: TDClassOrInterface(c)}), tSuperRef, tSuperRef);
-
+				var eSuperRef = mkDeclRef(c, leadTrivia);
 				e.with(kind = TEField({kind: TOExplicit(mkDot(), eSuperRef), type: tSuperRef}, fieldName, fieldToken));
 			case _:
 				mapExpr(processExpr, e);
 		}
+	}
+
+	function mkDeclRef(c:TClassOrInterfaceDecl, leadTrivia:Array<Trivia>):TExpr {
+		var dotPath:DotPath = {
+			var parts;
+			if (!thisClass.parentModule.isImported(c) && c.parentModule.pack.name != "") {
+				parts = c.parentModule.pack.name.split(".");
+				parts.push(c.name);
+			} else {
+				parts = [c.name];
+			}
+			{
+				first: new Token(0, TkIdent, parts[0], leadTrivia, []),
+				rest: [for (i in 1...parts.length) {sep: mkDot(), element: mkIdent(parts[i])}]
+			};
+		};
+		var tDeclRef = TTStatic(c);
+		return mk(TEDeclRef(dotPath, {name: c.name, kind: TDClassOrInterface(c)}), tDeclRef, tDeclRef);
 	}
 }
