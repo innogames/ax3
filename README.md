@@ -42,10 +42,10 @@ Originally I used JS target, but node.js worked slower and eventually died on so
 
 Most of the `TODO`s are actually in the code, so look there too, but still:
 
- - implement class-wrapping for module-level vars/functions
  - patch some types loaded from SWC (e.g. `DisplayObject.filters` is `Array<BitmapFilter>`)
  - don't parse `*=` as a single token when parsing signatures (fix `a:*=b` parsing without spaces)
  - add a filter to remove redundant parenthesis, because they can become redundant due to expression rewriting (e.g. stripping away `as` upcasts)
  - rewrite `arr[arr.length] = value` to `arr.push(value)`
  - generate "type patch" files for loaded SWCs, replacing `Object` with `ASObject` and `*` with `ASAny`
  - remove `:Void` type hints for class methods (not sure about that, but it looks clean)
+ - generate something sensible for `Object` used as a type-expr (e.g. in `call(Object)`)
