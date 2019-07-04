@@ -37,6 +37,11 @@ class ToString extends AbstractFilter {
 						var eToString = mk(TEField({kind: TOExplicit(mkDot(), e), type: e.type}, "toString", mkIdent("toString")), tToString, tToString);
 						mkCall(eToString, [], TTString, removeTrailingTrivia(e));
 
+					// these are not really about "ToString", but I haven't found a better place to add them without introducing yet another filter
+					// normally this can't happen in AS3, unless you do `for (var i:int in someObject)` then it can ¯\_(ツ)_/¯
+					case [TTString, TTInt | TTUint]: mkCastCall("toInt", e, TTInt);
+					case [TTString, TTNumber]: mkCastCall("toNumber", e, TTNumber);
+
 					case [_, TTString]:
 						reportError(exprPos(e), "Unknown to string coercion (actual type is " + e.type + ")");
 						e;
@@ -45,5 +50,17 @@ class ToString extends AbstractFilter {
 						e;
 				}
 		}
+	}
+
+	static function mkCastCall(methodName:String, e:TExpr, t:TType):TExpr {
+		var eCastMethod = mkBuiltin("ASCompat." + methodName, TTFunction, removeLeadingTrivia(e));
+		return e.with(
+			kind = TECall(eCastMethod, {
+				openParen: mkOpenParen(),
+				args: [{expr: e, comma: null}],
+				closeParen: mkCloseParen(removeTrailingTrivia(e))
+			}),
+			type = t
+		);
 	}
 }
