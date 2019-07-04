@@ -13,7 +13,8 @@ class RewriteMeta extends AbstractFilter {
 							newMetadata.push(haxeMetaFromFlash(m, "@:postConstruct"));
 						case "PreDestroy":
 							newMetadata.push(haxeMetaFromFlash(m, "@:preDestroy"));
-						// case "Inline":
+						case "Inline":
+							newMetadata.push(meta);
 						// 	// TODO: Haxe `inline` generation is disabled, because Haxe cannot always
 						// 	// statically inline methods and emits `Cannot inline a not final return` error
 						// 	// we can still detect this by checking the method body and only generate `inline`
