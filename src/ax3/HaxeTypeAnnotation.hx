@@ -80,7 +80,7 @@ abstract HaxeTypeAnnotation(String) {
 
 		// before first modifier
 		t = extractFromDeclModifiers(v.modifiers);
-		if (t != null) t;
+		if (t != null) return t;
 
 		// before the keyword
 		return switch (v.kind) {
