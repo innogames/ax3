@@ -933,7 +933,7 @@ class ExprTyper {
 				var type = switch [a.type, b.type] {
 					case [TTString, _] | [_, TTString]: TTString; // string concat
 					case [TTNumber, (TTNumber | TTInt | TTUint)] | [(TTInt | TTUint), TTNumber]: TTNumber; // always number
-					case [TTInt, TTUint] | [TTUint, TTInt]: TTUint; // always uint
+					case [TTInt, TTUint] | [TTUint, (TTInt | TTUint)]: TTUint; // always uint
 					case [TTInt, TTInt]: TTInt; // int addition
 					case [TTAny, _] | [_, TTAny]:
 						err("Dynamic + operation!", plus.pos);
@@ -950,7 +950,7 @@ class ExprTyper {
 
 				var type = switch [a.type, b.type] {
 					case [TTNumber, (TTNumber | TTInt | TTUint)] | [(TTInt | TTUint), TTNumber]: TTNumber; // always number
-					case [TTInt, TTUint] | [TTUint, TTInt]: TTUint; // always uint
+					case [TTInt, TTUint] | [TTUint, (TTInt | TTUint)]: TTUint; // always uint
 					case [TTInt, TTInt]: TTInt;
 					case [TTAny, _] | [_, TTAny]:
 						err("Dynamic arithmetic operation!", token.pos);
