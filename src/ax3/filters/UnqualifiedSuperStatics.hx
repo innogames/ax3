@@ -20,14 +20,14 @@ class UnqualifiedSuperStatics extends AbstractFilter {
 			case TEField({kind: TOImplicitClass(c), type: tSuperRef}, fieldName, fieldToken) if (c != thisClass):
 				var leadTrivia = fieldToken.leadTrivia;
 				fieldToken.leadTrivia = [];
-				var eSuperRef = mkDeclRef(c, leadTrivia);
+				var eSuperRef = mkDeclRef(thisClass, c, leadTrivia);
 				e.with(kind = TEField({kind: TOExplicit(mkDot(), eSuperRef), type: tSuperRef}, fieldName, fieldToken));
 			case _:
 				mapExpr(processExpr, e);
 		}
 	}
 
-	function mkDeclRef(c:TClassOrInterfaceDecl, leadTrivia:Array<Trivia>):TExpr {
+	public static function mkDeclRef(thisClass:TClassOrInterfaceDecl, c:TClassOrInterfaceDecl, leadTrivia:Array<Trivia>):TExpr {
 		var dotPath:DotPath = {
 			var parts;
 			if (!thisClass.parentModule.isImported(c) && c.parentModule.pack.name != "") {

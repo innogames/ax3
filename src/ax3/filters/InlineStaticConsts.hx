@@ -28,6 +28,13 @@ class InlineStaticConsts extends AbstractFilter {
 }
 
 class FixInlineStaticConstAccess extends AbstractFilter {
+	var thisClass:Null<TClassOrInterfaceDecl>;
+	override function processClass(c:TClassOrInterfaceDecl) {
+		thisClass = c;
+		super.processClass(c);
+		thisClass = null;
+	}
+
 	override function processExpr(e:TExpr):TExpr {
 		e = mapExpr(processExpr, e);
 		return switch e.kind {
@@ -42,6 +49,23 @@ class FixInlineStaticConstAccess extends AbstractFilter {
 					case _:
 						e;
 				}
+
+			case TEField({kind: TOExplicit(dot, expr), type: TTInst(c)}, fieldName, fieldToken):
+				switch c.findFieldInHierarchy(fieldName, true) {
+					case {field: {kind: TFVar({isInline: true})}, declaringClass: c}:
+						if (!canBeRepeated(expr)) { // TODO: this is not really about repeating, but side-effects, so we can omit the expr without changing behaviour
+							throwError(dot.pos, "Const field that was made static is accessed through an instance expression that cannot be safely rewritten into a class reference");
+						}
+						expr = UnqualifiedSuperStatics.mkDeclRef(thisClass, c, removeLeadingTrivia(expr));
+						e.with(kind = TEField(
+							{kind: TOExplicit(dot, expr), type: expr.type},
+							fieldName,
+							fieldToken
+						));
+					case _:
+						e;
+				}
+
 			case _:
 				e;
 		}
