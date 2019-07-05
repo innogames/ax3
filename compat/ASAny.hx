@@ -137,8 +137,10 @@ abstract ASAny(Dynamic)
 	}
 
 	// TODO: this (with Dynamic) will only really work on JS and Flash, but oh well
-	@:op(a - b) static inline function ___minusAny(a:ASAny, b:ASAny):ASAny return (a:Dynamic) - (b:Dynamic);
-	@:op(a + b) static inline function ___plusAny(a:ASAny, b:ASAny):ASAny return (a:Dynamic) + (b:Dynamic);
+	@:op(a - b) static inline function ___subAny(a:ASAny, b:ASAny):ASAny return (a:Dynamic) - (b:Dynamic);
+	@:op(a + b) static inline function ___addAny(a:ASAny, b:ASAny):ASAny return (a:Dynamic) + (b:Dynamic);
+	@:op(a / b) static inline function ___divAny(a:ASAny, b:ASAny):ASAny return (a:Dynamic) / (b:Dynamic);
+	@:op(a * b) static inline function ___mulAny(a:ASAny, b:ASAny):ASAny return (a:Dynamic) * (b:Dynamic);
 
 	@:op(a > b) static function ___gt(a:ASAny, b:Float):Bool return a.___toFloat() > b;
 	@:op(a < b) static function ___lt(a:ASAny, b:Float):Bool return a.___toFloat() < b;
