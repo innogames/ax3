@@ -44,7 +44,7 @@ class RewriteCasts extends AbstractFilter {
 						}));
 
 					// Number(already a number)
-					case [TTNumber | TTInt | TTUint, TTNumber]: // TODO: is it really safe to include Int types here?
+					case [TTNumber | TTInt | TTUint, TTNumber]:
 						stripCast();
 
 					// Number(other)
