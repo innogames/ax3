@@ -49,3 +49,4 @@ Most of the `TODO`s are actually in the code, so look there too, but still:
  - generate "type patch" files for loaded SWCs, replacing `Object` with `ASObject` and `*` with `ASAny`
  - remove `:Void` type hints for class methods (not sure about that, but it looks clean)
  - generate something sensible for `Object` used as a type-expr (e.g. in `call(Object)`)
+ - review and cleanup `ASCompat` - rework some things as static extensions (e.g. Vector/Array compat methods)
