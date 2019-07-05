@@ -191,11 +191,12 @@ class ASArray {
 		return a;
 	}
 
-	#if flash // TODO: implement for other targets
 	public static inline function sortOn<T>(a:Array<T>, fieldName:String, options:Int):Array<T> {
+		// TODO: this will only work on Flash, but we need it to _compile_ on JS too for now, so `RectanglePacker` is not breaking the build :-P
 		return (cast a).sortOn(fieldName, options);
 	}
 
+	#if flash // TODO: implement for other targets
 	public static inline function sortWithOptions<T>(a:Array<T>, options:Int):Array<T> {
 		return (cast a).sort(options);
 	}
