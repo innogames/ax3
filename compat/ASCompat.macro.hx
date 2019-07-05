@@ -88,12 +88,21 @@ class ASCompat {
 
 class ASArray {
 	static function pushMultiple<T>(a:Expr, first:Expr, rest:Array<Expr>):Expr {
-		var exprs = [macro ___arr.push($first)];
+		return makeMultipleAppend("push", a, first, rest);
+	}
+
+	static function unshiftMultiple<T>(a:Expr, first:Expr, rest:Array<Expr>):Expr {
+		return makeMultipleAppend("unshift", a, first, rest);
+	}
+
+	static function makeMultipleAppend(methodName:String, object:Expr, firstValue:Expr, rest:Array<Expr>):Expr {
+		var pos = Context.currentPos();
+		var exprs = [macro @:pos(pos) ___arr.$methodName($firstValue)];
 		for (expr in rest) {
-			exprs.push(macro ___arr.push($expr));
+			exprs.push(macro @:pos(pos) ___arr.$methodName($expr));
 		}
-		return macro @:pos(Context.currentPos()) {
-			var ___arr = $a;
+		return macro @:pos(pos) {
+			var ___arr = $object;
 			$b{exprs};
 		};
 	}
