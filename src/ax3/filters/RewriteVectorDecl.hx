@@ -76,7 +76,7 @@ class RewriteVectorDecl extends AbstractFilter {
 								// array decl with all elements conforming
 							case _:
 								// add type cast
-								var t = TTArray(elemType); // TODO: support inserting `cast` in TEHaxeRetype
+								var t = TTArray(elemType);
 								var eRetypedArray = eArray.with(expr = mk(TEHaxeRetype(eArrayExpr.with(expectedType = t)), t, t));
 								args = args.with(args = [eRetypedArray]);
 						}
