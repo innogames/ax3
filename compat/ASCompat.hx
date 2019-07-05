@@ -221,7 +221,11 @@ class ASVector {
 }
 
 class ASVectorTools {
+	#if flash inline #end
 	public static function filter<T>(v:flash.Vector<T>, callback:(item:T, index:Int, vector:flash.Vector<T>)->Bool):flash.Vector<T> {
+		#if flash
+		return (cast v).filter(callback);
+		#else
 		var result = new flash.Vector<T>();
 		for (i in 0...v.length) {
 			var item = v[i];
@@ -230,24 +234,48 @@ class ASVectorTools {
 			}
 		}
 		return result;
+		#end
 	}
 
+	#if flash inline #end
+	public static function map<T,T2>(v:flash.Vector<T>, callback:(item:T, index:Int, vector:flash.Vector<T>)->T2):flash.Vector<T2> {
+		#if flash
+		return (cast v).map(callback);
+		#else
+		var result = new flash.Vector<T2>(v.length);
+		for (i in 0...v.length) {
+			result[i] = callback(v[i], i, v);
+		}
+		return result;
+		#end
+	}
+
+	#if flash inline #end
 	public static function every<T>(v:flash.Vector<T>, callback:(item:T, index:Int, vector:flash.Vector<T>)->Bool):Bool {
+		#if flash
+		return (cast v).every(callback);
+		#else
 		for (i in 0...v.length) {
 			if (!callback(v[i], i, v)) {
 				return false;
 			}
 		}
 		return true;
+		#end
 	}
 
+	#if flash inline #end
 	public static function some<T>(v:flash.Vector<T>, callback:(item:T, index:Int, vector:flash.Vector<T>)->Bool):Bool {
+		#if flash
+		return (cast v).some(callback);
+		#else
 		for (i in 0...v.length) {
 			if (callback(v[i], i, v)) {
 				return true;
 			}
 		}
 		return false;
+		#end
 	}
 }
 
