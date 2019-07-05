@@ -637,7 +637,7 @@ class GenAS3 extends PrinterBase {
 	function printObjectDecl(o:TObjectDecl) {
 		printOpenBrace(o.syntax.openBrace);
 		for (f in o.fields) {
-			printTextWithTrivia(f.name, f.syntax.name); // TODO: quoted fields
+			printTextWithTrivia(f.name, f.syntax.name);
 			printColon(f.syntax.colon);
 			printExpr(f.expr);
 			if (f.syntax.comma != null) printComma(f.syntax.comma);
