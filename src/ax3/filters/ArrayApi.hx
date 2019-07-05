@@ -29,19 +29,29 @@ class ArrayApi extends AbstractFilter {
 						throwError(exprPos(e), "Unsupported Array.sortOn arguments");
 				}
 
-			// array.sort()
-			case TECall(obj = {kind: TEField({kind: TOExplicit(_, {type: TTArray(_)})}, "sort", _)}, args = {args: []}):
-				e.with(kind = TECall(obj, args.with(args = [{expr: eReflectCompare, comma: null}])));
-
-			// Vector.sort
-			case TECall({kind: TEField({kind: TOExplicit(dot, eVector = {type: TTVector(_)})}, "sort", fieldToken)}, args):
+			// Vector/Array.sort
+			case TECall(obj = {kind: TEField({kind: TOExplicit(dot, eVector = {type: TTVector(_) | TTArray(_)})}, "sort", _)}, args):
+				// TODO: refactor this a bit, too much duplication here
+				var kind = if (eVector.type.match(TTVector(_))) "Vector" else "Array";
 				switch args.args {
+					case [] if (kind == "Array"):
+						var reflectCompareArg = {expr: eReflectCompare, comma: null};
+						if (e.expectedType != TTVoid) {
+							var eCompatVector = mkBuiltin("ASCompat.ASArray", TTBuiltin, removeLeadingTrivia(eVector));
+							e.with(kind = TECall(
+								mk(TEField({kind: TOExplicit(dot, eCompatVector), type: eCompatVector.type}, "sort", mkIdent("sort")), TTFunction, TTFunction),
+								args.with(args = [{expr: eVector, comma: commaWithSpace}, reflectCompareArg])
+							));
+						} else {
+							e.with(kind = TECall(obj, args.with(args = [reflectCompareArg])));
+						}
+
 					case [{expr: {type: TTFunction | TTFun(_)}}]:
 						if (e.expectedType != TTVoid) {
 							// method used in a value place. AS3 API modifies the vector inplace, but still returns itself
 							// for Haxe we could generate `{ expr.sort(); expr; }`, but since `expr` can be a complex
 							// expression with possible side-effects, let's just keep it simple and call an ASCompat method
-							var eCompatVector = mkBuiltin("ASCompat.ASVector", TTBuiltin, removeLeadingTrivia(eVector));
+							var eCompatVector = mkBuiltin("ASCompat.AS" + kind, TTBuiltin, removeLeadingTrivia(eVector));
 							e.with(kind = TECall(
 								mk(TEField({kind: TOExplicit(dot, eCompatVector), type: eCompatVector.type}, "sort", mkIdent("sort")), TTFunction, TTFunction),
 								args.with(args = [{expr: eVector, comma: commaWithSpace}, args.args[0]])
@@ -52,7 +62,7 @@ class ArrayApi extends AbstractFilter {
 						}
 
 					case [eOptions = {expr: {type: TTInt | TTUint}}]:
-						var eCompatVector = mkBuiltin("ASCompat.ASVector", TTBuiltin, removeLeadingTrivia(eVector));
+						var eCompatVector = mkBuiltin("ASCompat.AS" + kind, TTBuiltin, removeLeadingTrivia(eVector));
 						e.with(kind = TECall(
 							mk(TEField({kind: TOExplicit(dot, eCompatVector), type: eCompatVector.type}, "sortWithOptions", mkIdent("sortWithOptions")), TTFunction, TTFunction),
 							args.with(args = [
@@ -62,7 +72,7 @@ class ArrayApi extends AbstractFilter {
 						));
 
 					case _:
-						throwError(exprPos(e), "Unsupported Vector.sort arguments");
+						throwError(exprPos(e), 'Unsupported $kind.sort arguments');
 				}
 
 			// concat with no args

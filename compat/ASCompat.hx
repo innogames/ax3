@@ -186,9 +186,20 @@ class ASArray {
 	public static inline final RETURNINDEXEDARRAY = 8;
 	public static inline final UNIQUESORT = 4;
 
+	public static inline function sort<T>(a:Array<T>, f:(T, T) -> Int):Array<T> {
+		a.sort(f);
+		return a;
+	}
+
+	#if flash // TODO: implement for other targets
 	public static inline function sortOn<T>(a:Array<T>, fieldName:String, options:Int):Array<T> {
 		return (cast a).sortOn(fieldName, options);
 	}
+
+	public static inline function sortWithOptions<T>(a:Array<T>, options:Int):Array<T> {
+		return (cast a).sort(options);
+	}
+	#end
 
 	public static macro function pushMultiple<T>(a:ExprOf<Array<T>>, first:ExprOf<T>, rest:Array<ExprOf<T>>):ExprOf<Int>;
 	public static macro function unshiftMultiple<T>(a:ExprOf<Array<T>>, first:ExprOf<T>, rest:Array<ExprOf<T>>):ExprOf<Int>;
