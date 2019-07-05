@@ -12,7 +12,6 @@ class InlineStaticConsts extends AbstractFilter {
 				if (isConstantLiteral) {
 					var isStatic = Lambda.exists(field.modifiers, m -> m.match(FMStatic(_)));
 					// TODO: deal with leading trivia here
-					// TODO: static is disabled because we also need to change field access expressions
 					if (!isStatic) {
 						field.modifiers.push(FMStatic(new Token(0, TkIdent, "static", [], [whitespace])));
 						isStatic = true;
