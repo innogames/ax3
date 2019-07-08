@@ -618,7 +618,7 @@ class ExprTyper {
 			case "join": TTFun([TTAny], TTString);
 			case "push" | "unshift": TTFun([t], TTUint, TRestSwc);
 			case "pop" | "shift": TTFun([], t);
-			case "concat": TTFun([tUntypedArray], TTArray(t));
+			case "concat": TTFun([TTArray(t)], TTArray(t));
 			case "indexOf" | "lastIndexOf": TTFun([t, TTInt], TTInt);
 			case "slice": TTFun([TTInt, TTInt], TTArray(t));
 			case "splice": TTFun([TTInt, TTUint, TTAny], TTArray(t));
