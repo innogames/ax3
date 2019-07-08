@@ -222,6 +222,17 @@ class ASVector {
 
 class ASVectorTools {
 	#if flash inline #end
+	public static function forEach<T>(v:flash.Vector<T>, callback:(item:T, index:Int, vector:flash.Vector<T>)->Void):Void {
+		#if flash
+		(cast v).forEach(callback);
+		#else
+		for (i in 0...v.length) {
+			callback(v[i], i, v);
+		}
+		#end
+	}
+
+	#if flash inline #end
 	public static function filter<T>(v:flash.Vector<T>, callback:(item:T, index:Int, vector:flash.Vector<T>)->Bool):flash.Vector<T> {
 		#if flash
 		return (cast v).filter(callback);
