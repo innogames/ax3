@@ -201,6 +201,8 @@ class GenHaxe extends PrinterBase {
 		}
 		printOpenBrace(c.syntax.openBrace);
 
+		var staticInits = [];
+
 		for (m in c.members) {
 			switch (m) {
 				case TMCondCompBegin(b):
@@ -217,13 +219,19 @@ class GenHaxe extends PrinterBase {
 					printTextWithTrivia("", semicolon);
 
 				case TMStaticInit(i):
-					// let's hope that people are sane(ish) and there's only one static init per class :)
-					printTrivia(TypedTreeTools.removeLeadingTrivia(i.expr));
-					var trailTrivia = TypedTreeTools.removeTrailingTrivia(i.expr);
-					buf.add("static function __init__() ");
-					printExpr(i.expr);
-					printTrivia(trailTrivia);
+					staticInits.push(i);
 			}
+		}
+
+		if (staticInits.length > 0) {
+			buf.add("\n\tstatic function __init__() {\n");
+			for (i in staticInits) {
+				printTrivia(TypedTreeTools.removeLeadingTrivia(i.expr));
+				var trailTrivia = TypedTreeTools.removeTrailingTrivia(i.expr);
+				printExpr(i.expr);
+				printTrivia(trailTrivia);
+			}
+			buf.add("\n\t}\n");
 		}
 
 		printCloseBrace(c.syntax.closeBrace);
