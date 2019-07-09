@@ -40,6 +40,15 @@ class RewriteAs extends AbstractFilter {
 							closeParen: mkCloseParen(removeTrailingTrivia(e))
 						}));
 
+					case TTDictionary(k, v):
+						if (k != TTAny || v != TTAny) throwError(exprPos(e), "assert"); // only untyped Dictionary can come from the AS3 `as` cast
+						var eAsDictMethod = mkBuiltin("ASDictionary.asDictionary", TTFunction, removeLeadingTrivia(e));
+						e.with(kind = TECall(eAsDictMethod, {
+							openParen: mkOpenParen(),
+							args: [{expr: eobj, comma: null}],
+							closeParen: mkCloseParen(removeTrailingTrivia(e))
+						}));
+
 					case TTArray(tElem):
 						if (tElem != TTAny) throwError(exprPos(e), "assert"); // only TTArray(TTAny) can come from AS3 `as` cast
 						var needsTypeCheck = false;

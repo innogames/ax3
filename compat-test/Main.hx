@@ -4,6 +4,7 @@ class Main {
 			new TestASAny(),
 			new TestXML(),
 			new TestASCompat(),
+			new TestASDictionary(),
 		]);
 	}
 }
