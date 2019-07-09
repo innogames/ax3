@@ -548,6 +548,8 @@ class ExprTyper {
 			case "children": TTFun([], TTXMLList);
 			case "comments": TTFun([], TTXMLList);
 			case "contains": TTFun([TTXML], TTBoolean);
+			case "name": TTFun([], TTString);
+			case "localName": TTFun([], TTString);
 			case "copy": TTFun([], TTXML);
 			case "descendants": TTFun([tUntypedObject], TTXMLList);
 			case "elements": TTFun([tUntypedObject], TTXMLList);

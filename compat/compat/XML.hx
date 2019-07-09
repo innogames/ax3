@@ -47,6 +47,22 @@ abstract XML(XMLImpl) from XMLImpl to XMLImpl {
 		#end
 	}
 
+	public function children():XMLList {
+		#if flash
+		return this.children();
+		#else
+		return [for (x in this.elements()) x];
+		#end
+	}
+
+	public function localName():String {
+		#if flash
+		return this.localName();
+		#else
+		return this.nodeName;
+		#end
+	}
+
 	public function descendants(name:String):XMLList {
 		#if flash
 		return this.descendants(name);

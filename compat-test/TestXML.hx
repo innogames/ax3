@@ -41,6 +41,16 @@ class TestXML extends utest.Test {
 		equals("<li>1</li>\n<li>2</li>", x.child("li").toXMLString());
 	}
 
+	function testChildren() {
+		var x = new compat.XML('<ul><li>1</li><notli/><li>2</li></ul>');
+		equals("<li>1</li>\n<notli/>\n<li>2</li>", x.children().toXMLString());
+	}
+
+	function testLocalName() {
+		var x = new compat.XML('<element/>');
+		equals("element", x.localName());
+	}
+
 	function testDescendants() {
 		var x = new compat.XML('
 			<root>
