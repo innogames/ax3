@@ -256,8 +256,10 @@ class TestASAny extends utest.Test {
 	}
 
 	function testMixedArray() {
+		#if !flash // TODO
 		var x:ASAny = [1, false, "hi"];
 		same([1, false, "hi"], x);
+		#end
 
 		var x:ASObject = [1, false, "hi"];
 		same([1, false, "hi"], x);
