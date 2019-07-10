@@ -28,19 +28,7 @@ class UnqualifiedSuperStatics extends AbstractFilter {
 	}
 
 	public static function mkDeclRef(thisClass:TClassOrInterfaceDecl, c:TClassOrInterfaceDecl, leadTrivia:Array<Trivia>):TExpr {
-		var dotPath:DotPath = {
-			var parts;
-			if (!thisClass.parentModule.isImported(c) && c.parentModule.pack.name != "") {
-				parts = c.parentModule.pack.name.split(".");
-				parts.push(c.name);
-			} else {
-				parts = [c.name];
-			}
-			{
-				first: new Token(0, TkIdent, parts[0], leadTrivia, []),
-				rest: [for (i in 1...parts.length) {sep: mkDot(), element: mkIdent(parts[i])}]
-			};
-		};
+		var dotPath = mkDeclDotPath(thisClass, c, leadTrivia);
 		var tDeclRef = TTStatic(c);
 		return mk(TEDeclRef(dotPath, {name: c.name, kind: TDClassOrInterface(c)}), tDeclRef, tDeclRef);
 	}

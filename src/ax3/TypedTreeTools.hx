@@ -776,21 +776,38 @@ class TypedTreeTools {
 		return if (r == null) exprs else r;
 	}
 
+	public static function mkDeclDotPath(thisClass:TClassOrInterfaceDecl, c:TClassOrInterfaceDecl, leadTrivia:Array<Trivia>):DotPath {
+		var parts;
+		if (!thisClass.parentModule.isImported(c) && c.parentModule.pack.name != "") {
+			parts = c.parentModule.pack.name.split(".");
+			parts.push(c.name);
+		} else {
+			parts = [c.name];
+		}
+		return {
+			first: new Token(0, TkIdent, parts[0], leadTrivia, []),
+			rest: [for (i in 1...parts.length) {sep: mkDot(), element: mkIdent(parts[i])}]
+		};
+	}
+
 	public static function determineCastKind(valueType:TType, asClass:TClassOrInterfaceDecl):CastKind {
 		return switch valueType {
-			case TTInst(valueClass):
-				if (valueClass == asClass)
-					CKSameClass
-				else if (isChildClass(valueClass, asClass))
-					CKUpcast
-				else if (isChildClass(asClass, valueClass))
-					CKDowncast
-				else
-					CKUnknown;
-			case _:
-				CKUnknown;
+			case TTInst(valueClass): determineClassCastKind(valueClass, asClass);
+			case _: CKUnknown;
 		}
 	}
+
+	public static function determineClassCastKind(valueClass:TClassOrInterfaceDecl, asClass:TClassOrInterfaceDecl):CastKind {
+		return if (valueClass == asClass)
+			CKSameClass
+		else if (isChildClass(valueClass, asClass))
+			CKUpcast
+		else if (isChildClass(asClass, valueClass))
+			CKDowncast
+		else
+			CKUnknown;
+	}
+
 	static function isChildClass(cls:TClassOrInterfaceDecl, base:TClassOrInterfaceDecl):Bool {
 		function loop(cls:TClassOrInterfaceDecl):Bool {
 			if (cls == base) {

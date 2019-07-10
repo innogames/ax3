@@ -29,6 +29,13 @@ class TypedTree {
 		return mod.pack.decl;
 	}
 
+	public function getClassOrInterface(packName:String, name:String):TClassOrInterfaceDecl {
+		return switch getDecl(packName, name).kind {
+			case TDClassOrInterface(c): c;
+			case _: throw '$packName::$name is not a class or interface';
+		};
+	}
+
 	public function getInterface(packName:String, name:String):TClassOrInterfaceDecl {
 		return switch getDecl(packName, name).kind {
 			case TDClassOrInterface(iface) if (iface.kind.match(TInterface(_))): iface;

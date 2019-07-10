@@ -7,13 +7,12 @@ import ax3.Utils.*;
 private typedef Config = {
 	var src:EitherType<String,Array<String>>;
 	var swc:Array<String>;
-	var ?out:String;
 	var ?hxout:String;
-	var ?dump:String;
+	var ?injection:Context.InjectionConfig;
 }
 
 class Main {
-	static final ctx = new Context();
+	static var ctx:Context;
 
 	static function main() {
 		var args = Sys.args();
@@ -21,6 +20,7 @@ class Main {
 			throw "invalid args";
 		}
 		var config:Config = haxe.Json.parse(sys.io.File.getContent(args[0]));
+		ctx = new Context(config.injection);
 
 		var total = stamp();
 
