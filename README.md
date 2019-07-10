@@ -51,3 +51,4 @@ Most of the `TODO`s are actually in the code, so look there too, but still:
  - generate something sensible for `Object` used as a type-expr (e.g. in `call(Object)`)
  - review and cleanup `ASCompat` - rework some things as static extensions (e.g. Vector/Array compat methods)
  - change `__init__` into `static final ___init = {expr; null;};`
+ - add some more empty ctors to work around https://github.com/HaxeFoundation/haxe/issues/8531
