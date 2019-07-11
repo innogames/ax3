@@ -224,14 +224,17 @@ class GenHaxe extends PrinterBase {
 		}
 
 		if (staticInits.length > 0) {
-			buf.add("\n\tstatic function __init__() {\n");
+			buf.add("\n\tstatic final ___init = {\n");
 			for (i in staticInits) {
 				printTrivia(TypedTreeTools.removeLeadingTrivia(i.expr));
 				var trailTrivia = TypedTreeTools.removeTrailingTrivia(i.expr);
 				printExpr(i.expr);
 				printTrivia(trailTrivia);
 			}
-			buf.add("\n\t}\n");
+			if (needsSemicolon(staticInits[staticInits.length - 1].expr)) {
+				buf.add(";");
+			}
+			buf.add("\n\tnull;\n\t};\n");
 		}
 
 		printCloseBrace(c.syntax.closeBrace);
