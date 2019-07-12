@@ -1,5 +1,6 @@
 package ax3;
 
+import haxe.DynamicAccess;
 import haxe.extern.EitherType;
 import sys.FileSystem;
 import ax3.Utils.*;
@@ -9,6 +10,7 @@ private typedef Config = {
 	var swc:Array<String>;
 	var ?hxout:String;
 	var ?injection:Context.InjectionConfig;
+	var ?swcTypeAnnotations:DynamicAccess<HaxeTypeAnnotation>;
 }
 
 class Main {
@@ -27,7 +29,7 @@ class Main {
 		var tree = new TypedTree();
 
 		var t = stamp();
-		SWCLoader.load(tree, config.swc);
+		SWCLoader.load(tree, config.swc, config.swcTypeAnnotations);
 		Timers.swcs = stamp() - t;
 
 		var files = [];

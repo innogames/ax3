@@ -1,5 +1,6 @@
 package ax3;
 
+import haxe.DynamicAccess;
 import format.abc.Data.IName;
 import format.swf.Data.SWF;
 import format.abc.Data.MethodType;
@@ -14,18 +15,21 @@ import ax3.TypedTreeTools.tUntypedDictionary;
 class SWCLoader {
 	final tree:TypedTree;
 	final structureSetups:Array<()->Void> = [];
+	final haxeTypeAnnotations:DynamicAccess<HaxeTypeAnnotation>;
 
-	function new(tree:TypedTree) {
+	function new(tree, haxeTypeAnnotations) {
 		this.tree = tree;
+		this.haxeTypeAnnotations = haxeTypeAnnotations;
 	}
 
-	public static function load(tree:TypedTree, files:Array<String>) {
+	public static function load(tree:TypedTree, files:Array<String>, haxeTypeAnnotations:Null<DynamicAccess<HaxeTypeAnnotation>>) {
 		// loading is done in two steps:
 		// 1. create modules and empty/untyped declarations
 		// 2. resolve type references
 		//   - setup heritage: link classes/interfaces to their parents)
 		//   - setup signatures: add fields with proper types linking to declarations
-		var loader = new SWCLoader(tree);
+		if (haxeTypeAnnotations == null) haxeTypeAnnotations = {};
+		var loader = new SWCLoader(tree, haxeTypeAnnotations);
 		for (file in files) {
 			var swf = getLibrary(file);
 			loader.processLibrary(file, swf);
@@ -82,6 +86,10 @@ class SWCLoader {
 		return mod;
 	}
 
+	function getHaxeTypeAnnotation(pack:String, name:String, field:String):Null<HaxeTypeAnnotation> {
+		return haxeTypeAnnotations['$pack.$name.$field'];
+	}
+
 	function processLibrary(swcPath:String, swf:SWF) {
 		var abcs = getAbcs(swf);
 		for (abc in abcs) {
@@ -89,6 +97,7 @@ class SWCLoader {
 				var n = getPublicName(abc, cls.name);
 				if (n == null || shouldSkipClass(n.ns, n.name)) continue;
 
+				var packageName = n.ns, className = n.name;
 				var members:Array<TClassMember> = [];
 
 				inline function addVar(name:String, type:TType, isStatic:Bool, isConst:Bool) {
@@ -205,7 +214,7 @@ class SWCLoader {
 					}
 
 					structureSetups.push(function() {
-						var ctor = buildFunDecl(abc, cls.constructor);
+						var ctor = buildFunDecl(abc, cls.constructor, getHaxeTypeAnnotation(packageName, className, className));
 						addMethod(n.name, ctor, false);
 					});
 				}
@@ -227,6 +236,8 @@ class SWCLoader {
 					// TODO: sort out namespaces
 					// if (n.ns != "") throw "namespaced field name? " + n.ns;
 
+					var haxeType = getHaxeTypeAnnotation(packageName, className, n.name);
+
 					inline function buildPublicType(type) {
 						return buildTypeStructure(abc, type);
 					}
@@ -237,13 +248,13 @@ class SWCLoader {
 								addVar(n.name, if (type != null) buildPublicType(type) else TTAny, isStatic, isConst);
 
 							case FMethod(type, KNormal, _, _):
-								addMethod(n.name, buildFunDecl(abc, type), isStatic);
+								addMethod(n.name, buildFunDecl(abc, type, haxeType), isStatic);
 
 							case FMethod(type, KGetter, _, _):
-								addGetter(n.name, buildFunDecl(abc, type), isStatic);
+								addGetter(n.name, buildFunDecl(abc, type, haxeType), isStatic);
 
 							case FMethod(type, KSetter, _, _):
-								addSetter(n.name, buildFunDecl(abc, type), isStatic);
+								addSetter(n.name, buildFunDecl(abc, type, haxeType), isStatic);
 
 							case FClass(_) | FFunction(_): throw "should not happen";
 						}
@@ -285,7 +296,7 @@ class SWCLoader {
 
 						case FMethod(type, KNormal, _, _):
 							var fun:TFunction = {sig: null, expr: null};
-							structureSetups.push(() -> fun.sig = buildFunDecl(abc, type));
+							structureSetups.push(() -> fun.sig = buildFunDecl(abc, type, null));
 							var funDecl:TFunctionDecl = {
 								metadata: [],
 								modifiers: [],
@@ -312,7 +323,7 @@ class SWCLoader {
 		}
 	}
 
-	function buildFunDecl(abc:ABCData, methType:Index<MethodType>):TFunctionSignature {
+	function buildFunDecl(abc:ABCData, methType:Index<MethodType>, haxeType:Null<HaxeTypeAnnotation>):TFunctionSignature {
 		var methType = getMethodType(abc, methType);
 		var args:Array<TFunctionArg> = [];
 		for (i in 0...methType.args.length) {

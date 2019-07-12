@@ -3,5 +3,8 @@
 	"hxout": "OUT",
 	"swc": [
 		"playerglobal32_0.swc"
-	]
+	],
+	"swcTypeAnnotations": {
+		"flash.display.DisplayObject.filters": "Array<flash.filters.BitmapFilter>"
+	}
 }

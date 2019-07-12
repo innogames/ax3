@@ -9,6 +9,7 @@ import ax3.TypedTreeTools.tUntypedDictionary;
 import ax3.TypedTreeTools.getFunctionTypeFromSignature;
 import ax3.TypedTreeTools.mk;
 import ax3.HaxeTypeAnnotation;
+import ax3.HaxeTypeResolver;
 
 class Typer {
 	public static function process(context:Context, tree:TypedTree, files:Array<File>) {
