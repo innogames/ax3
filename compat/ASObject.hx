@@ -95,6 +95,10 @@ abstract ASObject(flash.utils.Object)
 		return this;
 	}
 
+	// see ASAny.___eq/___neq comments
+	@:op(a == b) inline function ___eq(that:Dynamic):Bool return this == that;
+	@:op(a != b) inline function ___neq(that:Dynamic):Bool return this != that;
+
 	@:op(a.b) inline function ___get(name:String):ASAny return ASAny.getPropertyOrBoundMethod(this, name);
 
 	@:op(a.b) inline function ___set(name:String, value:ASAny):ASAny {
