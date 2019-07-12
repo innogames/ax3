@@ -51,13 +51,18 @@ class RewriteAs extends AbstractFilter {
 
 					case TTArray(tElem):
 						if (tElem != TTAny) throwError(exprPos(e), "assert"); // only TTArray(TTAny) can come from AS3 `as` cast
-						var needsTypeCheck = false;
-						var type = switch e.expectedType {
-							case TTArray(_): needsTypeCheck = true; e.expectedType;
-							case _: tUntypedArray;
-						};
-						var e = mk(makeAs(eobj, mkBuiltin("Array", TTBuiltin), removeLeadingTrivia(e), removeTrailingTrivia(e)), type, e.expectedType);
-						e.with(kind = TEHaxeRetype(e));
+						if (eobj.type.match(TTArray(_))) {
+							// already an array - optimize their `as`es
+							processTrailingToken(t -> t.trailTrivia = t.trailTrivia.concat(removeTrailingTrivia(e)), eobj);
+							eobj.with(expectedType = e.expectedType); // it's important to keep the expected type for further filters
+						} else {
+							var type = switch e.expectedType {
+								case TTArray(_): e.expectedType;
+								case _: tUntypedArray;
+							};
+							var e = mk(makeAs(eobj, mkBuiltin("Array", TTBuiltin), removeLeadingTrivia(e), removeTrailingTrivia(e)), type, e.expectedType);
+							e.with(kind = TEHaxeRetype(e));
+						}
 
 					case TTInst(cls):
 						var path = switch (typeRef.syntax) {
