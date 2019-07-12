@@ -11,6 +11,14 @@ class ASCompat {
 	public static inline final MAX_FLOAT = 1.79e+308;
 	public static inline final MIN_FLOAT = -1.79E+308;
 
+	public static inline function escape(s:String):String {
+		#if flash
+		return untyped __global__["escape"](s);
+		#else
+		return js.Lib.global.escape(s);
+		#end
+	}
+
 	#if flash
 	public static inline function describeType(value:Any):compat.XML {
 		return flash.Lib.describeType(value);
