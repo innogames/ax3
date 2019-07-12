@@ -45,10 +45,10 @@ Most of the `TODO`s are actually in the code, so look there too, but still:
  - patch some types loaded from SWC (e.g. `DisplayObject.filters` is `Array<BitmapFilter>`)
  - don't parse `*=` as a single token when parsing signatures (fix `a:*=b` parsing without spaces)
  - add a filter to remove redundant parenthesis, because they can become redundant due to expression rewriting (e.g. stripping away `as` upcasts)
+ - add a "final-step" filter to remove redundant `TEHaxeRetype`s too
  - rewrite `arr[arr.length] = value` to `arr.push(value)`
  - generate "type patch" files for loaded SWCs, replacing `Object` with `ASObject` and `*` with `ASAny`
  - remove `:Void` type hints for class methods (not sure about that, but it looks clean)
  - generate something sensible for `Object` used as a type-expr (e.g. in `call(Object)`)
  - review and cleanup `ASCompat` - rework some things as static extensions (e.g. Vector/Array compat methods)
- - change `__init__` into `static final ___init = {expr; null;};`
  - add some more empty ctors to work around https://github.com/HaxeFoundation/haxe/issues/8531

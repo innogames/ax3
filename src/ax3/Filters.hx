@@ -24,6 +24,7 @@ class Filters {
 			new RestArgs(context),
 			new RewriteRegexLiterals(context),
 			new HandleNew(context),
+			new RewriteVectorDecl(context),
 			new AddSuperCtorCall(context),
 			new RewriteBlockBinops(context),
 			new RewriteNewArray(context),
@@ -48,7 +49,6 @@ class Filters {
 			// new CheckExpectedTypes(context)
 			new DateApi(context),
 			new ArrayApi(context),
-			new RewriteVectorDecl(context),
 			new StringApi(context),
 			new NumberApi(context),
 			new FunctionApply(context),

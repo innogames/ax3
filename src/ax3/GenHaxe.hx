@@ -4,6 +4,7 @@ import ax3.ParseTree;
 import ax3.TypedTree;
 import ax3.Token.Trivia;
 import ax3.TypedTreeTools.exprPos;
+import ax3.TypedTreeTools.skipParens;
 using StringTools;
 
 @:nullSafety
@@ -934,12 +935,16 @@ class GenHaxe extends PrinterBase {
 		if (expectedType.match(TTAny | TTObject(TTAny)))
 			return false;
 
-		switch expr.kind {
+		switch skipParens(expr).kind {
 			case TELiteral(TLNull(_)) | TEArrayDecl(_) | TEObjectDecl(_):
 				return false;
 			case TELiteral(TLInt(_)) if (expectedType.match(TTNumber | TTUint)):
 				return false;
 			case TECall({kind: TEBuiltin(_, "flash.Vector.convert")}, _):
+				// this one depends on the expected type
+				return false;
+			case TECall({kind: TEBuiltin(_, "ASCompat.as")}, _) if (expectedType.match(TTArray(_))):
+				// this one will return an unbound Array element type
 				return false;
 			case _:
 				return Type.enumEq(expectedType, expr.type);

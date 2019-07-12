@@ -56,12 +56,13 @@ class RewriteAs extends AbstractFilter {
 							processTrailingToken(t -> t.trailTrivia = t.trailTrivia.concat(removeTrailingTrivia(e)), eobj);
 							eobj.with(expectedType = e.expectedType); // it's important to keep the expected type for further filters
 						} else {
+							var needsRetype = false;
 							var type = switch e.expectedType {
 								case TTArray(_): e.expectedType;
-								case _: tUntypedArray;
+								case _: needsRetype = true; tUntypedArray;
 							};
 							var e = mk(makeAs(eobj, mkBuiltin("Array", TTBuiltin), removeLeadingTrivia(e), removeTrailingTrivia(e)), type, e.expectedType);
-							e.with(kind = TEHaxeRetype(e));
+							if (needsRetype) e.with(kind = TEHaxeRetype(e)) else e;
 						}
 
 					case TTInst(cls):
