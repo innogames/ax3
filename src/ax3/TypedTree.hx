@@ -438,7 +438,7 @@ typedef TClassField = {
 
 enum TMetadata {
 	MetaFlash(m:Metadata);
-	MetaHaxe(t:Token);
+	MetaHaxe(t:Token, args:Null<CallArgs>);
 }
 
 enum TClassFieldKind {

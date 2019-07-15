@@ -106,6 +106,13 @@ class RewriteMeta extends AbstractFilter {
 	}
 
 	inline static function haxeMetaFromFlash(flashMeta:ParseTree.Metadata, metaString:String):TMetadata {
-		return MetaHaxe(mkIdent(metaString, flashMeta.openBracket.leadTrivia, flashMeta.closeBracket.trailTrivia));
+		var trailTrivia;
+		if (flashMeta.args != null) {
+			trailTrivia = [];
+			flashMeta.args.closeParen.trailTrivia = flashMeta.args.closeParen.trailTrivia.concat(flashMeta.closeBracket.trailTrivia);
+		} else {
+			trailTrivia = flashMeta.closeBracket.trailTrivia;
+		}
+		return MetaHaxe(mkIdent(metaString, flashMeta.openBracket.leadTrivia, trailTrivia), flashMeta.args);
 	}
 }

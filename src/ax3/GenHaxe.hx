@@ -365,8 +365,11 @@ class GenHaxe extends PrinterBase {
 					}
 					buf.add(")");
 					printTokenTrivia(m.closeBracket);
-				case MetaHaxe(token):
+				case MetaHaxe(token, args):
 					printTextWithTrivia(token.text, token);
+					if (args != null) {
+						new Printer(buf).printCallArgs(args);
+					}
 			}
 		}
 	}

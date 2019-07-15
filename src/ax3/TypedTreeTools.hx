@@ -65,7 +65,7 @@ class TypedTreeTools {
 			switch m {
 				case MetaFlash(m):
 					return m.openBracket;
-				case MetaHaxe(t):
+				case MetaHaxe(t, _):
 					return t;
 			}
 		}

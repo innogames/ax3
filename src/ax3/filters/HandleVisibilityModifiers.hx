@@ -65,7 +65,7 @@ class HandleVisibilityModifiers extends AbstractFilter {
 				// just make it `public`
 				field.modifiers.unshift(FMPublic(mkIdent("public", leadTrivia, trailTrivia)));
 			} else {
-				field.metadata.push(MetaHaxe(mkIdent('@:allow($packagePath)', leadTrivia, trailTrivia)));
+				field.metadata.push(MetaHaxe(mkIdent('@:allow($packagePath)', leadTrivia, trailTrivia), null));
 			}
 		}
 

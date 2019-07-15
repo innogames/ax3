@@ -4,9 +4,11 @@ import ax3.Token;
 import ax3.ParseTree;
 
 class PrinterBase {
-	final buf = new StringBuf();
+	final buf:StringBuf;
 
-	public function new() {}
+	public function new(?buf) {
+		this.buf = if (buf != null) buf else new StringBuf();
+	}
 
 	public function toString() {
 		return buf.toString();
