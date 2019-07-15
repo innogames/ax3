@@ -12,4 +12,8 @@ class TestASCompat extends utest.Test {
 		var undefined = new ASDictionary<Int,Float>()[10];
 		floatEquals(Math.NaN, ASCompat.processNull((undefined : Null<Float>)));
 	}
+
+	function testIsAnyVector() {
+		isTrue(ASCompat.isVector(new flash.Vector<String>(), (_:ASAny)));
+	}
 }

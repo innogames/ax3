@@ -14,6 +14,9 @@ class ASCompat {
 	}
 
 	static function makeVectorTypeReference(elementType:ComplexType, pos:Position):Expr {
+		if (elementType.match(TPath({pack: [], name: "ASAny"}))) {
+			elementType = macro : flash.AnyType;
+		}
 		return macro @:pos(pos) (flash.Vector.typeReference() : Class<flash.Vector<$elementType>>);
 	}
 
