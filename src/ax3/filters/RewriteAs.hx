@@ -6,12 +6,20 @@ class RewriteAs extends AbstractFilter {
 		return switch e.kind {
 			case TEAs(eobj, keyword, typeRef):
 				switch typeRef.type {
-					case TTClass | TTFunction:
+					case TTClass:
 						e.with(kind = TEHaxeRetype(eobj));
 
 					case TTObject(tElem):
 						if (tElem != TTAny) throwError(exprPos(e), "assert"); // only TTObject(TTAny) can come from AS3 `as` cast
 						e.with(kind = TEHaxeRetype(eobj));
+
+					case TTFunction:
+						var eAsFunctionMethod = mkBuiltin("ASCompat.asFunction", TTFunction, removeLeadingTrivia(e));
+						e.with(kind = TECall(eAsFunctionMethod, {
+							openParen: mkOpenParen(),
+							args: [{expr: eobj, comma: null}],
+							closeParen: mkCloseParen(removeTrailingTrivia(e))
+						}));
 
 					case TTInt | TTUint | TTNumber | TTString | TTBoolean: // omg
 						// TODO: this is not correct: we need to actually check and return null here

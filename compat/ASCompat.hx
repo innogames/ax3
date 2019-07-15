@@ -140,6 +140,10 @@ class ASCompat {
 	@:noCompletion public static inline function _isVector(value:Any):Bool return openfl.Vector.isVector(value);
 	#end
 
+	public static inline function asFunction(v:Any):Null<ASFunction> {
+		return if (Reflect.isFunction(v)) v else null;
+	}
+
 	public static macro function setTimeout(closure:ExprOf<haxe.Constraints.Function>, delay:ExprOf<Float>, arguments:Array<Expr>):ExprOf<UInt>;
 
 	public static inline function clearTimeout(id:UInt):Void {
