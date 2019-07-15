@@ -7,7 +7,7 @@ class RewriteIs extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
 		e = mapExpr(processExpr, e);
 		return switch e.kind {
-			case TEBinop(a, OpIs(_), b):
+			case TEBinop(a, OpIs(isToken), b):
 				switch b.kind {
 					case TEBuiltin(_, "Function"):
 						final isFunction = mkBuiltin("Reflect.isFunction", tIsFunction, removeLeadingTrivia(e));
@@ -16,6 +16,13 @@ class RewriteIs extends AbstractFilter {
 							args: [{expr: a, comma: null}],
 							closeParen: mkCloseParen(removeTrailingTrivia(e)),
 						}));
+
+					case TEBuiltin(objectToken, "Object"):
+						// only `null` is failing the `is object` check, so we can convert this to `!= null`
+						var neqToken = new Token(isToken.pos, TkExclamationEquals, "!=", isToken.leadTrivia, isToken.trailTrivia);
+						var nullToken = new Token(objectToken.pos, TkIdent, "null", objectToken.leadTrivia, objectToken.trailTrivia);
+						var nullExpr = mk(TELiteral(TLNull(nullToken)), TTAny, TTAny);
+						e.with(kind = TEBinop(a, OpNotEquals(neqToken), nullExpr));
 
 					case TEVector(_, elemType):
 						var eIsVectorMethod = mkBuiltin("ASCompat.isVector", TTFunction, removeLeadingTrivia(e));
