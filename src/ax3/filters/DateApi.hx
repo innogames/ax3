@@ -1,5 +1,7 @@
 package ax3.filters;
 
+import ax3.ParseTree.Binop;
+
 class DateApi extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
 		return switch e.kind {
@@ -54,12 +56,38 @@ class DateApi extends AbstractFilter {
 					throwError(exprPos(e), "Using Date property assignments as values are not yet implemented");
 				}
 
-				if (op.match(OpAssignOp(_))) {
-					reportError(exprPos(e), "TODO: Date property assignment operators (generated incorrectly now!!!)");
+				eDate = processExpr(eDate);
+				expr = processExpr(expr);
+
+				switch op {
+					case OpAssignOp(aop):
+						if (!canBeRepeated(eDate)) throwError(exprPos(eDate), "Assign-op on complex Date expressions are not supported");
+						var newOp:Binop = switch aop {
+							case AOpAdd(t): OpAdd(t.with(TkPlus, "+"));
+							case AOpSub(t): OpSub(t.with(TkMinus, "-"));
+							case AOpMul(t): OpMul(t.with(TkAsterisk, "*"));
+							case AOpDiv(t): OpDiv(t.with(TkSlash, "/"));
+							case AOpMod(t): OpMod(t.with(TkPercent, "%"));
+							case AOpBitAnd(t): OpBitAnd(t.with(TkAmpersand, "&"));
+							case AOpBitOr(t): OpBitOr(t.with(TkPipe, "|"));
+							case AOpBitXor(t): OpBitXor(t.with(TkCaret, "^"));
+							case AOpShl(t): OpShl(t.with(TkLtLt, "<<"));
+							case AOpShr(t): OpShr(t.with(TkGtGt, ">>"));
+							case AOpUshr(t): OpUshr(t.with(TkGtGtGt, ">>>"));
+							case AOpAnd(t) | AOpOr(t):
+								throwError(t.pos, "Unsupported operation on Date properties");
+						}
+						var methodName = "get" + fieldName.charAt(0).toUpperCase() + fieldName.substring(1);
+						var clonedDate = cloneExpr(eDate);
+						removeLeadingTrivia(clonedDate);
+						removeTrailingTrivia(clonedDate);
+						var eMethod = mk(TEField({kind: TOExplicit(mkDot(), clonedDate), type: eDate.type}, methodName, mkIdent(methodName)), TTFunction, TTFunction);
+						var getterCall = e.with(kind = TECall(eMethod, {openParen: mkOpenParen(), args: [], closeParen: mkCloseParen()}));
+						expr = expr.with(kind = TEBinop(getterCall, newOp, expr));
+					case _:
 				}
 
-				var to = {kind: TOExplicit(dot, processExpr(eDate)), type: eDate.type};
-				expr = processExpr(expr);
+				var to = {kind: TOExplicit(dot, eDate), type: eDate.type};
 				switch fieldName {
 					case "date"
 					   | "fullYear"

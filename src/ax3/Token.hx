@@ -21,6 +21,8 @@ class Token {
 		return '${kind.getName()}(${haxe.Json.stringify(text)})';
 	}
 
+	public inline function with(kind, text) return new Token(this.pos, kind, text, this.leadTrivia, this.trailTrivia);
+
 	public inline function clone():Token {
 		return new Token(pos, kind, text, leadTrivia.copy(), trailTrivia.copy());
 	}

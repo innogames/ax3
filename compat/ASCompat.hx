@@ -328,35 +328,6 @@ class ASDate {
 		return (cast d).setSeconds(second, millisecond);
 	}
 
-	public static inline function getTimezoneOffset(d:Date):Float {
-		return (cast d).getTimezoneOffset();
-	}
-
-	public static inline function getUTCDate(d:Date):Float {
-		return (cast d).getUTCDate();
-	}
-	public static inline function getUTCDay(d:Date):Float {
-		return (cast d).getUTCDay();
-	}
-	public static inline function getUTCFullYear(d:Date):Float {
-		return (cast d).getUTCFullYear();
-	}
-	public static inline function getUTCHours(d:Date):Float {
-		return (cast d).getUTCHours();
-	}
-	public static inline function getUTCMilliseconds(d:Date):Float {
-		return (cast d).getUTCMilliseconds();
-	}
-	public static inline function getUTCMinutes(d:Date):Float {
-		return (cast d).getUTCMinutes();
-	}
-	public static inline function getUTCMonth(d:Date):Float {
-		return (cast d).getUTCMonth();
-	}
-	public static inline function getUTCSeconds(d:Date):Float {
-		return (cast d).getUTCSeconds();
-	}
-
 	public static inline function setUTCDate(d:Date, day:Float):Float {
 		return (cast d).setUTCDate(day);
 	}
@@ -367,6 +338,10 @@ class ASDate {
 
 	public static inline function setUTCHours(d:Date, hour:Float, ?minute:Float, ?second:Float, ?millisecond:Float):Float {
 		return (cast d).setUTCHours(hour, minute, second, millisecond);
+	}
+
+	public static inline function getUTCMilliseconds(d:Date):Float {
+		return (cast d).getUTCMilliseconds();
 	}
 
 	public static inline function setUTCMilliseconds(d:Date, millisecond:Float):Float {
