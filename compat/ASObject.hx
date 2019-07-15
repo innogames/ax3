@@ -7,10 +7,15 @@ abstract ASObject(flash.utils.Object)
 
 	// from haxe.Constraints.Function
 
-	#if !flash // https://github.com/HaxeFoundation/haxe/issues/8203
 	from Array<Dynamic>
-	#end
 {
+	public static inline function typeReference() {
+		#if flash
+		return flash.utils.Object;
+		#else
+		return Dynamic;
+		#end
+	}
 
 	public inline function new() this = cast {};
 

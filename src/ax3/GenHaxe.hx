@@ -578,7 +578,7 @@ class GenHaxe extends PrinterBase {
 			case "int": "Int";
 			case "uint": "UInt";
 			case "Boolean": "Bool";
-			case "Object": "ASObject";
+			case "Object": "ASObject.typeReference()";
 			case "Function": "ASFunction";
 			case "XML": "compat.XML";
 			case "XMLList": "compat.XMLList";
