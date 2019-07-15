@@ -7,9 +7,13 @@ class UtilFunctions extends AbstractFilter {
 	static final tGetUrl = TTFun([TTAny/*TODO:URLRequest*/, TTString], TTVoid);
 
 	override function processExpr(e:TExpr):TExpr {
+		e = mapExpr(processExpr, e);
 		return switch e.kind {
 			case TEDeclRef(_, {kind: TDFunction({parentModule: {name: "getDefinitionByName", parentPack: {name: "flash.utils"}}})}):
 				mkBuiltin("Type.resolveClass", tResolveClass, removeLeadingTrivia(e), removeTrailingTrivia(e));
+			case TECall({kind: TEBuiltin(_, "Type.resolveClass")}, _):
+				// `getDefinitionByName` returns Object, but `Type.resolveClass` can only return Class, so fix the type of its calls
+				e.with(type = TTClass);
 			case TEDeclRef(_, {kind: TDFunction({parentModule: {name: "getTimer", parentPack: {name: "flash.utils"}}})}):
 				mkBuiltin("flash.Lib.getTimer", tGetTimer, removeLeadingTrivia(e), removeTrailingTrivia(e));
 			case TEDeclRef(_, {kind: TDFunction({parentModule: {name: "describeType", parentPack: {name: "flash.utils"}}})}):
@@ -37,7 +41,7 @@ class UtilFunctions extends AbstractFilter {
 			// 			throwError(exprPos(e), "Invalid getQualifiedClassName arguments");
 			// 	}
 			case _:
-				mapExpr(processExpr, e);
+				e;
 		}
 	}
 }

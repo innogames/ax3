@@ -7,7 +7,16 @@ class RewriteAs extends AbstractFilter {
 			case TEAs(eobj, keyword, typeRef):
 				switch typeRef.type {
 					case TTClass:
-						e.with(kind = TEHaxeRetype(eobj));
+						// just strip out `as`, I don't think we can really downcast to `Class` in Haxe
+						switch e.expectedType {
+							case TTClass | TTStatic(_):
+								// if the expected type is Class or even Class<T> - just remove `as`
+								processTrailingToken(t -> t.trailTrivia = t.trailTrivia.concat(removeTrailingTrivia(e)), eobj);
+								eobj.with(expectedType = e.expectedType);
+							case _:
+								// otherwise wrap in type-check, to have the same type checking as when expected type is Class
+								e.with(kind = TEHaxeRetype(eobj));
+						};
 
 					case TTObject(tElem):
 						if (tElem != TTAny) throwError(exprPos(e), "assert"); // only TTObject(TTAny) can come from AS3 `as` cast
