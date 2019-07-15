@@ -478,6 +478,8 @@ class GenHaxe extends PrinterBase {
 			switch [e.type, e.expectedType] {
 				case [TTFunction, TTFun(_)]: true; // Function from AS3 code unified with proper function type
 
+				case [TTClass, TTStatic(_)]: true; // untyped Class unified with Class<ConcreteOne>
+
 				case [TTFun([argType], _, _), TTFun([TTAny], _)] if (argType != TTAny): true; // add/remove event listener
 
 				case [TTArray(TTAny), TTArray(TTAny)]: false; // untyped arrays
