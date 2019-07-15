@@ -115,8 +115,11 @@ class RewriteForIn extends AbstractFilter {
 				eobj = mkIteratorMethodCallExpr(eobj, "keys");
 				loopVarType = keyType;
 
-			case TTObject(_):
-				eobj = mkIteratorMethodCallExpr(eobj, "___keys");
+			case TTObject(valueType):
+				// TTAny most probably means it's coming from an AS3 Object,
+				// while any other type is surely coming from haxe.DynamicAccess
+				var keysMethod = if (valueType == TTAny) "___keys" else "keys";
+				eobj = mkIteratorMethodCallExpr(eobj, keysMethod);
 				loopVarType = TTString;
 
 			case TTAny:
