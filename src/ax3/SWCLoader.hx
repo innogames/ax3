@@ -251,7 +251,9 @@ class SWCLoader {
 					structureSetups.push(function() {
 						switch (f.kind) {
 							case FVar(type, _, isConst):
-								addVar(n.name, if (type != null) buildTypeStructure(abc, type, getHaxeType(packName, className, n.name)) else TTAny, isStatic, isConst);
+								var typeOverride = haxeTypeResolver.resolveTypeHint(getHaxeType(packName, className, n.name), 0);
+								var type = if (typeOverride != null) typeOverride else if (type != null) buildTypeStructure(abc, type) else TTAny;
+								addVar(n.name, type, isStatic, isConst);
 
 							case FMethod(type, KNormal, _, _):
 								addMethod(n.name, buildFunDecl(abc, type, getHaxeType(packName, className, n.name)), isStatic);
@@ -296,7 +298,10 @@ class SWCLoader {
 								semicolon: null
 							};
 							if (type != null) {
-								structureSetups.push(() -> varDecl.type = buildTypeStructure(abc, type, getHaxeType(n.ns, n.name, n.name)));
+								structureSetups.push(function() {
+									var typeOverride = haxeTypeResolver.resolveTypeHint(getHaxeType(n.ns, n.name, n.name), 0);
+									varDecl.type = if (typeOverride != null) typeOverride else buildTypeStructure(abc, type);
+								});
 							}
 							varDecl.parentModule = addModule(swcPath, tree, n.ns, n.name, TDVar(varDecl));
 
@@ -337,7 +342,7 @@ class SWCLoader {
 		for (i in 0...methType.args.length) {
 			var arg = methType.args[i];
 			var typeOverride = if (typeOverrides == null) null else typeOverrides.args['p${i + 1}'];
-			var type = if (typeOverride != null) typeOverride else if (arg != null) buildTypeStructure(abc, arg, null) else TTAny;
+			var type = if (typeOverride != null) typeOverride else if (arg != null) buildTypeStructure(abc, arg) else TTAny;
 			args.push({
 				syntax: null,
 				comma: null,
@@ -358,7 +363,7 @@ class SWCLoader {
 			});
 		}
 		var typeOverride = if (typeOverrides == null) null else typeOverrides.ret;
-		var ret = if (typeOverride != null) typeOverride else if (methType.ret != null) buildTypeStructure(abc, methType.ret, null) else TTAny;
+		var ret = if (typeOverride != null) typeOverride else if (methType.ret != null) buildTypeStructure(abc, methType.ret) else TTAny;
 
 		return {
 			syntax: null,
@@ -378,7 +383,7 @@ class SWCLoader {
 		return TypedTree.declToInst(tree.getDecl(ns, n));
 	}
 
-	function buildTypeStructure(abc:ABCData, name:IName, haxeType:Null<HaxeTypeAnnotation>):TType {
+	function buildTypeStructure(abc:ABCData, name:IName):TType {
 		switch abc.get(abc.names, name) {
 			case NName(name, ns):
 				switch (abc.get(abc.namespaces, ns)) {
@@ -421,7 +426,7 @@ class SWCLoader {
 				var n = getPublicName(abc, n);
 				switch [n.ns, n.name] {
 					case ["__AS3__.vec", "Vector"]:
-						return TTVector(buildTypeStructure(abc, type, null));
+						return TTVector(buildTypeStructure(abc, type));
 					case _:
 						throw "assert: " + n;
 				}
