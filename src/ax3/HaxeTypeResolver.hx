@@ -29,6 +29,8 @@ class HaxeTypeResolver {
 	}
 
 	function resolveHaxeType(t:HaxeType, pos:Int):TType {
+		inline function resolveDotPath(p) return try this.resolveDotPath(p) catch (e:Any) throwError(Std.string(e), pos);
+
 		return switch t {
 			case HTPath("Array", [elemT]): TTArray(resolveHaxeType(elemT, pos));
 			case HTPath("Int", []): TTInt;
