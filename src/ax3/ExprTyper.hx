@@ -20,8 +20,7 @@ typedef TyperContext = {
 	function getCurrentClass():Null<TClassOrInterfaceDecl>;
 	function resolveDotPath(path:Array<String>):TDecl;
 	function resolveType(t:SyntaxType):TType;
-	function resolveHaxeTypeHint(a:Null<HaxeTypeAnnotation>, p:Int):Null<TType>;
-	function resolveHaxeSignature(a:Null<HaxeTypeAnnotation>, p:Int):Null<{args:Map<String,TType>, ret:Null<TType>}>;
+	final haxeTypes:HaxeTypeResolver;
 }
 
 class ExprTyper {
@@ -175,7 +174,7 @@ class ExprTyper {
 
 	// TODO: copypasta from Typer
 	function typeFunctionSignature(sig:FunctionSignature, haxeType:Null<HaxeTypeAnnotation>):TFunctionSignature {
-		var typeOverrides = typerContext.resolveHaxeSignature(haxeType, sig.openParen.pos);
+		var typeOverrides = typerContext.haxeTypes.resolveSignature(haxeType, sig.openParen.pos);
 
 		var targs =
 			if (sig.args != null) {
@@ -228,7 +227,7 @@ class ExprTyper {
 
 	function typeVars(kind:VarDeclKind, vars:Separated<VarDecl>, expectedType:TType):TExpr {
 		var varToken = switch kind { case VVar(t) | VConst(t): t; };
-		var overrideType = typerContext.resolveHaxeTypeHint(HaxeTypeAnnotation.extract(varToken.leadTrivia), varToken.pos);
+		var overrideType = typerContext.haxeTypes.resolveTypeHint(HaxeTypeAnnotation.extract(varToken.leadTrivia), varToken.pos);
 
 		switch expectedType {
 			case TTAny: // for (var i)

@@ -113,7 +113,7 @@ class Typer {
 		};
 
 		structureSetups.push(function() {
-			var overrideType = resolveHaxeTypeHint(mod, overrideType, v.name.pos); // TODO: no need to resolve this more than once
+			var overrideType = typerContext.haxeTypes.resolveTypeHint(overrideType, v.name.pos); // TODO: no need to resolve this more than once
 			moduleVar.type = if (overrideType != null) overrideType else if (v.type == null) TTAny else resolveType(mod, v.type.type);
 		});
 
@@ -131,9 +131,8 @@ class Typer {
 			throwError: throwErr.bind(mod),
 			resolveDotPath: resolveDotPath.bind(mod),
 			resolveType: resolveType.bind(mod),
-			resolveHaxeTypeHint: resolveHaxeTypeHint.bind(mod),
-			resolveHaxeSignature: resolveHaxeSignature.bind(mod)
-		}
+			haxeTypes: new HaxeTypeResolver(path -> resolveDotPath(mod, path.split(".")), throwErr.bind(mod))
+		};
 	}
 
 	function typeMetadata(metadata:Array<Metadata>):Array<TMetadata> {
@@ -302,7 +301,7 @@ class Typer {
 
 		var v = vars.first;
 
-		var overrideType = resolveHaxeTypeHint(mod, haxeType, v.name.pos);
+		var overrideType = typerContext.haxeTypes.resolveTypeHint(haxeType, v.name.pos);
 		var type:TType = if (overrideType != null) overrideType else if (v.type == null) TTAny else resolveType(mod, v.type.type);
 
 		var varField:TVarField = {
@@ -427,41 +426,6 @@ class Typer {
 		};
 	}
 
-	function resolveHaxeType(mod:TModule, t:HaxeType, pos:Int):TType {
-		inline function resolveDotPath(path:String) return try this.resolveDotPath(mod, path.split(".")) catch (e:Any) throwErr(mod, Std.string(e), pos);
-
-		return switch t {
-			case HTPath("Array", [elemT]): TTArray(resolveHaxeType(mod, elemT, pos));
-			case HTPath("Int", []): TTInt;
-			case HTPath("UInt", []): TTUint;
-			case HTPath("Float", []): TTNumber;
-			case HTPath("Bool", []): TTBoolean;
-			case HTPath("String", []): TTString;
-			case HTPath("Dynamic", []): TTAny;
-			case HTPath("Void", []): TTVoid;
-			case HTPath("FastXML", []): TTXMLList;
-			case HTPath("RegExp", []): TTRegExp;
-			case HTPath("haxe.DynamicAccess", [elemT]): TTObject(resolveHaxeType(mod, elemT, pos));
-			case HTPath("flash.utils.Object", []): tUntypedObject;
-			case HTPath("Vector" | "flash.Vector" | "openfl.Vector", [t]): TTVector(resolveHaxeType(mod, t, pos));
-			case HTPath("GenericDictionary", [k, v]): TTDictionary(resolveHaxeType(mod, k, pos), resolveHaxeType(mod, v, pos));
-
-			// TODO: hacks begin
-			case HTPath("StateDescription" | "TransitionDescription", []): TTObject(TTAny);
-			case HTPath("Class", [HTPath("org.robotlegs.core.ICommand", [])]): TTClass;
-			case HTPath("GenericPool", [_]): resolveHaxeType(mod, HTPath("GenericPool", []), pos);
-			// hacks end
-
-			case HTPath("Class", [HTPath("Dynamic", [])]): TTClass;
-			case HTPath("Class", [HTPath(path, [])]): TypedTree.declToStatic(resolveDotPath(path));
-			case HTPath("Null", [t]): resolveHaxeType(mod, t, pos); // TODO: keep nullability?
-			case HTPath("Function" | "haxe.Constraints.Function", []): TTFunction;
-			case HTPath(path, []): TypedTree.declToInst(resolveDotPath(path));
-			case HTPath(path, _): trace("TODO: " + path); TTAny;
-			case HTFun(args, ret): TTFun([for (a in args) resolveHaxeType(mod, a, pos)], resolveHaxeType(mod, ret, pos));
-		};
-	}
-
 	inline function err(mod:TModule, msg:String, pos:Int) context.reportError(mod.path, pos, msg);
 
 	inline function throwErr(mod:TModule, msg:String, pos:Int):Dynamic {
@@ -469,25 +433,8 @@ class Typer {
 		throw "assert"; // TODO do it nicer
 	}
 
-	function resolveHaxeTypeHint(mod:TModule, a:Null<HaxeTypeAnnotation>, p:Int):Null<TType> {
-		if (a == null) return null;
-		var hint = try a.parseTypeHint() catch (e:Any) throwErr(mod, Std.string(e), p);
-		return resolveHaxeType(mod, hint, p);
-	}
-
-	function resolveHaxeSignature(mod:TModule, a:Null<HaxeTypeAnnotation>, p:Int):Null<{args:Map<String,TType>, ret:Null<TType>}> {
-		if (a == null) {
-			return null;
-		}
-		var sig = try a.parseSignature() catch (e:Any) throwErr(mod, Std.string(e), p);
-		return {
-			args: [for (name => type in sig.args) name => resolveHaxeType(mod, type, p)],
-			ret: if (sig.ret == null) null else resolveHaxeType(mod, sig.ret, p)
-		};
-	}
-
 	function typeFunctionSignature(sig:FunctionSignature, haxeType:Null<HaxeTypeAnnotation>, typerContext:ExprTyper.TyperContext):TFunctionSignature {
-		var typeOverrides = typerContext.resolveHaxeSignature(haxeType, sig.openParen.pos);
+		var typeOverrides = typerContext.haxeTypes.resolveSignature(haxeType, sig.openParen.pos);
 
 		var targs =
 			if (sig.args != null) {
