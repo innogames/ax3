@@ -3,5 +3,9 @@
 	"hxout": "OUT",
 	"swc": [
 		"playerglobal32_0.swc"
-	]
+	],
+	"haxeTypes": {
+		"flash.display.DisplayObject.filters$get": "return:Array<flash.filters.BitmapFilter>",
+		"flash.display.DisplayObject.filters$set": "p1:Array<flash.filters.BitmapFilter>"
+	}
 }

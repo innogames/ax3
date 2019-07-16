@@ -142,7 +142,7 @@ private class HaxeTypeParser {
 	public static function parseTypeHint(typeString:String):HaxeType {
 		var s = new MiniScanner(typeString);
 		var t = parseType(s);
-		s.expect(TkCloseParen);
+		// s.expect(TkCloseParen);
 		return t;
 	}
 
@@ -253,7 +253,7 @@ private class HaxeTypeParser {
 			}
 		}
 
-		s.expect(TkCloseParen);
+		// s.expect(TkCloseParen);
 
 		return {
 			args: args,

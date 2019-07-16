@@ -1,5 +1,6 @@
 package ax3;
 
+import haxe.DynamicAccess;
 import format.abc.Data.IName;
 import format.swf.Data.SWF;
 import format.abc.Data.MethodType;
@@ -13,19 +14,30 @@ import ax3.TypedTreeTools.tUntypedDictionary;
 
 class SWCLoader {
 	final tree:TypedTree;
+	final haxeTypes:DynamicAccess<HaxeTypeAnnotation>;
 	final structureSetups:Array<()->Void> = [];
+	final haxeTypeResolver:HaxeTypeResolver;
 
-	function new(tree:TypedTree) {
+	function new(tree:TypedTree, haxeTypes:DynamicAccess<HaxeTypeAnnotation>) {
 		this.tree = tree;
+		this.haxeTypes = haxeTypes;
+		haxeTypeResolver = new HaxeTypeResolver(
+			function(path) {
+				var parts = path.split(".");
+				var name = parts.pop();
+				return tree.getDecl(parts.join("."), name);
+			},
+			(msg,_) -> throw msg
+		);
 	}
 
-	public static function load(tree:TypedTree, files:Array<String>) {
+	public static function load(tree:TypedTree, haxeTypes:DynamicAccess<HaxeTypeAnnotation>, files:Array<String>) {
 		// loading is done in two steps:
 		// 1. create modules and empty/untyped declarations
 		// 2. resolve type references
 		//   - setup heritage: link classes/interfaces to their parents)
 		//   - setup signatures: add fields with proper types linking to declarations
-		var loader = new SWCLoader(tree);
+		var loader = new SWCLoader(tree, haxeTypes);
 		for (file in files) {
 			var swf = getLibrary(file);
 			loader.processLibrary(file, swf);
@@ -82,12 +94,21 @@ class SWCLoader {
 		return mod;
 	}
 
+	function getHaxeType(pack:String, clsName:String, field:String, ?accessor:String):Null<HaxeTypeAnnotation> {
+		var key = [pack, clsName, field].join(".");
+		if (accessor != null) key += "$" + accessor;
+		return haxeTypes[key];
+	}
+
 	function processLibrary(swcPath:String, swf:SWF) {
 		var abcs = getAbcs(swf);
 		for (abc in abcs) {
 			for (cls in abc.classes) {
 				var n = getPublicName(abc, cls.name);
 				if (n == null || shouldSkipClass(n.ns, n.name)) continue;
+
+				var packName = n.ns;
+				var className = n.name;
 
 				var members:Array<TClassMember> = [];
 
@@ -205,7 +226,7 @@ class SWCLoader {
 					}
 
 					structureSetups.push(function() {
-						var ctor = buildFunDecl(abc, cls.constructor);
+						var ctor = buildFunDecl(abc, cls.constructor, getHaxeType(packName, className, "new"));
 						addMethod(n.name, ctor, false);
 					});
 				}
@@ -227,23 +248,19 @@ class SWCLoader {
 					// TODO: sort out namespaces
 					// if (n.ns != "") throw "namespaced field name? " + n.ns;
 
-					inline function buildPublicType(type) {
-						return buildTypeStructure(abc, type);
-					}
-
 					structureSetups.push(function() {
 						switch (f.kind) {
 							case FVar(type, _, isConst):
-								addVar(n.name, if (type != null) buildPublicType(type) else TTAny, isStatic, isConst);
+								addVar(n.name, if (type != null) buildTypeStructure(abc, type, getHaxeType(packName, className, n.name)) else TTAny, isStatic, isConst);
 
 							case FMethod(type, KNormal, _, _):
-								addMethod(n.name, buildFunDecl(abc, type), isStatic);
+								addMethod(n.name, buildFunDecl(abc, type, getHaxeType(packName, className, n.name)), isStatic);
 
 							case FMethod(type, KGetter, _, _):
-								addGetter(n.name, buildFunDecl(abc, type), isStatic);
+								addGetter(n.name, buildFunDecl(abc, type, getHaxeType(packName, className, n.name, "get")), isStatic);
 
 							case FMethod(type, KSetter, _, _):
-								addSetter(n.name, buildFunDecl(abc, type), isStatic);
+								addSetter(n.name, buildFunDecl(abc, type, getHaxeType(packName, className, n.name, "set")), isStatic);
 
 							case FClass(_) | FFunction(_): throw "should not happen";
 						}
@@ -279,13 +296,13 @@ class SWCLoader {
 								semicolon: null
 							};
 							if (type != null) {
-								structureSetups.push(() -> varDecl.type = buildTypeStructure(abc, type));
+								structureSetups.push(() -> varDecl.type = buildTypeStructure(abc, type, getHaxeType(n.ns, n.name, n.name)));
 							}
 							varDecl.parentModule = addModule(swcPath, tree, n.ns, n.name, TDVar(varDecl));
 
 						case FMethod(type, KNormal, _, _):
 							var fun:TFunction = {sig: null, expr: null};
-							structureSetups.push(() -> fun.sig = buildFunDecl(abc, type));
+							structureSetups.push(() -> fun.sig = buildFunDecl(abc, type, getHaxeType(n.ns, n.name, n.name)));
 							var funDecl:TFunctionDecl = {
 								metadata: [],
 								modifiers: [],
@@ -312,12 +329,15 @@ class SWCLoader {
 		}
 	}
 
-	function buildFunDecl(abc:ABCData, methType:Index<MethodType>):TFunctionSignature {
+	function buildFunDecl(abc:ABCData, methType:Index<MethodType>, haxeType:Null<HaxeTypeAnnotation>):TFunctionSignature {
+		var typeOverrides = haxeTypeResolver.resolveSignature(haxeType, 0);
+
 		var methType = getMethodType(abc, methType);
 		var args:Array<TFunctionArg> = [];
 		for (i in 0...methType.args.length) {
 			var arg = methType.args[i];
-			var type = if (arg != null) buildTypeStructure(abc, arg) else TTAny;
+			var typeOverride = if (typeOverrides == null) null else typeOverrides.args['p${i + 1}'];
+			var type = if (typeOverride != null) typeOverride else if (arg != null) buildTypeStructure(abc, arg, null) else TTAny;
 			args.push({
 				syntax: null,
 				comma: null,
@@ -337,7 +357,8 @@ class SWCLoader {
 				kind: TArgRest(null, TRestSwc, null),
 			});
 		}
-		var ret = if (methType.ret != null) buildTypeStructure(abc, methType.ret) else TTAny;
+		var typeOverride = if (typeOverrides == null) null else typeOverrides.ret;
+		var ret = if (typeOverride != null) typeOverride else if (methType.ret != null) buildTypeStructure(abc, methType.ret, null) else TTAny;
 
 		return {
 			syntax: null,
@@ -357,7 +378,7 @@ class SWCLoader {
 		return TypedTree.declToInst(tree.getDecl(ns, n));
 	}
 
-	function buildTypeStructure(abc:ABCData, name:IName):TType {
+	function buildTypeStructure(abc:ABCData, name:IName, haxeType:Null<HaxeTypeAnnotation>):TType {
 		switch abc.get(abc.names, name) {
 			case NName(name, ns):
 				switch (abc.get(abc.namespaces, ns)) {
@@ -400,7 +421,7 @@ class SWCLoader {
 				var n = getPublicName(abc, n);
 				switch [n.ns, n.name] {
 					case ["__AS3__.vec", "Vector"]:
-						return TTVector(buildTypeStructure(abc, type));
+						return TTVector(buildTypeStructure(abc, type, null));
 					case _:
 						throw "assert: " + n;
 				}
