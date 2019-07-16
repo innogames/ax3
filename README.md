@@ -47,6 +47,7 @@ Most of the `TODO`s are actually in the code, so look there too, but still:
  - add a "final-step" filter to remove redundant `TEHaxeRetype`s too
  - rewrite `arr[arr.length] = value` to `arr.push(value)`
  - generate "type patch" files for loaded SWCs, replacing `Object` with `ASObject` and `*` with `ASAny`
+ - handle @haxe-type'd Array elements of type Array in `for each (var v:Array)`
  - remove `:Void` type hints for class methods (not sure about that, but it looks clean)
  - review and cleanup `ASCompat` - rework some things as static extensions (e.g. Vector/Array compat methods)
  - add some more empty ctors to work around https://github.com/HaxeFoundation/haxe/issues/8531
