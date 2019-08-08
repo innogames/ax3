@@ -13,6 +13,7 @@ private typedef Config = {
 	var ?hxout:String;
 	var ?injection:Context.InjectionConfig;
 	var ?haxeTypes:DynamicAccess<HaxeTypeAnnotation>;
+	var ?rootImports:String;
 }
 
 class Main {
@@ -70,6 +71,12 @@ class Main {
 				sys.io.File.saveContent(path, out);
 			}
 		}
+
+		if (config.rootImports != null) {
+			var imports = sys.io.File.getContent(config.rootImports);
+			sys.io.File.saveContent(haxe.io.Path.join([haxeDir, "import.hx"]), imports);
+		}
+
 		Timers.output = stamp() - t;
 
 		total = (stamp() - total);
