@@ -7,8 +7,6 @@ tutorial.parser.ITutorialParser.$parse__data : ASObject;
 de.innogames.common.assets.lib.ISoundAtlasLoader.$loadAtlas__handler : Bool->Void;
 de.innogames.common.assets.lib.ISoundAtlasLoader.$loadAtlas__p2 : Bool->Void;
 
-openfl.display.SpriteTileSet.__reference : ASDictionary<String, Int>;
-
 starling.core.Starling.$new__renderMode : flash.display3D.Context3DRenderMode;
 starling.core.Starling.$new__p5 : flash.display3D.Context3DRenderMode;
 
