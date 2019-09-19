@@ -1,8 +1,14 @@
 package ax3.filters;
 
-private typedef IntIterInfo = {itName:Token, vit:TVar, iter:TExpr};
+private typedef IntIterInfo = {
+	final loopVar:TVar;
+	final iterator:TExpr;
+	final assignment:Null<TExpr>;
+}
 
 class RewriteCFor extends AbstractFilter {
+	static final tempLoopVarName = "_tmp_";
+
 	var currentIncrExpr:Null<TExpr>; // TODO: handle comma here for the nicer output
 
 	override function processExpr(e:TExpr):TExpr {
@@ -26,17 +32,24 @@ class RewriteCFor extends AbstractFilter {
 
 	static function getSimpleSequence(f:TFor):Null<IntIterInfo> {
 		// TODO: check for modifications of the loop var and cancel (although Haxe compiler will check for that)
-		var initVarDecl, endValue;
+		var originalLoopVar, loopVar, startValue, endValue;
+		var assignment;
 		switch f.einit {
-			// TODO: also check for TELocal, but introduce temp var similar to what we do on `for( each)` type mismatches
 			case {kind: TEVars(_, [varDecl = {v: {type: TTInt | TTUint}}])} if (varDecl.init != null):
-				initVarDecl = varDecl;
+				loopVar = originalLoopVar = varDecl.v;
+				startValue = varDecl.init.expr;
+				assignment = null;
+			case {kind: TEBinop(eLoopLocal = {kind: TELocal(_, v)}, op = OpAssign(_), eInit)}:
+				originalLoopVar = v;
+				loopVar = {name: tempLoopVarName, type: v.type};
+				startValue = eInit;
+				assignment = mk(TEBinop(eLoopLocal, op, mk(TELocal(mkIdent(tempLoopVarName), loopVar), v.type, v.type)), v.type, TTVoid);
 			case _:
 				return null;
 		}
 
 		switch f.econd {
-			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpLt(_), b = {type: TTInt | TTUint})} if (checkedVar == initVarDecl.v):
+			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpLt(_), b = {type: TTInt | TTUint})} if (checkedVar == originalLoopVar):
 				switch b.kind {
 					case TELocal(_, endValueVar) if (!isEndValueModified(endValueVar, f.body)):
 						endValue = b;
@@ -64,17 +77,17 @@ class RewriteCFor extends AbstractFilter {
 
 		switch f.eincr {
 			// TODO: also check for `<=` and add `+1` to `endValue`?
-			case {kind: TEPreUnop(PreIncr(_), {kind: TELocal(_, checkedVar)})} if (checkedVar == initVarDecl.v):
-			case {kind: TEPostUnop({kind: TELocal(_, checkedVar)}, PostIncr(_))} if (checkedVar == initVarDecl.v):
-			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpAssignOp(AOpAdd(_)), {kind: TELiteral(TLInt({text: "1"}))})} if (checkedVar == initVarDecl.v):
+			case {kind: TEPreUnop(PreIncr(_), {kind: TELocal(_, checkedVar)})} if (checkedVar == originalLoopVar):
+			case {kind: TEPostUnop({kind: TELocal(_, checkedVar)}, PostIncr(_))} if (checkedVar == originalLoopVar):
+			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpAssignOp(AOpAdd(_)), {kind: TELiteral(TLInt({text: "1"}))})} if (checkedVar == originalLoopVar):
 			case _:
 				return null;
 		}
 
 		return {
-			itName: initVarDecl.syntax.name,
-			vit: initVarDecl.v,
-			iter: mk(TEHaxeIntIter(initVarDecl.init.expr, endValue), TTBuiltin, TTBuiltin)
+			loopVar: loopVar,
+			iterator: mk(TEHaxeIntIter(startValue, endValue), TTBuiltin, TTBuiltin),
+			assignment: assignment,
 		};
 	}
 
@@ -101,13 +114,16 @@ class RewriteCFor extends AbstractFilter {
 			syntax: {
 				forKeyword: f.syntax.keyword,
 				openParen: f.syntax.openParen,
-				itName: s.itName,
+				itName: mkIdent(s.loopVar.name),
 				inKeyword: mkTokenWithSpaces(TkIdent, "in"),
 				closeParen: f.syntax.closeParen
 			},
-			vit: s.vit,
-			iter: s.iter,
-			body: processExpr(f.body)
+			vit: s.loopVar,
+			iter: s.iterator,
+			body: {
+				var body = processExpr(f.body);
+				if (s.assignment == null) body else concatExprs(s.assignment, body);
+			}
 		}), TTVoid, TTVoid);
 	}
 
