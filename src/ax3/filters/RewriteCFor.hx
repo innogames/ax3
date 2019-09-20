@@ -23,8 +23,13 @@ class RewriteCFor extends AbstractFilter {
 					case s:
 						rewriteToIntIter(f, s);
 				}
+
 			case TEContinue(_):
-				if (currentIncrExpr != null) concatExprs(currentIncrExpr, e) else e;
+				if (currentIncrExpr != null)
+					concatExprs(currentIncrExpr, e)
+				else
+					e;
+
 			case _:
 				mapExpr(processExpr, e);
 		}
