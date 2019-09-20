@@ -1,5 +1,6 @@
 package ax3;
 
+import ax3.filters.RewriteCFor;
 import haxe.DynamicAccess;
 import haxe.extern.EitherType;
 import sys.FileSystem;
@@ -72,9 +73,18 @@ class Main {
 			}
 		}
 
-		if (config.rootImports != null) {
-			var imports = sys.io.File.getContent(config.rootImports);
-			sys.io.File.saveContent(haxe.io.Path.join([haxeDir, "import.hx"]), imports);
+		{
+			// TODO: maybe we need a more sophisticated system for collecting toplevel imports
+			var imports = [];
+			if (RewriteCFor.reverseIntIterUsed) {
+				imports.push("import ReverseIntIterator.reverseIntIter;");
+			}
+			if (config.rootImports != null) {
+				imports.push(sys.io.File.getContent(config.rootImports));
+			}
+			if (imports.length > 0) {
+				sys.io.File.saveContent(haxe.io.Path.join([haxeDir, "import.hx"]), imports.join("\n"));
+			}
 		}
 
 		Timers.output = stamp() - t;

@@ -10,6 +10,8 @@ class RewriteCFor extends AbstractFilter {
 	static final tempLoopVarName = "_tmp_";
 	public static final reverseIntIterBuiltin = "reverseIntIter";
 
+	public static var reverseIntIterUsed(default,null) = false;
+
 	var currentIncrExpr:Null<TExpr>; // TODO: handle comma here for the nicer output
 
 	override function processExpr(e:TExpr):TExpr {
@@ -111,6 +113,7 @@ class RewriteCFor extends AbstractFilter {
 		if (isReverse) {
 			var reverseIntIter = mk(TEBuiltin(mkIdent(reverseIntIterBuiltin, removeLeadingTrivia(iterator)), reverseIntIterBuiltin), TTBuiltin, TTBuiltin);
 			iterator = mkCall(reverseIntIter, [iterator], TTBuiltin, removeTrailingTrivia(iterator));
+			reverseIntIterUsed = true;
 		}
 
 		return {
