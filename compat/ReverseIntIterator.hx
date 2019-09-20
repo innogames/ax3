@@ -9,6 +9,8 @@ class ReverseIntIterator {
 	**/
 	@:access(IntIterator)
 	public static inline function reverseIntIter(i:IntIterator) {
+		// TODO: maybe this should be a macro function that checks if the argument is `a...b` expr
+		// and generate `new ReverseIntIterator()` directly from it instead of relying on IntIterator inlining
 		return new ReverseIntIterator(i.min, i.max);
 	}
 
