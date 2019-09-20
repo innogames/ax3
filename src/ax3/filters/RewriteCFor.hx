@@ -8,6 +8,7 @@ private typedef IntIterInfo = {
 
 class RewriteCFor extends AbstractFilter {
 	static final tempLoopVarName = "_tmp_";
+	public static final reverseIntIterBuiltin = "reverseIntIter";
 
 	var currentIncrExpr:Null<TExpr>; // TODO: handle comma here for the nicer output
 
@@ -64,47 +65,82 @@ class RewriteCFor extends AbstractFilter {
 			return null;
 		}
 
+		var isReverse;
 		switch f.econd {
 			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpLt(_), b = {type: TTInt | TTUint})} if (checkedVar == originalLoopVar):
-				switch b.kind {
-					case TELocal(_, endValueVar) if (!isLocalVarModified(endValueVar, f.body)):
-						endValue = b;
+				if (isValidSimpleSequenceEndValueExpr(b, f.body)) {
+					endValue = b;
+					isReverse = false;
+				} else {
+					return null;
+				}
 
-					case TEField({type: TTStatic(cls)}, fieldName, _):
-						var field = cls.findField(fieldName, true);
-						if (field == null) throw "assert";
-						switch field.kind {
-							case TFVar({kind: VConst(_)}):
-								endValue = b;
-							case _:
-								return null;
-						}
-
-					case TELiteral(_):
-						endValue = b;
-
-					case _:
-						return null;
+			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpGte(_), b = {type: TTInt | TTUint})} if (checkedVar == originalLoopVar):
+				if (isValidSimpleSequenceEndValueExpr(b, f.body)) {
+					endValue = b;
+					isReverse = true;
+				} else {
+					return null;
 				}
 
 			case _:
 				return null;
 		}
 
-		switch f.eincr {
-			// TODO: also check for `<=` and add `+1` to `endValue`?
-			case {kind: TEPreUnop(PreIncr(_), {kind: TELocal(_, checkedVar)})} if (checkedVar == originalLoopVar):
-			case {kind: TEPostUnop({kind: TELocal(_, checkedVar)}, PostIncr(_))} if (checkedVar == originalLoopVar):
-			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpAssignOp(AOpAdd(_)), {kind: TELiteral(TLInt({text: "1"}))})} if (checkedVar == originalLoopVar):
-			case _:
-				return null;
+		if (!isReverse) {
+			switch f.eincr {
+				// TODO: also check for `<=` and add `+1` to `endValue`?
+				case {kind: TEPreUnop(PreIncr(_), {kind: TELocal(_, checkedVar)})} if (checkedVar == originalLoopVar):
+				case {kind: TEPostUnop({kind: TELocal(_, checkedVar)}, PostIncr(_))} if (checkedVar == originalLoopVar):
+				case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpAssignOp(AOpAdd(_)), {kind: TELiteral(TLInt({text: "1"}))})} if (checkedVar == originalLoopVar):
+				case _:
+					return null;
+			}
+		} else {
+			switch f.eincr {
+				// TODO: also check for `>` and add `-1` to `endValue`?
+				case {kind: TEPreUnop(PreDecr(_), {kind: TELocal(_, checkedVar)})} if (checkedVar == originalLoopVar):
+				case {kind: TEPostUnop({kind: TELocal(_, checkedVar)}, PostDecr(_))} if (checkedVar == originalLoopVar):
+				case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpAssignOp(AOpSub(_)), {kind: TELiteral(TLInt({text: "1"}))})} if (checkedVar == originalLoopVar):
+				case _:
+					return null;
+			}
+		}
+
+		var iterator = mk(TEHaxeIntIter(startValue, endValue), TTBuiltin, TTBuiltin);
+		if (isReverse) {
+			var reverseIntIter = mk(TEBuiltin(mkIdent(reverseIntIterBuiltin, removeLeadingTrivia(iterator)), reverseIntIterBuiltin), TTBuiltin, TTBuiltin);
+			iterator = mkCall(reverseIntIter, [iterator], TTBuiltin, removeTrailingTrivia(iterator));
 		}
 
 		return {
 			loopVar: loopVar,
-			iterator: mk(TEHaxeIntIter(startValue, endValue), TTBuiltin, TTBuiltin),
+			iterator: iterator,
 			assignment: assignment,
 		};
+	}
+
+	static function isValidSimpleSequenceEndValueExpr(e:TExpr, loopBody:TExpr):Bool {
+		return switch e.kind {
+			case TELocal(_, endValueVar) if (!isLocalVarModified(endValueVar, loopBody)):
+				true;
+
+			case TEField({type: TTStatic(cls)}, fieldName, _):
+				var field = cls.findField(fieldName, true);
+				if (field == null) throw "assert";
+				switch field.kind {
+					case TFVar({kind: VConst(_)}):
+						true;
+					case _:
+						false;
+				}
+
+			case TELiteral(_):
+				true;
+
+			case _:
+				false;
+		}
 	}
 
 	static function isLocalVarModified(v:TVar, e:TExpr) {

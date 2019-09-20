@@ -1,5 +1,6 @@
 package ax3;
 
+import ax3.filters.RewriteCFor;
 import ax3.ParseTree;
 import ax3.TypedTree;
 import ax3.Token.Trivia;
@@ -598,7 +599,8 @@ class GenHaxe extends PrinterBase {
 			case "arguments": "/*TODO*/arguments";
 			case "trace": "trace";
 			case "untyped __global__": "untyped __global__";
-			case _ if (name.startsWith("ASCompat.")): name;
+			case (_.startsWith("ASCompat.") => true)
+			   | (_ == RewriteCFor.reverseIntIterBuiltin => true): name;
 			case _:
 				throw "unknown builtin: " + name;
 		}
