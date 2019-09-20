@@ -19,7 +19,6 @@ class RewriteCFor extends AbstractFilter {
 			case TEFor(f):
 				// TODO: also detect `for (var i = 0; i < array.length; i++) { var elem = array[i]; ... }`
 				// we can safely rewrite it to `for (elem in array)` if no mutating methods are called and array itself is not passed over
-				// TODO: rewrite backward iterations to something
 				switch getSimpleSequence(f) {
 					case null:
 						rewriteToWhile(f);
