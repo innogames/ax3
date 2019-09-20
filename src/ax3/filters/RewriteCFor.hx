@@ -31,7 +31,6 @@ class RewriteCFor extends AbstractFilter {
 	}
 
 	static function getSimpleSequence(f:TFor):Null<IntIterInfo> {
-		// TODO: check for modifications of the loop var and cancel (although Haxe compiler will check for that)
 		var originalLoopVar, loopVar, startValue, endValue;
 		var assignment;
 		switch f.einit {
@@ -48,10 +47,14 @@ class RewriteCFor extends AbstractFilter {
 				return null;
 		}
 
+		if (isLocalVarModified(originalLoopVar, f.body)) {
+			return null;
+		}
+
 		switch f.econd {
 			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpLt(_), b = {type: TTInt | TTUint})} if (checkedVar == originalLoopVar):
 				switch b.kind {
-					case TELocal(_, endValueVar) if (!isEndValueModified(endValueVar, f.body)):
+					case TELocal(_, endValueVar) if (!isLocalVarModified(endValueVar, f.body)):
 						endValue = b;
 
 					case TEField({type: TTStatic(cls)}, fieldName, _):
@@ -91,7 +94,7 @@ class RewriteCFor extends AbstractFilter {
 		};
 	}
 
-	static function isEndValueModified(v:TVar, e:TExpr) {
+	static function isLocalVarModified(v:TVar, e:TExpr) {
 		var result = false;
 		function loop(e:TExpr):TExpr {
 			return switch e.kind {
