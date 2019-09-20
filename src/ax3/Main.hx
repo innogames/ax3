@@ -1,5 +1,6 @@
 package ax3;
 
+import ax3.filters.RewriteForIn;
 import ax3.filters.RewriteCFor;
 import haxe.DynamicAccess;
 import haxe.extern.EitherType;
@@ -78,6 +79,9 @@ class Main {
 			var imports = [];
 			if (RewriteCFor.reverseIntIterUsed) {
 				imports.push("import ReverseIntIterator.reverseIntIter;");
+			}
+			if (RewriteForIn.checkNullIterateeUsed) {
+				imports.push("import ASCompat.checkNullIteratee;");
 			}
 			if (config.rootImports != null) {
 				imports.push(sys.io.File.getContent(config.rootImports));

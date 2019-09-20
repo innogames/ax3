@@ -4,7 +4,11 @@ import ax3.ParseTree.VarDeclKind;
 
 class RewriteForIn extends AbstractFilter {
 	static final tIteratorMethod = TTFun([], TTBuiltin);
-	static final tempLoopVarName = "_tmp_";
+	static inline final tempLoopVarName = "_tmp_";
+	static inline final tempIterateeVarName = "_iter_";
+	public static inline final checkNullIterateeBuiltin = "checkNullIteratee";
+
+	public static var checkNullIterateeUsed(default, null) = false;
 
 	override function processExpr(e:TExpr):TExpr {
 		return switch e.kind {
@@ -69,21 +73,45 @@ class RewriteForIn extends AbstractFilter {
 			body: body
 		}), TTVoid, TTVoid);
 
-		// TODO: generate something like `for (i in nullSafeIteratee(expr))` here instead
-		return mk(TEIf({
+
+		var checkedExpr;
+		if (data.iterateeTempVar == null) {
+			checkedExpr = data.originalExpr;
+		} else {
+			checkedExpr = mk(TELocal(mkIdent(data.iterateeTempVar.name), data.iterateeTempVar), data.iterateeTempVar.type, data.iterateeTempVar.type);
+		}
+
+		var checkedLoop = mk(TEIf({
 			syntax: {
 				keyword: mkIdent("if", removeLeadingTrivia(eFor), [whitespace]),
 				openParen: mkOpenParen(),
 				closeParen: addTrailingWhitespace(mkCloseParen()),
 			},
-			econd: mk(TEBinop(
-				data.originalExpr,
-				OpNotEquals(mkNotEqualsToken()),
-				mkNullExpr()
-			), TTBoolean, TTBoolean),
+			econd: mkCheckNullIterateeExpr(checkedExpr),
 			ethen: eFor,
 			eelse: null
 		}), TTVoid, TTVoid);
+
+		if (data.iterateeTempVar == null) {
+			return checkedLoop;
+		} else {
+			var tempVarDecl = mk(TEVars(VConst(mkIdent("final", removeLeadingTrivia(checkedLoop), [whitespace])), [{
+				syntax: {
+					name: mkIdent(data.iterateeTempVar.name),
+					type: null
+				},
+				v: data.iterateeTempVar,
+				init: {
+					equalsToken: mkTokenWithSpaces(TkEquals, "="),
+					expr: data.originalExpr,
+				},
+				comma: null
+			}]), TTVoid, TTVoid);
+			return mkMergedBlock([
+				{expr: tempVarDecl, semicolon: semicolonWithSpace},
+				{expr: checkedLoop, semicolon: null},
+			]);
+		}
 	}
 
 	function getLoopVar(e:TExpr):LoopVarData {
@@ -107,8 +135,30 @@ class RewriteForIn extends AbstractFilter {
 		}
 	}
 
+	static inline function maybeTempVarIteratee(e:TExpr):{expr:TExpr, tempVar:Null<TVar>} {
+		return if (skipParens(e).kind.match(TELocal(_)))
+			{
+				expr: e,
+				tempVar: null,
+			};
+		else {
+			var tempVar = {name: tempIterateeVarName, type: e.type};
+			{
+				tempVar: tempVar,
+				expr: mk(TELocal(mkIdent(tempIterateeVarName), tempVar), e.type, e.type),
+			};
+		};
+
+	}
+
 	function getForInData(f:TForIn):LoopData {
-		var eobj = f.iter.eobj;
+		var eobj, iterTempVar;
+		{
+			var d = maybeTempVarIteratee(f.iter.eobj);
+			eobj = d.expr;
+			iterTempVar = d.tempVar;
+		}
+
 		var loopVarType;
 		switch eobj.type {
 			case TTDictionary(keyType, _):
@@ -138,11 +188,12 @@ class RewriteForIn extends AbstractFilter {
 				loopVarType = TTInt;
 
 			case other:
-				throwError(exprPos(eobj), "Unsupported iteratee type: " + other);
+				throwError(exprPos(f.iter.eobj), "Unsupported iteratee type: " + other);
 		}
 		return {
 			originalExpr: f.iter.eobj,
 			iterateeExpr: eobj,
+			iterateeTempVar: iterTempVar,
 			loopVarType: loopVarType,
 			syntax: {
 				forKeyword: f.syntax.forKeyword,
@@ -154,8 +205,15 @@ class RewriteForIn extends AbstractFilter {
 	}
 
 	function getForEachData(f:TForEach):LoopData {
+		var eobj, iterTempVar;
+		{
+			var d = maybeTempVarIteratee(f.iter.eobj);
+			eobj = d.expr;
+			iterTempVar = d.tempVar;
+		}
+
 		var loopVarType;
-		switch f.iter.eobj.type {
+		switch eobj.type {
 			case TTAny:
 				loopVarType = TTAny;
 			case TTArray(t) | TTVector(t) | TTDictionary(_, t) | TTObject(t):
@@ -167,7 +225,8 @@ class RewriteForIn extends AbstractFilter {
 		}
 		return {
 			originalExpr: f.iter.eobj,
-			iterateeExpr: f.iter.eobj,
+			iterateeExpr: eobj,
+			iterateeTempVar: iterTempVar,
 			loopVarType: loopVarType,
 			syntax: {
 				forKeyword: f.syntax.forKeyword,
@@ -182,11 +241,18 @@ class RewriteForIn extends AbstractFilter {
 		var eMethod = mk(TEField({kind: TOExplicit(mkDot(), eobj), type: eobj.type}, methodName, mkIdent(methodName)), tIteratorMethod, tIteratorMethod);
 		return mkCall(eMethod, []);
 	}
+
+	static inline function mkCheckNullIterateeExpr(eobj:TExpr):TExpr {
+		var eCheckBuiltin = mkBuiltin(checkNullIterateeBuiltin, TTBuiltin);
+		checkNullIterateeUsed = true;
+		return mkCall(eCheckBuiltin, [eobj], TTBoolean);
+	}
 }
 
 typedef LoopData = {
 	var syntax:ForSyntax;
 	var originalExpr:TExpr;
+	var iterateeTempVar:Null<TVar>;
 	var iterateeExpr:TExpr;
 	var loopVarType:TType;
 }

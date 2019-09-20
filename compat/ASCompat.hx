@@ -11,6 +11,18 @@ class ASCompat {
 	public static inline final MAX_FLOAT = 1.79e+308;
 	public static inline final MIN_FLOAT = -1.79E+308;
 
+	public static inline function checkNullIteratee<T>(v:Null<T>, ?pos:haxe.PosInfos):Bool {
+		if (v == null) {
+			reportNullIteratee(pos);
+			return false;
+		}
+		return true;
+	}
+
+	static function reportNullIteratee(pos:haxe.PosInfos) {
+		haxe.Log.trace("FIXME: Null value passed as an iteratee for for-in/for-each expression!", pos);
+	}
+
 	public static inline function escape(s:String):String {
 		#if flash
 		return untyped __global__["escape"](s);
