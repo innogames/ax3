@@ -36,6 +36,7 @@ class TokenTools {
 	public static final whitespace = new Trivia(TrWhitespace, " ");
 	public static final newline = new Trivia(TrNewline, "\n");
 	public static final commaWithSpace = new Token(0, TkComma, ",", [], [whitespace]);
+	public static final semicolonWithSpace = new Token(0, TkSemicolon, ";", [], [whitespace]);
 
 	public static function mkTokenWithSpaces(kind:TokenKind, text:String):Token {
 		return new Token(0, kind, text, [whitespace], [whitespace]);
