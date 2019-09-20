@@ -25,10 +25,18 @@ class RewriteCFor extends AbstractFilter {
 				}
 
 			case TEContinue(_):
-				if (currentIncrExpr != null)
-					concatExprs(currentIncrExpr, e)
-				else
+				if (currentIncrExpr != null) {
+
+					var incrExpr = cloneExpr(currentIncrExpr);
+					processLeadingToken(t -> t.leadTrivia = removeLeadingTrivia(e).concat(t.leadTrivia), incrExpr);
+
+					mkMergedBlock([
+						{expr: incrExpr, semicolon: mkSemicolon()},
+						{expr: e, semicolon: mkSemicolon()},
+					]);
+				} else {
 					e;
+				}
 
 			case _:
 				mapExpr(processExpr, e);
@@ -156,16 +164,11 @@ class RewriteCFor extends AbstractFilter {
 		}), TTVoid, TTVoid);
 
 		if (f.einit != null) {
-			return mk(TEBlock({
-				syntax: {
-					openBrace: new Token(0, TkBraceOpen, "{", f.syntax.keyword.leadTrivia, []),
-					closeBrace: new Token(0, TkBraceClose, "}", [], removeTrailingTrivia(body)),
-				},
-				exprs: [
-					{expr: f.einit, semicolon: mkSemicolon()},
-					{expr: ewhile, semicolon: null}
-				]
-			}), TTVoid, TTVoid);
+			processLeadingToken(t -> t.leadTrivia = f.syntax.keyword.leadTrivia.concat(t.leadTrivia), f.einit);
+			return mkMergedBlock([
+				{expr: f.einit, semicolon: mkSemicolon()},
+				{expr: ewhile, semicolon: null}
+			]);
 		} else {
 			return ewhile;
 		}

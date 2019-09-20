@@ -468,6 +468,21 @@ class TypedTreeTools {
 				TEHaxeRetype(cloneExpr(e));
 			case TEHaxeIntIter(start, end):
 				TEHaxeIntIter(cloneExpr(start), cloneExpr(end));
+			case TEBinop(a, op, b):
+				TEBinop(cloneExpr(a), cloneBinop(op), cloneExpr(b));
+			case TEPreUnop(op, e):
+				TEPreUnop(switch op {
+					case PreNot(t): PreNot(t.clone());
+					case PreNeg(t): PreNeg(t.clone());
+					case PreIncr(t): PreIncr(t.clone());
+					case PreDecr(t): PreDecr(t.clone());
+					case PreBitNeg(t): PreBitNeg(t.clone());
+				}, cloneExpr(e));
+			case TEPostUnop(e, op):
+				TEPostUnop(cloneExpr(e), switch op {
+					case PostIncr(t): PostIncr(t.clone());
+					case PostDecr(t): PostDecr(t.clone());
+				});
 			case TEDeclRef(path, c): throw "TODO";
 			case TELocalFunction(f): throw "TODO";
 			case TECall(eobj, args): throw "TODO";
@@ -488,9 +503,6 @@ class TypedTreeTools {
 			case TEForIn(f): throw "TODO";
 			case TEForEach(f): throw "TODO";
 			case TEHaxeFor(f): throw "TODO";
-			case TEBinop(a, op, b): throw "TODO";
-			case TEPreUnop(op, e): throw "TODO";
-			case TEPostUnop(e, op): throw "TODO";
 			case TEAs(e, keyword, type): throw "TODO";
 			case TESwitch(s): throw "TODO";
 			case TENew(keyword, cls, args): throw "TODO";
@@ -502,6 +514,51 @@ class TypedTreeTools {
 			case TEXmlDescend(x): throw "TODO";
 			case TEUseNamespace(ns): throw "TODO";
 		});
+	}
+
+	static function cloneBinop(op:Binop):Binop {
+		return switch op {
+			case OpAdd(t): OpAdd(t.clone());
+			case OpSub(t): OpSub(t.clone());
+			case OpDiv(t): OpDiv(t.clone());
+			case OpMul(t): OpMul(t.clone());
+			case OpMod(t): OpMod(t.clone());
+			case OpAssign(t): OpAssign(t.clone());
+			case OpAssignOp(op): OpAssignOp(switch op {
+				case AOpAdd(t): AOpAdd(t.clone());
+				case AOpSub(t): AOpSub(t.clone());
+				case AOpMul(t): AOpMul(t.clone());
+				case AOpDiv(t): AOpDiv(t.clone());
+				case AOpMod(t): AOpMod(t.clone());
+				case AOpAnd(t): AOpAnd(t.clone());
+				case AOpOr(t): AOpOr(t.clone());
+				case AOpBitAnd(t): AOpBitAnd(t.clone());
+				case AOpBitOr(t): AOpBitOr(t.clone());
+				case AOpBitXor(t): AOpBitXor(t.clone());
+				case AOpShl(t): AOpShl(t.clone());
+				case AOpShr(t): AOpShr(t.clone());
+				case AOpUshr(t): AOpUshr(t.clone());
+			});
+			case OpEquals(t): OpEquals(t.clone());
+			case OpNotEquals(t): OpNotEquals(t.clone());
+			case OpStrictEquals(t): OpStrictEquals(t.clone());
+			case OpNotStrictEquals(t): OpNotStrictEquals(t.clone());
+			case OpGt(t): OpGt(t.clone());
+			case OpGte(t): OpGte(t.clone());
+			case OpLt(t): OpLt(t.clone());
+			case OpLte(t): OpLte(t.clone());
+			case OpIn(t): OpIn(t.clone());
+			case OpAnd(t): OpAnd(t.clone());
+			case OpOr(t): OpOr(t.clone());
+			case OpShl(t): OpShl(t.clone());
+			case OpShr(t): OpShr(t.clone());
+			case OpUshr(t): OpUshr(t.clone());
+			case OpBitAnd(t): OpBitAnd(t.clone());
+			case OpBitOr(t): OpBitOr(t.clone());
+			case OpBitXor(t): OpBitXor(t.clone());
+			case OpIs(t): OpIs(t.clone());
+			case OpComma(t): OpComma(t.clone());
+		}
 	}
 
 	public static function mapExpr(f:TExpr->TExpr, e1:TExpr):TExpr {
@@ -761,6 +818,18 @@ class TypedTreeTools {
 		return if (r == null) decls else r;
 	}
 
+	/**
+		Create a block expression taht will be merged into the enclosing block by mapBlockExprs
+	**/
+	public static function mkMergedBlock(exprs:Array<TBlockExpr>):TExpr {
+		return mk(TEBlock({syntax: mergeBlockMarkerSyntax, exprs: exprs}), TTVoid, TTVoid);
+	}
+
+	static final mergeBlockMarkerSyntax = {
+		openBrace: new Token(0, TkBraceOpen, "{", [], []),
+		closeBrace: new Token(0, TkBraceClose, "}", [], []),
+	};
+
 	public static function mapBlockExprs(f:TExpr->TExpr, exprs:Array<TBlockExpr>):Array<TBlockExpr> {
 		var r:Null<Array<TBlockExpr>> = null;
 		for (i in 0...exprs.length) {
@@ -768,7 +837,22 @@ class TypedTreeTools {
 			var mapped = f(e.expr);
 			if (mapped != e.expr) {
 				if (r == null) r = exprs.slice(0, i);
-				r.push(e.with(expr = mapped));
+				switch mapped.kind {
+					case TEBlock(block) if (block.syntax == mergeBlockMarkerSyntax):
+						for (i in 0...block.exprs.length) {
+							var innerExpr = block.exprs[i];
+							if (i == block.exprs.length - 1) {
+								if (innerExpr.semicolon == null) {
+									innerExpr.semicolon = e.semicolon;
+								} else {
+									innerExpr.semicolon.trailTrivia = innerExpr.semicolon.trailTrivia.concat(e.semicolon.trailTrivia);
+								}
+							}
+							r.push(innerExpr);
+						}
+					case _:
+						r.push(e.with(expr = mapped));
+				}
 			} else if (r != null) {
 				r.push(e);
 			}
