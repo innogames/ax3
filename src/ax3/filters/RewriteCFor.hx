@@ -7,8 +7,8 @@ private typedef IntIterInfo = {
 }
 
 class RewriteCFor extends AbstractFilter {
-	static final tempLoopVarName = "_tmp_";
-	public static final reverseIntIterBuiltin = "reverseIntIter";
+	static inline final tempLoopVarName = "_tmp_";
+	public static inline final reverseIntIterBuiltin = "reverseIntIter";
 
 	public static var reverseIntIterUsed(default,null) = false;
 
