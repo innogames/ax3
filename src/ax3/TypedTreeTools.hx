@@ -844,7 +844,7 @@ class TypedTreeTools {
 							if (i == block.exprs.length - 1) {
 								if (innerExpr.semicolon == null) {
 									innerExpr.semicolon = e.semicolon;
-								} else {
+								} else if (e.semicolon != null) {
 									innerExpr.semicolon.trailTrivia = innerExpr.semicolon.trailTrivia.concat(e.semicolon.trailTrivia);
 								}
 							}
