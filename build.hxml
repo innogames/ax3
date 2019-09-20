@@ -2,7 +2,6 @@
 -lib format
 -D no-copt
 
-# -debug
 -D analyzer-optimize
 
 # --macro nullSafety("ax3")
@@ -12,5 +11,8 @@
 -java java_out
 -D jvm
 
+# -debug
+# -cmd cp java_out/Main-debug.jar converter.jar
 -cmd cp java_out/Main.jar converter.jar
-# -cmd java -jar java_out/Main.jar config-local.json
+
+-cmd java -jar converter.jar config-local.json
