@@ -83,7 +83,9 @@ class RewriteCasts extends AbstractFilter {
 
 					// String(other)
 					case [_, TTString]:
-						var eCastMethod = mkBuiltin("ASCompat.toString", tToString, removeLeadingTrivia(e));
+						// maybe we can always just call Std.string for everything?
+						var methodName = if (expr.type.match(TTInt | TTUint | TTNumber)) "Std.string" else "ASCompat.toString";
+						var eCastMethod = mkBuiltin(methodName, tToString, removeLeadingTrivia(e));
 						e.with(kind = TECall(eCastMethod, {
 							openParen: syntax.openParen,
 							args: [{expr: expr, comma: null}],
