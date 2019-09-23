@@ -184,24 +184,15 @@ class SWCLoader {
 					var ifaceInfo = {extend: null};
 					clsKind = TInterface(ifaceInfo);
 
-					var extensions = [];
-					for (iface in cls.interfaces) {
-						var ifaceN = getPublicName(abc, iface);
-						if (ifaceN != null) {
-							if (ifaceN.name == "DRMErrorListener") {
-								// TODO: something is bugged here, or I don't understand how to read SWC properly
-								ifaceN.ns = "com.adobe.tvsdk.mediacore";
-							}
-							extensions.push(ifaceN);
-						}
-					}
-
-					if (extensions.length > 0) {
+					if (cls.interfaces.length > 0) {
 						structureSetups.push(function() {
 							var interfaces = [];
-							for (n in extensions) {
-								var ifaceDecl = tree.getInterface(n.ns, n.name);
-								interfaces.push({iface: {syntax: null, decl: ifaceDecl}, comma: null});
+							for (iface in cls.interfaces) {
+								var n = getPublicName(abc, iface, null, (ns, name) -> try {tree.getDecl(ns, name); true;} catch (e:Any) false);
+								if (n != null) {
+									var ifaceDecl = tree.getInterface(n.ns, n.name);
+									interfaces.push({iface: {syntax: null, decl: ifaceDecl}, comma: null});
+								}
 							}
 							ifaceInfo.extend = {keyword: null, interfaces: interfaces}
 						});
@@ -229,6 +220,32 @@ class SWCLoader {
 						var ctor = buildFunDecl(abc, cls.constructor, getHaxeType(packName, className, "new"));
 						addMethod(n.name, ctor, false);
 					});
+
+					if (cls.interfaces.length > 0) {
+						classInfo.implement = {
+							keyword: null,
+							interfaces: []
+						};
+						structureSetups.push(function() {
+							for (iface in cls.interfaces) {
+								#if debug var failedMulti = []; #end
+								var iface = getPublicName(abc, iface, null, (ns, name) -> try {tree.getDecl(ns, name); true;} catch (e:Any) {#if debug failedMulti.push({ns: ns, name: name}); #end false;});
+								if (iface != null) {
+									classInfo.implement.interfaces.push({
+										iface: {syntax: null, decl: tree.getInterface(iface.ns, iface.name)},
+										comma: null
+									});
+								} else {
+									#if debug
+									trace('could not load one of implemented interfaces for $packName::$className:');
+									for (n in failedMulti) {
+										trace('  - ${n.ns}::${n.name}');
+									}
+									#end
+								}
+							}
+						});
+					}
 				}
 
 				var tDecl:TClassOrInterfaceDecl = {
@@ -436,7 +453,8 @@ class SWCLoader {
 		}
 	}
 
-	static function getPublicName(abc:ABCData, name:IName, ?ifaceNS:String):{ns:String, name:String} {
+	// TODO: cleanup NMulti handling
+	static function getPublicName(abc:ABCData, name:IName, ?ifaceNS:String, ?multiChecker:(ns:String, name:String)->Bool):{ns:String, name:String} {
 		var name = abc.get(abc.names, name);
 		switch (name) {
 			case NName(name, ns):
@@ -465,19 +483,19 @@ class SWCLoader {
 						return null;
 				}
 			case NMulti(name, nss):
-				// trace("OMG", abc.get(abc.strings, name));
+				var name = abc.get(abc.strings, name);
 				var nss = abc.get(abc.nssets, nss);
 				for (ns in nss) {
 					var nsk = abc.get(abc.namespaces, ns);
 					switch (nsk) {
 						case NPublic(ns) | NPrivate(ns) | NInternal(ns):
 							var ns = abc.get(abc.strings, ns);
-							var name = abc.get(abc.strings, name);
-							return {ns: ns, name: name}
+							if (multiChecker == null || multiChecker(ns, name)) {
+								return {ns: ns, name: name};
+							}
 						case _: throw "assert " + nsk.getName();
 					}
 				}
-				// TODO: ffs
 				return null;
 			case _:
 				throw "assert " + name.getName();
