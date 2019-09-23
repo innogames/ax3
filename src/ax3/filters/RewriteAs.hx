@@ -114,7 +114,9 @@ class RewriteAs extends AbstractFilter {
 	}
 
 	static function makeAs(eObj:TExpr, eType:TExpr, leadTrivia, trailTrivia):TExprKind {
-		var eMethod = mkBuiltin("ASCompat.as", TTFunction, leadTrivia);
+		var methodName = if (eObj.type.match(TTAny | TTObject(TTAny))) "dynamicAs" else "reinterpretAs";
+
+		var eMethod = mkBuiltin("ASCompat." + methodName, TTFunction, leadTrivia);
 		return TECall(eMethod, {
 			openParen: mkOpenParen(),
 			args: [

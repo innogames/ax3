@@ -953,7 +953,7 @@ class GenHaxe extends PrinterBase {
 			case TECall({kind: TEBuiltin(_, "flash.Vector.convert")}, _):
 				// this one depends on the expected type
 				return false;
-			case TECall({kind: TEBuiltin(_, "ASCompat.as")}, _) if (expectedType.match(TTArray(_))):
+			case TECall({kind: TEBuiltin(_, "ASCompat.reinterpretAs" | "ASCompat.dynamicAs")}, _) if (expectedType.match(TTArray(_))):
 				// this one will return an unbound Array element type
 				return false;
 			case TECall({kind: TEBuiltin(_, "Type.resolveClass")}, _) if (expectedType.match(TTStatic(_))):

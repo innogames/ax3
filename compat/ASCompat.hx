@@ -79,6 +79,14 @@ class ASCompat {
 		return flash.Lib.as(v, c);
 	}
 
+	public static inline function dynamicAs<T>(v:Dynamic, c:Class<T>):T {
+		return flash.Lib.as(v, c);
+	}
+
+	public static inline function reinterpretAs<T>(v:Dynamic, c:Class<T>):T {
+		return flash.Lib.as(v, c);
+	}
+
 	public static inline function toFixed(n:Float, ?digits:Int):String {
 		return (cast n).toFixed(digits);
 	}
