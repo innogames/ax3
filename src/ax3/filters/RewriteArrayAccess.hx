@@ -49,7 +49,7 @@ class RewriteArrayAccess extends AbstractFilter {
 							case [TTObject(TTAny), _]:
 							case [TTClass, TTStatic(_)]: //allowed
 							case _:
-								if (!Type.enumEq(expectedKeyType, keyType)) {
+								if (!typeEq(expectedKeyType, keyType)) {
 									reportError(exprPos(e), 'Invalid dictionary key type, expected $expectedKeyType, got $keyType');
 								}
 						}

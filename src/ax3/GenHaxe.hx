@@ -7,6 +7,7 @@ import ax3.TypedTree;
 import ax3.Token.Trivia;
 import ax3.TypedTreeTools.exprPos;
 import ax3.TypedTreeTools.skipParens;
+import ax3.TypedTreeTools.typeEq;
 using StringTools;
 
 @:nullSafety
@@ -960,7 +961,7 @@ class GenHaxe extends PrinterBase {
 				// resolveClass returns an unbound T for Class<T> so don't lose the actual class type
 				return false;
 			case _:
-				return Type.enumEq(expectedType, expr.type);
+				return typeEq(expectedType, expr.type);
 		}
 	}
 

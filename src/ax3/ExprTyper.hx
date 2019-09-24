@@ -11,6 +11,7 @@ import ax3.TypedTreeTools.tUntypedObject;
 import ax3.TypedTreeTools.tUntypedDictionary;
 import ax3.TypedTreeTools.getConstructor;
 import ax3.TypedTreeTools.isFieldStatic;
+import ax3.TypedTreeTools.typeEq;
 
 typedef Locals = Map<String, TVar>;
 
@@ -905,7 +906,7 @@ class ExprTyper {
 			case OpAnd(_) | OpOr(_):
 				var a = typeExpr(a, expectedType);
 				var b = typeExpr(b, expectedType);
-				var type = if (Type.enumEq(a.type, b.type)) a.type else TTAny;
+				var type = if (typeEq(a.type, b.type)) a.type else TTAny;
 				// these two must be further processed to be Haxe-friendly
 				return mk(TEBinop(a, op, b), type, expectedType);
 
@@ -1186,7 +1187,7 @@ class ExprTyper {
 		var resultType =
 			switch [ethen.type, eelse.type] {
 				case [TTInt | TTUint, TTNumber] | [TTNumber, TTInt | TTUint]: TTNumber;
-				case _ if (Type.enumEq(ethen.type, eelse.type)): ethen.type;
+				case _ if (typeEq(ethen.type, eelse.type)): ethen.type;
 				case _: TTAny; // TODO: warn here?
 			}
 		return mk(TETernary({
@@ -1230,7 +1231,7 @@ class ExprTyper {
 		var allElementsConformToExpectedType = true;
 		var elems = if (d.elems == null) [] else separatedToArray(d.elems, function(e, comma) {
 			var e = typeExpr(e, elemExpectedType);
-			if (elemExpectedType != TTAny && !Type.enumEq(e.type, elemExpectedType)) { // TODO: this should do proper "unification" and allow subtypes when expecting a base type
+			if (elemExpectedType != TTAny && !typeEq(e.type, elemExpectedType)) { // TODO: this should do proper "unification" and allow subtypes when expecting a base type
 				allElementsConformToExpectedType = false;
 			}
 			return {expr: e, comma: comma};

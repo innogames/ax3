@@ -26,7 +26,7 @@ class RewriteForIn extends AbstractFilter {
 
 		switch loopVar.kind {
 			case LOwn(kind, decl):
-				if (Type.enumEq(loopVar.v.type, data.loopVarType)) {
+				if (typeEq(loopVar.v.type, data.loopVarType)) {
 					// types are exactly the same, we can use the haxe loop var directly
 					loopVarVar = loopVar.v;
 					loopVarToken = mkIdent(loopVar.v.name, [], [whitespace]);

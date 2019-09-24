@@ -43,7 +43,7 @@ class RewriteVectorDecl extends AbstractFilter {
 			case TECall({kind: TEVector(v, elemType)}, args):
 				switch args.args {
 					case [{expr: eOtherVector = {type: TTVector(actualElemType)}}]:
-						if (Type.enumEq(elemType, actualElemType)) {
+						if (typeEq(elemType, actualElemType)) {
 							reportError(exprPos(e), "Useless vector casting");
 							processLeadingToken(t -> t.leadTrivia = removeLeadingTrivia(e).concat(t.leadTrivia), eOtherVector);
 							processTrailingToken(t -> t.trailTrivia = t.trailTrivia.concat(removeTrailingTrivia(e)), eOtherVector);
@@ -51,7 +51,7 @@ class RewriteVectorDecl extends AbstractFilter {
 						} else {
 							var convertMethod = mkBuiltin("flash.Vector.convert", TTFunction, removeLeadingTrivia(e));
 							e = e.with(kind = TECall(convertMethod, args));
-							if (Type.enumEq(e.expectedType, TTVector(elemType))) {
+							if (typeEq(e.expectedType, TTVector(elemType))) {
 								e;
 							} else {
 								e.with(kind = TEHaxeRetype(e));
@@ -70,7 +70,7 @@ class RewriteVectorDecl extends AbstractFilter {
 						var eArrayExpr = eArray.expr;
 
 						switch eArrayExpr {
-							case {type: TTArray(arrayElemType)} if (Type.enumEq(elemType, arrayElemType)):
+							case {type: TTArray(arrayElemType)} if (typeEq(elemType, arrayElemType)):
 								// same type, nothing to do \o/
 							case {kind: TEArrayDecl(arr)} if (!arrayDeclNeedsTypeCheck(arr, elemType)):
 								// array decl with all elements conforming
@@ -93,7 +93,7 @@ class RewriteVectorDecl extends AbstractFilter {
 
 	static function arrayDeclNeedsTypeCheck(decl:TArrayDecl, expectedElemType:TType):Bool {
 		for (e in decl.elements) {
-			if (!Type.enumEq(e.expr.type, expectedElemType)) {
+			if (!typeEq(e.expr.type, expectedElemType)) {
 				return true;
 			}
 		}

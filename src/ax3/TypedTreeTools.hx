@@ -13,6 +13,60 @@ class TypedTreeTools {
 	public static final tUntypedObject = TTObject(TTAny);
 	public static final tUntypedDictionary = TTDictionary(TTAny, TTAny);
 
+	public static function typeEq(a:TType, b:TType):Bool {
+		return
+			if (a == b) true
+			else switch a {
+				case TTVoid | TTAny | TTBoolean | TTNumber | TTInt | TTUint | TTString | TTFunction | TTClass | TTXML | TTXMLList | TTRegExp | TTBuiltin:
+					false;
+				case TTArray(aElem):
+					switch b {
+						case TTArray(bElem): typeEq(aElem, bElem);
+						case _: false;
+					}
+				case TTVector(aElem):
+					switch b {
+						case TTVector(bElem): typeEq(aElem, bElem);
+						case _: false;
+					}
+				case TTObject(aElem):
+					switch b {
+						case TTObject(bElem): typeEq(aElem, bElem);
+						case _: false;
+					}
+				case TTDictionary(aKey, aValue):
+					switch b {
+						case TTDictionary(bKey, bValue): typeEq(aKey, bKey) && typeEq(aValue, bValue);
+						case _: false;
+					}
+				case TTInst(aClass):
+					switch b {
+						case TTInst(bClass): aClass == bClass;
+						case _: false;
+					}
+				case TTStatic(aClass):
+					switch b {
+						case TTStatic(bClass): aClass == bClass;
+						case _: false;
+					}
+				case TTFun(aArgs, aRet, aRest):
+					switch b {
+						case TTFun(bArgs, bRet, bRest): argsEq(aArgs, bArgs) && typeEq(aRet, bRet) && aRest == bRest;
+						case _: false;
+					}
+		};
+	}
+
+	static function argsEq(a:Array<TType>, b:Array<TType>):Bool {
+		if (a.length != b.length) return false;
+
+		for (i in 0...a.length) {
+			if (!typeEq(a[i], b[i])) return false;
+		}
+
+		return true;
+	}
+
 	public static function isFieldStatic(field:TClassField):Bool {
 		for (m in field.modifiers) {
 			if (m.match(FMStatic(_))) return true;
