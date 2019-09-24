@@ -1213,10 +1213,20 @@ class ExprTyper {
 	}
 
 	function typeArrayDeclElements(d:ArrayDecl, elemExpectedType:TType) {
-		var elems = if (d.elems == null) [] else separatedToArray(d.elems, (e, comma) -> {expr: typeExpr(e, elemExpectedType), comma: comma});
+		var allElementsConformToExpectedType = true;
+		var elems = if (d.elems == null) [] else separatedToArray(d.elems, function(e, comma) {
+			var e = typeExpr(e, elemExpectedType);
+			if (elemExpectedType != TTAny && !Type.enumEq(e.type, elemExpectedType)) { // TODO: this should do proper "unification" and allow subtypes when expecting a base type
+				allElementsConformToExpectedType = false;
+			}
+			return {expr: e, comma: comma};
+		});
 		return {
-			syntax: {openBracket: d.openBracket, closeBracket: d.closeBracket},
-			elements: elems
+			allElementsConformToExpectedType: allElementsConformToExpectedType,
+			decl: {
+				syntax: {openBracket: d.openBracket, closeBracket: d.closeBracket},
+				elements: elems
+			}
 		};
 	}
 
@@ -1225,7 +1235,9 @@ class ExprTyper {
 			case TTArray(t): t;
 			case _: TTAny;
 		};
-		return mk(TEArrayDecl(typeArrayDeclElements(d, elemExpectedType)), tUntypedArray, expectedType);
+		var elements = typeArrayDeclElements(d, elemExpectedType);
+		var arrayType = if (elements.allElementsConformToExpectedType) TTArray(elemExpectedType) else tUntypedArray;
+		return mk(TEArrayDecl(elements.decl), arrayType, expectedType);
 	}
 
 	function typeVectorDecl(newKeyword:Token, t:TypeParam, d:ArrayDecl, expectedType:TType):TExpr {
@@ -1233,7 +1245,7 @@ class ExprTyper {
 		var elems = typeArrayDeclElements(d, type);
 		return mk(TEVectorDecl({
 			syntax: {newKeyword: newKeyword, typeParam: t},
-			elements: elems,
+			elements: elems.decl,
 			type: type
 		}), TTVector(type), expectedType);
 	}
