@@ -101,7 +101,7 @@ abstract HaxeTypeAnnotation(String) {
 		return HaxeTypeAnnotation.extract(f.keyword.leadTrivia);
 	}
 
-	public static function extract(trivia:Array<Trivia>):Null<HaxeTypeAnnotation> {
+	public static function extractTrivia(trivia:Array<Trivia>, f:(tr:Trivia, comment:String)->Void) {
 		var start = 0;
 		for (i in 0...trivia.length) {
 			var tr = trivia[i];
@@ -119,11 +119,17 @@ abstract HaxeTypeAnnotation(String) {
 							toDelete++;
 						}
 						trivia.splice(start, toDelete);
-						return cast comment.substring("@haxe-type(".length);
+						f(tr, comment);
+						return;
 					}
 			}
 		}
-		return null;
+	}
+
+	public static function extract(trivia:Array<Trivia>):Null<HaxeTypeAnnotation> {
+		var result:Null<HaxeTypeAnnotation> = null;
+		extractTrivia(trivia, (tr, comment) -> result = cast comment.substring("@haxe-type(".length));
+		return result;
 	}
 
 	public inline function parseTypeHint():HaxeType {

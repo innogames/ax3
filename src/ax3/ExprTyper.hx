@@ -1056,8 +1056,20 @@ class ExprTyper {
 		return mk(TEAs(e, keyword, {syntax: t, type: type}), type, expectedType);
 	}
 
+	function migrateForInVarHaxeTypeAnnotation(forKeyword:Token, forIter:ForIter) {
+		// this is a bit hacky: transfer the type annotation trivia from `for` keyword
+		// to the `var` keyword inside it so it can be picked up by `typeVars`
+		switch (forIter.eit) {
+			case EVars(VVar(t) | VConst(t), _):
+				HaxeTypeAnnotation.extractTrivia(forKeyword.leadTrivia, (tr, comment) -> t.leadTrivia.push(tr));
+			case _:
+		}
+	}
+
 	function typeForIn(f:ForIn, expectedType:TType):TExpr {
 		if (expectedType != TTVoid) throw "assert";
+
+		migrateForInVarHaxeTypeAnnotation(f.forKeyword, f.iter);
 
 		pushLocals();
 		var eobj = typeExpr(f.iter.eobj, TTAny);
@@ -1081,6 +1093,8 @@ class ExprTyper {
 
 	function typeForEach(f:ForEach, expectedType:TType):TExpr {
 		if (expectedType != TTVoid) throw "assert";
+
+		migrateForInVarHaxeTypeAnnotation(f.forKeyword, f.iter);
 
 		pushLocals();
 		var eobj = typeExpr(f.iter.eobj, TTAny);
