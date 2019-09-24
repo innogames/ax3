@@ -1,5 +1,5 @@
 tutorial.instructions.ITutorialInstruction.target : ASObject;
-tutorial.instructions.triggers.ITutorialTrigger.completeCallback : ASFunction;
+tutorial.instructions.triggers.ITutorialTrigger.completeCallback : tutorial.instructions.triggers.ITutorialTrigger->Void;
 
 tutorial.parser.ITutorialParser.$parse__p1 : ASObject;
 tutorial.parser.ITutorialParser.$parse__data : ASObject;
