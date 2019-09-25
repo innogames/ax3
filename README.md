@@ -51,3 +51,5 @@ Most of the `TODO`s are actually in the code, so look there too, but still:
  - remove `:Void` type hints for class methods (not sure about that, but it looks clean)
  - review and cleanup `ASCompat` - rework some things as static extensions (e.g. Vector/Array compat methods)
  - add some more empty ctors to work around https://github.com/HaxeFoundation/haxe/issues/8531
+ - use `Vector` instead of `flash.Vector` and add it to `imports.hx` automatically
+ - add imports for fully-qualified names that can come from `@haxe-type`
