@@ -55,3 +55,4 @@ Most of the `TODO`s are actually in the code, so look there too, but still:
  - add imports for fully-qualified names that can come from `@haxe-type`
  - remove `flash.utils.Dictionary` imports (because we translate that to `ASDictionary`)
  - remove duplicate imports (can happen when merging in out-of-package imports)
+ - rewrite `func.call(null, arg1, arg2)` to `func(arg1, arg2)`
