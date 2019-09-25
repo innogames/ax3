@@ -11,6 +11,7 @@ import ax3.TypedTreeTools.tUntypedObject;
 import ax3.TypedTreeTools.tUntypedDictionary;
 import ax3.TypedTreeTools.getConstructor;
 import ax3.TypedTreeTools.isFieldStatic;
+import ax3.TypedTreeTools.getFunctionTypeFromSignature;
 import ax3.TypedTreeTools.typeEq;
 
 typedef Locals = Map<String, TVar>;
@@ -170,7 +171,7 @@ class ExprTyper {
 				sig: sig,
 				expr: typeFunctionExpr(sig, fun.block)
 			}
-		}), TTFunction, expectedType); // TODO: TTFun, why not?
+		}), getFunctionTypeFromSignature(sig), expectedType);
 	}
 
 	// TODO: copypasta from Typer
