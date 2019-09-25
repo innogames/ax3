@@ -33,6 +33,8 @@ class FunctionApply extends AbstractFilter {
 				switch args.args {
 					case []: // no args call, that happens :-/
 						e.with(kind = TECall(eFun, args));
+					case _[0] => {expr: {kind: TELiteral(TLNull(_))}}: // call with `null` first arg should be the same as simply calling the function
+						e.with(kind = TECall(eFun, args.with(args = args.args.slice(1))));
 					case _:
 						var eArgs = mk(TEArrayDecl({
 							syntax: {
