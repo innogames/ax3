@@ -45,6 +45,20 @@ class RewriteCFor extends AbstractFilter {
 		}
 	}
 
+	static final literalOne = mk(TELiteral(TLInt(new Token(0, TkDecimalInteger, "1", [], []))), TTInt, TTInt);
+	static final opAdd = OpAdd(new Token(0, TkPlus, "+", [whitespace], [whitespace]));
+
+	static function addOneToEndValue(endValue:TExpr):TExpr {
+		switch endValue.kind {
+			case TELiteral(TLInt(intToken)):
+				var int = Std.parseInt(intToken.text);
+				if (int == null) throw "assert"; // should not happen I think?
+				return endValue.with(kind = TELiteral(TLInt(intToken.with(TkDecimalInteger, Std.string(int + 1)))));
+			case _:
+				return endValue.with(kind = TEBinop(endValue, opAdd, literalOne));
+		}
+	}
+
 	static function getSimpleSequence(f:TFor):Null<IntIterInfo> {
 		var originalLoopVar, loopVar, startValue, endValue;
 		var assignment;
@@ -68,18 +82,24 @@ class RewriteCFor extends AbstractFilter {
 
 		var isReverse;
 		switch f.econd {
-			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpLt(_), b = {type: TTInt | TTUint})} if (checkedVar == originalLoopVar):
+			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, op = OpLt(_) | OpLte(_), b = {type: TTInt | TTUint})} if (checkedVar == originalLoopVar):
 				if (isValidSimpleSequenceEndValueExpr(b, f.body)) {
-					endValue = b;
 					isReverse = false;
+					endValue = b;
+					if (op.match(OpLte(_))) {
+						endValue = addOneToEndValue(endValue);
+					}
 				} else {
 					return null;
 				}
 
-			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpGte(_), b = {type: TTInt | TTUint})} if (checkedVar == originalLoopVar):
+			case {kind: TEBinop({kind: TELocal(_, checkedVar)}, op = OpGte(_) | OpGt(_), b = {type: TTInt | TTUint})} if (checkedVar == originalLoopVar):
 				if (isValidSimpleSequenceEndValueExpr(b, f.body)) {
-					endValue = b;
 					isReverse = true;
+					endValue = b;
+					if (op.match(OpGt(_))) {
+						endValue = addOneToEndValue(endValue);
+					}
 				} else {
 					return null;
 				}
@@ -90,7 +110,6 @@ class RewriteCFor extends AbstractFilter {
 
 		if (!isReverse) {
 			switch f.eincr {
-				// TODO: also check for `<=` and add `+1` to `endValue`?
 				case {kind: TEPreUnop(PreIncr(_), {kind: TELocal(_, checkedVar)})} if (checkedVar == originalLoopVar):
 				case {kind: TEPostUnop({kind: TELocal(_, checkedVar)}, PostIncr(_))} if (checkedVar == originalLoopVar):
 				case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpAssignOp(AOpAdd(_)), {kind: TELiteral(TLInt({text: "1"}))})} if (checkedVar == originalLoopVar):
@@ -99,7 +118,6 @@ class RewriteCFor extends AbstractFilter {
 			}
 		} else {
 			switch f.eincr {
-				// TODO: also check for `>` and add `-1` to `endValue`?
 				case {kind: TEPreUnop(PreDecr(_), {kind: TELocal(_, checkedVar)})} if (checkedVar == originalLoopVar):
 				case {kind: TEPostUnop({kind: TELocal(_, checkedVar)}, PostDecr(_))} if (checkedVar == originalLoopVar):
 				case {kind: TEBinop({kind: TELocal(_, checkedVar)}, OpAssignOp(AOpSub(_)), {kind: TELiteral(TLInt({text: "1"}))})} if (checkedVar == originalLoopVar):
