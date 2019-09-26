@@ -213,7 +213,23 @@ class TModule {
 	var privateDecls:Array<TDecl>;
 	var eof:Token;
 
+	static function isClassDecl(decl:TDecl, c:TClassOrInterfaceDecl):Bool {
+		return switch decl {
+			case {kind: TDClassOrInterface(otherClass)} if (otherClass == c): true;
+			case _: false;
+		};
+	}
+
 	function isImported(c:TClassOrInterfaceDecl) {
+		if (isClassDecl(pack.decl, c)) {
+			return true;
+		}
+		for (decl in privateDecls) {
+			if (isClassDecl(decl, c)) {
+				return true;
+			}
+		}
+
 		// TODO: optimize this, because this is done A LOT
 		// actually, we might want to store the "local" flag in the TEDeclRef/TTypeHint/etc.
 		var i = pack.imports.length;
