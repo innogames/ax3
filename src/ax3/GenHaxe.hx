@@ -30,7 +30,7 @@ class GenHaxe extends PrinterBase {
 		currentModule = m;
 		printPackage(m.pack);
 		for (d in m.privateDecls) {
-			printDecl(d);
+			printDecl(d, true);
 		}
 		printTrivia(m.eof.leadTrivia);
 		@:nullSafety(Off) currentModule = null;
@@ -56,7 +56,7 @@ class GenHaxe extends PrinterBase {
 			printTokenTrivia(n.semicolon);
 		}
 
-		printDecl(p.decl);
+		printDecl(p.decl, false);
 		printTokenTrivia(p.syntax.closeBrace);
 	}
 
@@ -106,10 +106,10 @@ class GenHaxe extends PrinterBase {
 		if (i.syntax.condCompEnd != null) printCompCondEnd(i.syntax.condCompEnd);
 	}
 
-	function printDecl(d:TDecl) {
+	function printDecl(d:TDecl, isPrivate:Bool) {
 		switch (d.kind) {
-			case TDClassOrInterface(c = {kind: TClass(info)}): printClassDecl(c, info);
-			case TDClassOrInterface(i = {kind: TInterface(info)}): printInterfaceDecl(i, info);
+			case TDClassOrInterface(c = {kind: TClass(info)}): printClassDecl(c, info, isPrivate);
+			case TDClassOrInterface(i = {kind: TInterface(info)}): printInterfaceDecl(i, info, isPrivate);
 			case TDVar(v): printModuleVarDecl(v);
 			case TDFunction(f): printFunctionDecl(f);
 			case TDNamespace(n): printNamespace(n);
@@ -138,10 +138,10 @@ class GenHaxe extends PrinterBase {
 		printVarField(v);
 	}
 
-	function printInterfaceDecl(i:TClassOrInterfaceDecl, info:TInterfaceDeclInfo) {
+	function printInterfaceDecl(i:TClassOrInterfaceDecl, info:TInterfaceDeclInfo, isPrivate:Bool) {
 		printMetadata(i.metadata);
 		printDeclModifiers(i.modifiers);
-		printTextWithTrivia("interface", i.syntax.keyword);
+		printTextWithTrivia(if (isPrivate) "private interface" else "interface", i.syntax.keyword);
 		printTextWithTrivia(i.name, i.syntax.name);
 		if (info.extend != null) {
 			printTextWithTrivia("extends", info.extend.keyword);
@@ -183,10 +183,10 @@ class GenHaxe extends PrinterBase {
 		printCloseBrace(i.syntax.closeBrace);
 	}
 
-	function printClassDecl(c:TClassOrInterfaceDecl, info:TClassDeclInfo) {
+	function printClassDecl(c:TClassOrInterfaceDecl, info:TClassDeclInfo, isPrivate:Bool) {
 		printMetadata(c.metadata);
 		printDeclModifiers(c.modifiers);
-		printTextWithTrivia("class", c.syntax.keyword);
+		printTextWithTrivia(if (isPrivate) "private class" else  "class", c.syntax.keyword);
 		printTextWithTrivia(c.name, c.syntax.name);
 		if (info.extend != null) {
 			printTextWithTrivia("extends", info.extend.syntax.keyword);
