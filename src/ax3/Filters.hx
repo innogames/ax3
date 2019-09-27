@@ -58,6 +58,7 @@ class Filters {
 			new UintComparison(context),
 			new HandleProtectedOverrides(context),
 			new CheckUntypedMethodCalls(context),
+			new RemoveRedundantParenthesis(context),
 		]) {
 			f.run(tree);
 		}
