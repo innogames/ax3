@@ -262,10 +262,10 @@ class TypedTreeTools {
 				var trail = removeTrailingTrivia(e);
 				var openParen = new Token(0, TkParenOpen, "(", lead, []);
 				var closeParen = new Token(0, TkParenClose, ")", [], trail);
-				e.with(
-					kind = TEParens(openParen, e, closeParen),
-					type = e.expectedType
-				);
+				// we set the expected type of an expression inside parens to the type of that expression,
+				// because we don't want the inner expression to be checked against type mismatches,
+				// since the parens will carry the expected type so any transformations will be applied once: to the parenthesed expr
+				mk(TEParens(openParen, e.with(expectedType = e.type), closeParen), e.type, e.expectedType);
 		}
 	}
 
