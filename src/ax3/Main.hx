@@ -78,7 +78,7 @@ class Main {
 			// TODO: maybe we need a more sophisticated system for collecting toplevel imports
 			var imports = [];
 			if (RewriteCFor.reverseIntIterUsed) {
-				imports.push("import ReverseIntIterator.reverseIntIter;");
+				imports.push("using ReverseIntIterator;");
 			}
 			if (RewriteForIn.checkNullIterateeUsed) {
 				imports.push("import ASCompat.checkNullIteratee;");

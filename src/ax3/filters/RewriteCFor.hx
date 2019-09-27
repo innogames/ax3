@@ -8,7 +8,6 @@ private typedef IntIterInfo = {
 
 class RewriteCFor extends AbstractFilter {
 	static inline final tempLoopVarName = "_tmp_";
-	public static inline final reverseIntIterBuiltin = "reverseIntIter";
 
 	public static var reverseIntIterUsed(default,null) = false;
 
@@ -48,12 +47,33 @@ class RewriteCFor extends AbstractFilter {
 	static final literalOne = mk(TELiteral(TLInt(new Token(0, TkDecimalInteger, "1", [], []))), TTInt, TTInt);
 	static final opAdd = OpAdd(new Token(0, TkPlus, "+", [whitespace], [whitespace]));
 
-	static function addOneToEndValue(endValue:TExpr):TExpr {
+	static inline function getInt(intToken:Token):Int {
+		var int = Std.parseInt(intToken.text);
+		if (int == null) throw "assert"; // should not happen I think?
+		return int;
+	}
+
+	static function mkInt(originalToken:Token, newValue:Int):TExprKind {
+		return TELiteral(TLInt(originalToken.with(TkDecimalInteger, Std.string(newValue))));
+	}
+
+	static function addOne(endValue:TExpr):TExpr {
 		switch endValue.kind {
 			case TELiteral(TLInt(intToken)):
-				var int = Std.parseInt(intToken.text);
-				if (int == null) throw "assert"; // should not happen I think?
-				return endValue.with(kind = TELiteral(TLInt(intToken.with(TkDecimalInteger, Std.string(int + 1)))));
+				var int = getInt(intToken);
+				return endValue.with(kind = mkInt(intToken, int + 1));
+			case TEBinop(a, op = OpSub(_) | OpAdd(_), b = {kind: TELiteral(TLInt(intToken))}):
+				var int = getInt(intToken);
+				if (op.match(OpSub(_))) {
+					int--;
+				} else {
+					int++;
+				}
+				if (int == 0) {
+					return a; // TODO: keep trivia?
+				} else {
+					return endValue.with(kind = TEBinop(a, op, b.with(kind = mkInt(intToken, int))));
+				}
 			case _:
 				return endValue.with(kind = TEBinop(endValue, opAdd, literalOne));
 		}
@@ -87,7 +107,7 @@ class RewriteCFor extends AbstractFilter {
 					isReverse = false;
 					endValue = b;
 					if (op.match(OpLte(_))) {
-						endValue = addOneToEndValue(endValue);
+						endValue = addOne(endValue);
 					}
 				} else {
 					return null;
@@ -98,7 +118,7 @@ class RewriteCFor extends AbstractFilter {
 					isReverse = true;
 					endValue = b;
 					if (op.match(OpGt(_))) {
-						endValue = addOneToEndValue(endValue);
+						endValue = addOne(endValue);
 					}
 				} else {
 					return null;
@@ -124,13 +144,20 @@ class RewriteCFor extends AbstractFilter {
 				case _:
 					return null;
 			}
+
+			startValue = addOne(startValue);
 		}
 
-		var iterator = mk(TEHaxeIntIter(startValue, endValue), TTBuiltin, TTBuiltin);
+		var iterator;
 		if (isReverse) {
-			var reverseIntIter = mk(TEBuiltin(mkIdent(reverseIntIterBuiltin, removeLeadingTrivia(iterator)), reverseIntIterBuiltin), TTBuiltin, TTBuiltin);
-			iterator = mkCall(reverseIntIter, [iterator], TTBuiltin, removeTrailingTrivia(iterator));
+			var trail = removeTrailingTrivia(startValue);
+			if (containsOnlyWhitespace(trail)) trail.resize(0);
+			iterator = addParens(mk(TEHaxeIntIter(endValue, startValue), TTBuiltin, TTBuiltin));
+			iterator = mk(TEField({kind: TOExplicit(mkDot(), iterator), type: iterator.type}, "reverse", mkIdent("reverse")), TTBuiltin, TTBuiltin);
+			iterator = mkCall(iterator, [], TTBuiltin, trail);
 			reverseIntIterUsed = true;
+		} else {
+			iterator = mk(TEHaxeIntIter(startValue, endValue), TTBuiltin, TTBuiltin);
 		}
 
 		return {

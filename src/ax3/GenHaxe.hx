@@ -602,7 +602,6 @@ class GenHaxe extends PrinterBase {
 			case "trace": "trace";
 			case "untyped __global__": "untyped __global__";
 			case (_.startsWith("ASCompat.") => true)
-			   | (_ == RewriteCFor.reverseIntIterBuiltin => true)
 			   | (_ == RewriteForIn.checkNullIterateeBuiltin => true)
 			   : name;
 			case _:
