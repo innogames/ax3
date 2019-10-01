@@ -9,7 +9,7 @@ import ax3.ParseTree.dotPathToArray;
 class ExternModuleLevelImports extends AbstractFilter {
 	final globals = new Map<String, {dotPath:String, kind:TDeclKind}>();
 
-	static final asToken = new Token(0, TkIdent, "as", [new Trivia(TrWhitespace, " ")], [new Trivia(TrWhitespace, " ")]);
+	static final asToken = mkIdent("as", [whitespace], [whitespace]);
 
 	override function processImport(i:TImport):Bool {
 		switch i.kind {

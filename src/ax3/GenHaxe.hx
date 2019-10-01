@@ -65,42 +65,51 @@ class GenHaxe extends PrinterBase {
 		if (!i.kind.match(TIDecl({kind: TDNamespace(_)}))) { // TODO: still print trivia from namespace imports?
 			printTextWithTrivia("import", i.syntax.keyword);
 
-			{
-				// lowercase package first letter for Haxe
-				// TODO: don't use syntax at all, and get rid of the hacks
-				var p = i.syntax.path;
-				if (p.rest.length == 0) {
-					printTextWithTrivia(p.first.text, p.first);
-				} else {
-					inline function lowerFirst(t:Token) {
-						if (t.text == "Globals" || t.text == "ASCompat") { // hacky hack
-							printTextWithTrivia(t.text, t);
-						} else {
-							printTextWithTrivia(t.text.charAt(0).toLowerCase() + t.text.substring(1), t);
-						}
-					}
-					lowerFirst(p.first);
-					for (i in 0...p.rest.length) {
-						var part = p.rest[i];
-						printDot(part.sep);
-						if (i == p.rest.length - 1) {
-							printTextWithTrivia(part.element.text, part.element);
-						} else {
-							lowerFirst(part.element);
-						}
-					}
+			var dotPath = i.syntax.path;
+
+			function printPackagePath(p:TPackage) {
+				printTrivia(dotPath.first.leadTrivia);
+				var parts = p.name.split(".");
+				for (part in parts) {
+					// lowercase package first letter for Haxe
+					buf.add(part.charAt(0).toLowerCase() + part.substring(1));
+					buf.add(".");
 				}
 			}
 
+			function printDotPathTrailTrivia() {
+				printTrivia(if (dotPath.rest.length == 0) dotPath.first.trailTrivia else dotPath.rest[dotPath.rest.length - 1].element.trailTrivia);
+			}
+
 			switch i.kind {
-				case TIDecl(_):
-				case TIAliased(d, as, name):
+				case TIDecl(d):
+					switch d.kind {
+						case TDClassOrInterface(c):
+							printPackagePath(c.parentModule.parentPack);
+							buf.add(c.name);
+						case TDVar(v):
+							printPackagePath(v.parentModule.parentPack);
+							buf.add(v.name);
+						case TDFunction(f):
+							printPackagePath(f.parentModule.parentPack);
+							buf.add(f.name);
+						case TDNamespace(_):
+							throw "assert";
+					}
+					printDotPathTrailTrivia();
+				case TIAliased(_, as, name):
+					// this is awkward: the decl is pointing to original flash decl in flash package,
+					// but the syntax path is something we constructed to import from Haxe
+					printDotPath(i.syntax.path);
 					printTextWithTrivia("as", as);
 					printTextWithTrivia(name.text, name);
-				case TIAll(_, dot, asterisk):
-					printDot(dot);
+				case TIAll(pack, _, asterisk):
+					printPackagePath(pack);
 					printTextWithTrivia("*", asterisk);
+					printDotPathTrailTrivia();
 			}
+
+
 			printSemicolon(i.syntax.semicolon);
 		}
 		if (i.syntax.condCompEnd != null) printCompCondEnd(i.syntax.condCompEnd);
