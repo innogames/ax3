@@ -409,15 +409,20 @@ class GenHaxe extends PrinterBase {
 					if (init != null) printVarInit(init);
 
 				case TArgRest(dots, _):
-					// TODO: throw, as this should be rewritten
-					printTextWithTrivia("...", dots);
-					printTextWithTrivia(arg.name, arg.syntax.name);
+					throwError(dots.pos, "Unprocessed rest arguments");
 			}
 			if (arg.comma != null) printComma(arg.comma);
 		}
 		printCloseParen(sig.syntax.closeParen);
 		if (printReturnType) {
-			printTypeHint(sig.ret);
+			switch sig.ret.type {
+				case TTVoid: // skip printing :Void
+					if (sig.ret.syntax != null) {
+						printTrivia(ParseTree.getSyntaxTypeTrailingTrivia(sig.ret.syntax.type));
+					}
+				case _:
+					printTypeHint(sig.ret);
+			}
 		}
 	}
 
