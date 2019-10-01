@@ -1,7 +1,5 @@
 package ax3;
 
-import ax3.filters.RewriteForIn;
-import ax3.filters.RewriteCFor;
 import haxe.DynamicAccess;
 import haxe.extern.EitherType;
 import sys.FileSystem;
