@@ -33,12 +33,15 @@ class RewriteAs extends AbstractFilter {
 					case TTInt | TTUint | TTNumber | TTString | TTBoolean: // omg
 						// TODO: this is not correct: we need to actually check and return null here
 						reportError(keyword.pos, "`as` operator with basic type");
+						var lead = removeLeadingTrivia(eobj);
 						e.with(kind = TECast({
 							syntax: {
 								openParen: mkOpenParen(),
 								closeParen: mkCloseParen(),
 								path: switch (typeRef.syntax) {
-									case TPath(path): path;
+									case TPath(path):
+										path.first.leadTrivia = lead.concat(path.first.leadTrivia);
+										path;
 									case _: throw "asset";
 								}
 							},
