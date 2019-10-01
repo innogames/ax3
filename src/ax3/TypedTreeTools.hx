@@ -347,11 +347,7 @@ class TypedTreeTools {
 
 	/** remove and return the leading trivia of an expression **/
 	public static function removeLeadingTrivia(e:TExpr):Array<Trivia> {
-		return processLeadingToken(function(t) {
-			var trivia = t.leadTrivia;
-			t.leadTrivia = [];
-			return trivia;
-		}, e);
+		return processLeadingToken(t -> t.removeLeadingTrivia(), e);
 	}
 
 	public static function processLeadingToken<T>(r:Token->T, e:TExpr):T {
@@ -403,19 +399,17 @@ class TypedTreeTools {
 
 	/** remove and return the trailing trivia of an expression **/
 	public static function removeTrailingTrivia(e:TExpr):Array<Trivia> {
-		return processTrailingToken(function(token) {
-			var trivia = token.trailTrivia;
-			token.trailTrivia = [];
-			return trivia;
-		}, e);
+		return processTrailingToken(t -> t.removeTrailingTrivia(), e);
 	}
 
-	public static function processTrailingToken<T>(r:Token->T, e:TExpr):T {
-		function fromDotPath(p:DotPath) {
+	public static function processDotPathTrailingToken<T>(r:Token->T, p:DotPath):T {
 			return
 				if (p.rest.length == 0) r(p.first)
 				else r(p.rest[p.rest.length - 1].element);
-		}
+	}
+
+	public static function processTrailingToken<T>(r:Token->T, e:TExpr):T {
+		inline function fromDotPath(p) return processDotPathTrailingToken(r, p);
 
 		function fromSyntaxType(t:SyntaxType) {
 			return switch (t) {

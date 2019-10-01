@@ -27,6 +27,18 @@ class Token {
 		return new Token(pos, kind, text, leadTrivia.copy(), trailTrivia.copy());
 	}
 
+	public inline function removeLeadingTrivia():Array<Trivia> {
+		var trivia = leadTrivia;
+		leadTrivia = [];
+		return trivia;
+	}
+
+	public inline function removeTrailingTrivia():Array<Trivia> {
+		var trivia = trailTrivia;
+		trailTrivia = [];
+		return trivia;
+	}
+
 	public function trimTrailingWhitespace() {
 		var i = trailTrivia.length - 1;
 		if (trailTrivia[i].kind == TrNewline) {
