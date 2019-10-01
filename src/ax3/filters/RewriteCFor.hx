@@ -9,8 +9,6 @@ private typedef IntIterInfo = {
 class RewriteCFor extends AbstractFilter {
 	static inline final tempLoopVarName = "_tmp_";
 
-	public static var reverseIntIterUsed(default,null) = false;
-
 	var currentIncrExpr:Null<TExpr>; // TODO: handle comma here for the nicer output
 
 	override function processExpr(e:TExpr):TExpr {
@@ -79,7 +77,7 @@ class RewriteCFor extends AbstractFilter {
 		}
 	}
 
-	static function getSimpleSequence(f:TFor):Null<IntIterInfo> {
+	function getSimpleSequence(f:TFor):Null<IntIterInfo> {
 		var originalLoopVar, loopVar, startValue, endValue;
 		var assignment;
 		switch f.einit {
@@ -155,7 +153,7 @@ class RewriteCFor extends AbstractFilter {
 			iterator = addParens(mk(TEHaxeIntIter(endValue, startValue), TTBuiltin, TTBuiltin));
 			iterator = mk(TEField({kind: TOExplicit(mkDot(), iterator), type: iterator.type}, "reverse", mkIdent("reverse")), TTBuiltin, TTBuiltin);
 			iterator = mkCall(iterator, [], TTBuiltin, trail);
-			reverseIntIterUsed = true;
+			context.addToplevelImport("ReverseIntIterator", Using);
 		} else {
 			iterator = mk(TEHaxeIntIter(startValue, endValue), TTBuiltin, TTBuiltin);
 		}

@@ -74,21 +74,15 @@ class Main {
 			}
 		}
 
-		{
-			// TODO: maybe we need a more sophisticated system for collecting toplevel imports
-			var imports = [];
-			if (RewriteCFor.reverseIntIterUsed) {
-				imports.push("using ReverseIntIterator;");
-			}
-			if (RewriteForIn.checkNullIterateeUsed) {
-				imports.push("import ASCompat.checkNullIteratee;");
-			}
-			if (config.rootImports != null) {
-				imports.push(sys.io.File.getContent(config.rootImports));
-			}
-			if (imports.length > 0) {
-				sys.io.File.saveContent(haxe.io.Path.join([haxeDir, "import.hx"]), imports.join("\n"));
-			}
+		var imports = [];
+		for (path => kind in ctx.getToplevelImports()) {
+			imports.push('$kind $path;');
+		}
+		if (config.rootImports != null) {
+			imports.push(sys.io.File.getContent(config.rootImports));
+		}
+		if (imports.length > 0) {
+			sys.io.File.saveContent(haxe.io.Path.join([haxeDir, "import.hx"]), imports.join("\n"));
 		}
 
 		Timers.output = stamp() - t;

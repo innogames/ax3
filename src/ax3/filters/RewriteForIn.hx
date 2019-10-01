@@ -8,8 +8,6 @@ class RewriteForIn extends AbstractFilter {
 	static inline final tempIterateeVarName = "_iter_";
 	public static inline final checkNullIterateeBuiltin = "checkNullIteratee";
 
-	public static var checkNullIterateeUsed(default, null) = false;
-
 	override function processExpr(e:TExpr):TExpr {
 		return switch e.kind {
 			case TEForIn(f):
@@ -242,9 +240,9 @@ class RewriteForIn extends AbstractFilter {
 		return mkCall(eMethod, []);
 	}
 
-	static inline function mkCheckNullIterateeExpr(eobj:TExpr):TExpr {
+	inline function mkCheckNullIterateeExpr(eobj:TExpr):TExpr {
 		var eCheckBuiltin = mkBuiltin(checkNullIterateeBuiltin, TTBuiltin);
-		checkNullIterateeUsed = true;
+		context.addToplevelImport("ASCompat.checkNullIteratee", Import);
 		return mkCall(eCheckBuiltin, [eobj], TTBoolean);
 	}
 }
