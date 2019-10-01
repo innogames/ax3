@@ -1,7 +1,6 @@
 package ax3;
 
 import ax3.filters.RewriteForIn;
-import ax3.filters.RewriteCFor;
 import ax3.ParseTree;
 import ax3.TypedTree;
 import ax3.Token.Trivia;
@@ -439,7 +438,9 @@ class GenHaxe extends PrinterBase {
 			case TTXML: buf.add("compat.XML");
 			case TTXMLList: buf.add("compat.XMLList");
 			case TTRegExp: buf.add("compat.RegExp");
-			case TTVector(t): buf.add("flash.Vector<"); printTType(t); buf.add(">");
+			case TTVector(t):
+				importVector();
+				buf.add("Vector<"); printTType(t); buf.add(">");
 			case TTDictionary(k, v): buf.add("ASDictionary<"); printTType(k); buf.add(","); printTType(v); buf.add(">");
 			case TTBuiltin: buf.add("TODO");
 			case TTFun(args, ret, rest):
@@ -600,7 +601,7 @@ class GenHaxe extends PrinterBase {
 		name = switch name {
 			case
 				"Std.is" | "Std.downcast" | "Std.int" | "Std.string" | "String"
-				| "flash.Vector.convert"| "flash.Vector.ofArray" | "flash.Lib.getTimer" | "flash.Lib.getURL"
+				| "flash.Lib.getTimer" | "flash.Lib.getURL"
 				| "Reflect.deleteField" | "Type.createInstance"| "Type.resolveClass" | "Type.getClassName" | "Type.getClass"
 				| "haxe.Json" | "Reflect.compare" | "Reflect.isFunction" | "Math.POSITIVE_INFINITY" | "Math.NEGATIVE_INFINITY"
 				| "StringTools.replace" | "StringTools.hex" | "Reflect.callMethod" | "ASDictionary.asDictionary" | "_":
@@ -613,7 +614,9 @@ class GenHaxe extends PrinterBase {
 			case "Function": "ASFunction";
 			case "XML": "compat.XML";
 			case "XMLList": "compat.XMLList";
-			case "Vector": "flash.Vector";
+			case "Vector":
+				importVector();
+				"Vector";
 			case "Array": "Array";
 			case "RegExp": "compat.RegExp";
 			case "parseInt": "Std.parseInt";
@@ -624,6 +627,9 @@ class GenHaxe extends PrinterBase {
 			case "arguments": "/*TODO*/arguments";
 			case "trace": "trace";
 			case "untyped __global__": "untyped __global__";
+			case (_.startsWith("Vector.") => true):
+				importVector();
+				name;
 			case (_.startsWith("ASCompat.") => true)
 			   | (_ == RewriteForIn.checkNullIterateeBuiltin => true)
 			   : name;
@@ -973,7 +979,7 @@ class GenHaxe extends PrinterBase {
 				return false;
 			case TELiteral(TLInt(_)) if (expectedType.match(TTNumber | TTUint)):
 				return false;
-			case TECall({kind: TEBuiltin(_, "flash.Vector.convert")}, _):
+			case TECall({kind: TEBuiltin(_, "Vector.convert")}, _):
 				// this one depends on the expected type
 				return false;
 			case TECall({kind: TEBuiltin(_, "ASCompat.reinterpretAs" | "ASCompat.dynamicAs")}, _) if (expectedType.match(TTArray(_))):
@@ -1079,5 +1085,9 @@ class GenHaxe extends PrinterBase {
 	inline function printTokenTrivia(t:Token) {
 		printTrivia(t.leadTrivia);
 		printTrivia(t.trailTrivia);
+	}
+
+	inline function importVector() {
+		context.addToplevelImport("flash.Vector", Import);
 	}
 }

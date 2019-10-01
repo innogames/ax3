@@ -24,8 +24,8 @@ class RewriteVectorDecl extends AbstractFilter {
 				}));
 
 			case TEVectorDecl(v):
-				// rewrite to flash.Vector.ofArray, adding a type-check if needed
-				var eConvertMethod = mkBuiltin("flash.Vector.ofArray", TTFunction, v.syntax.newKeyword.leadTrivia);
+				// rewrite to Vector.ofArray, adding a type-check if needed
+				var eConvertMethod = mkBuiltin("Vector.ofArray", TTFunction, v.syntax.newKeyword.leadTrivia);
 				var tArray = TTArray(v.type);
 				var eArrayDecl = mk(TEArrayDecl(v.elements), tArray, tArray);
 				var trailTrivia = removeTrailingTrivia(eArrayDecl);
@@ -49,7 +49,7 @@ class RewriteVectorDecl extends AbstractFilter {
 							processTrailingToken(t -> t.trailTrivia = t.trailTrivia.concat(removeTrailingTrivia(e)), eOtherVector);
 							eOtherVector.with(expectedType = e.expectedType);
 						} else {
-							var convertMethod = mkBuiltin("flash.Vector.convert", TTFunction, removeLeadingTrivia(e));
+							var convertMethod = mkBuiltin("Vector.convert", TTFunction, removeLeadingTrivia(e));
 							e = e.with(kind = TECall(convertMethod, args));
 							if (typeEq(e.expectedType, TTVector(elemType))) {
 								e;
@@ -66,7 +66,7 @@ class RewriteVectorDecl extends AbstractFilter {
 						e.with(kind = TENew(newKeyword, TNType({type: TTVector(elemType), syntax: TVector(v)}), args.with(args = [])));
 
 					case [eArray = {expr: {type: TTArray(_) | TTAny}}]:
-						var convertMethod = mkBuiltin("flash.Vector.ofArray", TTFunction, removeLeadingTrivia(e));
+						var convertMethod = mkBuiltin("Vector.ofArray", TTFunction, removeLeadingTrivia(e));
 						var eArrayExpr = eArray.expr;
 
 						switch eArrayExpr {
