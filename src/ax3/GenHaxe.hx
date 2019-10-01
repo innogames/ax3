@@ -150,7 +150,7 @@ class GenHaxe extends PrinterBase {
 		printDeclModifiers(f.modifiers);
 		printTextWithTrivia("function", f.syntax.keyword);
 		printTextWithTrivia(f.name, f.syntax.name);
-		printSignature(f.fun.sig);
+		printSignature(f.fun.sig, NoVoid);
 		printExpr(f.fun.expr);
 	}
 
@@ -186,7 +186,7 @@ class GenHaxe extends PrinterBase {
 							printMetadata(field.metadata);
 							printTextWithTrivia("function", f.syntax.keyword);
 							printTextWithTrivia(f.name, f.syntax.name);
-							printSignature(f.fun.sig);
+							printSignature(f.fun.sig, Print);
 							printSemicolon(f.semicolon.sure());
 
 						case TFGetter(_) | TFSetter(_):
@@ -340,7 +340,7 @@ class GenHaxe extends PrinterBase {
 				printTextWithTrivia(kwd, f.syntax.keyword);
 				var isCtor = f.name == className;
 				printTextWithTrivia(if (isCtor) "new" else f.name, f.syntax.name);
-				printSignature(f.fun.sig, !isCtor);
+				printSignature(f.fun.sig, if (isCtor) Skip else NoVoid);
 
 				var trailTrivia = TypedTreeTools.removeTrailingTrivia(f.fun.expr);
 				printExpr(f.fun.expr);
@@ -352,14 +352,14 @@ class GenHaxe extends PrinterBase {
 				printTextWithTrivia(kwd, f.syntax.functionKeyword);
 				printTokenTrivia(f.syntax.accessorKeyword);
 				printTextWithTrivia("get_" + f.name, f.syntax.name);
-				printSignature(f.fun.sig);
+				printSignature(f.fun.sig, NoVoid);
 				printExpr(f.fun.expr);
 			case TFSetter(f):
 				var kwd = if (f.isInline) "inline function" else "function";
 				printTextWithTrivia(kwd, f.syntax.functionKeyword);
 				printTokenTrivia(f.syntax.accessorKeyword);
 				printTextWithTrivia("set_" + f.name, f.syntax.name);
-				printSignature(f.fun.sig);
+				printSignature(f.fun.sig, NoVoid);
 				printExpr(f.fun.expr);
 		}
 	}
@@ -399,7 +399,7 @@ class GenHaxe extends PrinterBase {
 		}
 	}
 
-	function printSignature(sig:TFunctionSignature, printReturnType = true) {
+	function printSignature(sig:TFunctionSignature, returnTypeRule:ReturnTypeRule) {
 		printOpenParen(sig.syntax.openParen);
 		for (arg in sig.args) {
 			switch (arg.kind) {
@@ -414,15 +414,14 @@ class GenHaxe extends PrinterBase {
 			if (arg.comma != null) printComma(arg.comma);
 		}
 		printCloseParen(sig.syntax.closeParen);
-		if (printReturnType) {
-			switch sig.ret.type {
-				case TTVoid: // skip printing :Void
-					if (sig.ret.syntax != null) {
-						printTrivia(ParseTree.getSyntaxTypeTrailingTrivia(sig.ret.syntax.type));
-					}
-				case _:
-					printTypeHint(sig.ret);
-			}
+		switch returnTypeRule {
+			case Skip:
+			case NoVoid if (sig.ret.type == TTVoid):
+				if (sig.ret.syntax != null) {
+					printTrivia(ParseTree.getSyntaxTypeTrailingTrivia(sig.ret.syntax.type));
+				}
+			case _:
+				printTypeHint(sig.ret);
 		}
 	}
 
@@ -658,7 +657,7 @@ class GenHaxe extends PrinterBase {
 	function printLocalFunction(f:TLocalFunction) {
 		printTextWithTrivia("function", f.syntax.keyword);
 		if (f.name != null) printTextWithTrivia(f.name.name, f.name.syntax);
-		printSignature(f.fun.sig);
+		printSignature(f.fun.sig, NoVoid);
 		printExpr(f.fun.expr);
 	}
 
@@ -1095,4 +1094,10 @@ class GenHaxe extends PrinterBase {
 	inline function importVector() {
 		context.addToplevelImport("flash.Vector", Import);
 	}
+}
+
+private enum ReturnTypeRule {
+	Print;
+	NoVoid;
+	Skip;
 }

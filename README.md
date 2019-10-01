@@ -51,3 +51,4 @@ Most of the `TODO`s are actually in the code, so look there too, but still:
  - add some more empty ctors to work around https://github.com/HaxeFoundation/haxe/issues/8531
  - add imports for fully-qualified names that can come from `@haxe-type`
  - remove duplicate imports (can happen when merging in out-of-package imports)
+ - add configuration for some things (like omitting type hints and `private` keywords)
