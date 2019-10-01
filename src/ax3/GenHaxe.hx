@@ -62,7 +62,20 @@ class GenHaxe extends PrinterBase {
 
 	function printImport(i:TImport) {
 		if (i.syntax.condCompBegin != null) printCondCompBegin(i.syntax.condCompBegin);
-		if (!i.kind.match(TIDecl({kind: TDNamespace(_)}))) { // TODO: still print trivia from namespace imports?
+
+		var skip = switch i.kind {
+			// skip namespaces and flash.utils.Dictionary (because we generate another type for Dictionaries)
+			case TIDecl({kind: TDNamespace(_) | TDClassOrInterface({parentModule: {parentPack: {name: "flash.utils"}}, name: "Dictionary"})}):
+				var trivia = i.syntax.keyword.leadTrivia.concat(i.syntax.semicolon.trailTrivia);
+				if (!TokenTools.containsOnlyWhitespaceOrNewline(trivia)) {
+					printTrivia(trivia);
+				}
+				true;
+			case _:
+				false;
+		}
+
+		if (!skip) {
 			printTextWithTrivia("import", i.syntax.keyword);
 
 			var dotPath = i.syntax.path;
@@ -112,6 +125,7 @@ class GenHaxe extends PrinterBase {
 
 			printSemicolon(i.syntax.semicolon);
 		}
+
 		if (i.syntax.condCompEnd != null) printCompCondEnd(i.syntax.condCompEnd);
 	}
 

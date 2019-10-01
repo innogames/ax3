@@ -12,6 +12,17 @@ class TokenTools {
 		return true;
 	}
 
+	public static function containsOnlyWhitespaceOrNewline(tr:Array<Trivia>):Bool {
+		for (t in tr) {
+			switch t.kind {
+				case TrWhitespace | TrNewline:
+				case _:
+					return false;
+			}
+		}
+		return true;
+	}
+
 	public static inline function mkIdent(n, ?lead, ?trail) return new Token(0, TkIdent, n, if (lead == null) [] else lead, if (trail == null) [] else trail);
 	public static inline function mkOpenParen() return new Token(0, TkParenOpen, "(", [], []);
 	public static inline function mkCloseParen(?trail) return new Token(0, TkParenClose, ")", [], if (trail == null) [] else trail);
