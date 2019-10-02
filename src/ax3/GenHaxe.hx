@@ -973,7 +973,7 @@ class GenHaxe extends PrinterBase {
 		}
 	}
 
-	function canSkipTypeHint(expectedType:TType, expr:TExpr):Bool {
+	public static function canSkipTypeHint(expectedType:TType, expr:TExpr):Bool {
 		// we can skip explicit type hint for vars where the type is exactly the same
 		// and let the type inference do the job. this makes code easier to read and refactor
 		if (expectedType.match(TTAny | TTObject(TTAny)))
