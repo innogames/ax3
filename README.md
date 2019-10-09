@@ -49,8 +49,9 @@ Most of the `TODO`s are actually in the code, so look there too, but still:
  - generate "type patch" files for loaded SWCs, replacing `Object` with `ASObject` and `*` with `ASAny`
  - review and cleanup `ASCompat` - rework some things as static extensions (e.g. Vector/Array compat methods)
  - add some more empty ctors to work around https://github.com/HaxeFoundation/haxe/issues/8531
- - add configuration for some things (like omitting type hints and `private` keywords)
+ - add configuration options for some things (like omitting type hints and `private` keywords)
  - fix imports
   - add imports for fully-qualified names that can come from `@haxe-type`
   - remove duplicate imports (can happen when merging in out-of-package imports)
   - remove unused imports (can happen when not printing type annotations for inferred types)
+ - maybe add `inline` for arithmetic ops in static var inits where all operands are also static inline
