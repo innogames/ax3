@@ -13,13 +13,22 @@ class TypeDescriptionAwareFlashMacro {
 			return null;
 
 		var fields = Context.getBuildFields();
+		var setters = new Map<String,MetadataEntry>();
 		for (field in fields) {
-			var newMeta = [];
 			for (i in 0...field.meta.length) { // iterating over length because we want to push more meta and not iterate over that :D
 				var meta = field.meta[i];
 				switch meta.name {
 					case ":inject":
-						field.meta.push(mkFlashMeta(meta, "Inject"));
+						var flashMeta = mkFlashMeta(meta, "Inject");
+						field.meta.push(flashMeta);
+						switch field.kind {
+							// forward the Flash [Inject] to the setter
+							// TODO: this is quite ugly, it'll generate a "method injection" instead of "property injection",
+							// but it should work... ugh
+							case FProp(_, "set"):
+								setters[field.name] = flashMeta;
+							case _:
+						}
 					case ":postConstruct":
 						field.meta.push(mkFlashMeta(meta, "PostConstruct"));
 					case ":preDestroy":
@@ -27,6 +36,15 @@ class TypeDescriptionAwareFlashMacro {
 				}
 			}
 		}
+
+		for (name => meta in setters) {
+			var setterName = "set_" + name;
+			var setterField = Lambda.find(fields, f -> f.name == setterName);
+			if (setterField != null) {
+				setterField.meta.push(meta);
+			}
+		}
+
 		return fields;
 	}
 
