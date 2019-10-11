@@ -539,6 +539,12 @@ class GenHaxe extends PrinterBase {
 			case TELocal(syntax, v): printTextWithTrivia(syntax.text, syntax);
 			case TEField(object, fieldName, fieldToken): printFieldAccess(object, fieldName, fieldToken);
 			case TEBuiltin(syntax, name): printBuiltin(syntax, name);
+			case TEDeclRef(_, {kind: TDClassOrInterface({parentModule: {parentPack: {name: "flash.utils"}}, name: "Dictionary"})}):
+				// TODO: this is hacky as hell, ugh
+				printTrivia(TypedTreeTools.removeLeadingTrivia(e));
+				buf.add("ASDictionary.type");
+				printTrivia(TypedTreeTools.removeTrailingTrivia(e));
+
 			case TEDeclRef(dotPath, c): printDotPath(dotPath);
 			case TECall(eobj, args): printExpr(eobj); printCallArgs(args);
 			case TEArrayDecl(d): printArrayDecl(d);

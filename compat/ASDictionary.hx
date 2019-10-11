@@ -72,4 +72,6 @@ abstract ASDictionary<K,V>(Dictionary<K,V>) from Dictionary<K,V> { //TODO: remov
 		return if (Std.is(v, haxe.Constraints.IMap)) v else null;
 		#end
 	}
+
+	public static final type = #if flash flash.utils.Dictionary #else haxe.Constraints.IMap #end;
 }
