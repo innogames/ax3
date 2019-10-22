@@ -43,7 +43,7 @@ class HaxeTypeResolver {
 			case HTPath("FastXML", []): TTXMLList;
 			case HTPath("RegExp", []): TTRegExp;
 			case HTPath("haxe.DynamicAccess", [elemT]): TTObject(resolveHaxeType(elemT, pos));
-			case HTPath("flash.utils.Object", []): tUntypedObject;
+			case HTPath("Object" | "flash.utils.Object", []): tUntypedObject;
 			case HTPath("Vector" | "flash.Vector" | "openfl.Vector", [t]): TTVector(resolveHaxeType(t, pos));
 			case HTPath("GenericDictionary", [k, v]): TTDictionary(resolveHaxeType(k, pos), resolveHaxeType(v, pos));
 			case HTPath("Class", [HTPath("Dynamic", [])]): TTClass;
