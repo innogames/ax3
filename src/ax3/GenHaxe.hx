@@ -466,11 +466,6 @@ class GenHaxe extends PrinterBase {
 			case TTInst(cls):
 				buf.add(getClassLocalPath(cls));
 
-				// TODO: this is hacky, but we don't support custom parametrized in the converter
-				if (cls.name == "GenericPool") {
-					buf.add("#if !flash <Dynamic> /*FIXME*/ #end");
-				};
-
 			case TTStatic(cls):
 				buf.add("Class<" + getClassLocalPath(cls) + ">");
 		}
