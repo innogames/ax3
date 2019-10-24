@@ -1,5 +1,6 @@
 package ax3.filters;
 
+// TODO: maybe we could detect if we REALLY need to init the local var by checking if we read before writing or not
 class VarInits extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
 		return switch e.kind {
