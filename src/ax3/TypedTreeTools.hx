@@ -817,6 +817,164 @@ class TypedTreeTools {
 		}
 	}
 
+	public static function iterExpr(f:TExpr->Void, e1:TExpr) {
+		switch (e1.kind) {
+			case TEVector(_) | TELiteral(_) | TEUseNamespace(_) | TELocal(_) | TEBuiltin(_) | TEDeclRef(_) | TEReturn(_, null) | TEBreak(_) | TEContinue(_) | TECondCompValue(_):
+			case TEField({kind: TOImplicitThis(_) | TOImplicitClass(_)}, _):
+
+			case TEField(obj = {kind: TOExplicit(_, e)}, _):
+				f(e);
+
+			case TECast(c):
+				f(c.expr);
+
+			case TEParens(_, e, _):
+				f(e);
+
+			case TECall(eobj, args):
+				f(eobj);
+				for (arg in args.args) {
+					f(arg.expr);
+				}
+
+			case TEArrayDecl(el) | TEVectorDecl({elements: el}):
+				for (e in el.elements) {
+					f(e.expr);
+				}
+
+			case TEReturn(_, e) | TEThrow(_, e) | TEDelete(_, e):
+				f(e);
+
+			case TEBlock(block):
+				for (e in block.exprs) {
+					f(e.expr);
+				}
+
+			case TEIf(e):
+				f(e.econd);
+				f(e.ethen);
+				if (e.eelse != null) {
+					f(e.eelse.expr);
+				}
+
+			case TETry(t):
+				f(t.expr);
+				for (c in t.catches) {
+					f(c.expr);
+				}
+
+			case TELocalFunction(fun):
+				f(fun.fun.expr);
+
+			case TEArrayAccess(a):
+				f(a.eobj);
+				f(a.eindex);
+
+			case TEVars(_, vars):
+				for (v in vars) {
+					if (v.init != null) {
+						f(v.init.expr);
+					}
+				}
+
+			case TEObjectDecl(o):
+				for (field in o.fields) {
+					f(field.expr);
+				};
+
+			case TETernary(t):
+				f(t.econd);
+				f(t.ethen);
+				f(t.eelse);
+
+			case TEWhile(w):
+				f(w.cond);
+				f(w.body);
+
+			case TEDoWhile(w):
+				f(w.body);
+				f(w.cond);
+
+			case TEHaxeFor(l):
+				f(l.iter);
+				f(l.body);
+
+			case TEFor(l):
+				if (l.einit != null) f(l.einit);
+				if (l.econd != null) f(l.econd);
+				if (l.eincr != null) f(l.eincr);
+				f(l.body);
+
+			case TEForIn(l):
+				f(l.iter.eit);
+				f(l.iter.eobj);
+				f(l.body);
+
+			case TEForEach(l):
+				f(l.iter.eit);
+				f(l.iter.eobj);
+				f(l.body);
+
+			case TEBinop(a, op, b):
+				f(a);
+				f(b);
+
+			case TEPreUnop(_, e) | TEPostUnop(e, _):
+				f(e);
+
+			case TEAs(e, _):
+				f(e);
+
+			case TESwitch(s):
+				f(s.subj);
+				for (c in s.cases) {
+					for (e in c.body) {
+						f(e.expr);
+					}
+				}
+				if (s.def != null) {
+					for (e in s.def.body) {
+						f(e.expr);
+					}
+				}
+
+			case TENew(_, obj, args):
+				switch obj {
+					case TNExpr(e):
+						f(e);
+					case TNType(_):
+				}
+				if (args != null) {
+					for (e in args.args) {
+						f(e.expr);
+					}
+				}
+
+			case TECondCompBlock(v, expr):
+				f(expr);
+
+			case TEXmlAttr(x):
+				f(x.eobj);
+
+			case TEXmlChild(x):
+				f(x.eobj);
+
+			case TEXmlAttrExpr(x):
+				f(x.eobj);
+				f(x.eattr);
+
+			case TEXmlDescend(x):
+				f(x.eobj);
+
+			case TEHaxeRetype(e):
+				f(e);
+
+			case TEHaxeIntIter(start, end):
+				f(start);
+				f(end);
+		}
+	}
+
 	static function mapArrayDecl(f:TExpr->TExpr, a:TArrayDecl):TArrayDecl {
 		return a.with(elements = [for (e in a.elements) e.with(expr = f(e.expr))]);
 	}

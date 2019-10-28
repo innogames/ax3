@@ -190,16 +190,15 @@ class RewriteCFor extends AbstractFilter {
 
 	static function isLocalVarModified(v:TVar, e:TExpr) {
 		var result = false;
-		function loop(e:TExpr):TExpr {
-			return switch e.kind {
+		function loop(e:TExpr) {
+			switch e.kind {
 				case TEBinop({kind: TELocal(_, modifiedVar)}, OpAssign(_) | OpAssignOp(_), _)
 				   | TEPreUnop(PreIncr(_) | PreDecr(_), {kind: TELocal(_, modifiedVar)})
 				   | TEPostUnop({kind: TELocal(_, modifiedVar)}, PostIncr(_) | PostDecr(_))
 				   if (modifiedVar == v):
 					result = true;
-					e;
 				case _:
-					mapExpr(loop, e); // TODO: i really need an iterExpr function with a way to exit early
+					iterExpr(loop, e); // TODO: add early exit option to iterExpr
 			}
 		}
 		loop(e);
