@@ -719,6 +719,17 @@ class ExprTyper {
 			case {type: TTFunction}: // also untyped call, but inevitable
 				type = TTAny;
 
+			// a hack for our robotlegs that support type parms instead of Dynamic
+			// TODO: uncomment this once we use the proper parametrized version of RobotLegs on every platform
+			/*
+			case {kind: TEField({type: TTInst({name: "IInjector", parentModule: {parentPack: {name: "org.robotlegs.core"}}})}, "instantiate" | "getInstance", _)}:
+				type = switch targs.args[0].expr.type {
+					case TTStatic(cls): TTInst(cls);
+					case TTClass: TTAny;
+					case _: throwErr("unknown type passed to the injector", targs.openParen.pos);
+				};
+			*/
+
 			case {type: TTFun(_, ret)}: // known function type call
 				type = ret;
 
