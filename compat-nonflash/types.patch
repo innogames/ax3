@@ -1,4 +1,1 @@
 de.innogames.shared.networking.vos.AbstractVO.$fromJSONObject__raw : ASObject;
-de.innogames.shared.mvcs.model.AbstractSequencer.$addStep__commandClass : Class<org.robotlegs.core.ICommand>;
-de.innogames.strategycity.main.controller.bootstrap.ConfigurationSequence.$addStep__commandClass : Class<org.robotlegs.core.ICommand>;
-org.robotlegs.mvcs.Mediator.$removeViewListener__listener : ASFunction;
