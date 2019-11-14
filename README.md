@@ -52,7 +52,6 @@ Most of the `TODO`s are actually in the code, so look there too, but still:
  - fix imports
   - add imports for fully-qualified names that can come from `@haxe-type`
   - remove duplicate imports (can happen when merging in out-of-package imports)
-  - remove unused imports (can happen when not printing type annotations for inferred types)
  - maybe add `inline` for arithmetic ops in static var inits where all operands are also static inline
  - remove `public` from `@:inject`/`@:postConstruct`/`@:preDestroy` as these should not really be part of public API
  - support keeping rest arguments for `printf` calls
