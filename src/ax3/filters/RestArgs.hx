@@ -71,12 +71,24 @@ class RestArgs extends AbstractFilter {
 				}
 
 			case TECall(eobj = {type: TTFun(argTypes, _, TRestAs3)}, args) if (args.args.length > argTypes.length):
-				args.args = transformArgs(args.args, argTypes.length);
+				if (!keepRestCall(eobj)) {
+					args.args = transformArgs(args.args, argTypes.length);
+				}
 
 			case _:
 		}
 
 		return e;
+	}
+
+	static function keepRestCall(callable:TExpr):Bool {
+		return switch callable.kind {
+			// TODO: this should be configurable, I guess
+			case TEDeclRef(_, {kind: TDFunction({name: "printf", parentModule: {parentPack: {name: ""}}})}):
+				true;
+			case _:
+				false;
+		}
 	}
 
 	static function transformArgs(args:Array<{expr:TExpr, comma:Null<Token>}>, nonRest:Int) {
