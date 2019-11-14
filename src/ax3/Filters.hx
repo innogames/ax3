@@ -59,6 +59,7 @@ class Filters {
 			new HandleProtectedOverrides(context),
 			new CheckUntypedMethodCalls(context),
 			new RemoveRedundantParenthesis(context),
+			new FixImports(context)
 		]) {
 			f.run(tree);
 		}

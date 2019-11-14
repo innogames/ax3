@@ -42,6 +42,22 @@ class AbstractFilter {
 				}
 				prevImport = i;
 			} else {
+				var trivia = i.syntax.keyword.leadTrivia.concat(i.syntax.semicolon.trailTrivia);
+				if (!TokenTools.containsOnlyWhitespaceOrNewline(trivia)) {
+					// TODO: this is a very hacky way to keep trivia:
+					// GenHaxe will skip TDNamespace and only print its trivia
+					newImports.push({
+						syntax: {
+							condCompBegin: null,
+							keyword: i.syntax.keyword,
+							path: i.syntax.path,
+							semicolon: i.syntax.semicolon,
+							condCompEnd: null
+						},
+						kind: TIDecl({name: null, kind: TDNamespace(null)})
+					});
+				}
+
 				if (i.syntax.condCompBegin != null) {
 					if (condCompBegin != null) throw "assert"; // this will be annoying to deal with
 					condCompBegin = i.syntax.condCompBegin;
