@@ -143,13 +143,17 @@ class HaxeProperties extends AbstractFilter {
 			// otherwise the returned value will be different from Flash.
 
 			var argLocal = mk(TELocal(mkIdent(arg.name, [whitespace]), arg.v), arg.v.type, arg.v.type);
-			function rewriteReturns(e:TExpr):TExpr {
-				return switch e.kind {
-					case TELocalFunction(_): e;
-					case TEReturn(keyword, null): e.with(kind = TEReturn(keyword, argLocal));
-					case _: mapExpr(rewriteReturns, e);
+
+			var funExpr = {
+				function rewriteReturns(e:TExpr):TExpr {
+					return switch e.kind {
+						case TELocalFunction(_): e;
+						case TEReturn(keyword, null): e.with(kind = TEReturn(keyword, argLocal));
+						case _: mapExpr(rewriteReturns, e);
+					}
 				}
-			}
+				rewriteReturns(accessor.fun.expr);
+			};
 
 			var needsFinalReturn = true;
 			// here is an optimization for the majority of setters in AS3/Flash projects:
@@ -159,7 +163,7 @@ class HaxeProperties extends AbstractFilter {
 			// which is shorter and nicer :) the code below is stupid and ideally we should also handle
 			// this also in rewriteReturns for early returns that contain such assignment just above them,
 			// but oh well
-			switch accessor.fun.expr.kind {
+			switch funExpr.kind {
 				case TEBlock({exprs: exprs}) if (exprs.length > 0):
 					var lastBlockExpr = exprs[exprs.length - 1];
 					var lastExpr = lastBlockExpr.expr;
@@ -178,8 +182,9 @@ class HaxeProperties extends AbstractFilter {
 
 			if (needsFinalReturn) {
 				var finalReturnExpr = mk(TEReturn(mkIdent("return"), argLocal), TTVoid, TTVoid);
-				accessor.fun.expr = concatExprs(rewriteReturns(accessor.fun.expr), finalReturnExpr);
+				funExpr = concatExprs(funExpr, finalReturnExpr);
 			}
+			accessor.fun.expr = funExpr;
 		}
 
 		if (!mods.isOverride) {
