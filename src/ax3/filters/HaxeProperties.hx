@@ -139,6 +139,9 @@ class HaxeProperties extends AbstractFilter {
 		removePublicModifier(field);
 
 		if (accessor.fun.expr != null) {
+			// TODO: I think we should ensure that argument local var is never modified, because
+			// otherwise the returned value will be different from Flash.
+
 			var argLocal = mk(TELocal(mkIdent(arg.name, [whitespace]), arg.v), arg.v.type, arg.v.type);
 			function rewriteReturns(e:TExpr):TExpr {
 				return switch e.kind {
@@ -148,8 +151,35 @@ class HaxeProperties extends AbstractFilter {
 				}
 			}
 
-			var finalReturnExpr = mk(TEReturn(mkIdent("return"), argLocal), TTVoid, TTVoid);
-			accessor.fun.expr = concatExprs(rewriteReturns(accessor.fun.expr), finalReturnExpr);
+			var needsFinalReturn = true;
+			// here is an optimization for the majority of setters in AS3/Flash projects:
+			// instead of just always adding `return value` to the end of a function,
+			// we check if the last expression is an assignment of `value` that preserves the type
+			// so instead of `_x = value; return value;` we generate `return _x = value;`
+			// which is shorter and nicer :) the code below is stupid and ideally we should also handle
+			// this also in rewriteReturns for early returns that contain such assignment just above them,
+			// but oh well
+			switch accessor.fun.expr.kind {
+				case TEBlock({exprs: exprs}) if (exprs.length > 0):
+					var lastBlockExpr = exprs[exprs.length - 1];
+					var lastExpr = lastBlockExpr.expr;
+					switch lastExpr.kind {
+						case TEBinop(_, OpAssign(_), {kind: TELocal(_, v)}) if (v == arg.v && typeEq(lastExpr.type, arg.v.type)):
+							needsFinalReturn = false;
+							var leadTrivia = removeLeadingTrivia(lastExpr);
+							exprs[exprs.length - 1] = {
+								expr: lastExpr.with(kind = TEReturn(mkIdent("return", leadTrivia, [whitespace]), lastExpr)),
+								semicolon: lastBlockExpr.semicolon
+							};
+						case _:
+					}
+				case _:
+			}
+
+			if (needsFinalReturn) {
+				var finalReturnExpr = mk(TEReturn(mkIdent("return"), argLocal), TTVoid, TTVoid);
+				accessor.fun.expr = concatExprs(rewriteReturns(accessor.fun.expr), finalReturnExpr);
+			}
 		}
 
 		if (!mods.isOverride) {
