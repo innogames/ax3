@@ -54,3 +54,5 @@ Most of the `TODO`s are actually in the code, so look there too, but still:
   - remove duplicate imports (can happen when merging in out-of-package imports)
  - maybe add `inline` for arithmetic ops in static var inits where all operands are also static inline
  - remove `public` from `@:inject`/`@:postConstruct`/`@:preDestroy` as these should not really be part of public API
+ - remove type hints from `static inline final` fields (and maybe field with initializers in general, similar to local vars)
+ - for setters: if the last/only expression is `something = argument`, return that instead of adding a `return argument` afterwards.
