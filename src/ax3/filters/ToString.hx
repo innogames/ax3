@@ -27,11 +27,14 @@ class ToString extends AbstractFilter {
 
 					case [TTInt | TTNumber, TTString]:
 						var eStdString = mkBuiltin("Std.string", tStdString, removeLeadingTrivia(e));
-						e.with(kind = TECall(eStdString, {
-							openParen: mkOpenParen(),
-							args: [{expr: e, comma: null}],
-							closeParen: new Token(0, TkParenClose, ")", [], removeTrailingTrivia(e))
-						}));
+						e.with(
+							kind = TECall(eStdString, {
+								openParen: mkOpenParen(),
+								args: [{expr: e, comma: null}],
+								closeParen: new Token(0, TkParenClose, ")", [], removeTrailingTrivia(e))
+							}),
+							type = TTString
+						);
 
 					case [TTXML | TTXMLList, TTString]:
 						var eToString = mk(TEField({kind: TOExplicit(mkDot(), e), type: e.type}, "toString", mkIdent("toString")), tToString, tToString);
