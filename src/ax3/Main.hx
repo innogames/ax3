@@ -1,20 +1,9 @@
 package ax3;
 
-import haxe.DynamicAccess;
-import haxe.extern.EitherType;
 import sys.FileSystem;
 
-import ax3.HaxeTypeAnnotation;
 import ax3.Utils.*;
-
-private typedef Config = {
-	var src:EitherType<String,Array<String>>;
-	var swc:Array<String>;
-	var ?hxout:String;
-	var ?injection:Context.InjectionConfig;
-	var ?haxeTypes:DynamicAccess<HaxeTypeAnnotation>;
-	var ?rootImports:String;
-}
+import ax3.Context;
 
 class Main {
 	static var ctx:Context;
@@ -25,7 +14,7 @@ class Main {
 			throw "invalid args";
 		}
 		var config:Config = haxe.Json.parse(sys.io.File.getContent(args[0]));
-		ctx = new Context(config.injection);
+		ctx = new Context(config);
 
 		var total = stamp();
 

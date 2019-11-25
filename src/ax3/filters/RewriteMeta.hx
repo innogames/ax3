@@ -11,14 +11,14 @@ class RewriteMeta extends AbstractFilter {
 	}
 
 	override function run(tree:TypedTree) {
-		if (context.injectionConfig != null) {
+		if (context.config.injection != null) {
 			magicBaseClasses = [];
 
-			var p = getPackName(context.injectionConfig.magicInterface);
+			var p = getPackName(context.config.injection.magicInterface);
 			typeAwareInterface = tree.getInterface(p.pack, p.name);
 			magicBaseClasses.push(typeAwareInterface);
 
-			for (p in context.injectionConfig.magicBaseClasses) {
+			for (p in context.config.injection.magicBaseClasses) {
 				var p = getPackName(p);
 				magicBaseClasses.push(tree.getClassOrInterface(p.pack, p.name));
 			}

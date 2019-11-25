@@ -8,6 +8,13 @@ class RewriteForIn extends AbstractFilter {
 	static inline final tempIterateeVarName = "_iter_";
 	public static inline final checkNullIterateeBuiltin = "checkNullIteratee";
 
+	final generateCheckNullIteratee:Bool;
+
+	public function new(context:Context) {
+		super(context);
+		generateCheckNullIteratee = if (context.config.settings == null) false else context.config.settings.checkNullIteratee;
+	}
+
 	override function processExpr(e:TExpr):TExpr {
 		return switch e.kind {
 			case TEForIn(f):
@@ -72,28 +79,33 @@ class RewriteForIn extends AbstractFilter {
 		}), TTVoid, TTVoid);
 
 
-		var checkedExpr;
-		if (data.iterateeTempVar == null) {
-			checkedExpr = data.originalExpr;
+		var loopExpr;
+		if (generateCheckNullIteratee) {
+			var checkedExpr;
+			if (data.iterateeTempVar == null) {
+				checkedExpr = data.originalExpr;
+			} else {
+				checkedExpr = mk(TELocal(mkIdent(data.iterateeTempVar.name), data.iterateeTempVar), data.iterateeTempVar.type, data.iterateeTempVar.type);
+			}
+
+			loopExpr = mk(TEIf({
+				syntax: {
+					keyword: mkIdent("if", removeLeadingTrivia(eFor), [whitespace]),
+					openParen: mkOpenParen(),
+					closeParen: addTrailingWhitespace(mkCloseParen()),
+				},
+				econd: mkCheckNullIterateeExpr(checkedExpr),
+				ethen: eFor,
+				eelse: null
+			}), TTVoid, TTVoid);
 		} else {
-			checkedExpr = mk(TELocal(mkIdent(data.iterateeTempVar.name), data.iterateeTempVar), data.iterateeTempVar.type, data.iterateeTempVar.type);
+			loopExpr = eFor;
 		}
 
-		var checkedLoop = mk(TEIf({
-			syntax: {
-				keyword: mkIdent("if", removeLeadingTrivia(eFor), [whitespace]),
-				openParen: mkOpenParen(),
-				closeParen: addTrailingWhitespace(mkCloseParen()),
-			},
-			econd: mkCheckNullIterateeExpr(checkedExpr),
-			ethen: eFor,
-			eelse: null
-		}), TTVoid, TTVoid);
-
 		if (data.iterateeTempVar == null) {
-			return checkedLoop;
+			return loopExpr;
 		} else {
-			var tempVarDecl = mk(TEVars(VConst(mkIdent("final", removeLeadingTrivia(checkedLoop), [whitespace])), [{
+			var tempVarDecl = mk(TEVars(VConst(mkIdent("final", removeLeadingTrivia(loopExpr), [whitespace])), [{
 				syntax: {
 					name: mkIdent(data.iterateeTempVar.name),
 					type: null
@@ -107,7 +119,7 @@ class RewriteForIn extends AbstractFilter {
 			}]), TTVoid, TTVoid);
 			return mkMergedBlock([
 				{expr: tempVarDecl, semicolon: semicolonWithSpace},
-				{expr: checkedLoop, semicolon: null},
+				{expr: loopExpr, semicolon: null},
 			]);
 		}
 	}
@@ -133,8 +145,8 @@ class RewriteForIn extends AbstractFilter {
 		}
 	}
 
-	static inline function maybeTempVarIteratee(e:TExpr):{expr:TExpr, tempVar:Null<TVar>} {
-		return if (skipParens(e).kind.match(TELocal(_)))
+	inline function maybeTempVarIteratee(e:TExpr):{expr:TExpr, tempVar:Null<TVar>} {
+		return if (!generateCheckNullIteratee || skipParens(e).kind.match(TELocal(_)))
 			{
 				expr: e,
 				tempVar: null,
@@ -146,7 +158,6 @@ class RewriteForIn extends AbstractFilter {
 				expr: mk(TELocal(mkIdent(tempIterateeVarName), tempVar), e.type, e.type),
 			};
 		};
-
 	}
 
 	function getForInData(f:TForIn):LoopData {
