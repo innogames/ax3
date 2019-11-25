@@ -368,8 +368,14 @@ class GenHaxe extends PrinterBase {
 		if (v.isInline) buf.add("inline ");
 		printVarKind(v.kind, v.init == null /* `final` must be immediately initialized */);
 		printTextWithTrivia(v.name, v.syntax.name);
-		// TODO: skip type hints when init is there, using the same logic as for locals
-		printTypeHint({type: v.type, syntax: v.syntax.type});
+
+		// TODO: skip type hints when init is there for all fields, not just inline ones?
+		var skipTypeHint = v.isInline && v.init != null && canSkipTypeHint(v.type, v.init.expr);
+		if (!skipTypeHint) {
+			// TODO: don't lose the typehint's trivia
+			printTypeHint({type: v.type, syntax: v.syntax.type});
+		}
+
 		if (v.init != null) printVarInit(v.init);
 		printSemicolon(v.semicolon);
 	}
