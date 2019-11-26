@@ -46,4 +46,5 @@ typedef InjectionConfig = {
 
 typedef Settings = {
 	var ?checkNullIteratee:Bool;
+	var ?haxeRobotlegs:Bool;
 }

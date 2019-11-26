@@ -28,12 +28,20 @@ class VarInits extends AbstractFilter {
 		return last;
 	}
 
-	function intersect(a:Map<TVar, VarState>, b:Map<TVar, VarState>) {
-		for (v => aState in a) {
-			if (aState.inited) {
-				var bState = b[v];
-				if (bState.inited) {
-					vars[v].inited = true;
+	function intersect(states:Array<Map<TVar, VarState>>) {
+		for (v => state in vars) {
+			if (!state.inited) {
+				var wasInited = false;
+				for (varsState in states) {
+					if (varsState[v].inited) {
+						wasInited = true;
+					} else {
+						wasInited = false;
+						break;
+					}
+				}
+				if (wasInited) {
+					state.inited = true;
 				}
 			}
 		}
@@ -107,7 +115,7 @@ class VarInits extends AbstractFilter {
 						push();
 						loop(i.eelse.expr);
 						var varsAfterElse = pop();
-						intersect(varsAfterThen, varsAfterElse);
+						intersect([varsAfterThen, varsAfterElse]);
 					}
 
 				case TESwitch(s):
@@ -127,9 +135,8 @@ class VarInits extends AbstractFilter {
 							loop(e.expr);
 						}
 						var afterDefault = pop();
-						for (state in caseStates) {
-							intersect(afterDefault, state);
-						}
+						caseStates.push(afterDefault);
+						intersect(caseStates);
 					}
 
 				case TETry(t):
@@ -143,9 +150,8 @@ class VarInits extends AbstractFilter {
 					push();
 					loop(t.expr);
 					var afterTry = pop();
-					for (state in catchStates) {
-						intersect(afterTry, state);
-					}
+					catchStates.push(afterTry);
+					intersect(catchStates);
 
 				case TEReturn(_, null) | TEBreak(_) | TEContinue(_):
 					// code after these ones is not reachable, so mark all vars as inited as it should be safe

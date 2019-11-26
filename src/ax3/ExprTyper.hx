@@ -721,7 +721,7 @@ class ExprTyper {
 
 			// a hack for our robotlegs that support type parms instead of Dynamic
 			// TODO: make this enableable via config instead of being hard-coded
-			case {kind: TEField({type: TTInst({name: "IInjector", parentModule: {parentPack: {name: "org.robotlegs.core"}}})}, "instantiate" | "getInstance", _)}:
+			case {kind: TEField({type: TTInst({name: "IInjector", parentModule: {parentPack: {name: "org.robotlegs.core"}}})}, "instantiate" | "getInstance", _)} if (context.config.settings != null && context.config.settings.haxeRobotlegs):
 				type = switch targs.args[0].expr.type {
 					case TTStatic(cls): TTInst(cls);
 					case TTClass: TTAny;
