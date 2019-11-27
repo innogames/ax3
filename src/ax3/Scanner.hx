@@ -583,6 +583,7 @@ class Scanner {
 			case "n".code:
 			case "r".code:
 			case "\\".code:
+			case "/".code:
 			case "\"".code:
 			case "'".code:
 			case "u".code:
