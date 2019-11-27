@@ -49,7 +49,10 @@ class RestArgs extends AbstractFilter {
 						), argLocal.type, argLocal.type),
 						eelse: null
 					}), TTVoid, TTVoid);
-					fun.expr = concatExprs(eArrayInit, fun.expr);
+
+					if (fun.expr != null) { // null if interface
+						fun.expr = concatExprs(eArrayInit, fun.expr);
+					}
 
 			}
 		}

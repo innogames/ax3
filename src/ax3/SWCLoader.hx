@@ -204,7 +204,7 @@ class SWCLoader {
 
 					if (cls.superclass != null) {
 						switch getPublicName(abc, cls.superclass) {
-							case null | {ns: "", name: "Object"} | {ns: "mx.core", name: "UIComponent"}: // ignore mx.core.UIComponent
+							case null | {ns: "", name: "Object"} | {ns: "mx.core", name: "UIComponent"} | {ns: "asunit.framework", name: "TestCase"}: // TODO: this is ugly
 							case n:
 								structureSetups.push(function() {
 									var classDecl = switch tree.getDecl(n.ns, n.name).kind {
@@ -422,7 +422,7 @@ class SWCLoader {
 							case ["", "XMLList"]: TTXMLList;
 							case ["", "RegExp"]: TTRegExp;
 							case ["flash.utils", "Dictionary"]: tUntypedDictionary;
-							case ["mx.core", _]: TTAny; // TODO: hacky hack
+							case ["mx.core" | "mx.managers", _]: TTAny; // TODO: hacky hack
 							case _: resolveTypePath(ns, name);
 						}
 					case NPrivate(ns):
