@@ -369,14 +369,13 @@ class GenHaxe extends PrinterBase {
 		printVarKind(v.kind, v.init == null /* `final` must be immediately initialized */);
 		printTextWithTrivia(v.name, v.syntax.name);
 
-		// TODO: skip type hints when init is there for all fields, not just inline ones?
 		var skipTypeHint = v.isInline && v.init != null && canSkipTypeHint(v.type, v.init.expr);
 		if (!skipTypeHint) {
 			// TODO: don't lose the typehint's trivia
 			printTypeHint({type: v.type, syntax: v.syntax.type});
 		}
 
-		if (v.init != null) printVarInit(v.init);
+		if (v.init != null) printVarInit(v.init, skipTypeHint, v.type);
 		printSemicolon(v.semicolon);
 	}
 
@@ -412,7 +411,7 @@ class GenHaxe extends PrinterBase {
 				case TArgNormal(hint, init):
 					printTextWithTrivia(arg.name, arg.syntax.name);
 					printTypeHint({type: arg.type, syntax: hint});
-					if (init != null) printVarInit(init);
+					if (init != null) printVarInit(init, false, arg.type);
 
 				case TArgRest(dots, _):
 					throwError(dots.pos, "Unprocessed rest arguments");
@@ -486,9 +485,52 @@ class GenHaxe extends PrinterBase {
 		return if (packName == "") cls.name else packName + "." + cls.name;
 	}
 
-	function printTypeRef(t:TTypeRef) {
+	function printTypeRef(t:TTypeRef, printTypeParams:Bool, pos:Int) {
 		printTrivia(ParseTree.getSyntaxTypeLeadingTrivia(t.syntax));
-		printTType(t.type);
+
+		switch t.type {
+			case TTVoid | TTAny | TTBoolean | TTNumber | TTInt | TTUint | TTString | TTFunction | TTClass | TTBuiltin | TTFun(_) | TTStatic(_):
+				throwError(pos, "Unsupported type ref: " + t.type); // can't construct those with `new`
+
+			case TTXML | TTXMLList | TTRegExp | TTInst(_) | TTObject(TTAny):
+				printTType(t.type);
+
+			case TTArray(t):
+				buf.add("Array");
+				if (printTypeParams) {
+					buf.add("<");
+					printTType(t);
+					buf.add(">");
+				}
+
+			case TTVector(t):
+				importVector();
+				buf.add("Vector");
+				if (printTypeParams) {
+					buf.add("<");
+					printTType(t);
+					buf.add(">");
+				}
+
+			case TTDictionary(k, v):
+				buf.add("ASDictionary");
+				if (printTypeParams) {
+					buf.add("<");
+					printTType(k);
+					buf.add(",");
+					printTType(v);
+					buf.add(">");
+				}
+
+			case TTObject(t):
+				buf.add("haxe.DynamicAccess");
+				if (printTypeParams) {
+					buf.add("<");
+					printTType(t);
+					buf.add(">");
+				}
+		}
+
 		printTrivia(ParseTree.getSyntaxTypeTrailingTrivia(t.syntax));
 	}
 
@@ -580,7 +622,7 @@ class GenHaxe extends PrinterBase {
 			case TEPreUnop(op, e): printPreUnop(op, e);
 			case TEPostUnop(e, op): printPostUnop(e, op);
 			case TESwitch(s): printSwitch(s);
-			case TENew(keyword, obj, args): printNew(keyword, obj, args);
+			case TENew(keyword, obj, args): printNew(keyword, obj, args, true);
 			case TECondCompValue(v): printCondCompVar(v);
 			case TECondCompBlock(v, expr): printCondCompBlock(v, expr);
 			case TEAs(_): throwError(exprPos(e), "unprocessed `as` expression");
@@ -828,10 +870,10 @@ class GenHaxe extends PrinterBase {
 		printExpr(f.body);
 	}
 
-	function printNew(keyword:Token, newObject:TNewObject, args:Null<TCallArgs>) {
+	function printNew(keyword:Token, newObject:TNewObject, args:Null<TCallArgs>, includeTypeParams:Bool) {
 		printTextWithTrivia("new", keyword);
 		switch newObject {
-			case TNType(t): printTypeRef(t);
+			case TNType(t): printTypeRef(t, includeTypeParams, keyword.pos);
 			case TNExpr(e): throwError(exprPos(e), "unprocessed expr for `new`");
 		}
 		if (args != null) printCallArgs(args) else buf.add("()");
@@ -970,11 +1012,12 @@ class GenHaxe extends PrinterBase {
 			printTextWithTrivia(v.v.name, v.syntax.name);
 
 			// TODO: don't lose the typehint's trivia
-			if (v.init == null || !canSkipTypeHint(v.v.type, v.init.expr)) {
+			var skipTypeHint = v.init != null && canSkipTypeHint(v.v.type, v.init.expr);
+			if (!skipTypeHint) {
 				printTypeHint({type: v.v.type, syntax: v.syntax.type});
 			}
 
-			if (v.init != null) printVarInit(v.init);
+			if (v.init != null) printVarInit(v.init, skipTypeHint, v.v.type);
 			if (v.comma != null) printComma(v.comma);
 		}
 	}
@@ -1004,9 +1047,14 @@ class GenHaxe extends PrinterBase {
 		}
 	}
 
-	function printVarInit(init:TVarInit) {
+	function printVarInit(init:TVarInit, includeTypeParams:Bool, expectedType:TType) {
 		printTextWithTrivia("=", init.equalsToken);
-		printExpr(init.expr);
+		switch init.expr.kind {
+			case TENew(keyword, newObject = TNType(t), args) if (!includeTypeParams && Type.enumEq(t.type, expectedType)):
+				printNew(keyword, newObject, args, false);
+			case _:
+				printExpr(init.expr);
+		}
 	}
 
 	function printObjectDecl(o:TObjectDecl) {
