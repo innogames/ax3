@@ -294,7 +294,7 @@ class GenHaxe extends PrinterBase {
 				var p = a.haxeProperty;
 				printTrivia(p.syntax.leadTrivia);
 				printMetadata(p.metadata);
-				// if (p.isFlashProperty) TODO: re-enable the check for the final move to the converted code
+				if (p.isFlashProperty || (context.config.settings != null && context.config.settings.flashProperties))
 					buf.add("@:flash.property ");
 				if (p.isPublic) buf.add("public ");
 				if (p.isStatic) buf.add("static ");
