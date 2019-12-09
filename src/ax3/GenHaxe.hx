@@ -294,8 +294,18 @@ class GenHaxe extends PrinterBase {
 				var p = a.haxeProperty;
 				printTrivia(p.syntax.leadTrivia);
 				printMetadata(p.metadata);
-				if (p.isFlashProperty || (context.config.settings != null && context.config.settings.flashProperties))
-					buf.add("@:flash.property ");
+
+				var addMeta =
+					switch context.config {
+						case {settings: {flashProperties: none}}:
+							false;
+						case {settings: {flashProperties: externInterface}}:
+							p.isFlashProperty;
+						case _:
+							true;
+					};
+
+				if (addMeta) buf.add("@:flash.property ");
 				if (p.isPublic) buf.add("public ");
 				if (p.isStatic) buf.add("static ");
 				buf.add("var ");

@@ -9,6 +9,7 @@
 		"flash.display.DisplayObject.filters$set": "p1:Array<flash.filters.BitmapFilter>"
 	},
 	"settings": {
-		"checkNullIteratee": false
+		"checkNullIteratee": false,
+		"flashProperties": "none"
 	}
 }

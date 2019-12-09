@@ -47,5 +47,11 @@ typedef InjectionConfig = {
 typedef Settings = {
 	var ?checkNullIteratee:Bool;
 	var ?haxeRobotlegs:Bool;
-	var ?flashProperties:Bool;
+	var ?flashProperties:FlashPropertiesSetting;
+}
+
+enum abstract FlashPropertiesSetting(String) {
+	var none;
+	var externInterface;
+	var all;
 }
