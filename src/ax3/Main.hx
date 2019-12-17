@@ -69,6 +69,8 @@ class Main {
 			imports.push(sys.io.File.getContent(config.rootImports));
 		}
 		if (imports.length > 0) {
+			imports.unshift("#if !macro");
+			imports.push("#end");
 			sys.io.File.saveContent(haxe.io.Path.join([haxeDir, "import.hx"]), imports.join("\n"));
 		}
 
