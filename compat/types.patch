@@ -1,12 +1,3 @@
-tutorial.instructions.ITutorialInstruction.target : ASObject;
-tutorial.instructions.triggers.ITutorialTrigger.completeCallback : tutorial.instructions.triggers.ITutorialTrigger->Void;
-
-tutorial.parser.ITutorialParser.$parse__p1 : ASObject;
-tutorial.parser.ITutorialParser.$parse__data : ASObject;
-
-de.innogames.common.assets.lib.ISoundAtlasLoader.$loadAtlas__handler : Bool->Void;
-de.innogames.common.assets.lib.ISoundAtlasLoader.$loadAtlas__p2 : Bool->Void;
-
 starling.core.Starling.$new__renderMode : flash.display3D.Context3DRenderMode;
 starling.core.Starling.$new__p5 : flash.display3D.Context3DRenderMode;
 
@@ -18,6 +9,4 @@ openfl.net.SharedObject.data : ASObject;
 
 flash.display.Stage3D.$requestContext3D__context3DRenderMode : flash.display3D.Context3DRenderMode;
 
-de.innogames.shared.mvcs.model.AbstractSequencer.$addStep__commandClass : Class<org.robotlegs.core.ICommand>;
-de.innogames.strategycity.main.controller.bootstrap.ConfigurationSequence.$addStep__commandClass : Class<org.robotlegs.core.ICommand>;
 org.robotlegs.mvcs.Mediator.$removeViewListener__listener : ASFunction;
