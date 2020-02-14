@@ -8,5 +8,3 @@ flash.net.SharedObject.data : ASObject;
 openfl.net.SharedObject.data : ASObject;
 
 flash.display.Stage3D.$requestContext3D__context3DRenderMode : flash.display3D.Context3DRenderMode;
-
-org.robotlegs.mvcs.Mediator.$removeViewListener__listener : ASFunction;
