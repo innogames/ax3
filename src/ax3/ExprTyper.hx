@@ -621,6 +621,7 @@ class ExprTyper {
 			case "join": TTFun([TTAny], TTString);
 			case "push" | "unshift": TTFun([t], TTUint, TRestSwc);
 			case "pop" | "shift": TTFun([], t);
+			case "insertAt": TTFun([TTInt, t], TTVoid);
 			case "concat": TTFun([TTArray(t)], TTArray(t));
 			case "indexOf" | "lastIndexOf": TTFun([t, TTInt], TTInt);
 			case "slice": TTFun([TTInt, TTInt], TTArray(t));
@@ -637,6 +638,7 @@ class ExprTyper {
 			case "length": TTInt; // it's `uint` in Flash, but Haxe defines it as `Int`
 			case "push" | "unshift": TTFun([t], TTUint, TRestSwc);
 			case "pop" | "shift": TTFun([], t);
+			case "insertAt": TTFun([TTInt, t], TTVoid);
 			case "indexOf" | "lastIndexOf": TTFun([t, TTInt], TTInt);
 			case "splice": TTFun([TTInt, TTUint, t], TTVector(t));
 			case "slice": TTFun([TTInt, TTInt], TTVector(t));

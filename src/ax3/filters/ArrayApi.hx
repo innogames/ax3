@@ -140,6 +140,12 @@ class ArrayApi extends AbstractFilter {
 					}));
 				}
 
+			// insertAt
+			case TECall(eInsertAtMethod = {kind: TEField(fieldObj = {type: TTArray(_)}, "insertAt", insertAtToken)}, args):
+				var insertToken = insertAtToken.with(TkIdent, "insert");
+				var eInsertMethod = eInsertAtMethod.with(kind = TEField(fieldObj, "insert", insertToken));
+				e.with(kind = TECall(eInsertMethod, args));
+
 			// splice
 			case TECall({kind: TEField(fieldObj = {kind: TOExplicit(dot, eArray), type: t = TTArray(_) | TTVector(_)}, "splice", _)}, args):
 				var isVector = t.match(TTVector(_));
