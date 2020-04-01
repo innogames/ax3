@@ -697,7 +697,7 @@ class GenHaxe extends PrinterBase {
 			   | (_ == RewriteForIn.checkNullIterateeBuiltin => true)
 			   : name;
 			case _:
-				throw "unknown builtin: " + name;
+				throwError(token.pos, "unknown builtin: " + name);
 		}
 		printTextWithTrivia(name, token);
 	}

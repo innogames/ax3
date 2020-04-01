@@ -423,6 +423,7 @@ class SWCLoader {
 							case ["", "RegExp"]: TTRegExp;
 							case ["flash.utils", "Dictionary"]: tUntypedDictionary;
 							case ["mx.core" | "mx.managers", _]: TTAny; // TODO: hacky hack
+							case ["org.as3commons.reflect", _]: TTAny; // TODO hacky hack for elvenar \o/
 							case _: resolveTypePath(ns, name);
 						}
 					case NPrivate(ns):
@@ -460,7 +461,7 @@ class SWCLoader {
 			case NName(name, ns):
 				var ns = abc.get(abc.namespaces, ns);
 				switch (ns) {
-					case NPublic(ns) | NProtected(ns) | NStaticProtected(ns):
+					case NPublic(ns) | NProtected(ns) | NStaticProtected(ns) | NInternal(ns):
 						var ns = abc.get(abc.strings, ns);
 						var name = abc.get(abc.strings, name);
 						return {ns: ns, name: name};

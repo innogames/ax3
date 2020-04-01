@@ -75,7 +75,8 @@ class AbstractFilter {
 
 	public function run(tree:TypedTree) {
 		for (pack in tree.packages) {
-			for (mod in pack) {
+			var mods = [for (mod in pack) mod]; // save the list because we might modify the package (e.g. rename the module)
+			for (mod in mods) {
 				if (mod.isExtern) {
 					continue;
 				}

@@ -1029,7 +1029,7 @@ class ExprTyper {
 		for (c in cases) {
 			switch (c) {
 				case CCase(keyword, v, colon, body):
-					if (def != null) throw "`case` after `default` in switch";
+					if (def != null) throwErr("`case` after `default` in switch", keyword.pos);
 					tcases.push({
 						syntax: {
 							keyword: keyword,

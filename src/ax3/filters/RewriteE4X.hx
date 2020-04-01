@@ -116,7 +116,7 @@ class RewriteE4X extends AbstractFilter {
 
 	function assertIsXML(e:TExpr) {
 		if (!e.type.match(TTXML | TTXMLList)) {
-			throwError(exprPos(e), "E4X syntax is used on non-XML expression");
+			throwError(exprPos(e), 'E4X syntax is used on non-XML expression (type: ${e.type})');
 		}
 	}
 
