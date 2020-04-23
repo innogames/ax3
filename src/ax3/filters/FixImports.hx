@@ -3,7 +3,7 @@ package ax3.filters;
 import ax3.GenHaxe.canSkipTypeHint;
 
 class FixImports extends AbstractFilter {
-	final usedClasses = new Map<TClassOrInterfaceDecl, Bool>();
+	var usedClasses:Null<Map<TClassOrInterfaceDecl, Bool>>;
 
 	override function processExpr(e:TExpr):TExpr {
 		e = mapExpr(processExpr, e);
@@ -30,11 +30,13 @@ class FixImports extends AbstractFilter {
 	}
 
 	override function processModule(mod:TModule) {
+		usedClasses = new Map();
 		processDecl(mod.pack.decl);
 		for (decl in mod.privateDecls) {
 			processDecl(decl);
 		}
 		processImports(mod);
+		usedClasses = null;
 	}
 
 	override function processClass(c:TClassOrInterfaceDecl) {
