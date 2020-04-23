@@ -41,7 +41,7 @@ class RewriteMeta extends AbstractFilter {
 			case TInterface(_): return; // don't process interfaces
 		};
 
-		if (classInfo.extend != null) {
+		if (classInfo.extend != null && !classInfo.extend.superClass.parentModule.isExtern) {
 			processClass(classInfo.extend.superClass);
 		}
 
