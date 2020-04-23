@@ -3,6 +3,7 @@ package ax3.filters;
 class RewriteMeta extends AbstractFilter {
 	var typeAwareInterface:Null<TClassOrInterfaceDecl>;
 	var magicBaseClasses:Null<Array<TClassOrInterfaceDecl>>;
+	var processedClasses:Null<Map<TClassOrInterfaceDecl,Bool>>;
 
 	static function getPackName(path:String) {
 		var pack = path.split(".");
@@ -23,14 +24,26 @@ class RewriteMeta extends AbstractFilter {
 				magicBaseClasses.push(tree.getClassOrInterface(p.pack, p.name));
 			}
 		}
+		processedClasses = new Map();
 		super.run(tree);
+		processedClasses = null;
 	}
 
 	override function processClass(c:TClassOrInterfaceDecl) {
+		if (processedClasses.exists(c)) {
+			return;
+		}
+
+		processedClasses[c] = true;
+
 		var classInfo = switch c.kind {
 			case TClass(info): info;
 			case TInterface(_): return; // don't process interfaces
 		};
+
+		if (classInfo.extend != null) {
+			processClass(classInfo.extend.superClass);
+		}
 
 		var needsTypeAwareInterface = false;
 		for (m in c.members) {
