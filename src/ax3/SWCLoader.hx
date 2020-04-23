@@ -204,7 +204,7 @@ class SWCLoader {
 
 					if (cls.superclass != null) {
 						switch getPublicName(abc, cls.superclass) {
-							case null | {ns: "", name: "Object"} | {ns: "mx.core", name: "UIComponent"} | {ns: "asunit.framework", name: "TestCase"}: // TODO: this is ugly
+							case null | {ns: "", name: "Object" | "Array" | "Function"} | {ns: "mx.core", name: "UIComponent"} | {ns: "asunit.framework", name: "TestCase"}: // TODO: this is ugly
 							case n:
 								structureSetups.push(function() {
 									var classDecl = switch tree.getDecl(n.ns, n.name).kind {
