@@ -7,6 +7,7 @@ import ax3.Context;
 
 class Main {
 	static var ctx:Context;
+	static var skipFiles = new Map<String,Bool>();
 
 	static function main() {
 		var args = Sys.args();
@@ -86,13 +87,18 @@ class Main {
 		print("-- TOTAL  " + total);
 	}
 
+	static function shouldSkip(path:String):Bool {
+		var skipFiles = ctx.config.skipFiles;
+		return skipFiles != null && skipFiles.contains(path);
+	}
+
 	static function walk(dir:String, files:Array<ParseTree.File>) {
 		function loop(dir) {
 			for (name in FileSystem.readDirectory(dir)) {
 				var absPath = dir + "/" + name;
 				if (FileSystem.isDirectory(absPath)) {
 					walk(absPath, files);
-				} else if (StringTools.endsWith(name, ".as")) {
+				} else if (StringTools.endsWith(name, ".as") && !shouldSkip(absPath)) {
 					var file = parseFile(absPath);
 					if (file != null) {
 						files.push(file);
