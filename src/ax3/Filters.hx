@@ -7,8 +7,11 @@ class Filters {
 	public static function run(context:Context, tree:TypedTree) {
 		var externImports = new ExternModuleLevelImports(context);
 		var coerceToBool = new CoerceToBool(context);
+		var detectFieldRedefinitions = new RewriteRedefinedPrivate.DetectFieldRedefinitions(context);
 
 		for (f in [
+			detectFieldRedefinitions,
+			new RewriteRedefinedPrivate.RenameRedefinedFields(context, detectFieldRedefinitions),
 			new RewriteAndOrAssign(context),
 			new WrapModuleLevelDecls(context),
 			new HandleVisibilityModifiers(context),
