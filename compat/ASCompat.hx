@@ -336,6 +336,10 @@ class ASDate {
 		return (cast d).setDate(day);
 	}
 
+	public static inline function setMonth(d:Date, month:Float, ?day:Float):Float {
+		return (cast d).setMonth(month, day);
+	}
+
 	public static inline function setHours(d:Date, hour:Int, ?minute:Int, ?second:Int, ?millisecond:Int):Float {
 		return (cast d).setHours(hour, minute, second, millisecond);
 	}
@@ -350,6 +354,10 @@ class ASDate {
 
 	public static inline function setUTCDate(d:Date, day:Float):Float {
 		return (cast d).setUTCDate(day);
+	}
+
+	public static inline function setFullYear(d:Date, year:Float, ?month:Float, ?day:Float):Float {
+		return (cast d).setFullYear(year, month, day);
 	}
 
 	public static inline function setUTCFullYear(d:Date, year:Float, ?month:Float, ?day:Float):Float {
