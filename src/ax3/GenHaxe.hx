@@ -677,6 +677,7 @@ class GenHaxe extends PrinterBase {
 			case "Function": "ASFunction";
 			case "XML": "compat.XML";
 			case "XMLList": "compat.XMLList";
+			case "Class": "Class";
 			case "Vector":
 				importVector();
 				"Vector";
