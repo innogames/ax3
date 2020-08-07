@@ -15,7 +15,10 @@ class DetectFieldRedefinitions extends AbstractFilter {
 						case TMField(field):
 							switch (field.kind) {
 								case TFVar({name: name}) | TFFun({name: name}) | TFGetter({name: name}) | TFSetter({name: name}):
-									markRedefinition(info.extend.superClass, name);
+									var isPrivate = Lambda.exists(field.modifiers, m -> m.match(FMPrivate(_)));
+									if (isPrivate) {
+										markRedefinition(info.extend.superClass, name);
+									}
 							}
 						case _:
 					}
