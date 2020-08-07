@@ -422,6 +422,7 @@ class SWCLoader {
 							case ["", "XMLList"]: TTXMLList;
 							case ["", "RegExp"]: TTRegExp;
 							case ["flash.utils", "Dictionary"]: tUntypedDictionary;
+							case ["__AS3__.vec", "Vector"]: TTVector(TTAny); // hope that's correct
 							case ["mx.core" | "mx.managers", _]: TTAny; // TODO: hacky hack
 							case ["org.as3commons.reflect", _]: TTAny; // TODO hacky hack for elvenar \o/
 							case _: resolveTypePath(ns, name);
