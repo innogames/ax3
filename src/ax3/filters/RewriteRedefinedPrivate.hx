@@ -15,10 +15,7 @@ class DetectFieldRedefinitions extends AbstractFilter {
 						case TMField(field):
 							switch (field.kind) {
 								case TFVar({name: name}) | TFFun({name: name}) | TFGetter({name: name}) | TFSetter({name: name}):
-									var isPrivate = Lambda.exists(field.modifiers, m -> m.match(FMPrivate(_)));
-									if (isPrivate) {
-										markRedefinition(info.extend.superClass, name);
-									}
+									markRedefinition(info.extend.superClass, name);
 							}
 						case _:
 					}
@@ -35,30 +32,26 @@ class DetectFieldRedefinitions extends AbstractFilter {
 
 		var c = parentDefinition.declaringClass;
 
-		if (c.parentModule.isExtern) {
-			// Not sure what would be the behaviour here, but I don't thin this can happen, because SWCLoader skips private fields.
-			throw "TODO";
-		}
+		var field = parentDefinition.field;
+		var isPrivate = Lambda.exists(field.modifiers, m -> m.match(FMPrivate(_)));
 
+		if (!isPrivate) {
+			// not a problem
+			return;
+		}
 
 		// register
 		var fields = redefinitions[c];
 		if (fields == null) {
 			fields = redefinitions[c] = new Map();
 		}
+		if (fields.exists(name)) {
+			// already mangled
+			return;
+		}
 		var qualifier = if (c.parentModule.parentPack.name == "") c.name else StringTools.replace(c.parentModule.parentPack.name, ".", "_") + "_" + c.name;
 		var mangledName = name + "__" + qualifier; // should be pretty unique
 		fields[name] = mangledName;
-
-		// traverse parents
-		switch c.kind {
-			case TClass(info):
-				if (info.extend != null) {
-					markRedefinition(info.extend.superClass, name);
-				}
-			case TInterface(_):
-				throw "assert";
-		}
 	}
 }
 
