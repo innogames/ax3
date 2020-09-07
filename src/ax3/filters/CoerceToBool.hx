@@ -38,7 +38,7 @@ class CoerceToBool extends AbstractFilter {
 					var eIntAsBoolMethod = mkBuiltin("ASCompat.intAsBool", tIntAsBool, lead, []);
 					mk(TECall(eIntAsBoolMethod, {
 						openParen: mkOpenParen(),
-						closeParen: new Token(0, TkParenClose, ")", [], tail),
+						closeParen: mkCloseParen(tail),
 						args: [{expr: e.with(expectedType = e.type), comma: null}],
 					}), TTBoolean, TTBoolean);
 				} else {
@@ -61,7 +61,7 @@ class CoerceToBool extends AbstractFilter {
 				var eStringAsBoolMethod = mkBuiltin("ASCompat.stringAsBool", tStringAsBool, lead, []);
 				mk(TECall(eStringAsBoolMethod, {
 					openParen: mkOpenParen(),
-					closeParen: new Token(0, TkParenClose, ")", [], tail),
+					closeParen: mkCloseParen(tail),
 					args: [{expr: e.with(expectedType = e.type), comma: null}],
 				}), TTBoolean, TTBoolean);
 
@@ -71,7 +71,7 @@ class CoerceToBool extends AbstractFilter {
 				var eFloatAsBoolMethod = mkBuiltin("ASCompat.floatAsBool", tFloatAsBool, lead, []);
 				mk(TECall(eFloatAsBoolMethod, {
 					openParen: mkOpenParen(),
-					closeParen: new Token(0, TkParenClose, ")", [], tail),
+					closeParen: mkCloseParen(tail),
 					args: [{expr: e.with(expectedType = e.type), comma: null}],
 				}), TTBoolean, TTBoolean);
 

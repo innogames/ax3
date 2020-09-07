@@ -27,7 +27,7 @@ class RewriteRegexLiterals extends AbstractFilter {
 				var args:TCallArgs = {
 					openParen: mkOpenParen(),
 					args: args,
-					closeParen: new Token(0, TkParenClose, ")", [], token.trailTrivia)
+					closeParen: mkCloseParen(token.trailTrivia)
 				}
 				e.with(kind = TENew(newToken, TNType({syntax: TPath({first: mkIdent("RegExp"), rest: []}), type: TTRegExp}), args));
 

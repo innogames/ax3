@@ -17,7 +17,7 @@ class DateApi extends AbstractFilter {
 						if (args == null) args = {
 							openParen: mkOpenParen(),
 							args: [],
-							closeParen: new Token(0, TkParenClose, ")", [], removeTrailingTrivia(e))
+							closeParen: mkCloseParen(removeTrailingTrivia(e))
 						}
 						var eNowField = mk(TEField({kind: TOExplicit(mkDot(), eDate), type: tDate}, "now", mkIdent("now")), TTFunction, TTFunction);
 						e.with(kind = TECall(eNowField, args));
@@ -103,7 +103,7 @@ class DateApi extends AbstractFilter {
 						e.with(kind = TECall(eMethod, {
 							openParen: mkOpenParen(),
 							args: [{expr: expr, comma: null}],
-							closeParen: new Token(0, TkParenClose, ")", [], fieldToken.trailTrivia)
+							closeParen: mkCloseParen(fieldToken.trailTrivia)
 						}));
 
 					case _:
@@ -129,7 +129,7 @@ class DateApi extends AbstractFilter {
 						e.with(kind = TECall(eMethod, {
 							openParen: mkOpenParen(),
 							args: [],
-							closeParen: new Token(0, TkParenClose, ")", [], fieldToken.trailTrivia)
+							closeParen: mkCloseParen(fieldToken.trailTrivia)
 						}));
 
 					case "valueOf":

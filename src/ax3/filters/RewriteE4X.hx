@@ -39,7 +39,7 @@ class RewriteE4X extends AbstractFilter {
 				return mk(
 					TECall(eMethod, {
 						openParen: mkOpenParen(),
-						closeParen: new Token(0, TkParenClose, ")", [], x.syntax.name.trailTrivia),
+						closeParen: mkCloseParen(x.syntax.name.trailTrivia),
 						args: [
 							{expr: mk(TELiteral(TLString(attrNameToken)), TTString, TTString), comma: commaWithSpace},
 							{expr: eValue.with(expectedType = TTString), comma: null}
@@ -129,8 +129,8 @@ class RewriteE4X extends AbstractFilter {
 				var xmlNewObject = TNType({syntax: TPath({first: mkIdent("XML"), rest: []}), type: TTXML});
 				mk(TENew(newKeyword, xmlNewObject, {
 					openParen: mkOpenParen(),
-					args: [{expr: e, comma: null}],
-					closeParen: new Token(0, TkParenClose, ")", [], removeTrailingTrivia(e))
+					closeParen: mkCloseParen(removeTrailingTrivia(e)),
+					args: [{expr: e, comma: null}]
 				}), TTXML, TTXML);
 		}
 	}
@@ -145,7 +145,7 @@ class RewriteE4X extends AbstractFilter {
 		return mk(
 			TECall(eMethod, {
 				openParen: mkOpenParen(),
-				closeParen: new Token(0, TkParenClose, ")", [], nameToken.trailTrivia),
+				closeParen: mkCloseParen(nameToken.trailTrivia),
 				args: [{expr: mk(TELiteral(TLString(descendantNameToken)), TTString, TTString), comma: null}],
 			}),
 			TTString,

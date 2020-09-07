@@ -39,7 +39,7 @@ class HandleNew extends AbstractFilter {
 									comma: null
 								}
 							],
-							closeParen: new Token(0, TkParenClose, ")", [], trailTrivia)
+							closeParen: mkCloseParen(trailTrivia)
 						}));
 				}
 			case _:

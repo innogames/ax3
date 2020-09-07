@@ -31,7 +31,7 @@ class ToString extends AbstractFilter {
 							kind = TECall(eStdString, {
 								openParen: mkOpenParen(),
 								args: [{expr: e, comma: null}],
-								closeParen: new Token(0, TkParenClose, ")", [], removeTrailingTrivia(e))
+								closeParen: mkCloseParen(removeTrailingTrivia(e))
 							}),
 							type = TTString
 						);

@@ -131,7 +131,7 @@ class RewriteAs extends AbstractFilter {
 				{expr: eObj, comma: commaWithSpace},
 				{expr: eType, comma: null},
 			],
-			closeParen: new Token(0, TkParenClose, ")", [], trailTrivia)
+			closeParen: mkCloseParen(trailTrivia)
 		});
 	}
 
@@ -143,7 +143,7 @@ class RewriteAs extends AbstractFilter {
 				{expr: eObj, comma: commaWithSpace},
 				{expr: eType, comma: null},
 			],
-			closeParen: new Token(0, TkParenClose, ")", [], trailTrivia)
+			closeParen: mkCloseParen(trailTrivia)
 		});
 	}
 }

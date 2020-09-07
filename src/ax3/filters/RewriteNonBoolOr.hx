@@ -18,7 +18,7 @@ class RewriteNonBoolOr extends AbstractFilter {
 						syntax: {
 							keyword: mkIdent("if", removeLeadingTrivia(a), [whitespace]),
 							openParen: mkOpenParen(),
-							closeParen: new Token(0, TkParenClose, ")", [], removeTrailingTrivia(a))
+							closeParen: mkCloseParen(removeTrailingTrivia(a))
 						},
 						econd: coerceToBool.coerce(a),
 						ethen: a,
@@ -35,7 +35,7 @@ class RewriteNonBoolOr extends AbstractFilter {
 
 					mk(TECall(eChooseMethod, {
 						openParen: mkOpenParen(),
-						closeParen: new Token(0, TkParenClose, ")", [], tail),
+						closeParen: mkCloseParen(tail),
 						args: [
 							{expr: a, comma: commaWithSpace},
 							{expr: b, comma: null}
