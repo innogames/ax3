@@ -43,6 +43,7 @@ class ASCompat {
 	}
 	#end
 
+	// int(d), uint(d)
 	public static inline function toInt(d:Dynamic):Int {
 		#if flash
 		return d;
@@ -51,6 +52,7 @@ class ASCompat {
 		#end
 	}
 
+	// Number(d)
 	public static inline function toNumber(d:Dynamic):Float {
 		#if flash
 		return d;
@@ -59,19 +61,21 @@ class ASCompat {
 		#end
 	}
 
-	public static inline function toString(d:Dynamic):String {
-		#if flash
-		return d;
-		#else
-		return js.Syntax.code("String")(d);
-		#end
-	}
-
+	// Boolean(d)
 	public static inline function toBool(d:Dynamic):Bool {
 		#if flash
 		return d;
 		#else
 		return js.Syntax.code("Boolean")(d);
+		#end
+	}
+
+	// String(d)
+	public static inline function toString(d:Dynamic):String {
+		#if flash
+		return d;
+		#else
+		return js.Syntax.code("String")(d);
 		#end
 	}
 
@@ -108,8 +112,8 @@ class ASCompat {
 		return (f : ASAny);
 	}
 
-	public static inline function intAsBool(f:Null<Int>):Bool {
-		return (f : ASAny);
+	public static inline function intAsBool(i:Null<Int>):Bool {
+		return (i : ASAny);
 	}
 
 	public static inline function allocArray<T>(length:Int):Array<T> {
