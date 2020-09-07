@@ -103,6 +103,10 @@ class ASCompat {
 		return (cast n).toPrecision(precision);
 	}
 
+	public static inline function toRadix(n:Float, radix:Int = 10):String {
+		return (cast n).toString(radix);
+	}
+
 	// TODO: this is temporary
 	public static inline function thisOrDefault<T>(value:T, def:T):T {
 		return if ((value : ASAny)) value else def;
