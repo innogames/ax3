@@ -91,12 +91,16 @@ class ASCompat {
 		return flash.Lib.as(v, c);
 	}
 
+	public static inline function toExponential(n:Float, ?digits:Int):String {
+		return (cast n).toExponential(digits);
+	}
+
 	public static inline function toFixed(n:Float, ?digits:Int):String {
 		return (cast n).toFixed(digits);
 	}
 
-	public static inline function toPrecision(n:Float, digits:Int):String {
-		return (cast n).toPrecision(digits);
+	public static inline function toPrecision(n:Float, precision:Int):String {
+		return (cast n).toPrecision(precision);
 	}
 
 	// TODO: this is temporary
