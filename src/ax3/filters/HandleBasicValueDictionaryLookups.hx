@@ -39,7 +39,7 @@ class HandleBasicValueDictionaryLookups extends AbstractFilter {
 		return e.with(kind = TECall(eUnwrapMethod, {
 			openParen: mkOpenParen(),
 			args: [{expr: e, comma: null}],
-			closeParen: new Token(0, TkParenClose, ")", [], tail)
+			closeParen: mkCloseParen(tail)
 		}));
 	}
 

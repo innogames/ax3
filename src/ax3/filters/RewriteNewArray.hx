@@ -17,7 +17,7 @@ class RewriteNewArray extends AbstractFilter {
 						e.with(kind = TEArrayDecl({
 							syntax: {
 								openBracket: new Token(0, TkBracketOpen, "[", keyword.leadTrivia, args.openParen.trailTrivia),
-								closeBracket: new Token(0, TkBraceClose, "]", args.closeParen.leadTrivia, args.closeParen.trailTrivia),
+								closeBracket: new Token(0, TkBracketClose, "]", args.closeParen.leadTrivia, args.closeParen.trailTrivia),
 							},
 							elements: args.args
 						}));

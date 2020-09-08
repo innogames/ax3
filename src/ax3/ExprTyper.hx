@@ -301,6 +301,7 @@ class ExprTyper {
 			case "unescape": mk(TEBuiltin(i, "unescape"), TTFun([TTString], TTString), expectedType);
 			case ident:
 				var v = locals[ident];
+
 				if (v != null) {
 					return mk(TELocal(i, v), v.type, expectedType);
 				}
@@ -331,7 +332,7 @@ class ExprTyper {
 							var eobj:TFieldObject =
 								if (isFieldStatic(field))
 								{
-									kind:  TOImplicitClass(c),
+									kind: TOImplicitClass(c),
 									type: TTStatic(c)
 								}
 								else

@@ -11,7 +11,7 @@ class RewriteHasOwnProperty extends AbstractFilter {
 				e.with(kind = TECall(eExistsMethod, {
 					openParen: mkOpenParen(),
 					args: [{expr: ekey, comma: null}],
-					closeParen: new Token(0, TkParenClose, ")", [], removeTrailingTrivia(edict))
+					closeParen: mkCloseParen(removeTrailingTrivia(edict))
 				}));
 
 			case TECall(eField = {kind: TEField(obj, "hasOwnProperty", fieldToken)}, args):
