@@ -49,7 +49,7 @@ class HaxeTypeResolver {
 			case HTPath("Class", [HTPath("Dynamic", [])]): TTClass;
 			case HTPath("Class", [HTPath(path, [])]): TypedTree.declToStatic(resolveDotPath(path));
 			case HTPath("Null", [t]): resolveHaxeType(t, pos); // TODO: keep nullability?
-			case HTPath("Function" | "haxe.Constraints.Function", []): TTFunction;
+			case HTPath("Function" | "flash.utils.Function" | "haxe.Constraints.Function", []): TTFunction;
 			case HTPath(path, []): TypedTree.declToInst(resolveDotPath(path));
 			case HTPath(path, _): throwError("Unsupported parametrized type: " + path, pos);
 			case HTFun(args, ret): TTFun([for (a in args) resolveHaxeType(a, pos)], resolveHaxeType(ret, pos));
