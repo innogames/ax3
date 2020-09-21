@@ -2,17 +2,7 @@
            // I'm not sure how much can we do about it, maybe wrap the TTAny arguments and the return value in ASAny on the converter level?
 abstract ASAny(Dynamic)
 	from Dynamic
-	to ASObject
-
-	// these are here because of https://github.com/HaxeFoundation/haxe/issues/8425
-	from ASFunction
-	from ASObject
-	from compat.XML
 {
-	// this is also here because of https://github.com/HaxeFoundation/haxe/issues/8425
-	@:from extern static inline function ___fromDictionary<K,V>(d:ASDictionary<K,V>):ASAny return cast d;
-
-
 	public inline function new() this = cast {};
 
 	@:noCompletion
