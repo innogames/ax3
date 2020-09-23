@@ -12,7 +12,7 @@ class Filters {
 		for (f in [
 			detectFieldRedefinitions,
 			new RewriteRedefinedPrivate.RenameRedefinedFields(context, detectFieldRedefinitions),
-			new RewriteAndOrAssign(context),
+			new RewriteAssignOps(context),
 			new WrapModuleLevelDecls(context),
 			new HandleVisibilityModifiers(context),
 			new RewriteMeta(context),
