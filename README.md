@@ -9,6 +9,11 @@ To achieve that, it actually resembles the typical compiler a lot, so here's how
  - run a sequence of "filters" which analyze and re-write the TypedTree structures to adapt the code for Haxe
  - generate haxe modules from the processed TypedTree
 
+## DISCLAIMER
+
+This tool was developed and used by [InnoGames](https://www.innogames.com/) to migrate our ActionScript 3 codebases. Feel free to ask questions,
+fork and contribute fixes. However, we are NOT planning to maintain and provide official support for this project.
+
 ## Usage:
 
 ```
@@ -25,6 +30,10 @@ where `config.json` is something like:
   ]
 }
 ```
+
+## Known limitations
+
+ - The parser doesn't currently support ASI (automatic semicolon insertion). The only case where a semicolon can be omitted is the last expression of a block.
 
 ## Building
 
