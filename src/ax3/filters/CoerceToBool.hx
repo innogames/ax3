@@ -27,7 +27,7 @@ class CoerceToBool extends AbstractFilter {
 			case TTBoolean:
 				e; // shouldn't happen really
 
-			case TTFunction | TTFun(_) | TTClass | TTObject(_) | TTInst(_) | TTStatic(_) | TTArray(_) | TTVector(_) | TTRegExp | TTXML | TTXMLList | TTDictionary(_, _):
+			case TTFunction | TTFun(_) | TTClass | TTInst(_) | TTStatic(_) | TTArray(_) | TTVector(_) | TTRegExp | TTXML | TTXMLList | TTDictionary(_, _):
 				var trail = removeTrailingTrivia(e);
 				mk(TEBinop(e.with(expectedType = e.type), OpNotEquals(mkNotEqualsToken()), mkNullExpr(e.type, [], trail)), TTBoolean, TTBoolean);
 
@@ -75,8 +75,8 @@ class CoerceToBool extends AbstractFilter {
 					args: [{expr: e.with(expectedType = e.type), comma: null}],
 				}), TTBoolean, TTBoolean);
 
-			case TTAny:
-				e.with(expectedType = e.type); // handled at run-time by the ASAny abstract \o/
+			case TTAny | TTObject(_):
+				e.with(expectedType = e.type); // handled at run-time by the ASAny/ASObject abstract \o/
 
 			case TTVoid:
 				throwError(exprPos(e), "void used as Bool?");
