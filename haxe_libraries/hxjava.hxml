@@ -1,0 +1,5 @@
+# @install: lix --silent download "gh://github.com/HaxeFoundation/hxjava#a046705230941673ede16c3483d1e42749ab9bd0" into hxjava/4.0.0-alpha/github/a046705230941673ede16c3483d1e42749ab9bd0
+# @run: haxelib run-dir hxjava ${HAXE_LIBCACHE}/hxjava/4.0.0-alpha/github/a046705230941673ede16c3483d1e42749ab9bd0
+-cp ${HAXE_LIBCACHE}/hxjava/4.0.0-alpha/github/a046705230941673ede16c3483d1e42749ab9bd0/
+-D hxjava=4.0.0-alpha
+-java-lib lib/hxjava-std.jar

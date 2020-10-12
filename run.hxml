@@ -1,0 +1,5 @@
+# lix doesn't yet support running libraries from main class (with eval),
+# so we have to compile old-school neko executable named run.n
+-cp src
+-main ax3.Run
+-neko run.n

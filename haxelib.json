@@ -1,0 +1,10 @@
+{
+	"name": "ax3",
+	"description": "AS3 to Haxe converter tool by InnoGames",
+	"url": "https://github.com/innogames/ax3",
+	"license": "MIT",
+	"version": "0.1.0",
+	"releasenote": "Unreleased",
+	"contributors": ["nadako"],
+	"classPath": "src"
+}

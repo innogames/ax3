@@ -34,18 +34,18 @@ where `config.json` is something like:
 ## Known limitations
 
  - The parser doesn't currently support ASI (automatic semicolon insertion). The only case where a semicolon can be omitted is the last expression of a block.
+ - Only a small, most commonly used subset of E4X is supported. It's recommended to rewrite the unsupported things in AS3 sources to adapt it for conversion.
 
 ## Building
 
-The converter is written in Haxe, using latest Haxe 4 features, so you need Haxe 4 :)
+The converter is written in Haxe 4 and is only one library, `format`, for reading the SWC files.
+To make it easy there's a [Lix](https://github.com/lix-pm/lix.client) scope configured, so assuming you have nodejs installed, you can do:
 
-It also uses the `format` library which contains `SWF/ABC` readers, so before building, make sure to install it (`haxelib install format` or `lix install haxelib:format`). Note that you need the version after the commit `88041be7819e1093189e88e50be2d222dddd73a7` (TODO: just use lix and pin the version)
+ * `npm i lix`
+ * `npx lix download`
+ * `npx haxe build.hxml`
 
-Then, to build the converter binary, just run `haxe build.hxml`.
-
-It uses the Java target (actually, even the new JVM bytecode target), because JVM has
-great GC and handles unoptimized functional code of this converter very well.
-Originally I used JS target, but node.js worked slower and eventually died on so many allocations. :)
+It uses the Java target (actually, even the new JVM bytecode target), because JVM has great GC and handles unoptimized functional code of this converter very well. Originally I used JS target, but node.js worked slower and eventually died on so many allocations. :)
 
 ## TODO
 
