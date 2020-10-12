@@ -10,6 +10,6 @@ class Run {
 		var args = Sys.args();
 		Sys.setCwd(args.pop());
 		var jarFile = Path.join([ax3Dir, "converter.jar"]);
-		Sys.command("java", ["-jar", jarFile].concat(args));
+		Sys.exit(Sys.command("java", ["-jar", jarFile].concat(args)));
 	}
 }
