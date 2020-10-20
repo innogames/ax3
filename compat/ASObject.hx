@@ -2,12 +2,8 @@
            // I'm not sure how much can we do about it, maybe wrap the TTAny arguments and the return value in ASAny on the converter level?
 abstract ASObject(flash.utils.Object)
 	from flash.utils.Object
-	from Dynamic<ASObject> // this will make ASObject an expected type for nested object values, so we can have mixed-arrays inside object decls
 	to flash.utils.Object
-
-	// from haxe.Constraints.Function
-
-	from Array<Dynamic>
+	from Dynamic
 {
 	public static inline function typeReference() {
 		#if flash
@@ -151,6 +147,4 @@ abstract ASObject(flash.utils.Object)
 
 	@:op([]) inline function ___arrayGet(name:ASObject):ASAny return ___get(name);
 	@:op([]) inline function ___arraySet(name:ASObject, value:ASAny):ASAny return ___set(name, value);
-
-	@:from extern static inline function ___fromDictionary<K,V>(d:ASDictionary<K,V>):ASObject return cast d;
 }
