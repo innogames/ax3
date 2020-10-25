@@ -48,11 +48,20 @@ class TypeDescriptionAwareFlashMacro {
 		return fields;
 	}
 
-	static function mkFlashMeta(originalMeta:MetadataEntry, flashMetaName:String):MetadataEntry {
-		var ident = {pos: originalMeta.pos, expr: EConst(CIdent(flashMetaName))};
-		var call = {pos: originalMeta.pos, expr: ECall(ident, originalMeta.params)};
+	static function mkFlashMeta(meta:MetadataEntry, flashMetaName:String):MetadataEntry {
+		// CIdent to CString
+		// https://github.com/HaxeFoundation/haxe/blob/7ae69994422a17dce5adb198ce6fafe9ce3f67c7/src/generators/genswf9.ml#L2041
+		for (param in meta.params) {
+			switch param {
+				case {expr:EBinop(OpAssign,{expr:EConst(CIdent(_))}, c = {expr:EConst(CIdent(s))})}:
+					c.expr = EConst(CString(s));
+				case _:
+			}
+		}
+		var ident = {pos: meta.pos, expr: EConst(CIdent(flashMetaName))};
+		var call = {pos: meta.pos, expr: ECall(ident, meta.params)};
 		return {
-			pos: originalMeta.pos,
+			pos: meta.pos,
 			name: ":meta",
 			params: [call]
 		};
