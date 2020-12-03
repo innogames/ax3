@@ -22,7 +22,7 @@ class ToString extends AbstractFilter {
 					case [TTString, TTString]:
 						e; // ok
 
-					case [TTAny, TTString]:
+					case [TTAny | TTObject(_), TTString]:
 						e; // handled at run-time
 
 					case [TTInt | TTNumber, TTString]:
