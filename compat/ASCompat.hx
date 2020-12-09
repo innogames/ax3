@@ -2,6 +2,8 @@
 import haxe.macro.Expr;
 #end
 
+import de.innogames.shared.util.NullIterateeUtil;
+
 import haxe.Constraints.Function;
 
 class ASCompat {
@@ -13,14 +15,11 @@ class ASCompat {
 
 	public static inline function checkNullIteratee<T>(v:Null<T>, ?pos:haxe.PosInfos):Bool {
 		if (v == null) {
-			reportNullIteratee(pos);
+			haxe.Log.trace("FIXME: Null value passed as an iteratee for for-in/for-each expression!", pos);
+			NullIterateeUtil.reportNullIteratee(pos.fileName, pos.lineNumber);
 			return false;
 		}
 		return true;
-	}
-
-	static function reportNullIteratee(pos:haxe.PosInfos) {
-		haxe.Log.trace("FIXME: Null value passed as an iteratee for for-in/for-each expression!", pos);
 	}
 
 	public static inline function escape(s:String):String {
