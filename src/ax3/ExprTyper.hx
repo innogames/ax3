@@ -875,7 +875,7 @@ class ExprTyper {
 			case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTString | TTArray(_) | TTObject(_) | TTXML | TTXMLList | TTRegExp | TTVector(_) | TTInst(_) | TTDictionary(_):
 				throwErr("Trying to call an expression of type " + callableType.getName(), args.openParen.pos);
 			case TTClass:
-				throw "assert??";
+				throwErr("assert?? " + callableType.getName(), args.openParen.pos);
 			case TTAny | TTFunction:
 				(i,earg) -> TTAny;
 			case TTBuiltin | TTStatic(_):
