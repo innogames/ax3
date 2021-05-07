@@ -536,6 +536,7 @@ enum TExprKind {
 	TEArrayDecl(a:TArrayDecl);
 	TEVectorDecl(v:TVectorDecl);
 	TEReturn(keyword:Token, e:Null<TExpr>);
+	TETypeof(keyword:Token, e:TExpr);
 	TEThrow(keyword:Token, e:TExpr);
 	TEDelete(keyword:Token, e:TExpr);
 	TEBreak(keyword:Token);

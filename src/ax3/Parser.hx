@@ -230,6 +230,7 @@ class Parser {
 		var modifiers = [];
 		var namespace = null;
 		var metadata = parseSequence(parseOptionalMetadata);
+		var namespaceSetted: Bool = false;
 		while (true) {
 			var token = scanner.advance();
 
@@ -245,13 +246,21 @@ class Parser {
 
 			switch token.text {
 				case "public":
+					if (namespaceSetted) throw "Namespace setted";
 					modifiers.push(FMPublic(scanner.consume()));
+					namespaceSetted = true;
 				case "private":
+					if (namespaceSetted) throw "Namespace setted";
 					modifiers.push(FMPrivate(scanner.consume()));
+					namespaceSetted = true;
 				case "protected":
+					if (namespaceSetted) throw "Namespace setted";
 					modifiers.push(FMProtected(scanner.consume()));
+					namespaceSetted = true;
 				case "internal":
+					if (namespaceSetted) throw "Namespace setted";
 					modifiers.push(FMInternal(scanner.consume()));
+					namespaceSetted = true;
 				case "override":
 					modifiers.push(FMOverride(scanner.consume()));
 				case "static":
@@ -265,8 +274,15 @@ class Parser {
 				case "function":
 					return MField(parseClassFunNext(metadata, namespace, modifiers, scanner.consume()));
 				case text:
-					if (modifiers.length > 0)
-						throw "Modifiers without declaration";
+					if (modifiers.length > 0) {
+						if (!namespaceSetted) {
+							modifiers.push(FMPublic(scanner.consume()));
+							namespaceSetted = true;
+							continue;
+						} else {
+							throw "Modifiers without declaration";
+						}
+					}
 					if (metadata.length > 0)
 						throw "Metadata without declaration";
 					if (namespace != null)
@@ -560,6 +576,8 @@ class Parser {
 		switch consumedToken.text {
 			case "new":
 				return parseNewNext(consumedToken, allowComma);
+			case "typeof":
+				return ETypeof(consumedToken, parseExpr(allowComma));
 			case "return":
 				return EReturn(consumedToken, parseOptionalExpr(allowComma));
 			case "throw":
@@ -731,6 +749,17 @@ class Parser {
 		var eelse = switch scanner.advance() {
 			case {kind: TkIdent, text: "else"}:
 				{keyword: scanner.consume(), expr: parseExpr(true)};
+			case {kind: TkSemicolon, text: ";"}:
+				scanner.savePos();
+				scanner.consume();
+				switch scanner.advance() {
+					case {kind: TkIdent, text: "else"}:
+						{keyword: scanner.consume(), expr: parseExpr(true)};
+					case _:
+						scanner.cancelConsume();
+						scanner.restorePos();
+						null;
+				}
 			case _:
 				null;
 		}

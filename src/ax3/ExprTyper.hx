@@ -116,6 +116,10 @@ class ExprTyper {
 				if (expectedType != TTVoid) throw "assert";
 				mk(TEReturn(keyword, if (eReturned != null) typeExpr(eReturned, currentReturnType) else null), TTVoid, TTVoid);
 
+			case ETypeof(keyword, ex):
+				if (ex == null) throw "assert";
+				mk(TETypeof(keyword, typeExpr(ex, TTAny)), TTVoid, TTVoid);
+
 			case EThrow(keyword, e):
 				if (expectedType != TTVoid) throw "assert";
 				mk(TEThrow(keyword, typeExpr(e, TTAny)), TTVoid, TTVoid);
@@ -293,7 +297,7 @@ class ExprTyper {
 			case "Object": mk(TEBuiltin(i, "Object"), TTBuiltin, expectedType);
 			case "RegExp": mk(TEBuiltin(i, "RegExp"), TTBuiltin, expectedType);
 			// TODO: actually these must be resolved after everything because they are global idents!!!
-			case "parseInt":  mk(TEBuiltin(i, "parseInt"), TTFun([TTString], TTInt), expectedType);
+			case "parseInt":  mk(TEBuiltin(i, "parseInt"), TTFun([TTString, TTInt], TTInt), expectedType);
 			case "parseFloat": mk(TEBuiltin(i, "parseFloat"), TTFun([TTString], TTNumber), expectedType);
 			case "NaN": mk(TEBuiltin(i, "NaN"), TTNumber, expectedType);
 			case "isNaN": mk(TEBuiltin(i, "isNaN"), TTFun([TTNumber], TTBoolean), expectedType);
@@ -451,7 +455,7 @@ class ExprTyper {
 		var type =
 			switch [fieldName, skipParens(obj)] {
 				case [_, {type: TTInt | TTUint | TTNumber}]: getNumericInstanceFieldType(fieldToken, obj.type);
-				case ["toString", _]: TTFun([], TTString);
+				case ["toString", _]: TTFun([TTUint], TTString);
 				case ["hasOwnProperty", {type: TTDictionary(keyType, _)}]: TTFun([keyType], TTBoolean);
 				case ["hasOwnProperty", _]: TTFun([TTString], TTBoolean);
 				case ["prototype", _]: tUntypedObject;
@@ -534,6 +538,8 @@ class ExprTyper {
 		var field = loop(cls);
 		if (field != null) {
 			return getFieldType(field);
+		} else if (Lambda.exists(cls.modifiers, function(m) return m.equals(DMDynamic(null)))) {
+			return TTAny;
 		}
 
 		return throwErr('Unknown instance field $fieldName on class ${cls.name}', pos);
@@ -585,6 +591,7 @@ class ExprTyper {
 	function getFunctionInstanceFieldType(field:Token):TType {
 		return switch field.text {
 			case "call" | "apply": TTFunction;
+			case "length": TTUint;
 			case other: err('Unknown Function instance field: $other', field.pos); TTAny;
 		}
 	}
@@ -627,6 +634,7 @@ class ExprTyper {
 			case "indexOf" | "lastIndexOf": TTFun([t, TTInt], TTInt);
 			case "slice": TTFun([TTInt, TTInt], TTArray(t));
 			case "splice": TTFun([TTInt, TTUint, TTAny], TTArray(t));
+			case "removeAt": TTFun([TTInt], t);
 			case "sort": TTFun([TTAny], TTArray(t));
 			case "sortOn": TTFun([TTString, tUntypedObject], TTArray(t));
 			case "filter": TTFun([TTFun([t], TTBoolean)], TTArray(t)); // in as3 the `fitler` signature is actually 3-argument, but not in Haxe
@@ -648,6 +656,9 @@ class ExprTyper {
 			case "concat": TTFun([TTVector(t)], TTVector(t));
 			case "reverse": TTFun([], TTVector(t));
 			case "forEach": TTFun([TTFunction, tUntypedObject], TTVoid);
+			case "fixed": TTBoolean;
+			case "removeAt": TTFun([TTInt], t);
+			case "filter": TTFun([TTFun([t, TTUint, TTVector(t)], TTBoolean), TTObject(TTAny)], TTVector(t));
 			case other: err('Unknown Vector instance field $other', field.pos); TTAny;
 		}
 	}
@@ -683,6 +694,8 @@ class ExprTyper {
 		return switch field.text {
 			case "MIN_VALUE": type;
 			case "MAX_VALUE": type;
+			case "POSITIVE_INFINITY": type;
+			case "NEGATIVE_INFINITY": type;
 			case other: err('Unknown field $other on type ${type.getName()}', field.pos); TTAny;
 		}
 	}
@@ -694,7 +707,8 @@ class ExprTyper {
 			case {kind: TELiteral(TLSuper(_)), type: TTInst(cls)}: getConstructorType(cls);
 			case _: eobj.type;
 		}
-		var targs = typeCallArgs(args, callableType);
+
+		var targs = typeCallArgs(args, callableType, e);
 
 		inline function mkCast(path, t) return {
 			var e = switch targs.args {
@@ -757,6 +771,9 @@ class ExprTyper {
 
 			case {kind: TEDeclRef(path, _), type: TTStatic(cls)}: // ClassName(expr) cast
 				return mkCast(path, TTInst(cls));
+
+			case {kind: TEXmlChild(child)} if (child.name == "hasSimpleContent"):
+				type = TTBoolean;
 
 			case _:
 				err("unknown callable type: " + eobj.type, exprPos(e));
@@ -870,8 +887,15 @@ class ExprTyper {
 		return mk(TENew(keyword, obj, args), type, expectedType);
 	}
 
-	function typeCallArgs(args:CallArgs, callableType:TType):TCallArgs {
+	function typeCallArgs(args:CallArgs, callableType:TType, ?e: Expr):TCallArgs {
 		var getExpectedType = switch (callableType) {
+			case TTXMLList if (e != null):
+				switch e {
+					case EField(_, _, ident) if (ident.kind.equals(TkIdent) && ident.text == "hasSimpleContent"):
+						(i,earg) -> TTBoolean;
+					case _:
+						throwErr("Trying to call an expression of type " + callableType.getName(), args.openParen.pos);
+				}
 			case TTVoid | TTBoolean | TTNumber | TTInt | TTUint | TTString | TTArray(_) | TTObject(_) | TTXML | TTXMLList | TTRegExp | TTVector(_) | TTInst(_) | TTDictionary(_):
 				throwErr("Trying to call an expression of type " + callableType.getName(), args.openParen.pos);
 			case TTClass:

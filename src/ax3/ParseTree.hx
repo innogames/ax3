@@ -48,7 +48,7 @@ class ParseTree {
 		return switch (e) {
 			case EIdent(t) | ELiteral(LString(t) | LDecInt(t) | LHexInt(t) | LFloat(t) | LRegExp(t)): t.pos;
 			case ECall(e, _) | EArrayAccess(e, _, _, _) | EField(e, _, _)  | EXmlAttr(e, _, _, _) | EXmlAttrExpr(e, _, _, _, _, _) | EXmlDescend(e, _, _): exprPos(e);
-			case ETry(keyword, _) | EFunction(keyword, _) | EIf(keyword, _, _, _, _, _) | ESwitch(keyword, _) | EReturn(keyword, _) | EThrow(keyword, _) | EDelete(keyword, _) | EBreak(keyword) | EContinue(keyword) | ENew(keyword, _, _) | EVectorDecl(keyword, _, _): keyword.pos;
+			case ETry(keyword, _) | EFunction(keyword, _) | EIf(keyword, _, _, _, _, _) | ESwitch(keyword, _) | EReturn(keyword, _) | EThrow(keyword, _) | EDelete(keyword, _) | EBreak(keyword) | EContinue(keyword) | ENew(keyword, _, _) | ETypeof(keyword, _) | EVectorDecl(keyword, _, _): keyword.pos;
 			case EParens(openParen, _, _): openParen.pos;
 			case EArrayDecl(d): d.openBracket.pos;
 			case EBlock(b): b.openBrace.pos;
@@ -408,6 +408,7 @@ enum Expr {
 	EArrayAccess(e:Expr, openBracket:Token, eindex:Expr, closeBracket:Token);
 	EArrayDecl(d:ArrayDecl);
 	EReturn(keyword:Token, e:Null<Expr>);
+	ETypeof(keyword:Token, e:Expr);
 	EThrow(keyword:Token, e:Expr);
 	EDelete(keyword:Token, e:Expr);
 	EBreak(keyword:Token);

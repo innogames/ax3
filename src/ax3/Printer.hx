@@ -329,6 +329,9 @@ class Printer extends PrinterBase {
 			case EReturn(keyword, e):
 				printTextWithTrivia("return", keyword);
 				if (e != null) printExpr(e);
+			case ETypeof(keyword, e):
+				printTextWithTrivia("typeof", keyword);
+				printExpr(e);
 			case EThrow(keyword, e):
 				printTextWithTrivia("throw", keyword);
 				printExpr(e);

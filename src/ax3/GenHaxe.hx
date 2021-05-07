@@ -603,6 +603,7 @@ class GenHaxe extends PrinterBase {
 			case TEArrayDecl(d): printArrayDecl(d);
 			case TEVectorDecl(v): throw "assert";
 			case TEReturn(keyword, e): printTextWithTrivia("return", keyword); if (e != null) printExpr(e);
+			case TETypeof(keyword, e): printTextWithTrivia("typeof", keyword); printExpr(e);
 			case TEThrow(keyword, e): printTextWithTrivia("throw", keyword); printExpr(e);
 			case TEDelete(keyword, e): throw "assert";
 			case TEBreak(keyword): printTextWithTrivia("break", keyword);
@@ -800,7 +801,7 @@ class GenHaxe extends PrinterBase {
 			   | TELocal(_)
 
 			   // no way these can even appear here so we could as well throw an assertion failure here
-			   | TEReturn(_) | TEThrow(_) | TEDelete(_) | TEBreak(_) | TEContinue(_)
+			   | TEReturn(_) | TETypeof(_) | TEThrow(_) | TEDelete(_) | TEBreak(_) | TEContinue(_)
 			   | TEWhile(_) | TEDoWhile(_) | TEFor(_) | TEForIn(_) | TEForEach(_) | TEHaxeFor(_)
 			   | TELocalFunction(_) | TEVars(_) | TEBlock(_) | TESwitch(_) | TECondCompValue(_) | TECondCompBlock(_) | TETry(_) | TEUseNamespace(_)
 
