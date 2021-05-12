@@ -63,6 +63,15 @@ class RewriteMeta extends AbstractFilter {
 									case "PreDestroy":
 										needsTypeAwareInterface = true;
 										newMetadata.push(haxeMetaFromFlash(m, "@:preDestroy"));
+									case "Inspectable":
+										needsTypeAwareInterface = true;
+										newMetadata.push(haxeMetaFromFlash(m, "@:inspectable"));
+									case "Bindable":
+										needsTypeAwareInterface = true;
+										newMetadata.push(haxeMetaFromFlash(m, "@:bindable"));
+									case "Event":
+										needsTypeAwareInterface = true;
+										newMetadata.push(haxeMetaFromFlash(m, "@:event"));
 									case "Inline":
 										newMetadata.push(meta);
 									// 	// TODO: Haxe `inline` generation is disabled, because Haxe cannot always
@@ -75,6 +84,37 @@ class RewriteMeta extends AbstractFilter {
 									// 		case TFGetter(f) | TFSetter(f): f.isInline = true;
 									// 		case TFVar(_): throwError(m.name.pos, "Inline meta on a var?");
 									// 	}
+									case "Embed":
+										var map: Map<String, String> = [for (a in m.args.args.rest.map(function(f) return f.element).concat([m.args.args.first])) {
+											var kv: {k: String, v: String} = switch a {
+												case EBinop(EIdent(n), OpAssign(_), ELiteral(LString(v))):
+													{ k: n.text, v: StringTools.trim(v.text.substr(1, v.text.length - 2)) };
+												case _:
+													reportError(m.name.pos, "Unknown embed metadata format"); null;
+											}
+											if (kv != null) kv.k => kv.v;
+										}];
+										switch map['mimeType'] {
+											case "application/x-font", "application/x-font-truetype":
+												newMetadata.push(MetaHaxe(
+													mkIdent('@:font', m.openBracket.leadTrivia, []),
+													{
+														openParen: mkOpenParen(),
+														args: {first: ELiteral(LString(mkIdent(map['source']))), rest: []},
+														closeParen: mkCloseParen()
+													}
+												));
+											case "application/octet-stream":
+												newMetadata.push(MetaHaxe(
+													mkIdent('@:file', m.openBracket.leadTrivia, []),
+													{
+														openParen: mkOpenParen(),
+														args: {first: ELiteral(LString(mkIdent(map['source']))), rest: []}, closeParen: mkCloseParen()
+													}
+												));
+											case t:
+												reportError(m.name.pos, "Unknown mimeType: " + t);
+										}
 									case other:
 										reportError(m.name.pos, "Unknown metadata: " + other);
 										newMetadata.push(meta);
