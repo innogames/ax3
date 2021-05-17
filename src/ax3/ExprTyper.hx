@@ -775,6 +775,12 @@ class ExprTyper {
 			case {kind: TEXmlChild(child)} if (child.name == "hasSimpleContent"):
 				type = TTBoolean;
 
+			case {kind: TEXmlChild(child)} if (child.name == "children"):
+				type = TTXMLList;
+
+			case {kind: TEXmlChild(child)} if (child.name == "appendChild"):
+				type = TTVoid;
+
 			case _:
 				err("unknown callable type: " + eobj.type, exprPos(e));
 				type = TTAny;
@@ -893,6 +899,10 @@ class ExprTyper {
 				switch e {
 					case EField(_, _, ident) if (ident.kind.equals(TkIdent) && ident.text == "hasSimpleContent"):
 						(i,earg) -> TTBoolean;
+					case EField(_, _, ident) if (ident.kind.equals(TkIdent) && ident.text == "children"):
+						(i,earg) -> TTFun([], TTXMLList);
+					case EField(_, _, ident) if (ident.kind.equals(TkIdent) && ident.text == "appendChild"):
+						(i,earg) -> TTFun([TTXML], TTVoid);
 					case _:
 						throwErr("Trying to call an expression of type " + callableType.getName(), args.openParen.pos);
 				}
