@@ -778,6 +778,9 @@ class ExprTyper {
 			case {kind: TEXmlChild(child)} if (child.name == "children"):
 				type = TTXMLList;
 
+			case {kind: TEXmlChild(child)} if (child.name == "child"):
+				type = TTXMLList;
+
 			case {kind: TEXmlChild(child)} if (child.name == "appendChild"):
 				type = TTVoid;
 
@@ -901,6 +904,8 @@ class ExprTyper {
 						(i,earg) -> TTBoolean;
 					case EField(_, _, ident) if (ident.kind.equals(TkIdent) && ident.text == "children"):
 						(i,earg) -> TTFun([], TTXMLList);
+					case EField(_, _, ident) if (ident.kind.equals(TkIdent) && ident.text == "child"):
+						(i,earg) -> TTFun([TTString], TTXMLList);
 					case EField(_, _, ident) if (ident.kind.equals(TkIdent) && ident.text == "appendChild"):
 						(i,earg) -> TTFun([TTXML], TTVoid);
 					case _:
