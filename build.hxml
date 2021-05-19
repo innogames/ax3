@@ -15,4 +15,4 @@
 # -cmd cp java_out/Main-debug.jar converter.jar
 -cmd cp java_out/Main.jar converter.jar
 
--cmd java -jar converter.jar config-local.json
+# -cmd java -jar converter.jar config-local.json

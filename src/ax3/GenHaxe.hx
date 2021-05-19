@@ -1,5 +1,6 @@
 package ax3;
 
+import ax3.Token.TokenKind;
 import ax3.filters.RewriteForIn;
 import ax3.ParseTree;
 import ax3.TypedTree;
@@ -11,6 +12,12 @@ using StringTools;
 
 @:nullSafety
 class GenHaxe extends PrinterBase {
+
+	static var REPLACE_CONTROL_CHAR: Map<String, Int> = [
+		"\\b" => 0x08,
+		"\\f" => 0x0C
+	];
+
 	@:nullSafety(Off) var currentModule:TModule;
 
 	final context:Context;
@@ -1112,7 +1119,7 @@ class GenHaxe extends PrinterBase {
 			case TLUndefined(syntax): printTextWithTrivia("/*undefined*/null", syntax);
 			case TLInt(syntax): printTextWithTrivia(syntax.text, syntax);
 			case TLNumber(syntax): printTextWithTrivia(syntax.text, syntax);
-			case TLString(syntax): printTextWithTrivia(syntax.text, syntax);
+			case TLString(syntax): printTextWithTrivia(replaceControlChars(syntax.text, syntax.kind), syntax);
 			case TLRegExp(syntax): throw "assert";
 		}
 	}
@@ -1161,6 +1168,23 @@ class GenHaxe extends PrinterBase {
 
 	inline function importVector() {
 		context.addToplevelImport("flash.Vector", Import);
+	}
+
+	static function replaceControlChars(s: String, kind: TokenKind): String {
+		var r: Null<Int> = REPLACE_CONTROL_CHAR[s.substr(1, s.length - 2)];
+		return if (r != null) 'String.fromCharCode($r)'
+		else switch kind {
+		case TkStringDouble:
+			replaces(s, [for (k in REPLACE_CONTROL_CHAR.keys()) k => '" + String.fromCharCode(' + REPLACE_CONTROL_CHAR[k] + ') + "']);
+		case TkStringSingle:
+			replaces(s, [for (k in REPLACE_CONTROL_CHAR.keys()) k => "${String.fromCharCode(" + REPLACE_CONTROL_CHAR[k] + ")}"]);
+		case _: s;
+		}
+	}
+
+	static function replaces(s: String, m: Map<String, String>): String {
+		for (k in m.keys()) s = @:nullSafety(Off) s.replace(k, m[k]);
+		return s;
 	}
 }
 
