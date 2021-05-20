@@ -100,7 +100,10 @@ class RewriteMeta extends AbstractFilter {
 													mkIdent('@:font', m.openBracket.leadTrivia, []),
 													{
 														openParen: mkOpenParen(),
-														args: {first: ELiteral(LString(mkIdent(map['source']))), rest: []},
+														args: {
+															first: ELiteral(LString(mkString(map['source']))),
+															rest: []
+														},
 														closeParen: mkCloseParen()
 													}
 												));
@@ -109,7 +112,11 @@ class RewriteMeta extends AbstractFilter {
 													mkIdent('@:file', m.openBracket.leadTrivia, []),
 													{
 														openParen: mkOpenParen(),
-														args: {first: ELiteral(LString(mkIdent(map['source']))), rest: []}, closeParen: mkCloseParen()
+														args: {
+															first: ELiteral(LString(mkString(map['source']))),
+															rest: []
+														},
+														closeParen: mkCloseParen()
 													}
 												));
 											case t:
