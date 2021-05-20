@@ -421,7 +421,7 @@ enum Expr {
 	EXmlDescend(e:Expr, dotDot:Token, childName:Token);
 	EBlock(b:BracedExprBlock);
 	EObjectDecl(openBrace:Token, fields:Separated<ObjectField>, closeBrace:Token);
-	EIf(keyword:Token, openParen:Token, econd:Expr, closeParen:Token, ethen:Expr, eelse:Null<{keyword:Token, expr:Expr}>);
+	EIf(keyword:Token, openParen:Token, econd:Expr, closeParen:Token, ethen:Expr, eelse:Null<{keyword:Token, expr:Expr, semiliconBefore: Bool}>);
 	ETernary(econd:Expr, question:Token, ethen:Expr, colon:Token, eelse:Expr);
 	EWhile(w:While);
 	EDoWhile(w:DoWhile);

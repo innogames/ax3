@@ -748,13 +748,13 @@ class Parser {
 		var ethen = parseExpr(true);
 		var eelse = switch scanner.advance() {
 			case {kind: TkIdent, text: "else"}:
-				{keyword: scanner.consume(), expr: parseExpr(true)};
+				{keyword: scanner.consume(), expr: parseExpr(true), semiliconBefore: false};
 			case {kind: TkSemicolon, text: ";"}:
 				scanner.savePos();
 				scanner.consume();
 				switch scanner.advance() {
 					case {kind: TkIdent, text: "else"}:
-						{keyword: scanner.consume(), expr: parseExpr(true)};
+						{keyword: scanner.consume(), expr: parseExpr(true), semiliconBefore: true};
 					case _:
 						scanner.cancelConsume();
 						scanner.restorePos();

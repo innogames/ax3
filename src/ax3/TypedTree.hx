@@ -747,7 +747,7 @@ typedef TIf = {
 	};
 	var econd:TExpr;
 	var ethen:TExpr;
-	var eelse:Null<{keyword:Token, expr:TExpr}>;
+	var eelse:Null<{keyword:Token, expr:TExpr, semiliconBefore: Bool}>;
 }
 
 typedef TCallArgs = {

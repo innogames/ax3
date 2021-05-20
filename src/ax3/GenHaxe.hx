@@ -932,6 +932,7 @@ class GenHaxe extends PrinterBase {
 		printCloseParen(i.syntax.closeParen);
 		printExpr(i.ethen);
 		if (i.eelse != null) {
+			if (i.eelse.semiliconBefore) buf.add(";\n");
 			printTextWithTrivia("else", i.eelse.keyword);
 			printExpr(i.eelse.expr);
 		}

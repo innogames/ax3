@@ -1218,12 +1218,23 @@ class ExprTyper {
 		}), TTVoid, TTVoid);
 	}
 
-	function typeIf(keyword:Token, openParen:Token, econd:Expr, closeParen:Token, ethen:Expr, eelse:Null<{keyword:Token, expr:Expr}>, expectedType:TType):TExpr {
+	function typeIf(
+		keyword:Token,
+		openParen:Token,
+		econd:Expr,
+		closeParen:Token,
+		ethen:Expr,
+		eelse:Null<{keyword:Token, expr:Expr, semiliconBefore: Bool}>,
+		expectedType:TType
+	):TExpr {
 		if (expectedType != TTVoid) throw "assert";
-
 		var econd = typeExpr(econd, TTBoolean);
 		var ethen = typeExpr(ethen, TTVoid);
-		var eelse = if (eelse != null) {keyword: eelse.keyword, expr: typeExpr(eelse.expr, TTVoid)} else null;
+		var eelse = if (eelse != null) {
+			keyword: eelse.keyword,
+			expr: typeExpr(eelse.expr, TTVoid),
+			semiliconBefore: eelse.semiliconBefore
+		} else null;
 		return mk(TEIf({
 			syntax: {keyword: keyword, openParen: openParen, closeParen: closeParen},
 			econd: econd,
