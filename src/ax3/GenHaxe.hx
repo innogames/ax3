@@ -498,7 +498,7 @@ class GenHaxe extends PrinterBase {
 	}
 
 	static function makeFQN(cls:TClassOrInterfaceDecl) {
-		var packName = cls.parentModule.parentPack.name;
+		var packName = cls.parentModule == null ? "" : cls.parentModule.parentPack.name;
 		return if (packName == "") cls.name else packName + "." + cls.name;
 	}
 

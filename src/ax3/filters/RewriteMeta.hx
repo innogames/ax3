@@ -72,6 +72,41 @@ class RewriteMeta extends AbstractFilter {
 									case "Event":
 										needsTypeAwareInterface = true;
 										newMetadata.push(haxeMetaFromFlash(m, "@:event"));
+									case 'ArrayElementType':
+										switch [field.kind, m.args.args.first] {
+											case [TFVar(v), ELiteral(LString(t))]:
+												v.type = TTArray(TTInst({
+													name: t.text.substr(1, t.text.length - 2),
+													syntax: null,
+													parentModule: null,
+													modifiers: [],
+													metadata: [],
+													members: [],
+													kind: null
+												}));
+											case [TFSetter(f), ELiteral(LString(t))]:
+												f.fun.sig.args[0].type = TTArray(TTInst({
+													name: t.text.substr(1, t.text.length - 2),
+													syntax: null,
+													parentModule: null,
+													modifiers: [],
+													metadata: [],
+													members: [],
+													kind: null
+												}));
+											case [TFGetter(f), ELiteral(LString(t))]:
+												f.fun.sig.ret.type = TTArray(TTInst({
+													name: t.text.substr(1, t.text.length - 2),
+													syntax: null,
+													parentModule: null,
+													modifiers: [],
+													metadata: [],
+													members: [],
+													kind: null
+												}));
+											case _:
+												reportError(m.name.pos, "Metadata error: ArrayElementType");
+										}
 									case "Inline":
 										newMetadata.push(meta);
 									// 	// TODO: Haxe `inline` generation is disabled, because Haxe cannot always

@@ -784,7 +784,8 @@ class ExprTyper {
 			case {kind: TEXmlChild(child)} if (child.name == "appendChild"):
 				type = TTVoid;
 
-			case _:
+			case v:
+				trace(v);
 				err("unknown callable type: " + eobj.type, exprPos(e));
 				type = TTAny;
 		}

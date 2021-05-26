@@ -3,7 +3,7 @@ package ax3.filters;
 class RewriteNewArray extends AbstractFilter {
 	override function processExpr(e:TExpr):TExpr {
 		return switch e.kind {
-			case TENew(keyword, TNType({type: TTArray(tElem)}), args) if (args.args.length > 0):
+			case TENew(keyword, TNType({type: TTArray(tElem)}), args) if (args != null && args.args.length > 0):
 				// TODO: insert typecheck where needed `(expr : Array<tElem>)`
 				switch args.args {
 					case [{expr: {type: TTInt | TTUint | TTNumber}}]:
