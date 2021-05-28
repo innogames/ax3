@@ -691,12 +691,12 @@ class GenHaxe extends PrinterBase {
 				"Vector";
 			case "Array": "Array";
 			case "RegExp": "compat.RegExp";
-			case "parseInt": "Std.parseInt";
+			case "parseInt": "ASCompat.parseInt";
 			case "parseFloat": "Std.parseFloat";
 			case "NaN": "Math.NaN";
 			case "isNaN": "Math.isNaN";
-			case "escape": "escape";
-			case "unescape": "unescape";
+			case "escape": "ASCompat.escape";
+			case "unescape": "ASCompat.unescape";
 			case "arguments": "/*TODO*/arguments";
 			case "trace": "trace";
 			case "untyped __global__": "untyped __global__";
