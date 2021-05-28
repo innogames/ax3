@@ -76,7 +76,7 @@ class RewriteMeta extends AbstractFilter {
 										switch [field.kind, m.args.args.first] {
 											case [TFVar(v), ELiteral(LString(t))]:
 												v.type = TTArray(TTInst({
-													name: t.text.substr(1, t.text.length - 2),
+													name: rmQuotesAndConvert(t.text),
 													syntax: null,
 													parentModule: null,
 													modifiers: [],
@@ -86,7 +86,7 @@ class RewriteMeta extends AbstractFilter {
 												}));
 											case [TFSetter(f), ELiteral(LString(t))]:
 												f.fun.sig.args[0].type = TTArray(TTInst({
-													name: t.text.substr(1, t.text.length - 2),
+													name: rmQuotesAndConvert(t.text),
 													syntax: null,
 													parentModule: null,
 													modifiers: [],
@@ -96,7 +96,7 @@ class RewriteMeta extends AbstractFilter {
 												}));
 											case [TFGetter(f), ELiteral(LString(t))]:
 												f.fun.sig.ret.type = TTArray(TTInst({
-													name: t.text.substr(1, t.text.length - 2),
+													name: rmQuotesAndConvert(t.text),
 													syntax: null,
 													parentModule: null,
 													modifiers: [],
@@ -209,5 +209,17 @@ class RewriteMeta extends AbstractFilter {
 			trailTrivia = flashMeta.closeBracket.trailTrivia;
 		}
 		return MetaHaxe(mkIdent(metaString, flashMeta.openBracket.leadTrivia, trailTrivia), flashMeta.args);
+	}
+
+	inline static function rmQuotesAndConvert(s: String): String return convertAS3TypeToHaxeType(s.substr(1, s.length - 2));
+
+	static function convertAS3TypeToHaxeType(s: String): String {
+		return switch s {
+			case "Number": "Float";
+			case "int": "Int";
+			case "uint": "UInt";
+			case "Boolean": "Bool";
+			case v: v;
+		};
 	}
 }
