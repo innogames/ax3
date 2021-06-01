@@ -136,7 +136,7 @@ class RewriteAs extends AbstractFilter {
 	}
 
 	static function makeStdDowncast(eObj:TExpr, eType:TExpr, leadTrivia, trailTrivia):TExprKind {
-		var eMethod = mkBuiltin("Std.downcast", TTFunction, leadTrivia);
+		var eMethod = mkBuiltin("cast", TTFunction, leadTrivia);
 		return TECall(eMethod, {
 			openParen: mkOpenParen(),
 			args: [
