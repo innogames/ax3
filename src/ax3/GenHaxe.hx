@@ -25,6 +25,7 @@ class GenHaxe extends PrinterBase {
 	public function new(context) {
 		super();
 		this.context = context;
+		importError();
 	}
 
 	inline function throwError(pos:Int, msg:String):Dynamic {
@@ -1169,6 +1170,10 @@ class GenHaxe extends PrinterBase {
 
 	inline function importVector() {
 		context.addToplevelImport("flash.Vector", Import);
+	}
+
+	inline function importError() {
+		context.addToplevelImport("flash.errors.Error", Import);
 	}
 
 	static function replaceControlChars(s: String, kind: TokenKind): String {
