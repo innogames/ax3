@@ -431,8 +431,13 @@ class GenHaxe extends PrinterBase {
 					printTypeHint({type: arg.type, syntax: hint});
 					if (init != null) printVarInit(init, false, arg.type);
 
-				case TArgRest(dots, _):
+				case TArgRest(dots, _, hint):
+					#if (haxe_ver >= 4.20)
+					printTextWithTrivia('...' + arg.name, arg.syntax.name);
+					printTypeHint({type: arg.type, syntax: hint});
+					#else
 					throwError(dots.pos, "Unprocessed rest arguments");
+					#end
 			}
 			if (arg.comma != null) printComma(arg.comma);
 		}

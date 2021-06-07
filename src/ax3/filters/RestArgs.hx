@@ -12,6 +12,7 @@ class RestArgs extends AbstractFilter {
 				case TArgNormal(_):
 					// nothing to do
 				case TArgRest(dots, _, typeHint):
+					#if (haxe_ver < 4.20)
 					if (typeHint == null) {
 						typeHint = {
 							colon: new Token(0, TkColon, ":", [], []),
@@ -53,7 +54,7 @@ class RestArgs extends AbstractFilter {
 					if (fun.expr != null) { // null if interface
 						fun.expr = concatExprs(eArrayInit, fun.expr);
 					}
-
+					#end
 			}
 		}
 	}
