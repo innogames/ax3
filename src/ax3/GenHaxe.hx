@@ -366,14 +366,20 @@ class GenHaxe extends PrinterBase {
 				printTrivia(trailTrivia);
 
 			case TFGetter(f):
-				var kwd = if (f.isInline) "inline function" else "function";
+				var kwd = "";
+				if (f.haxeProperty != null && f.haxeProperty.isPublic) kwd += "public ";
+				if (f.isInline) kwd += "inline ";
+				kwd += "function";
 				printTextWithTrivia(kwd, f.syntax.functionKeyword);
 				printTokenTrivia(f.syntax.accessorKeyword);
 				printTextWithTrivia("get_" + f.name, f.syntax.name);
 				printSignature(f.fun.sig, NoVoid);
 				printExpr(f.fun.expr);
 			case TFSetter(f):
-				var kwd = if (f.isInline) "inline function" else "function";
+				var kwd = "";
+				if (f.haxeProperty != null && f.haxeProperty.isPublic) kwd += "public ";
+				if (f.isInline) kwd += "inline ";
+				kwd += "function";
 				printTextWithTrivia(kwd, f.syntax.functionKeyword);
 				printTokenTrivia(f.syntax.accessorKeyword);
 				printTextWithTrivia("set_" + f.name, f.syntax.name);
