@@ -5,7 +5,7 @@ private typedef Dictionary<K,V> = flash.utils.Dictionary;
 #end
 
 abstract ASDictionary<K,V>(Dictionary<K,V>) from Dictionary<K,V> to Dictionary<K,V> { //TODO: remove implicit cast?
-	public inline function new(weakKeys : Bool = false) {
+	public extern inline function new(weakKeys : Bool = false) {
 		this = new Dictionary<K,V>(weakKeys);
 	}
 
