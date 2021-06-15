@@ -45,7 +45,9 @@ class RewriteMeta extends AbstractFilter {
 			processClass(classInfo.extend.superClass);
 		}
 
+		var rmList: Array<Int> = [];
 		var needsTypeAwareInterface = false;
+		var i: Int = 0;
 		for (m in c.members) {
 			switch m {
 				case TMField(field):
@@ -72,6 +74,17 @@ class RewriteMeta extends AbstractFilter {
 									case "Event":
 										needsTypeAwareInterface = true;
 										newMetadata.push(haxeMetaFromFlash(m, "@:event"));
+									case "HxOverride":
+										needsTypeAwareInterface = true;
+										field.modifiers.push(FMOverride(
+											new Token(0, TokenKind.TkIdent, '', [], [new Trivia(TrWhitespace, ' ')])
+										));
+									case "HxCancelOverride":
+										needsTypeAwareInterface = true;
+										field.modifiers = field.modifiers.filter(m -> !m.match(FMOverride(_)));
+									case "HxRemove":
+										needsTypeAwareInterface = true;
+										rmList.push(i);
 									case 'ArrayElementType':
 										switch [field.kind, m.args.args.first] {
 											case [TFVar(v), ELiteral(LString(t))]:
@@ -168,7 +181,10 @@ class RewriteMeta extends AbstractFilter {
 					field.metadata = newMetadata;
 				case _:
 			}
+			i++;
 		}
+
+		c.members = [for (i in 0...c.members.length) if (rmList.indexOf(i) == -1) c.members[i]];
 
 		if (needsTypeAwareInterface && typeAwareInterface != null && !extendsMagicBaseClass(c)) {
 			final heritage = {

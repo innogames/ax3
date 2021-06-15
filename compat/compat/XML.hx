@@ -63,6 +63,14 @@ abstract XML(XMLImpl) from XMLImpl to XMLImpl {
 		#end
 	}
 
+	public function name():String {
+		#if flash
+		return this.localName();
+		#else
+		return this.nodeName;
+		#end
+	}
+
 	public function descendants(name:String):XMLList {
 		#if flash
 		return this.descendants(name);
