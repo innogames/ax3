@@ -122,16 +122,16 @@ class RewriteMeta extends AbstractFilter {
 										}
 									case "Inline":
 										newMetadata.push(meta);
-									// 	// TODO: Haxe `inline` generation is disabled, because Haxe cannot always
-									// 	// statically inline methods and emits `Cannot inline a not final return` error
-									// 	// we can still detect this by checking the method body and only generate `inline`
-									// 	// when possible, but that will require some work that we can do later :-P
+										// 	// TODO: Haxe `inline` generation is disabled, because Haxe cannot always
+										// 	// statically inline methods and emits `Cannot inline a not final return` error
+										// 	// we can still detect this by checking the method body and only generate `inline`
+										// 	// when possible, but that will require some work that we can do later :-P
 
-									// 	switch field.kind {
-									// 		case TFFun(f): f.isInline = true;
-									// 		case TFGetter(f) | TFSetter(f): f.isInline = true;
-									// 		case TFVar(_): throwError(m.name.pos, "Inline meta on a var?");
-									// 	}
+										// 	switch field.kind {
+										// 		case TFFun(f): f.isInline = true;
+										// 		case TFGetter(f) | TFSetter(f): f.isInline = true;
+										// 		case TFVar(_): throwError(m.name.pos, "Inline meta on a var?");
+										// 	}
 									case "Embed":
 										var map: Map<String, String> = [for (a in m.args.args.rest.map(function(f) return f.element).concat([m.args.args.first])) {
 											var kv: {k: String, v: String} = switch a {
@@ -235,6 +235,7 @@ class RewriteMeta extends AbstractFilter {
 			case "int": "Int";
 			case "uint": "UInt";
 			case "Boolean": "Bool";
+			case "Array": "Array<ASAny>";
 			case v: v;
 		};
 	}
