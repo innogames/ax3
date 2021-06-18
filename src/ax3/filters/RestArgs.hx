@@ -54,6 +54,36 @@ class RestArgs extends AbstractFilter {
 					if (fun.expr != null) { // null if interface
 						fun.expr = concatExprs(eArrayInit, fun.expr);
 					}
+					#else
+					if (typeHint != null) {
+						typeHint.type = TPath({first: new Token(0, TkIdent, "ASAny", [], []), rest: []});
+						lastArg.type = TTAny;
+					}
+					if (fun.expr != null) {
+						final argLocal = mk(
+							TELocal(mkIdent(lastArg.name), lastArg.v),
+							TTArray(TTAny),
+							TTArray(TTAny)
+						);
+						final e = mk(TEBinop(
+							{
+								kind: TEVars(VConst(new Token(0, TkIdent, '', [], [whitespace])), [{
+									v: {name: lastArg.name, type: TTArray(TTAny)},
+									syntax: {
+										name: mkIdent(lastArg.name),
+										type: typeHint
+									},
+									init: null,
+									comma: null
+								}]),
+								type: TTArray(TTAny),
+								expectedType: TTArray(TTAny)
+							},
+							OpAssign(new Token(0, TkEquals, "=", [whitespace], [whitespace])),
+							argLocal
+						), TTArray(TTAny), TTArray(TTAny));
+						fun.expr = concatExprs(e, fun.expr);
+					}
 					#end
 			}
 		}
