@@ -135,6 +135,15 @@ class DateApi extends AbstractFilter {
 					case "valueOf":
 						e.with(kind = TEField(to, "getTime", new Token(fieldToken.pos, TkIdent, "getTime", fieldToken.leadTrivia, fieldToken.trailTrivia)));
 
+					case "dateUTC":
+						var methodName = "getUTCDate";
+						var eMethod = mk(TEField(to, methodName, mkIdent(methodName, fieldToken.leadTrivia)), TTFunction, TTFunction);
+						e.with(kind = TECall(eMethod, {
+							openParen: mkOpenParen(),
+							args: [],
+							closeParen: mkCloseParen(fieldToken.trailTrivia)
+						}));
+
 					case _:
 						mapExpr(processExpr, e);
 				}
