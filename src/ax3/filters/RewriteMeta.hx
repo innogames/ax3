@@ -117,6 +117,17 @@ class RewriteMeta extends AbstractFilter {
 													members: [],
 													kind: null
 												}));
+											case [TFFun(f), ELiteral(LString(t))]:
+												if (f.fun.sig.ret.type.match(TTArray(_)))
+													f.fun.sig.ret.type = TTArray(TTInst({
+														name: rmQuotesAndConvert(t.text),
+														syntax: null,
+														parentModule: null,
+														modifiers: [],
+														metadata: [],
+														members: [],
+														kind: null
+													}));
 											case _:
 												reportError(m.name.pos, "Metadata error: ArrayElementType");
 										}

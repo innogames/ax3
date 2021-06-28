@@ -30,6 +30,14 @@ abstract XML(XMLImpl) from XMLImpl to XMLImpl {
 		#end
 	}
 
+	public inline function attributes() {
+		#if flash
+		return this.attributes();
+		#else
+		return [for (a in this.attributes()) {name: () -> a, localName: () -> a, toString: () -> a}];
+		#end
+	}
+
 	public inline function setAttribute(name:String, value:String):String {
 		#if flash
 		this.attribute(name)[0] = new flash.xml.XML(value);
@@ -44,6 +52,14 @@ abstract XML(XMLImpl) from XMLImpl to XMLImpl {
 		return this.child(name);
 		#else
 		return [for (x in this.elementsNamed(name)) x];
+		#end
+	}
+
+	public function elements():XMLList {
+		#if flash
+		return this.elements();
+		#else
+		return [for (x in this.elements()) x];
 		#end
 	}
 

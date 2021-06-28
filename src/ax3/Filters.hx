@@ -31,6 +31,7 @@ class Filters {
 			new AddSuperCtorCall(context),
 			new RewriteBlockBinops(context),
 			new RewriteNewArray(context),
+			new RewriteArrayTypes(context),
 			new RewriteDelete(context),
 			new RewriteArrayAccess(context),
 			new RewriteAs(context),
