@@ -29,6 +29,11 @@ class TypedTree {
 		return mod.pack.decl;
 	}
 
+	public function getByFullName(name: String): TClassOrInterfaceDecl {
+		final i = name.lastIndexOf('.');
+		return getClassOrInterface(name.substring(0, i), name.substring(i + 1));
+	}
+
 	public function getClassOrInterface(packName:String, name:String):TClassOrInterfaceDecl {
 		return switch getDecl(packName, name).kind {
 			case TDClassOrInterface(c): c;

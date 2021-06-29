@@ -38,6 +38,7 @@ typedef Config = {
 	var ?haxeTypes:DynamicAccess<HaxeTypeAnnotation>;
 	var ?rootImports:String;
 	var ?settings:Settings;
+	var ?keepTypes:Bool;
 }
 
 typedef InjectionConfig = {

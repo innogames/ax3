@@ -38,6 +38,13 @@ class RewriteArrayTypes extends AbstractFilter {
 							init: init,
 							comma: comma
 						}]);
+					case v if (v.startsWith('Array<') && v.endsWith('>')):
+						e.kind = TEVars(k, [{
+							v: {name: name, type: TTArray(TTInst(tree.getByFullName(v.substring('Array<'.length, v.length - 1))))},
+							syntax: syntax,
+							init: init,
+							comma: comma
+						}]);
 					case _:
 				}
 				e;

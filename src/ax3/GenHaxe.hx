@@ -313,7 +313,7 @@ class GenHaxe extends PrinterBase {
 							true;
 					};
 
-				if (addMeta) buf.add("@:flash.property ");
+				if (addMeta) buf.add("@:flash.property @:isVar ");
 				if (p.isPublic) buf.add("public ");
 				if (p.isStatic) buf.add("static ");
 				buf.add("var ");
@@ -393,7 +393,7 @@ class GenHaxe extends PrinterBase {
 		printVarKind(v.kind, v.init == null /* `final` must be immediately initialized */);
 		printTextWithTrivia(v.name, v.syntax.name);
 
-		var skipTypeHint = v.isInline && v.init != null && canSkipTypeHint(v.type, v.init.expr);
+		var skipTypeHint = context.config.keepTypes != true && v.isInline && v.init != null && canSkipTypeHint(v.type, v.init.expr);
 		if (!skipTypeHint) {
 			// TODO: don't lose the typehint's trivia
 			printTypeHint({type: v.type, syntax: v.syntax.type});
@@ -1045,7 +1045,7 @@ class GenHaxe extends PrinterBase {
 			printTextWithTrivia(v.v.name, v.syntax.name);
 
 			// TODO: don't lose the typehint's trivia
-			var skipTypeHint = v.init != null && canSkipTypeHint(v.v.type, v.init.expr);
+			var skipTypeHint = context.config.keepTypes != true && v.init != null && canSkipTypeHint(v.v.type, v.init.expr);
 			if (!skipTypeHint) {
 				printTypeHint({type: v.v.type, syntax: v.syntax.type});
 			}
@@ -1065,6 +1065,8 @@ class GenHaxe extends PrinterBase {
 			case TELiteral(TLNull(_)) | TEArrayDecl(_) | TEObjectDecl(_):
 				return false;
 			case TELiteral(TLInt(_)) if (expectedType.match(TTNumber | TTUint)):
+				return false;
+			case TELiteral(TLNumber(_)):
 				return false;
 			case TECall({kind: TEBuiltin(_, "Vector.convert")}, _):
 				// this one depends on the expected type
