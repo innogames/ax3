@@ -26,11 +26,7 @@ class Main {
 		Timers.swcs = stamp() - t;
 
 		var files = [];
-		#if (haxe_ver >= 4.10)
 		var srcs = if (Std.isOfType(config.src, String)) [config.src] else config.src;
-		#else
-		var srcs = if (Std.is(config.src, String)) [config.src] else config.src;
-		#end
 		for (src in srcs) {
 			walk(src, files);
 		}

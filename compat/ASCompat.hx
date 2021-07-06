@@ -236,7 +236,7 @@ class ASCompat {
 	public static function parseInt(s:String, ?base:Int):Null<Int> {
         #if js
 		if (base == null) base = s.indexOf("0x") == 0 ? 16 : 10;
-		var v:Int = untyped __js__("parseInt")(s, base);
+		var v:Int = js.Syntax.code("parseInt({0}, {1})", s, base);
 		return Math.isNaN(v) ? null : v;
 		#elseif flash
 		if (base == null) base = 0;

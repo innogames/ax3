@@ -49,7 +49,7 @@ abstract ASAny(Dynamic)
 		if (this == null) {
 			return false;
 		}
-		if (Std.is(this, Float)) {
+		if (Std.isOfType(this, Float)) {
 			var v:Float = cast this;
 			return v != 0 && !Math.isNaN(v);
 		}
@@ -64,18 +64,18 @@ abstract ASAny(Dynamic)
 		if (this == null) {
 			return 0;
 		}
-		if (Std.is(this, Int)) {
+		if (Std.isOfType(this, Int)) {
 			return cast this;
 		}
-		if (Std.is(this, Float)) {
+		if (Std.isOfType(this, Float)) {
 			var v:Float = cast this;
 			return if (Math.isNaN(v)) 0 else Std.int(v);
 		}
-		if (Std.is(this, String)) {
+		if (Std.isOfType(this, String)) {
 			var i = Std.parseInt(cast this);
 			return if (i == null) 0 else i;
 		}
-		if (Std.is(this, Bool)) {
+		if (Std.isOfType(this, Bool)) {
 			return if (cast this) 1 else 0;
 		}
 		return 0;
