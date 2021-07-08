@@ -39,6 +39,8 @@ typedef Config = {
 	var ?rootImports:String;
 	var ?settings:Settings;
 	var ?keepTypes:Bool;
+	var ?dataout:String;
+	var ?dataext:Array<String>;
 }
 
 typedef InjectionConfig = {

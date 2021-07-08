@@ -1,6 +1,9 @@
 package ax3;
 
+import sys.io.File;
 import sys.FileSystem;
+
+import haxe.io.Path;
 
 import ax3.Utils.*;
 import ax3.Context;
@@ -14,7 +17,7 @@ class Main {
 		if (args.length != 1) {
 			throw "invalid args";
 		}
-		var config:Config = haxe.Json.parse(sys.io.File.getContent(args[0]));
+		var config:Config = haxe.Json.parse(File.getContent(args[0]));
 		ctx = new Context(config);
 
 		var total = stamp();
@@ -24,6 +27,8 @@ class Main {
 		var t = stamp();
 		SWCLoader.load(tree, config.haxeTypes, config.swc);
 		Timers.swcs = stamp() - t;
+
+		if (ctx.config.dataout != null) FileSystem.createDirectory(ctx.config.dataout);
 
 		var files = [];
 		var srcs = if (Std.isOfType(config.src, String)) [config.src] else config.src;
@@ -35,7 +40,7 @@ class Main {
 		Typer.process(ctx, tree, files);
 		Timers.typing = stamp() - t;
 
-		// sys.io.File.saveContent("structure.txt", tree.dump());
+		// File.saveContent("structure.txt", tree.dump());
 
 		t = stamp();
 		Filters.run(ctx, tree);
@@ -45,7 +50,7 @@ class Main {
 		t = stamp();
 		for (packName => pack in tree.packages) {
 
-			var dir = haxe.io.Path.join({
+			var dir = Path.join({
 				var parts = packName.split(".");
 				parts.unshift(haxeDir);
 				parts;
@@ -58,7 +63,7 @@ class Main {
 				gen.writeModule(mod);
 				var out = gen.toString();
 				var path = dir + "/" + mod.name + ".hx";
-				sys.io.File.saveContent(path, out);
+				File.saveContent(path, out);
 			}
 		}
 
@@ -67,12 +72,12 @@ class Main {
 			imports.push('$kind $path;');
 		}
 		if (config.rootImports != null) {
-			imports.push(sys.io.File.getContent(config.rootImports));
+			imports.push(File.getContent(config.rootImports));
 		}
 		if (imports.length > 0) {
 			imports.unshift("#if !macro");
 			imports.push("#end");
-			sys.io.File.saveContent(haxe.io.Path.join([haxeDir, "import.hx"]), imports.join("\n"));
+			File.saveContent(Path.join([haxeDir, "import.hx"]), imports.join("\n"));
 		}
 
 		Timers.output = stamp() - t;
@@ -93,20 +98,30 @@ class Main {
 	}
 
 	static function walk(dir:String, files:Array<ParseTree.File>) {
-		function loop(dir) {
-			for (name in FileSystem.readDirectory(dir)) {
-				var absPath = dir + "/" + name;
-				if (FileSystem.isDirectory(absPath)) {
-					walk(absPath, files);
-				} else if (StringTools.endsWith(name, ".as") && !shouldSkip(absPath)) {
+		for (name in FileSystem.readDirectory(dir)) {
+			var absPath = dir + "/" + name;
+			if (FileSystem.isDirectory(absPath)) {
+				walk(absPath, files);
+			} else if (!shouldSkip(absPath)) {
+				final extIndex = name.lastIndexOf('.') + 1;
+				if (extIndex <= 1) continue;
+				final ext = name.substr(extIndex);
+				if (ext == "as") {
 					var file = parseFile(absPath);
 					if (file != null) {
 						files.push(file);
 					}
+				} else if (
+					ctx.config.dataout != null && ctx.config.dataext != null &&
+					ctx.config.dataext.indexOf(ext) != -1
+				) {
+					print('Copy file ' + absPath);
+					final dst = ctx.config.dataout + '/' + name;
+					if (FileSystem.exists(dst)) printerr('File exists');
+					File.copy(absPath, dst);
 				}
 			}
 		}
-		loop(dir);
 	}
 
 	static function parseFile(path:String):ParseTree.File {
