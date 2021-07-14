@@ -554,6 +554,7 @@ class ExprTyper {
 			case "child": TTFun([tUntypedObject], TTXMLList);
 			case "childIndex": TTFun([], TTInt);
 			case "children": TTFun([], TTXMLList);
+			case "namespace": TTFun([], TTAny);
 			case "comments": TTFun([], TTXMLList);
 			case "contains": TTFun([TTXML], TTBoolean);
 			case "name": TTFun([], TTString);
@@ -784,8 +785,10 @@ class ExprTyper {
 			case {kind: TEXmlChild(child)} if (child.name == "appendChild"):
 				type = TTVoid;
 
+			case {kind: TEXmlChild(child)} if (child.name == "namespace"):
+				type = TTAny;
+
 			case v:
-				trace(v);
 				err("unknown callable type: " + eobj.type, exprPos(e));
 				type = TTAny;
 		}
@@ -909,6 +912,8 @@ class ExprTyper {
 						(i,earg) -> TTFun([TTString], TTXMLList);
 					case EField(_, _, ident) if (ident.kind.equals(TkIdent) && ident.text == "appendChild"):
 						(i,earg) -> TTFun([TTXML], TTVoid);
+					case EField(_, _, ident) if (ident.kind.equals(TkIdent) && ident.text == "namespace"):
+						(i,earg) -> TTFun([], TTAny);
 					case _:
 						throwErr("Trying to call an expression of type " + callableType.getName(), args.openParen.pos);
 				}

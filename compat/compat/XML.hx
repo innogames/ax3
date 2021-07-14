@@ -133,4 +133,7 @@ abstract XML(XMLImpl) from XMLImpl to XMLImpl {
 		return this.toString();
 		#end
 	}
+
+	public inline function namespace():Any return null; // todo
+
 }

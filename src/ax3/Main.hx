@@ -1,5 +1,6 @@
 package ax3;
 
+import haxe.zip.Reader;
 import sys.io.File;
 import sys.FileSystem;
 
@@ -8,19 +9,22 @@ import haxe.io.Path;
 import ax3.Utils.*;
 import ax3.Context;
 
+using StringTools;
+
 class Main {
 	static var ctx:Context;
 	static var skipFiles = new Map<String,Bool>();
 
 	static function main() {
+		var total = stamp();
+
 		var args = Sys.args();
 		if (args.length != 1) {
 			throw "invalid args";
 		}
 		var config:Config = haxe.Json.parse(File.getContent(args[0]));
 		ctx = new Context(config);
-
-		var total = stamp();
+		unpackswc();
 
 		var tree = new TypedTree();
 
@@ -84,6 +88,7 @@ class Main {
 
 		total = (stamp() - total);
 
+		if (Timers.unpack > 0) print("unpack    " + Timers.unpack);
 		print("parsing   " + Timers.parsing);
 		print("swcs      " + Timers.swcs);
 		print("typing    " + Timers.typing);
@@ -154,5 +159,24 @@ class Main {
 			// throw "not the same: " + haxe.Json.stringify(actual);
 			throw '$path not the same';
 		}
+	}
+
+	static function unpackswc() {
+		if (ctx.config.unpackswc == null && ctx.config.unpackout == null) return;
+		final t = stamp();
+		if (!FileSystem.exists(ctx.config.unpackout)) FileSystem.createDirectory(ctx.config.unpackout);
+		if (!ctx.config.unpackout.endsWith('/')) ctx.config.unpackout += '/';
+		for (swc in ctx.config.unpackswc)
+			for (entry in Reader.readZip(File.read(swc)))
+				if (entry.fileName == 'library.swf') {
+					print('Unpack ' + swc);
+					File.saveBytes(ctx.config.unpackout + fileName(swc) + 'swf', Reader.unzip(entry));
+					break;
+				}
+		Timers.unpack = stamp() - t;
+	}
+
+	static function fileName(path: String): String {
+		return path.substring(path.lastIndexOf('/'), path.lastIndexOf('.') + 1);
 	}
 }

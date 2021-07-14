@@ -41,6 +41,8 @@ typedef Config = {
 	var ?keepTypes:Bool;
 	var ?dataout:String;
 	var ?dataext:Array<String>;
+	var ?unpackout:String;
+	var ?unpackswc:Array<String>;
 }
 
 typedef InjectionConfig = {

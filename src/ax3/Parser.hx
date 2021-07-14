@@ -491,6 +491,11 @@ class Parser {
 				scanner.consume();
 			case TkBraceClose:
 				null; // if the next token is `}` then okay, allow no semicolon
+			case TkColonColon:
+				Utils.printerr('Skip expression ' + scanner.consume().toString());
+				scanner.advance();
+				Utils.printerr('Skip expression ' + scanner.consume().toString());
+				return {expr: EIdent(new Token(-1, TkIdent, "null", [], [])), semicolon: null}; // todo
 			case _ if (scanner.lastConsumedToken.kind != TkBraceClose):
 				throw "Semicolon expected after block expression";
 			case _:
