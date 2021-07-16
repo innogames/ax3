@@ -4,6 +4,7 @@ class AbstractFilter {
 	final context:Context;
 
 	var currentPath:Null<String>;
+	var tree: TypedTree;
 
 	public function new(context) {
 		this.context = context;
@@ -74,6 +75,7 @@ class AbstractFilter {
 	}
 
 	public function run(tree:TypedTree) {
+		this.tree = tree;
 		for (pack in tree.packages) {
 			var mods = [for (mod in pack) mod]; // save the list because we might modify the package (e.g. rename the module)
 			for (mod in mods) {

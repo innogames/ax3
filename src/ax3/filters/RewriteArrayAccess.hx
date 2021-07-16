@@ -13,11 +13,16 @@ class RewriteArrayAccess extends AbstractFilter {
 				var eindex = processExpr(a.eindex);
 
 				switch [eobj.type, eindex.type] {
-					case [TTArray(_) | TTVector(_) | TTXMLList | TTInst({name: "ByteArray", parentModule: {parentPack: {name: "flash.utils"}}}), TTInt | TTUint | TTNumber]
-					   | [TTObject(_), _]
+
+					case [TTArray(_) | TTVector(_) | TTXMLList, TTInt | TTUint | TTNumber] | [TTObject(_), _]
 					   :
 						if (eindex.type == TTNumber) reportError(exprPos(e), "Array access using Number index");
 						e.with(kind = TEArrayAccess(a.with(eobj = eobj, eindex = eindex)));
+
+					case [TTInst({name: "ByteArray", parentModule: {parentPack: {name: "flash.utils"}}}), TTInt | TTUint | TTNumber]
+					   :
+						if (eindex.type == TTNumber) reportError(exprPos(e), "ByteArray access using Number index");
+						e.with(kind = TEArrayAccess(a.with(eobj = eobj, eindex = eindex)), type = TTUint);
 
 					case [TTArray(_), TTString]:
 						reportError(exprPos(e), "String index used for array access on Array. Did you mean to use Dictionary/Object? Falling back to reflection.");

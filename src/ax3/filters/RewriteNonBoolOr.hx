@@ -24,7 +24,8 @@ class RewriteNonBoolOr extends AbstractFilter {
 						ethen: a,
 						eelse: {
 							keyword: mkIdent("else", [whitespace], [whitespace]),
-							expr: b
+							expr: b,
+							semiliconBefore: false
 						}
 					}), e.type, e.expectedType);
 				} else {

@@ -29,6 +29,11 @@ class TypedTree {
 		return mod.pack.decl;
 	}
 
+	public function getByFullName(name: String): TClassOrInterfaceDecl {
+		final i = name.lastIndexOf('.');
+		return getClassOrInterface(name.substring(0, i), name.substring(i + 1));
+	}
+
 	public function getClassOrInterface(packName:String, name:String):TClassOrInterfaceDecl {
 		return switch getDecl(packName, name).kind {
 			case TDClassOrInterface(c): c;
@@ -536,6 +541,7 @@ enum TExprKind {
 	TEArrayDecl(a:TArrayDecl);
 	TEVectorDecl(v:TVectorDecl);
 	TEReturn(keyword:Token, e:Null<TExpr>);
+	TETypeof(keyword:Token, e:TExpr);
 	TEThrow(keyword:Token, e:TExpr);
 	TEDelete(keyword:Token, e:TExpr);
 	TEBreak(keyword:Token);
@@ -746,7 +752,7 @@ typedef TIf = {
 	};
 	var econd:TExpr;
 	var ethen:TExpr;
-	var eelse:Null<{keyword:Token, expr:TExpr}>;
+	var eelse:Null<{keyword:Token, expr:TExpr, semiliconBefore: Bool}>;
 }
 
 typedef TCallArgs = {

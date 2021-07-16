@@ -14,12 +14,16 @@ class Scanner {
 	var text:String;
 	var end:Int;
 	var pos:Int;
+	var prevPos:Int = -1;
 	var tokenStartPos:Int;
 	var leadTrivia:Array<Trivia>;
 
 	var lastPos:Int;
+	var prevLastPos:Int = -1;
 	var lastToken:Token;
+	var prevConsumedToken:Token;
 	var lastMode:ScanMode;
+	var prevLastMode:ScanMode;
 
 	public var lastConsumedToken(default,null):Token;
 
@@ -47,10 +51,33 @@ class Scanner {
 	}
 
 	public function consume():Token {
+		prevLastMode = lastMode;
+		prevConsumedToken = lastConsumedToken;
 		lastConsumedToken = lastToken;
 		lastToken = null;
 		lastMode = null;
 		return lastConsumedToken;
+	}
+
+	public function cancelConsume():Token {
+		if (prevConsumedToken == null) return lastConsumedToken;
+		lastMode = prevLastMode;
+		lastToken = lastConsumedToken;
+		lastConsumedToken = prevConsumedToken;
+		prevConsumedToken = null;
+		prevLastMode = null;
+		return lastToken;
+	}
+
+	public function savePos(): Void {
+		prevPos = pos;
+		prevLastPos = lastPos;
+	}
+
+	public function restorePos(): Void {
+		if (prevPos == -1) return;
+		pos = prevPos;
+		prevLastPos = lastPos;
 	}
 
 	function scanTrivia(breakOnNewLine:Bool):Array<Trivia> {
@@ -582,6 +609,8 @@ class Scanner {
 			case "t".code:
 			case "n".code:
 			case "r".code:
+			case "b".code:
+			case "f".code:
 			case "\\".code:
 			case "/".code:
 			case "\"".code:

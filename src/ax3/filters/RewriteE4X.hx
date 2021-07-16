@@ -6,6 +6,14 @@ class RewriteE4X extends AbstractFilter {
 
 	override function processExpr(e:TExpr):TExpr {
 		return switch e.kind {
+			case TEXmlChild(x) if (x.name == "appendChild" || x.name == "children"):
+				var eobj = processExpr(x.eobj);
+				assertIsXML(eobj);
+				var fieldObject = {
+					kind: TOExplicit(x.syntax.dot, eobj),
+					type: eobj.type
+				};
+				return mk(TEField(fieldObject, x.name, mkIdent(x.name)), tMethod, tMethod);
 			case TEXmlChild(x):
 				var eobj = processExpr(x.eobj);
 				assertIsXML(eobj);

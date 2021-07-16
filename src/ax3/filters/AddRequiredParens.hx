@@ -76,6 +76,7 @@ class AddRequiredParens extends AbstractFilter {
 
 			// statements
 			case TEReturn(_): mapExpr(loop.bind(_, 100), e);
+			case TETypeof(_): mapExpr(loop.bind(_, 100), e);
 			case TEThrow(_): mapExpr(loop.bind(_, 100), e);
 			case TEBreak(_): mapExpr(loop.bind(_, 100), e);
 			case TEContinue(_): mapExpr(loop.bind(_, 100), e);

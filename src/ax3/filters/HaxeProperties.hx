@@ -45,6 +45,14 @@ class HaxeProperties extends AbstractFilter {
 
 		if (set) prop.set = true else prop.get = true;
 
+		for (m in metadata) {
+			switch m {
+				case MetaFlash({name: {text: 'HxForceProp'}}):
+					isNewProperty = false;
+				case _:
+			}
+		}
+
 		return if (isNewProperty) prop else null;
 	}
 

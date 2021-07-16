@@ -15,5 +15,16 @@ abstract ASFunction(Dynamic)
 	to (Dynamic,Dynamic,Dynamic,Dynamic)->Dynamic
 	to (Dynamic,Dynamic,Dynamic,Dynamic,Dynamic)->Dynamic
 	to (Dynamic,Dynamic,Dynamic,Dynamic,Dynamic,Dynamic)->Dynamic
-{}
+{
+
+	#if js
+	public var length(get, never): Int;
+
+	private function get_length(): Int {
+		final f = this;
+		return js.Syntax.code('f.length');
+	}
+	#end
+
+}
 #end

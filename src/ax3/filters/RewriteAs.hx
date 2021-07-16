@@ -90,7 +90,8 @@ class RewriteAs extends AbstractFilter {
 							if (needsRetype) e.with(kind = TEHaxeRetype(e)) else e;
 						}
 
-					case TTInst(cls):
+					case TTInst(cls) if (cls.name != 'ByteArray'):
+
 						var path = switch (typeRef.syntax) {
 							case TPath(path): path;
 							case _: throw "asset";
@@ -106,6 +107,9 @@ class RewriteAs extends AbstractFilter {
 							case CKUnknown:
 								e.with(kind = makeAs(eobj, eType, removeLeadingTrivia(e), removeTrailingTrivia(e)));
 						}
+
+					case TTInst(cls) if (cls.name == 'ByteArray'):
+						e.with(kind = TEHaxeRetype(eobj));
 
 					case _:
 						throwError(keyword.pos, "Unsupported `as` expression");
@@ -136,7 +140,7 @@ class RewriteAs extends AbstractFilter {
 	}
 
 	static function makeStdDowncast(eObj:TExpr, eType:TExpr, leadTrivia, trailTrivia):TExprKind {
-		var eMethod = mkBuiltin("Std.downcast", TTFunction, leadTrivia);
+		var eMethod = mkBuiltin("cast", TTFunction, leadTrivia);
 		return TECall(eMethod, {
 			openParen: mkOpenParen(),
 			args: [

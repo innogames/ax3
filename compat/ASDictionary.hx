@@ -69,7 +69,7 @@ abstract ASDictionary<K,V>(Dictionary<K,V>) from Dictionary<K,V> to Dictionary<K
 		#if flash
 		return flash.Lib.as(v, flash.utils.Dictionary);
 		#else
-		return if (Std.is(v, haxe.Constraints.IMap)) v else null;
+		return if (Std.isOfType(v, haxe.Constraints.IMap)) v else null;
 		#end
 	}
 

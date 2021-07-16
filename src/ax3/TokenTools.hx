@@ -33,6 +33,7 @@ class TokenTools {
 	public static inline function mkComma() return new Token(0, TkComma, ",", [], []);
 	public static inline function mkDot() return new Token(0, TkDot, ".", [], []);
 	public static inline function mkSemicolon() return new Token(0, TkSemicolon, ";", [], []);
+	public static inline function mkString(s) return new Token(0, TkStringDouble, '"$s"', [], []);
 
 	public static inline function addTrailingWhitespace(t:Token):Token {
 		t.trailTrivia.push(whitespace);

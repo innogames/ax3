@@ -36,7 +36,34 @@ class RewriteIs extends AbstractFilter {
 						}));
 
 					case _:
-						final stdIs = mkBuiltin("Std.is", tStdIs, removeLeadingTrivia(e));
+						final stdIs = mkBuiltin("Std.isOfType", tStdIs, removeLeadingTrivia(e));
+						switch b.kind {
+							case TEDeclRef(_, {name: 'ByteArray'}):
+								b.kind = TEDeclRef(
+									{rest: [], first: mkIdent('ByteArrayData')},
+									{
+										kind: TDClassOrInterface({
+											syntax: null,
+											kind: null,
+											metadata: [],
+											modifiers: [],
+											parentModule: {
+												isExtern: false,
+												path: 'flash.utils.ByteArray',
+												parentPack: new TPackage('flash.utils'),
+												pack: null,
+												name: 'flash.utils.ByteArray',
+												privateDecls: [],
+												eof: null
+											},
+											name: 'ByteArrayData',
+											members: []
+										}),
+										name: 'ByteArrayData'
+									}
+								);
+							case _:
+						}
 						e.with(kind = TECall(stdIs, {
 							openParen: mkOpenParen(),
 							args: [

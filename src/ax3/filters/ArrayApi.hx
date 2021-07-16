@@ -103,7 +103,7 @@ class ArrayApi extends AbstractFilter {
 			// join with no args
 			case TECall(eMethod = {kind: TEField({type: TTArray(_)}, "join", fieldToken)}, args = {args: []}):
 				e.with(kind = TECall(eMethod, args.with(args = [
-					{expr: mk(TELiteral(TLString(new Token(0, TkStringDouble, '","', [], []))), TTString, TTString), comma: null}
+					{expr: mk(TELiteral(TLString(mkString(','))), TTString, TTString), comma: null}
 				])));
 
 			// push with multiple arguments
