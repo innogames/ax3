@@ -1,9 +1,9 @@
 package ax3;
 
-import haxe.zip.Reader;
 import sys.io.File;
 import sys.FileSystem;
 
+import haxe.zip.Reader;
 import haxe.io.Path;
 
 import ax3.Utils.*;
@@ -19,12 +19,18 @@ class Main {
 		var total = stamp();
 
 		var args = Sys.args();
-		if (args.length != 1) {
-			throw "invalid args";
-		}
+		if (args.length != 1) error('invalid args');
+
 		var config:Config = haxe.Json.parse(File.getContent(args[0]));
+		checkSet(config.src, 'src');
+		checkSet(config.hxout, 'hxout');
+		checkSet(config.swc, 'swc');
+
 		ctx = new Context(config);
+		clean();
+		copy();
 		unpackswc();
+		copydatafiles();
 
 		var tree = new TypedTree();
 
@@ -86,15 +92,31 @@ class Main {
 
 		Timers.output = stamp() - t;
 
+		formatter();
+
 		total = (stamp() - total);
 
-		if (Timers.unpack > 0) print("unpack    " + Timers.unpack);
+		if (Timers.copy > 0)
+		print("copy      " + Timers.copy);
+		if (Timers.unpack > 0)
+		print("unpack    " + Timers.unpack);
 		print("parsing   " + Timers.parsing);
 		print("swcs      " + Timers.swcs);
 		print("typing    " + Timers.typing);
 		print("filters   " + Timers.filters);
 		print("output    " + Timers.output);
+		if (Timers.formatter > 0)
+		print("formatter " + Timers.formatter);
 		print("-- TOTAL  " + total);
+	}
+
+	static function checkSet(value: Any, name: String): Void {
+		if (value == null) error('$name not set');
+	}
+
+	static function error(message: String): Void {
+		printerr(message);
+		Sys.exit(1);
 	}
 
 	static function shouldSkip(path:String):Bool {
@@ -120,10 +142,12 @@ class Main {
 					ctx.config.dataout != null && ctx.config.dataext != null &&
 					ctx.config.dataext.indexOf(ext) != -1
 				) {
-					print('Copy file ' + absPath);
-					final dst = ctx.config.dataout + '/' + name;
-					if (FileSystem.exists(dst)) printerr('File exists');
+					print('Walk copy file ' + absPath);
+					final t = stamp();
+					final dst = ctx.config.dataout + name;
+					if (FileSystem.exists(dst)) print('File exists, overwrite');
 					File.copy(absPath, dst);
+					Timers.copy += stamp() - t;
 				}
 			}
 		}
@@ -165,7 +189,7 @@ class Main {
 		if (ctx.config.unpackswc == null && ctx.config.unpackout == null) return;
 		final t = stamp();
 		if (!FileSystem.exists(ctx.config.unpackout)) FileSystem.createDirectory(ctx.config.unpackout);
-		if (!ctx.config.unpackout.endsWith('/')) ctx.config.unpackout += '/';
+
 		for (swc in ctx.config.unpackswc)
 			for (entry in Reader.readZip(File.read(swc)))
 				if (entry.fileName == 'library.swf') {
@@ -178,5 +202,64 @@ class Main {
 
 	static function fileName(path: String): String {
 		return path.substring(path.lastIndexOf('/'), path.lastIndexOf('.') + 1);
+	}
+
+	static function copydatafiles(): Void {
+		if (ctx.config.datafiles != null && ctx.config.dataout != null && ctx.config.datafiles.length > 0) {
+			final t = stamp();
+			for (path in ctx.config.datafiles) {
+				final fileName = path.substr(path.lastIndexOf('/') + 1);
+				print('Copy file $fileName');
+				File.copy(path, ctx.config.dataout + fileName);
+			}
+			Timers.copy += stamp() - t;
+		}
+	}
+
+	static function clean(): Void {
+		if (ctx.config.dataoutClean && ctx.config.dataout != null) deleteDirRecursively(ctx.config.dataout);
+		if (ctx.config.hxoutClean) deleteDirRecursively(ctx.config.hxout);
+	}
+
+	static function deleteDirRecursively(path: String): Void {
+		if (FileSystem.exists(path) && FileSystem.isDirectory(path)) {
+			for (entry in FileSystem.readDirectory(path)) {
+				if (FileSystem.isDirectory(path + '/' + entry)) {
+					deleteDirRecursively(path + '/' + entry);
+					FileSystem.deleteDirectory(path + '/' + entry);
+				} else {
+					FileSystem.deleteFile(path + '/' + entry);
+				}
+			}
+		}
+	}
+
+	static function formatter(): Void {
+		if (!ctx.config.formatter) return;
+		final t = stamp();
+		final args = ['run', 'formatter', '-s', ctx.config.hxout];
+		print('haxelib ' + args.join(' '));
+		Sys.command('haxelib', args);
+		Timers.formatter = stamp() - t;
+	}
+
+	static function copy(): Void {
+		if (ctx.config.copy != null && ctx.config.copy.length > 0) {
+			final t = stamp();
+			for (copy in ctx.config.copy) copyUnit(copy.unit, copy.to);
+			Timers.copy += stamp() - t;
+		}
+	}
+
+	static function copyUnit(unit: String, to: String): Void {
+		if (FileSystem.isDirectory(unit)) {
+			if (!unit.endsWith('/')) unit += '/';
+			if (!to.endsWith('/')) to += '/';
+			if (!FileSystem.exists(to)) FileSystem.createDirectory(to);
+			for (u in FileSystem.readDirectory(unit)) copyUnit(unit + u, to + u);
+		} else {
+			print('Copy file $unit to $to');
+			File.copy(unit, to);
+		}
 	}
 }

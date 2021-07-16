@@ -175,10 +175,9 @@ class ASCompat {
 	public static macro function asVector<T>(value:Expr, typecheck:Expr):ExprOf<Null<flash.Vector<T>>>;
 	public static macro function isVector<T>(value:Expr, typecheck:Expr):ExprOf<Bool>;
 
-	// #if !flash
 	@:noCompletion public static inline function _asVector<T>(value:Any):Null<flash.Vector<T>> return if (_isVector(value)) value else null;
-	@:noCompletion public static inline function _isVector(value:Any):Bool @:privateAccess return Reflect.hasField(value, 'length') && Reflect.hasField(value, 'fixes');
-	// #end
+	@:noCompletion public static inline function _isVector(value:Any):Bool
+		return Reflect.hasField(value, '__array') && Reflect.hasField(value, 'fixed');
 
 	public static inline function asFunction(v:Any):Null<ASFunction> {
 		return if (Reflect.isFunction(v)) v else null;
