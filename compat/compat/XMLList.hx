@@ -15,7 +15,7 @@ abstract XMLList(XMLListImpl) from XMLListImpl to XMLListImpl {
 	}
 
 	#if flash inline #end
-	public function attribute(name:String):String {
+	public function attribute(name:String):Attribute {
 		#if flash
 		return this.attribute(name).toString();
 		#else

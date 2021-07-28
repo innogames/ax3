@@ -21,7 +21,7 @@ abstract XML(XMLImpl) from XMLImpl to XMLImpl {
 		#end
 	}
 
-	public inline function attribute(name:String):String {
+	public inline function attribute(name:String):Attribute {
 		#if flash
 		return this.attribute(name).toString();
 		#else
@@ -110,6 +110,7 @@ abstract XML(XMLImpl) from XMLImpl to XMLImpl {
 
 	#if flash inline #end
 	@:to public function toString():String {
+		if (this == null) return null;
 		#if flash
 		return this.toString();
 		#else
