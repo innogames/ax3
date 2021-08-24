@@ -178,6 +178,18 @@ class RewriteMeta extends AbstractFilter {
 														closeParen: mkCloseParen()
 													}
 												));
+											case null:
+												newMetadata.push(MetaHaxe(
+													mkIdent('@:bitmap', m.openBracket.leadTrivia, []),
+													{
+														openParen: mkOpenParen(),
+														args: {
+															first: ELiteral(LString(mkString(map['source']))),
+															rest: []
+														},
+														closeParen: mkCloseParen()
+													}
+												));
 											case t:
 												reportError(m.name.pos, "Unknown mimeType: " + t);
 										}
