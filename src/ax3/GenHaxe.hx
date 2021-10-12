@@ -15,7 +15,11 @@ class GenHaxe extends PrinterBase {
 
 	static var REPLACE_CONTROL_CHAR: Map<String, Int> = [
 		"\\b" => 0x08,
-		"\\f" => 0x0C
+		"\\f" => 0x0C,
+		"\\u00A0" => 160, // non breaking space
+		"\\u2028" => 8232, // line seperator
+		"\\u2029" => 8233, // paragraph seperator
+		"\\u3000" => 12288 // ideographic space
 	];
 
 	@:nullSafety(Off) var currentModule:TModule;
