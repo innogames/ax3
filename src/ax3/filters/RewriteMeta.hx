@@ -85,6 +85,23 @@ class RewriteMeta extends AbstractFilter {
 									case "HxRemove":
 										needsTypeAwareInterface = true;
 										rmList.push(i);
+									case "HxArrayArgType":
+										switch [field.kind, m.args.args.first, m.args.args.rest[0].element] {
+											case [TFFun(f), ELiteral(LString(_name)), ELiteral(LString(_type))]:
+												needsTypeAwareInterface = true;
+												final name: String = rmQuotesAndConvert(_name.text);
+												final type: String = rmQuotesAndConvert(_type.text);
+												for (arg in f.fun.sig.args) if (arg.name == name) arg.type = TTArray(TTInst({
+													name: type,
+													syntax: null,
+													parentModule: null,
+													modifiers: [],
+													metadata: [],
+													members: [],
+													kind: null
+												}));
+											case _:
+										}
 									case 'ArrayElementType':
 										switch [field.kind, m.args.args.first] {
 											case [TFVar(v), ELiteral(LString(t))]:
