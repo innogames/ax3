@@ -29,6 +29,32 @@ class TypedTree {
 		return mod.pack.decl;
 	}
 
+	public function getType(s: String): TType {
+		s = StringTools.trim(s);
+		final i = s.indexOf('<');
+		return i == -1 ? switch s {
+			case 'void': TTVoid;
+			case 'Boolean': TTBoolean;
+			case 'Number': TTNumber;
+			case 'int': TTInt;
+			case 'uint': TTUint;
+			case 'String': TTString;
+			case 'Class': TTClass;
+			case 'Function': TTFunction;
+			case 'XML': TTXML;
+			case 'XMLList': TTXMLList;
+			case 'RegExp': TTRegExp;
+			case _: TTInst(getByFullName(s));
+		} : switch s.substr(0, i) {
+			case 'Array': TTArray(getType(s.substring(i + 1, s.lastIndexOf('>'))));
+			case 'Object': TTObject(getType(s.substring(i + 1, s.lastIndexOf('>'))));
+			case 'Dictionary':
+				final comma = s.indexOf(',');
+				TTDictionary(getType(s.substring(i + 1, comma)), getType(s.substring(comma + 1, s.lastIndexOf('>'))));
+			case _: throw 'Not supported type: $s';
+		}
+	}
+
 	public function getByFullName(name: String): TClassOrInterfaceDecl {
 		final i = name.lastIndexOf('.');
 		return getClassOrInterface(name.substring(0, i), name.substring(i + 1));
