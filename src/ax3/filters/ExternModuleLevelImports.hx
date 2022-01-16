@@ -90,7 +90,7 @@ class ExternModuleLevelImports extends AbstractFilter {
 				closeBracket: mkCloseBracket()
 			},
 			eobj: eGlobal,
-			eindex: mk(TELiteral(TLString(new Token(0, TkStringDouble, '"$name"', [], []))), TTString, TTString)
+			eindex: mk(TELiteral(TLString(mkString(name))), TTString, TTString)
 		}), TTBuiltin, TTBuiltin);
 	}
 

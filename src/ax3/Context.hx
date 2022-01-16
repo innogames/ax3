@@ -4,6 +4,8 @@ import haxe.extern.EitherType;
 import haxe.DynamicAccess;
 import ax3.Utils.printerr;
 
+using StringTools;
+
 enum abstract ToplevelImportKind(String) to String {
 	var Import = "import";
 	var Using = "using";
@@ -16,6 +18,8 @@ class Context {
 
 	public function new(config:Config) {
 		this.config = config;
+		if (config.dataout != null && !config.dataout.endsWith('/')) config.dataout += '/';
+		if (config.unpackout != null && !config.unpackout.endsWith('/')) config.unpackout += '/';
 	}
 
 	public function reportError(path:String, pos:Int, message:String) {
@@ -30,14 +34,24 @@ class Context {
 }
 
 typedef Config = {
-	var src:EitherType<String,Array<String>>;
-	var swc:Array<String>;
+	var ?src:EitherType<String,Array<String>>;
+	var ?swc:Array<String>;
 	var ?skipFiles:Array<String>;
 	var ?hxout:String;
 	var ?injection:InjectionConfig;
 	var ?haxeTypes:DynamicAccess<HaxeTypeAnnotation>;
 	var ?rootImports:String;
 	var ?settings:Settings;
+	var ?keepTypes:Bool;
+	var ?dataout:String;
+	var ?dataext:Array<String>;
+	var ?datafiles:Array<String>;
+	var ?unpackout:String;
+	var ?unpackswc:Array<String>;
+	var ?hxoutClean:Bool;
+	var ?dataoutClean:Bool;
+	var ?formatter:Bool;
+	var ?copy:Array<{unit: String, to: String}>;
 }
 
 typedef InjectionConfig = {

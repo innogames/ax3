@@ -1,5 +1,6 @@
 package ax3;
 
+import ax3.Token.TokenKind;
 import ax3.filters.RewriteForIn;
 import ax3.ParseTree;
 import ax3.TypedTree;
@@ -11,6 +12,16 @@ using StringTools;
 
 @:nullSafety
 class GenHaxe extends PrinterBase {
+
+	static var REPLACE_CONTROL_CHAR: Map<String, Int> = [
+		"\\b" => 0x08,
+		"\\f" => 0x0C,
+		"\\u00A0" => 160, // non breaking space
+		"\\u2028" => 8232, // line seperator
+		"\\u2029" => 8233, // paragraph seperator
+		"\\u3000" => 12288 // ideographic space
+	];
+
 	@:nullSafety(Off) var currentModule:TModule;
 
 	final context:Context;
@@ -18,6 +29,7 @@ class GenHaxe extends PrinterBase {
 	public function new(context) {
 		super();
 		this.context = context;
+		importError();
 	}
 
 	inline function throwError(pos:Int, msg:String):Dynamic {
@@ -305,7 +317,7 @@ class GenHaxe extends PrinterBase {
 							true;
 					};
 
-				if (addMeta) buf.add("@:flash.property ");
+				if (addMeta) buf.add("@:flash.property @:isVar ");
 				if (p.isPublic) buf.add("public ");
 				if (p.isStatic) buf.add("static ");
 				buf.add("var ");
@@ -358,14 +370,20 @@ class GenHaxe extends PrinterBase {
 				printTrivia(trailTrivia);
 
 			case TFGetter(f):
-				var kwd = if (f.isInline) "inline function" else "function";
+				var kwd = "";
+				if (f.haxeProperty != null && f.haxeProperty.isPublic) kwd += "public ";
+				if (f.isInline) kwd += "inline ";
+				kwd += "function";
 				printTextWithTrivia(kwd, f.syntax.functionKeyword);
 				printTokenTrivia(f.syntax.accessorKeyword);
 				printTextWithTrivia("get_" + f.name, f.syntax.name);
 				printSignature(f.fun.sig, NoVoid);
 				printExpr(f.fun.expr);
 			case TFSetter(f):
-				var kwd = if (f.isInline) "inline function" else "function";
+				var kwd = "";
+				if (f.haxeProperty != null && f.haxeProperty.isPublic) kwd += "public ";
+				if (f.isInline) kwd += "inline ";
+				kwd += "function";
 				printTextWithTrivia(kwd, f.syntax.functionKeyword);
 				printTokenTrivia(f.syntax.accessorKeyword);
 				printTextWithTrivia("set_" + f.name, f.syntax.name);
@@ -379,7 +397,7 @@ class GenHaxe extends PrinterBase {
 		printVarKind(v.kind, v.init == null /* `final` must be immediately initialized */);
 		printTextWithTrivia(v.name, v.syntax.name);
 
-		var skipTypeHint = v.isInline && v.init != null && canSkipTypeHint(v.type, v.init.expr);
+		var skipTypeHint = context.config.keepTypes != true && v.isInline && v.init != null && canSkipTypeHint(v.type, v.init.expr);
 		if (!skipTypeHint) {
 			// TODO: don't lose the typehint's trivia
 			printTypeHint({type: v.type, syntax: v.syntax.type});
@@ -423,8 +441,13 @@ class GenHaxe extends PrinterBase {
 					printTypeHint({type: arg.type, syntax: hint});
 					if (init != null) printVarInit(init, false, arg.type);
 
-				case TArgRest(dots, _):
+				case TArgRest(dots, _, hint):
+					#if (haxe_ver >= 4.20)
+					printTextWithTrivia('...' + arg.name, arg.syntax.name);
+					printTypeHint({type: arg.type, syntax: hint});
+					#else
 					throwError(dots.pos, "Unprocessed rest arguments");
+					#end
 			}
 			if (arg.comma != null) printComma(arg.comma);
 		}
@@ -491,7 +514,7 @@ class GenHaxe extends PrinterBase {
 	}
 
 	static function makeFQN(cls:TClassOrInterfaceDecl) {
-		var packName = cls.parentModule.parentPack.name;
+		var packName = cls.parentModule == null ? "" : cls.parentModule.parentPack.name;
 		return if (packName == "") cls.name else packName + "." + cls.name;
 	}
 
@@ -603,6 +626,7 @@ class GenHaxe extends PrinterBase {
 			case TEArrayDecl(d): printArrayDecl(d);
 			case TEVectorDecl(v): throw "assert";
 			case TEReturn(keyword, e): printTextWithTrivia("return", keyword); if (e != null) printExpr(e);
+			case TETypeof(keyword, e): printTextWithTrivia("typeof", keyword); printExpr(e);
 			case TEThrow(keyword, e): printTextWithTrivia("throw", keyword); printExpr(e);
 			case TEDelete(keyword, e): throw "assert";
 			case TEBreak(keyword): printTextWithTrivia("break", keyword);
@@ -663,7 +687,7 @@ class GenHaxe extends PrinterBase {
 		// TODO: this is hacky (builtins in general are hacky...)
 		name = switch name {
 			case
-				"Std.is" | "Std.downcast" | "Std.int" | "Std.string" | "String"
+				"Std.isOfType" | "cast" | "Std.int" | "Std.string" | "String"
 				| "flash.Lib.getTimer" | "flash.Lib.getURL"
 				| "Reflect.deleteField" | "Type.createInstance"| "Type.resolveClass" | "Type.getClassName" | "Type.getClass"
 				| "haxe.Json" | "Reflect.compare" | "Reflect.isFunction" | "Math.POSITIVE_INFINITY" | "Math.NEGATIVE_INFINITY"
@@ -683,11 +707,12 @@ class GenHaxe extends PrinterBase {
 				"Vector";
 			case "Array": "Array";
 			case "RegExp": "compat.RegExp";
-			case "parseInt": "Std.parseInt";
+			case "parseInt": "ASCompat.parseInt";
 			case "parseFloat": "Std.parseFloat";
 			case "NaN": "Math.NaN";
 			case "isNaN": "Math.isNaN";
-			case "escape": "escape";
+			case "escape": "ASCompat.escape";
+			case "unescape": "ASCompat.unescape";
 			case "arguments": "/*TODO*/arguments";
 			case "trace": "trace";
 			case "untyped __global__": "untyped __global__";
@@ -800,7 +825,7 @@ class GenHaxe extends PrinterBase {
 			   | TELocal(_)
 
 			   // no way these can even appear here so we could as well throw an assertion failure here
-			   | TEReturn(_) | TEThrow(_) | TEDelete(_) | TEBreak(_) | TEContinue(_)
+			   | TEReturn(_) | TETypeof(_) | TEThrow(_) | TEDelete(_) | TEBreak(_) | TEContinue(_)
 			   | TEWhile(_) | TEDoWhile(_) | TEFor(_) | TEForIn(_) | TEForEach(_) | TEHaxeFor(_)
 			   | TELocalFunction(_) | TEVars(_) | TEBlock(_) | TESwitch(_) | TECondCompValue(_) | TECondCompBlock(_) | TETry(_) | TEUseNamespace(_)
 
@@ -923,6 +948,7 @@ class GenHaxe extends PrinterBase {
 		printCloseParen(i.syntax.closeParen);
 		printExpr(i.ethen);
 		if (i.eelse != null) {
+			if (i.eelse.semiliconBefore) buf.add(";\n");
 			printTextWithTrivia("else", i.eelse.keyword);
 			printExpr(i.eelse.expr);
 		}
@@ -1023,7 +1049,7 @@ class GenHaxe extends PrinterBase {
 			printTextWithTrivia(v.v.name, v.syntax.name);
 
 			// TODO: don't lose the typehint's trivia
-			var skipTypeHint = v.init != null && canSkipTypeHint(v.v.type, v.init.expr);
+			var skipTypeHint = context.config.keepTypes != true && v.init != null && canSkipTypeHint(v.v.type, v.init.expr);
 			if (!skipTypeHint) {
 				printTypeHint({type: v.v.type, syntax: v.syntax.type});
 			}
@@ -1043,6 +1069,8 @@ class GenHaxe extends PrinterBase {
 			case TELiteral(TLNull(_)) | TEArrayDecl(_) | TEObjectDecl(_):
 				return false;
 			case TELiteral(TLInt(_)) if (expectedType.match(TTNumber | TTUint)):
+				return false;
+			case TELiteral(TLNumber(_)):
 				return false;
 			case TECall({kind: TEBuiltin(_, "Vector.convert")}, _):
 				// this one depends on the expected type
@@ -1110,7 +1138,7 @@ class GenHaxe extends PrinterBase {
 			case TLUndefined(syntax): printTextWithTrivia("/*undefined*/null", syntax);
 			case TLInt(syntax): printTextWithTrivia(syntax.text, syntax);
 			case TLNumber(syntax): printTextWithTrivia(syntax.text, syntax);
-			case TLString(syntax): printTextWithTrivia(syntax.text, syntax);
+			case TLString(syntax): printTextWithTrivia(replaceControlChars(syntax.text, syntax.kind), syntax);
 			case TLRegExp(syntax): throw "assert";
 		}
 	}
@@ -1159,6 +1187,27 @@ class GenHaxe extends PrinterBase {
 
 	inline function importVector() {
 		context.addToplevelImport("flash.Vector", Import);
+	}
+
+	inline function importError() {
+		context.addToplevelImport("flash.errors.Error", Import);
+	}
+
+	static function replaceControlChars(s: String, kind: TokenKind): String {
+		var r: Null<Int> = REPLACE_CONTROL_CHAR[s.substr(1, s.length - 2)];
+		return if (r != null) 'String.fromCharCode($r)'
+		else switch kind {
+		case TkStringDouble:
+			replaces(s, [for (k in REPLACE_CONTROL_CHAR.keys()) k => '" + String.fromCharCode(' + REPLACE_CONTROL_CHAR[k] + ') + "']);
+		case TkStringSingle:
+			replaces(s, [for (k in REPLACE_CONTROL_CHAR.keys()) k => "${String.fromCharCode(" + REPLACE_CONTROL_CHAR[k] + ")}"]);
+		case _: s;
+		}
+	}
+
+	static function replaces(s: String, m: Map<String, String>): String {
+		for (k in m.keys()) s = @:nullSafety(Off) s.replace(k, m[k]);
+		return s;
 	}
 }
 

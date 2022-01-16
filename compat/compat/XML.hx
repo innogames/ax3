@@ -21,12 +21,20 @@ abstract XML(XMLImpl) from XMLImpl to XMLImpl {
 		#end
 	}
 
-	public inline function attribute(name:String):String {
+	public inline function attribute(name:String):Attribute {
 		#if flash
 		return this.attribute(name).toString();
 		#else
 		var attr = this.get(name);
 		return if (attr == null) "" else attr; // preserve Flash behaviour
+		#end
+	}
+
+	public inline function attributes() {
+		#if flash
+		return this.attributes();
+		#else
+		return [for (a in this.attributes()) {name: () -> a, localName: () -> a, toString: () -> a}];
 		#end
 	}
 
@@ -47,6 +55,14 @@ abstract XML(XMLImpl) from XMLImpl to XMLImpl {
 		#end
 	}
 
+	public function elements():XMLList {
+		#if flash
+		return this.elements();
+		#else
+		return [for (x in this.elements()) x];
+		#end
+	}
+
 	public function children():XMLList {
 		#if flash
 		return this.children();
@@ -56,6 +72,14 @@ abstract XML(XMLImpl) from XMLImpl to XMLImpl {
 	}
 
 	public function localName():String {
+		#if flash
+		return this.localName();
+		#else
+		return this.nodeName;
+		#end
+	}
+
+	public function name():String {
 		#if flash
 		return this.localName();
 		#else
@@ -85,7 +109,8 @@ abstract XML(XMLImpl) from XMLImpl to XMLImpl {
 	#end
 
 	#if flash inline #end
-	public function toString():String {
+	@:to public function toString():String {
+		if (this == null) return null;
 		#if flash
 		return this.toString();
 		#else
@@ -109,4 +134,7 @@ abstract XML(XMLImpl) from XMLImpl to XMLImpl {
 		return this.toString();
 		#end
 	}
+
+	public inline function namespace():Any return null; // todo
+
 }

@@ -31,6 +31,14 @@ class ASCompat {
 		#end
 	}
 
+	public static inline function unescape(s:String):String {
+		#if flash
+		return untyped __global__["unescape"](s);
+		#else
+		return js.Lib.global.unescape(s);
+		#end
+	}
+
 	#if flash
 	public static inline function describeType(value:Any):compat.XML {
 		return flash.Lib.describeType(value);
@@ -167,10 +175,9 @@ class ASCompat {
 	public static macro function asVector<T>(value:Expr, typecheck:Expr):ExprOf<Null<flash.Vector<T>>>;
 	public static macro function isVector<T>(value:Expr, typecheck:Expr):ExprOf<Bool>;
 
-	#if !flash
-	@:noCompletion public static inline function _asVector<T>(value:Any):Null<flash.Vector<T>> return if (openfl.Vector.isVector(value)) value else null;
-	@:noCompletion public static inline function _isVector(value:Any):Bool return openfl.Vector.isVector(value);
-	#end
+	@:noCompletion public static inline function _asVector<T>(value:Any):Null<flash.Vector<T>> return if (_isVector(value)) value else null;
+	@:noCompletion public static inline function _isVector(value:Any):Bool
+		return Reflect.hasField(value, '__array') && Reflect.hasField(value, 'fixed');
 
 	public static inline function asFunction(v:Any):Null<ASFunction> {
 		return if (Reflect.isFunction(v)) v else null;
@@ -221,6 +228,51 @@ class ASCompat {
 		return !!v;
 		#end
 	}
+
+	/**
+	 * https://github.com/HaxeFoundation/as3hx/blob/829f661777d0458c7902c4235a4c944de4c8cc6d/src/as3hx/Compat.hx#L114
+	 */
+	public static function parseInt(s:String, ?base:Int):Null<Int> {
+        #if js
+		if (base == null) base = s.indexOf("0x") == 0 ? 16 : 10;
+		var v:Int = js.Syntax.code("parseInt({0}, {1})", s, base);
+		return Math.isNaN(v) ? null : v;
+		#elseif flash
+		if (base == null) base = 0;
+		var v:Int = untyped __global__["parseInt"](s, base);
+		return Math.isNaN(v) ? null : v;
+		#else
+		var BASE = "0123456789abcdefghijklmnopqrstuvwxyz";
+		if (base != null && (base < 2 || base > BASE.length))
+		return throw 'invalid base ${base}, it must be between 2 and ${BASE.length}';
+		s = s.trim().toLowerCase();
+		var sign = if (s.startsWith("+")) {
+			s = s.substring(1);
+			1;
+		} else if (s.startsWith("-")) {
+			s = s.substring(1);
+			-1;
+		} else {
+			1;
+		};
+		if (s.length == 0) return null;
+		if (s.startsWith('0x')) {
+		if (base != null && base != 16) return null; // attempting at converting a hex using a different base
+			base = 16;
+			s = s.substring(2);
+		} else if (base == null) {
+			base = 10;
+		}
+		var acc = 0;
+		try s.split('').map(function(c) {
+			var i = BASE.indexOf(c);
+			if(i < 0 || i >= base) throw 'invalid';
+			acc = (acc * base) + i;
+		}) catch(e:Dynamic) {};
+		return acc * sign;
+		#end
+	}
+
 }
 
 class ASArray {

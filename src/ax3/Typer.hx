@@ -505,6 +505,7 @@ class Typer {
 					case ["XML"]: TTXML;
 					case ["XMLList"]: TTXMLList;
 					case ["RegExp"]: TTRegExp;
+					case ['Namespace']: TTAny;
 					case path: TypedTree.declToInst(resolveDotPath(mod, path));
 				}
 			case TVector(v):

@@ -29,6 +29,37 @@ class TypedTree {
 		return mod.pack.decl;
 	}
 
+	public function getType(s: String): TType {
+		s = StringTools.trim(s);
+		final i = s.indexOf('<');
+		return i == -1 ? switch s {
+			case 'void': TTVoid;
+			case 'Boolean': TTBoolean;
+			case 'Number': TTNumber;
+			case 'int': TTInt;
+			case 'uint': TTUint;
+			case 'String': TTString;
+			case 'Class': TTClass;
+			case 'Function': TTFunction;
+			case 'XML': TTXML;
+			case 'XMLList': TTXMLList;
+			case 'RegExp': TTRegExp;
+			case _: TTInst(getByFullName(s));
+		} : switch s.substr(0, i) {
+			case 'Array': TTArray(getType(s.substring(i + 1, s.lastIndexOf('>'))));
+			case 'Object': TTObject(getType(s.substring(i + 1, s.lastIndexOf('>'))));
+			case 'Dictionary':
+				final comma = s.indexOf(',');
+				TTDictionary(getType(s.substring(i + 1, comma)), getType(s.substring(comma + 1, s.lastIndexOf('>'))));
+			case _: throw 'Not supported type: $s';
+		}
+	}
+
+	public function getByFullName(name: String): TClassOrInterfaceDecl {
+		final i = name.lastIndexOf('.');
+		return getClassOrInterface(name.substring(0, i), name.substring(i + 1));
+	}
+
 	public function getClassOrInterface(packName:String, name:String):TClassOrInterfaceDecl {
 		return switch getDecl(packName, name).kind {
 			case TDClassOrInterface(c): c;
@@ -536,6 +567,7 @@ enum TExprKind {
 	TEArrayDecl(a:TArrayDecl);
 	TEVectorDecl(v:TVectorDecl);
 	TEReturn(keyword:Token, e:Null<TExpr>);
+	TETypeof(keyword:Token, e:TExpr);
 	TEThrow(keyword:Token, e:TExpr);
 	TEDelete(keyword:Token, e:TExpr);
 	TEBreak(keyword:Token);
@@ -746,7 +778,7 @@ typedef TIf = {
 	};
 	var econd:TExpr;
 	var ethen:TExpr;
-	var eelse:Null<{keyword:Token, expr:TExpr}>;
+	var eelse:Null<{keyword:Token, expr:TExpr, semiliconBefore: Bool}>;
 }
 
 typedef TCallArgs = {

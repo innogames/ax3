@@ -248,11 +248,13 @@ class SWCLoader {
 					}
 				}
 
+				var dynList = [{p: 'flash.net', c: 'URLVariables'}, {p: 'flash.display', c: 'ShaderData'}];
+
 				var tDecl:TClassOrInterfaceDecl = {
 					kind: clsKind,
 					syntax: null,
 					metadata: [],
-					modifiers: [],
+					modifiers: Lambda.exists(dynList, function(d) return d.p == packName && d.c == className) ? [DMDynamic(null)] : [],
 					parentModule: null,
 					name: n.name,
 					members: members
@@ -421,6 +423,7 @@ class SWCLoader {
 							case ["", "XML"]: TTXML;
 							case ["", "XMLList"]: TTXMLList;
 							case ["", "RegExp"]: TTRegExp;
+							case ["", "Namespace"]: TTAny;
 							case ["flash.utils", "Dictionary"]: tUntypedDictionary;
 							case ["__AS3__.vec", "Vector"]: TTVector(TTAny); // hope that's correct
 							case ["mx.core" | "mx.managers", _]: TTAny; // TODO: hacky hack

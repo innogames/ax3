@@ -219,7 +219,7 @@ class TypedTreeTools {
 			case TECast(c): c.syntax.path.first.pos;
 			case TEArrayDecl(a): a.syntax.openBracket.pos;
 			case TEVectorDecl(v): v.syntax.newKeyword.pos;
-			case TEReturn(keyword, _) | TEThrow(keyword, _) | TEDelete(keyword, _) | TEBreak(keyword) | TEContinue(keyword): keyword.pos;
+			case TEReturn(keyword, _) | TETypeof(keyword, _)  | TEThrow(keyword, _) | TEDelete(keyword, _) | TEBreak(keyword) | TEContinue(keyword): keyword.pos;
 			case TEVars(VVar(t) | VConst(t), _): t.pos;
 			case TEObjectDecl(o): o.syntax.openBrace.pos;
 			case TEArrayAccess(a): a.syntax.openBracket.pos;
@@ -365,7 +365,7 @@ class TypedTreeTools {
 			case TECast(c): fromDotPath(c.syntax.path);
 			case TEArrayDecl(a): r(a.syntax.openBracket);
 			case TEVectorDecl(v): r(v.syntax.newKeyword);
-			case TEReturn(keyword, _) | TEThrow(keyword, _) | TEDelete(keyword, _) | TEBreak(keyword) | TEContinue(keyword): r(keyword);
+			case TEReturn(keyword, _) | TETypeof(keyword, _) | TEThrow(keyword, _) | TEDelete(keyword, _) | TEBreak(keyword) | TEContinue(keyword): r(keyword);
 			case TEVars(VVar(t) | VConst(t), _): r(t);
 			case TEObjectDecl(o): r(o.syntax.openBrace);
 			case TEArrayAccess(a): processLeadingToken(r, a.eobj);
@@ -432,7 +432,7 @@ class TypedTreeTools {
 			case TEArrayDecl(a): r(a.syntax.closeBracket);
 			case TEVectorDecl(v): r(v.elements.syntax.closeBracket);
 			case TEBreak(keyword) | TEContinue(keyword) | TEReturn(keyword, null): r(keyword);
-			case TEReturn(_, e) | TEThrow(_, e) | TEDelete(_, e): processTrailingToken(r, e);
+			case TEReturn(_, e) | TETypeof(_, e) | TEThrow(_, e) | TEDelete(_, e): processTrailingToken(r, e);
 			case TEObjectDecl(o): r(o.syntax.closeBrace);
 			case TEArrayAccess(a): r(a.syntax.closeBracket);
 			case TEBlock(block): r(block.syntax.closeBrace);
@@ -504,6 +504,8 @@ class TypedTreeTools {
 				TEBuiltin(syntax.clone(), name);
 			case TEReturn(keyword, e):
 				TEReturn(keyword.clone(), if (e == null) null else cloneExpr(e));
+			case TETypeof(keyword, e):
+				TETypeof(keyword.clone(), cloneExpr(e));
 			case TEThrow(keyword, e):
 				TEThrow(keyword.clone(), cloneExpr(e));
 			case TEDelete(keyword, e):
@@ -648,6 +650,10 @@ class TypedTreeTools {
 			case TEReturn(keyword, e):
 				var mapped = f(e);
 				if (mapped == e) e1 else e1.with(kind = TEReturn(keyword, mapped));
+
+			case TETypeof(keyword, e):
+				var mapped = f(e);
+				if (mapped == e) e1 else e1.with(kind = TETypeof(keyword, mapped));
 
 			case TEThrow(keyword, e):
 				var mapped = f(e);
@@ -842,7 +848,7 @@ class TypedTreeTools {
 					f(e.expr);
 				}
 
-			case TEReturn(_, e) | TEThrow(_, e) | TEDelete(_, e):
+			case TEReturn(_, e) | TETypeof(_, e) | TEThrow(_, e) | TEDelete(_, e):
 				f(e);
 
 			case TEBlock(block):

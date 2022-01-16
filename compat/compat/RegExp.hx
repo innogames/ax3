@@ -1,5 +1,7 @@
 package compat;
-
+#if js
+import js.lib.RegExp.RegExpMatch;
+#end
 import haxe.extern.EitherType;
 import haxe.Constraints.Function;
 
@@ -11,7 +13,7 @@ abstract RegExp(RegExpImpl) {
 		this = new RegExpImpl(pattern, options);
 	}
 
-	public inline function exec(s:String) /*infer the type from `return`*/ {
+	public inline function exec(s:String): RegExpResult {
 		return this.exec(s);
 	}
 
@@ -41,3 +43,13 @@ abstract RegExp(RegExpImpl) {
 		return (cast s).split(this);
 	}
 }
+
+#if js
+abstract RegExpResult(RegExpMatch) from RegExpMatch to RegExpMatch {
+
+	@:to public function toString(): Null<String> return this != null ? this[0] : null;
+
+}
+#else
+typedef RegExpResult = Dynamic;
+#end

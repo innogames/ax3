@@ -1,5 +1,6 @@
 package compat;
 
+import haxe.Exception;
 import Xml as StdXml;
 
 private typedef XMLListImpl = #if flash flash.xml.XMLList #else Array<XML> #end;
@@ -14,11 +15,31 @@ abstract XMLList(XMLListImpl) from XMLListImpl to XMLListImpl {
 	}
 
 	#if flash inline #end
-	public function attribute(name:String):String {
+	public function attribute(name:String):Attribute {
 		#if flash
 		return this.attribute(name).toString();
 		#else
 		return [for (x in this) x.attribute(name)].join("");
+		#end
+	}
+
+	#if flash inline #end
+	public function appendChild(v:XML):Void {
+		#if flash
+		this.appendChild(v);
+		#else
+		for (x in this) x.appendChild(v);
+		#end
+	}
+
+	#if flash inline #end
+	public function children():XMLList {
+		#if flash
+		return this.children();
+		#else
+		final r: Array<XML> = [];
+		for (x in this) for (e in x.children()) r.push(e);
+		return r;
 		#end
 	}
 
