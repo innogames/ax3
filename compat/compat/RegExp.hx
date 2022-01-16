@@ -47,7 +47,7 @@ abstract RegExp(RegExpImpl) {
 #if js
 abstract RegExpResult(RegExpMatch) from RegExpMatch to RegExpMatch {
 
-	@:to public function toString(): String return this[0];
+	@:to public function toString(): Null<String> return this != null ? this[0] : null;
 
 }
 #else
